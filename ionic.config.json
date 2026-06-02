@@ -1,0 +1,7 @@
+{
+  "name": "ges-boutique-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
