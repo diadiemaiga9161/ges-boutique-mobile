@@ -1,0 +1,76 @@
+<ion-card *ngIf="!(networkStatus$ | async)?.isOnline || (syncStatus$ | async)?.isSyncing" class="offline-card">
+  <ion-card-content>
+    <div class="status-header" (click)="toggleDetails()">
+      <ion-icon
+        [name]="(networkStatus$ | async)?.isOnline ? 'wifi' : 'wifi-outline'"
+        [color]="(networkStatus$ | async)?.isOnline ? 'success' : 'danger'"
+        style="font-size: 24px; margin-right: 8px;"
+      ></ion-icon>
+      <div class="status-text">
+        <span *ngIf="!(networkStatus$ | async)?.isOnline" class="status-label">
+          🔴 Mode Hors Ligne
+        </span>
+        <span *ngIf="(networkStatus$ | async)?.isOnline && (syncStatus$ | async)?.isSyncing" class="status-label">
+          ⏳ Synchronisation en cours...
+        </span>
+      </div>
+      <ion-icon name="chevron-down" *ngIf="!showDetails"></ion-icon>
+      <ion-icon name="chevron-up" *ngIf="showDetails"></ion-icon>
+    </div>
+
+    <div class="sync-progress" *ngIf="syncStatus$ | async as status">
+      <small *ngIf="status.lastSyncTime">
+        Dernière sync: {{ status.lastSyncTime | date: 'short' }}
+      </small>
+      <small *ngIf="status.syncedCount > 0 || status.failedCount > 0">
+        ✓ {{ status.syncedCount }} réussi(es) | ✗ {{ status.failedCount }} échoué(es)
+      </small>
+    </div>
+
+    <div *ngIf="showDetails" class="details">
+      <div class="queue-summary">
+        <p>
+          <strong>Actions en attente:</strong>
+          {{ (offlineQueue$ | async)?.filter(a => a.status === 'EN_ATTENTE').length || 0 }}
+        </p>
+        <p>
+          <strong>Connexion:</strong>
+          {{ (networkStatus$ | async)?.connectionType || 'N/A' }}
+        </p>
+      </div>
+
+      <div class="actions-list" *ngIf="(offlineQueue$ | async) as queue">
+        <ion-list *ngIf="queue.length > 0">
+          <ion-item *ngFor="let action of queue">
+            <ion-label>
+              <h3>{{ action.type }}</h3>
+              <p>ID: {{ action.clientRequestId | slice: 0: 8 }}...</p>
+              <p *ngIf="action.lastError" class="error-text">
+                Erreur: {{ action.lastError }}
+              </p>
+            </ion-label>
+            <ion-badge
+              [color]="getStatusColor(action.status)"
+              slot="end"
+            >
+              {{ action.status }}
+            </ion-badge>
+          </ion-item>
+        </ion-list>
+        <p *ngIf="queue.length === 0" style="text-align: center; color: #666;">
+          Aucune action en attente
+        </p>
+      </div>
+
+      <ion-button
+        *ngIf="(offlineQueue$ | async)?.some(a => a.status === 'EN_ATTENTE')"
+        (click)="forceSync()"
+        expand="block"
+        color="primary"
+        style="margin-top: 12px;"
+      >
+        Synchroniser Maintenant
+      </ion-button>
+    </div>
+  </ion-card-content>
+</ion-card>

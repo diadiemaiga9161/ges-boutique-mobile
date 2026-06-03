@@ -1,3 +1,124 @@
 <ion-app>
-  <ion-router-outlet></ion-router-outlet>
+
+  <!-- Sidebar Menu -->
+  <ion-menu menuId="main-menu" contentId="main-content" type="overlay">
+    <ion-header class="ion-no-border">
+      <div class="menu-user">
+        <div class="menu-avatar">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </div>
+        <p class="menu-username">{{ getUserName() }}</p>
+        <p class="menu-role">{{ getRole() }}</p>
+      </div>
+
+      <!-- Indicateur connexion temps réel -->
+      <div class="ws-indicator" *ngIf="(ws.status$ | async) as status">
+        <div class="ws-dot"
+          [class.ws-connected]="status === 'connected'"
+          [class.ws-connecting]="status === 'connecting'"
+          [class.ws-disconnected]="status === 'disconnected'">
+        </div>
+        <span class="ws-label">{{ status === 'connected' ? 'En ligne' : status === 'connecting' ? 'Connexion...' : 'Hors ligne' }}</span>
+      </div>
+    </ion-header>
+
+    <ion-content>
+      <ion-list lines="none">
+
+        <!-- ===== MENU COMMUN ===== -->
+        <p class="menu-section-label">Navigation</p>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/home')">
+          <ion-icon name="home-outline" slot="start"></ion-icon>
+          <ion-label>Tableau de bord</ion-label>
+        </ion-item>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/clients')">
+          <ion-icon name="people-outline" slot="start"></ion-icon>
+          <ion-label>Clients</ion-label>
+        </ion-item>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/cart')">
+          <ion-icon name="cart-outline" slot="start"></ion-icon>
+          <ion-label>Nouvelle vente</ion-label>
+        </ion-item>
+
+        <!-- ===== MENU ADMIN SEULEMENT ===== -->
+        <ng-container *ngIf="auth.isAdmin()">
+
+          <div class="menu-divider"></div>
+          <p class="menu-section-label">Finances</p>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/factures')">
+            <ion-icon name="document-text-outline" slot="start"></ion-icon>
+            <ion-label>Factures</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/comptes')">
+            <ion-icon name="card-outline" slot="start"></ion-icon>
+            <ion-label>Comptes bancaires</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/dettes')">
+            <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+            <ion-label>Dettes anciennes</ion-label>
+          </ion-item>
+
+          <div class="menu-divider"></div>
+          <p class="menu-section-label">Ressources humaines</p>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/employes')">
+            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            <ion-label>Employés</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/paiement-employe')">
+            <ion-icon name="wallet-outline" slot="start"></ion-icon>
+            <ion-label>Paiements employés</ion-label>
+          </ion-item>
+
+          <div class="menu-divider"></div>
+          <p class="menu-section-label">Paramètres</p>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/fournisseurs')">
+            <ion-icon name="business-outline" slot="start"></ion-icon>
+            <ion-label>Fournisseurs</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/vendeurs')">
+            <ion-icon name="people-circle-outline" slot="start"></ion-icon>
+            <ion-label>Vendeurs</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/boutique')">
+            <ion-icon name="storefront-outline" slot="start"></ion-icon>
+            <ion-label>Ma boutique</ion-label>
+          </ion-item>
+
+        </ng-container>
+        <!-- ===== FIN MENU ADMIN ===== -->
+
+        <div class="menu-divider"></div>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/profile')">
+          <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+          <ion-label>Mon profil</ion-label>
+        </ion-item>
+
+      </ion-list>
+
+      <div class="menu-footer">
+        <ion-button expand="block" fill="clear" color="danger" (click)="logout()">
+          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+          Déconnexion
+        </ion-button>
+      </div>
+    </ion-content>
+  </ion-menu>
+
+  <ion-router-outlet id="main-content"></ion-router-outlet>
+
+  <!-- Statut Offline Global -->
+  <app-offline-status></app-offline-status>
+
 </ion-app>
