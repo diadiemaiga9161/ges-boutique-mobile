@@ -6,7 +6,7 @@
     instance_type: mac_mini_m2
 
     environment:
-      node: 20.19.2
+      node: 22.16.0
       java: 17
 
     scripts:
@@ -42,7 +42,7 @@
     instance_type: mac_mini_m2
 
     environment:
-      node: 20.19.2
+      node: 22.16.0
       xcode: latest
       cocoapods: default
       vars:
