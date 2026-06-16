@@ -1,0 +1,83 @@
+﻿workflows:
+
+  android-workflow:
+    name: Ges Lafia - Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      node: 20.19.2
+      java: 17
+
+    scripts:
+      - name: Install dependencies
+        script: npm install --legacy-peer-deps
+
+      - name: Build Angular (capacitor)
+        script: npx ng build --configuration capacitor
+
+      - name: Capacitor sync Android
+        script: npx cap sync android
+
+      - name: Build Android APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
+
+    publishing:
+      email:
+        recipients:
+          - doumaiga3@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  ios-workflow:
+    name: Ges Lafia - iOS IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      node: 20.19.2
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.ges.lafia"
+        XCODE_SCHEME: "App"
+        XCODE_WORKSPACE: "App.xcworkspace"
+
+    scripts:
+      - name: Install dependencies
+        script: npm install --legacy-peer-deps
+
+      - name: Build Angular (capacitor)
+        script: npx ng build --configuration capacitor
+
+      - name: Capacitor sync iOS
+        script: npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Build iOS IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      email:
+        recipients:
+          - doumaiga3@gmail.com
+        notify:
+          success: true
+          failure: true
