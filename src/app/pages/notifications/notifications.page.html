@@ -1,0 +1,33 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Notifications</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="notifications.length > 0" (click)="toutLire()" fill="clear" color="light">
+        <ion-icon name="checkmark-done-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <ion-list *ngIf="notifications.length > 0">
+    <ion-item *ngFor="let n of notifications" (click)="cliquer(n)" detail="true" button>
+      <ion-avatar slot="start" style="display:flex;align-items:center;justify-content:center;background:var(--ion-color-light);border-radius:50%">
+        <ion-icon [name]="icone(n.type)" [color]="couleur(n.type)" style="font-size:1.4rem"></ion-icon>
+      </ion-avatar>
+      <ion-label>
+        <h2>{{ n.titre }}</h2>
+        <p>{{ n.message }}</p>
+        <p style="font-size:0.72rem;color:var(--ion-color-medium)">{{ n.dateCreation | date:'dd/MM HH:mm' }}</p>
+      </ion-label>
+      <ion-badge [color]="couleur(n.type)" slot="end" style="min-width:8px;height:8px;border-radius:50%;padding:0"></ion-badge>
+    </ion-item>
+  </ion-list>
+
+  <div *ngIf="notifications.length === 0" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:var(--ion-color-medium)">
+    <ion-icon name="notifications-off-outline" style="font-size:4rem;margin-bottom:12px"></ion-icon>
+    <p>Aucune notification non lue</p>
+  </div>
+
+</ion-content>

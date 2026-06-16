@@ -1,0 +1,53 @@
+<ion-content [fullscreen]="true" class="select-content">
+  <div class="select-wrapper">
+
+    <!-- ZONE HAUTE — BRAND -->
+    <div class="select-hero">
+      <div class="lh-deco lh-deco--1"></div>
+      <div class="lh-deco lh-deco--2"></div>
+
+      <div class="lh-body">
+        <div class="lh-logo">
+          <span class="lh-logo__m">M</span>
+          <span class="lh-logo__c">C</span>
+        </div>
+        <h1 class="lh-app-name">Ges Lafia</h1>
+        <p class="lh-tagline">Maïga Consulting · Gestion de boutique</p>
+      </div>
+
+      <div class="lh-wave">
+        <svg viewBox="0 0 375 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,20 C60,50 120,0 200,25 C270,48 330,5 375,25 L375,60 L0,60 Z" fill="#f0f4f8"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ZONE BASSE — LISTE DES BOUTIQUES -->
+    <div class="select-zone">
+      <div class="select-card">
+        <h2 class="select-card__title">Choisissez votre boutique</h2>
+        <p class="select-card__sub">Cette sélection sera mémorisée</p>
+
+        <div class="boutique-list">
+          <button
+            *ngFor="let b of boutiques"
+            class="boutique-item"
+            [disabled]="isLoading"
+            (click)="selectBoutique(b)">
+            <div class="boutique-item__icon">
+              <ion-icon name="storefront-outline"></ion-icon>
+            </div>
+            <div class="boutique-item__info">
+              <span class="boutique-item__nom">{{ b.nom }}</span>
+              <span class="boutique-item__url">{{ b.url }}</span>
+            </div>
+            <ion-icon name="chevron-forward-outline" class="boutique-item__arrow"></ion-icon>
+          </button>
+        </div>
+
+        <p class="select-version">Ges Lafia · Maïga Consulting</p>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

@@ -1,0 +1,120 @@
+// ══════════════════════════════════════════════════
+//  BARRE DE NAVIGATION — Ges Lafia
+// ══════════════════════════════════════════════════
+ion-tab-bar {
+  --background: #ffffff;
+  --border:     none;
+  height:       68px;
+  padding:      0 4px;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow:   0 -4px 24px rgba(8, 22, 72, 0.10);
+  border-top:   1.5px solid #f1f5f9;
+  position:     relative;
+}
+
+// ── Bouton de tab ────────────────────────────────────
+ion-tab-button {
+  --color:          #94a3b8;
+  --color-selected: #1a56db;
+  --ripple-color:   transparent;
+  flex-direction:   column;
+  position:         relative;
+  padding:          6px 0 4px;
+  transition:       color 0.2s;
+
+  ion-label {
+    font-size:    10px;
+    font-weight:  700;
+    letter-spacing: 0.3px;
+    margin-top:   4px;
+    transition:   color 0.2s;
+    text-transform: none;
+  }
+
+  // ── Wrapper d'icône (reçoit la pilule de fond) ──
+  .tab-icon-wrap {
+    width:         40px;
+    height:        32px;
+    border-radius: 20px;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    transition:    background 0.22s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+
+    ion-icon {
+      font-size:  20px;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+  }
+
+  // ── État sélectionné ────────────────────────────
+  &.tab-selected {
+    .tab-icon-wrap {
+      background: #eff6ff;
+      transform:  translateY(-2px);
+
+      ion-icon {
+        transform: scale(1.15);
+        color:     #1a56db;
+      }
+    }
+
+    ion-label { color: #1a56db; }
+
+    // Indicateur point sous le label
+    &::after {
+      content:       '';
+      position:      absolute;
+      bottom:        6px;
+      left:          50%;
+      transform:     translateX(-50%);
+      width:         4px;
+      height:        4px;
+      border-radius: 50%;
+      background:    #1a56db;
+    }
+  }
+}
+
+// ── Bouton FAB central "Vendre" ──────────────────────
+.tab-btn--fab {
+  --color:          #ffffff;
+  --color-selected: #ffffff;
+
+  // Désactive le comportement tab-selected d'Ionic
+  &.tab-selected::after { display: none; }
+  &.tab-selected .tab-icon-wrap { background: transparent !important; transform: none !important; }
+
+  .tab-icon-wrap { display: none; } // caché, remplacé par .tab-fab-btn
+
+  .tab-fab-btn {
+    width:       52px;
+    height:      52px;
+    border-radius: 16px;
+    background:  linear-gradient(135deg, #1a56db 0%, #0d47a1 100%);
+    display:     flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:  0 6px 20px rgba(26,86,219,0.40);
+    margin-top:  -14px;
+    transition:  transform 0.18s, box-shadow 0.18s;
+
+    ion-icon {
+      font-size: 1.5rem;
+      color:     #ffffff;
+      font-weight: 700;
+    }
+  }
+
+  ion-label {
+    color:     #1a56db !important;
+    font-weight: 800 !important;
+    font-size: 10px !important;
+    margin-top: 4px;
+  }
+
+  &:active .tab-fab-btn {
+    transform:  scale(0.93);
+    box-shadow: 0 3px 10px rgba(26,86,219,0.25);
+  }
+}

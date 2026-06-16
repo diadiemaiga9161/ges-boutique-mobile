@@ -1,0 +1,173 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Bénéfices</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="exporterPDF()" [disabled]="!data || isLoading">
+        <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="charger(); $event.target.complete()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- SÉLECTEUR DE PÉRIODE -->
+  <div class="ion-padding-horizontal ion-padding-top">
+    <ion-segment [(ngModel)]="periodeActive" (ionChange)="selectionner(periodeActive)" scrollable>
+      <ion-segment-button value="JOURNALIER">
+        <ion-label>Jour</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="HEBDOMADAIRE">
+        <ion-label>Semaine</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="MENSUEL">
+        <ion-label>Mois</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="ANNUEL">
+        <ion-label>Année</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- FILTRES SELON PÉRIODE -->
+  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'JOURNALIER'">
+    <ion-item>
+      <ion-label>Date</ion-label>
+      <ion-datetime-button datetime="dtJour"></ion-datetime-button>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime id="dtJour" presentation="date" [(ngModel)]="dateJour"
+            (ionChange)="charger()" [max]="today"></ion-datetime>
+        </ng-template>
+      </ion-modal>
+    </ion-item>
+  </div>
+
+  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'MENSUEL'">
+    <ion-item>
+      <ion-label>Mois</ion-label>
+      <ion-select [(ngModel)]="moisSelect" (ionChange)="charger()" interface="popover">
+        <ion-select-option *ngFor="let m of moisList" [value]="m.v">{{ m.l }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-label>Année</ion-label>
+      <ion-select [(ngModel)]="anneeSelect" (ionChange)="charger()" interface="popover">
+        <ion-select-option *ngFor="let a of annees" [value]="a">{{ a }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </div>
+
+  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'ANNUEL'">
+    <ion-item>
+      <ion-label>Année</ion-label>
+      <ion-select [(ngModel)]="anneeSelect" (ionChange)="charger()" interface="popover">
+        <ion-select-option *ngFor="let a of annees" [value]="a">{{ a }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </div>
+
+  <!-- CHARGEMENT -->
+  <div class="ion-text-center ion-padding" *ngIf="isLoading">
+    <ion-spinner name="crescent" color="success"></ion-spinner>
+    <p class="ion-color-medium">Calcul des bénéfices…</p>
+  </div>
+
+  <!-- DONNÉES -->
+  <ng-container *ngIf="data && !isLoading">
+
+    <!-- HERO BÉNÉFICE -->
+    <div class="ben-hero">
+      <div class="ben-hero__deco"></div>
+      <p class="ben-hero__label">Bénéfice total</p>
+      <h1 class="ben-hero__val" [class.ben-hero__val--neg]="data.beneficeTotal < 0">
+        {{ fmt(data.beneficeTotal) }}
+      </h1>
+      <div class="ben-hero__sub">
+        <ion-icon [name]="evolutionIcon" [color]="evolutionColor"></ion-icon>
+        <span [class]="'ben-evo ben-evo--' + evolutionColor">
+          {{ evolution >= 0 ? '+' : '' }}{{ evolution.toFixed(1) }} % vs période préc.
+        </span>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="ben-kpis ion-padding-horizontal">
+      <div class="ben-kpi ben-kpi--blue">
+        <p class="ben-kpi__label">Chiffre d'affaires</p>
+        <p class="ben-kpi__val">{{ fmt(data.chiffreAffaireTotal) }}</p>
+      </div>
+      <div class="ben-kpi ben-kpi--purple">
+        <p class="ben-kpi__label">Ventes</p>
+        <p class="ben-kpi__val">{{ data.nombreVentes }}</p>
+      </div>
+      <div class="ben-kpi ben-kpi--amber">
+        <p class="ben-kpi__label">Marge moy.</p>
+        <p class="ben-kpi__val">{{ data.margeMoyenne.toFixed(1) }} %</p>
+      </div>
+    </div>
+
+    <!-- GRAPHIQUE -->
+    <ion-card class="ion-margin" *ngIf="data.lignes.length > 0">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="bar-chart-outline" color="success"></ion-icon>
+          Évolution des bénéfices
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="chart-wrap">
+          <canvas #beneficeChart></canvas>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- TABLEAU DÉTAIL -->
+    <ion-card class="ion-margin" *ngIf="data.lignes.length > 0">
+      <ion-card-header>
+        <ion-card-title>Détail par période</ion-card-title>
+      </ion-card-header>
+      <ion-card-content class="ion-no-padding">
+        <ion-list lines="inset">
+          <ion-item *ngFor="let l of data.lignes">
+            <ion-label>
+              <h3>{{ l.label }}</h3>
+              <p>{{ l.nombreVentes }} vente(s)</p>
+            </ion-label>
+            <ion-note slot="end" [color]="l.benefice >= 0 ? 'success' : 'danger'">
+              <strong>{{ fmt(l.benefice) }}</strong>
+            </ion-note>
+          </ion-item>
+          <!-- Total -->
+          <ion-item color="light">
+            <ion-label><strong>TOTAL</strong></ion-label>
+            <ion-note slot="end" color="success">
+              <strong>{{ fmt(data.beneficeTotal) }}</strong>
+            </ion-note>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Aucune donnée -->
+    <div class="ion-text-center ion-padding-vertical" *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0">
+      <ion-icon name="trending-up-outline" style="font-size:48px;color:#9ca3af"></ion-icon>
+      <p style="color:#9ca3af">Aucune vente pour cette période</p>
+    </div>
+
+  </ng-container>
+
+  <!-- FAB PDF -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button color="success" (click)="exporterPDF()" [disabled]="!data || isLoading">
+      <ion-icon name="document-text-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

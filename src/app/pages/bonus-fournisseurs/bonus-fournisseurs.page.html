@@ -1,0 +1,197 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Bonus Fournisseurs</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="startCreate()">
+        <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Onglets -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="activeTab">
+      <ion-segment-button value="liste">
+        <ion-label>Bonus</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="resultat">
+        <ion-label>Résultat Net</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ======== ONGLET LISTE ======== -->
+  <div *ngIf="activeTab === 'liste'" class="page-pad stack">
+
+    <!-- Résumé du mois -->
+    <div class="total-bonus-card" *ngIf="stats">
+      <div>
+        <p class="tb-label">Bonus ce mois</p>
+        <p class="tb-value">{{ money(stats.totalMois) }}</p>
+        <p class="tb-sub">{{ stats.nombreMois }} bonus • Année: {{ money(stats.totalAnnee) }}</p>
+      </div>
+      <ion-icon name="gift-outline" style="font-size:2.2rem; opacity:0.7; color:#28a745"></ion-icon>
+    </div>
+
+    <!-- Total liste courante -->
+    <div class="filter-card" *ngIf="bonus.length > 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.85rem;color:#6b7280">Total affiché</span>
+        <strong style="color:#28a745">+ {{ money(totalBonus()) }}</strong>
+      </div>
+    </div>
+
+    <ion-spinner *ngIf="loading"></ion-spinner>
+
+    <div class="empty-state" *ngIf="!loading && bonus.length === 0">
+      <ion-icon name="gift-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
+      <p>Aucun bonus enregistré</p>
+      <ion-button size="small" (click)="startCreate()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Ajouter un bonus
+      </ion-button>
+    </div>
+
+    <div class="bonus-list" *ngIf="!loading && bonus.length > 0">
+      <div class="bonus-card" *ngFor="let b of bonus">
+        <div class="bonus-header">
+          <div>
+            <p class="bonus-fournisseur">{{ b.fournisseurNom }}</p>
+            <p class="bonus-date">{{ b.date }}</p>
+          </div>
+          <div style="text-align:right">
+            <ion-badge [color]="typeColor(b.type)" style="font-size:0.72rem;margin-bottom:4px;">
+              {{ b.typeLibelle || b.type }}
+            </ion-badge>
+            <p class="bonus-montant">+ {{ money(b.montant) }}</p>
+          </div>
+        </div>
+        <p class="bonus-desc" *ngIf="b.description">{{ b.description }}</p>
+        <div class="bonus-actions">
+          <ion-button fill="outline" size="small" color="primary" (click)="startEdit(b)">
+            <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button fill="outline" size="small" color="danger" (click)="supprimer(b)">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== ONGLET RÉSULTAT NET ======== -->
+  <div *ngIf="activeTab === 'resultat'" class="page-pad stack">
+    <div *ngIf="resultat">
+
+      <!-- Carte résultat principal -->
+      <div class="resultat-main-card" [class.gain]="resultat.etat === 'GAIN'" [class.perte]="resultat.etat === 'PERTE'">
+        <p class="rm-label">Résultat Net du Mois</p>
+        <p class="rm-value">{{ money(resultat.resultatNet) }}</p>
+        <ion-badge [color]="resultat.etat === 'GAIN' ? 'success' : 'danger'" style="font-size:1rem;padding:6px 12px;">
+          {{ resultat.etat === 'GAIN' ? '✓ GAIN' : '✗ PERTE' }}
+        </ion-badge>
+      </div>
+
+      <!-- Détail -->
+      <div class="detail-card">
+        <div class="detail-row">
+          <span class="dr-label">
+            <ion-icon name="trending-up-outline" color="success"></ion-icon>
+            Bénéfices ventes
+          </span>
+          <strong class="dr-value text-success">+ {{ money(resultat.benefices) }}</strong>
+        </div>
+        <div class="detail-row">
+          <span class="dr-label">
+            <ion-icon name="gift-outline" color="primary"></ion-icon>
+            Bonus fournisseurs
+          </span>
+          <strong class="dr-value text-primary">+ {{ money(resultat.bonusFournisseurs) }}</strong>
+        </div>
+        <div class="detail-sep"></div>
+        <div class="detail-row">
+          <span class="dr-label">
+            <ion-icon name="trending-down-outline" color="danger"></ion-icon>
+            Dépenses
+          </span>
+          <strong class="dr-value text-danger">- {{ money(resultat.depenses) }}</strong>
+        </div>
+        <div class="detail-sep total-sep"></div>
+        <div class="detail-row total-row">
+          <span class="dr-label fw-bold">= Résultat Net</span>
+          <strong class="dr-value" [style.color]="resultat.etat === 'GAIN' ? '#28a745' : '#dc3545'">
+            {{ money(resultat.resultatNet) }}
+          </strong>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:8px;">
+        <ion-button fill="outline" size="small" (click)="loadResultat()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          Actualiser
+        </ion-button>
+      </div>
+    </div>
+
+    <ion-spinner *ngIf="!resultat"></ion-spinner>
+  </div>
+</ion-content>
+
+<!-- ======== MODAL FORMULAIRE ======== -->
+<div class="modal-overlay" *ngIf="showForm" (click)="showForm=false">
+  <div class="modal-sheet" (click)="$event.stopPropagation()">
+    <div class="modal-handle"></div>
+
+    <h3 class="modal-title">
+      {{ editingId ? 'Modifier le bonus' : 'Nouveau bonus' }}
+    </h3>
+
+    <div class="form-group">
+      <label class="form-label">Fournisseur *</label>
+      <select class="form-select" [(ngModel)]="form.fournisseurId">
+        <option [value]="0">-- Sélectionner --</option>
+        <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Type *</label>
+      <select class="form-select" [(ngModel)]="form.type">
+        <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group half">
+        <label class="form-label">Date *</label>
+        <input type="date" class="form-input" [(ngModel)]="form.date">
+      </div>
+      <div class="form-group half">
+        <label class="form-label">Montant (FCFA) *</label>
+        <input type="number" class="form-input" [(ngModel)]="form.montant" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" [(ngModel)]="form.description" rows="2"
+        placeholder="Ex: Ristourne 5% commandes mois..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <ion-button fill="outline" color="medium" (click)="showForm=false" expand="block">Annuler</ion-button>
+      <ion-button color="success" (click)="save()" expand="block">
+        {{ editingId ? 'Enregistrer' : 'Ajouter' }}
+      </ion-button>
+    </div>
+  </div>
+</div>

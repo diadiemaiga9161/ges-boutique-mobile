@@ -1,0 +1,118 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Profil</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="danger" (click)="logout()">
+        <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-pad stack">
+    <section class="mobile-card profile-card">
+      <div style="text-align:center; padding: 16px 0">
+
+        <!-- Avatar + bouton photo -->
+        <div class="avatar-wrapper">
+          <div class="avatar-circle photo-avatar" *ngIf="photoPreview">
+            <img [src]="photoPreview" alt="Photo de profil" class="avatar-img" />
+          </div>
+          <div class="avatar-circle" *ngIf="!photoPreview">
+            <ion-icon name="person-outline" style="font-size:48px"></ion-icon>
+          </div>
+
+          <div class="photo-actions">
+            <label class="photo-btn" title="Changer la photo">
+              <ion-icon name="camera-outline"></ion-icon>
+              <input type="file" accept="image/*" (change)="onPhotoSelected($event)" style="display:none" />
+            </label>
+            <button class="photo-btn photo-btn--remove" *ngIf="photoPreview" (click)="removePhoto()" title="Supprimer la photo">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+          <ion-spinner *ngIf="loadingPhoto" name="crescent" style="margin-top:6px"></ion-spinner>
+        </div>
+
+        <h2 style="margin: 8px 0 4px">{{ user?.nomComplet || auth.getDisplayName() }}</h2>
+        <p class="muted">{{ user?.username }}</p>
+        <ion-badge color="{{ auth.isAdmin() ? 'danger' : 'primary' }}">
+          {{ getFormattedRole() }}
+        </ion-badge>
+      </div>
+    </section>
+
+    <section class="form-panel stack">
+      <h2 class="card-title">Modifier mes informations</h2>
+
+      <ion-item>
+        <ion-input label="Nom complet *" labelPlacement="floating"
+          [(ngModel)]="form.nomComplet"
+          [class.ion-invalid]="!form.nomComplet.trim()"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input label="Nom d'utilisateur" labelPlacement="floating"
+          [value]="user?.username" [disabled]="true"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input label="Email *" labelPlacement="floating"
+          type="email"
+          [(ngModel)]="form.email"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input label="Téléphone *" labelPlacement="floating"
+          type="tel"
+          [(ngModel)]="form.telephone"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Nouveau mot de passe"
+          labelPlacement="floating"
+          [type]="showPassword ? 'text' : 'password'"
+          [(ngModel)]="form.password"
+          placeholder="Laisser vide pour ne pas changer"></ion-input>
+        <ion-button slot="end" fill="clear" (click)="showPassword = !showPassword">
+          <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item>
+      <small class="muted ion-padding-start">Minimum 6 caractères si vous souhaitez le modifier</small>
+
+      <ion-button expand="block" [disabled]="loading || !isFormValid" (click)="save()">
+        <ion-spinner *ngIf="loading" slot="start" name="crescent"></ion-spinner>
+        <ion-icon *ngIf="!loading" name="save-outline" slot="start"></ion-icon>
+        Enregistrer les modifications
+      </ion-button>
+    </section>
+
+    <section class="form-panel" *ngIf="user">
+      <h2 class="card-title">Informations du compte</h2>
+      <div class="mini-stats">
+        <div class="stat-row">
+          <span>Rôle</span>
+          <strong>{{ getFormattedRole() }}</strong>
+        </div>
+        <div class="stat-row">
+          <span>Username</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <div class="stat-row" *ngIf="user.actif !== undefined">
+          <span>Statut</span>
+          <ion-badge [color]="user.actif ? 'success' : 'medium'">{{ user.actif ? 'Actif' : 'Inactif' }}</ion-badge>
+        </div>
+      </div>
+    </section>
+
+    <ion-button expand="block" fill="outline" color="danger" (click)="logout()">
+      <ion-icon name="log-out-outline" slot="start"></ion-icon>
+      Se déconnecter
+    </ion-button>
+  </div>
+</ion-content>

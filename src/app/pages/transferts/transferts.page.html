@@ -1,0 +1,268 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Transferts</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="nouveauTransfert()" fill="clear" color="light">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- FORMULAIRE -->
+  <ion-card *ngIf="afficherFormulaire" color="light">
+    <ion-card-header>
+      <ion-card-title style="font-size:1rem">
+        {{ editingId ? 'Modifier le transfert' : 'Nouveau transfert' }}
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+
+      <ion-item>
+        <ion-label position="stacked">Boutique destination</ion-label>
+        <ion-select [(ngModel)]="form.boutiqueDestId" placeholder="Choisir…">
+          <ion-select-option *ngFor="let p of partenaires" [value]="p.id">{{ p.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Paiement</ion-label>
+        <ion-select [(ngModel)]="form.typePaiement">
+          <ion-select-option *ngFor="let tp of TYPES_PAIEMENT" [value]="tp.v">{{ tp.l }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Notes</ion-label>
+        <ion-input [(ngModel)]="form.notes" placeholder="Optionnel"></ion-input>
+      </ion-item>
+
+      <div style="padding: 8px 16px; margin-top: 8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong style="font-size:.85rem">Produits</strong>
+          <ion-button size="small" fill="outline" (click)="ajouterLigne()">
+            <ion-icon name="add-outline" slot="start"></ion-icon> Ajouter
+          </ion-button>
+        </div>
+
+        <div *ngFor="let l of form.lignes; let i = index"
+             style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px">
+          <ion-item lines="none" style="--padding-start:0">
+            <ion-label position="stacked">Produit</ion-label>
+            <ion-select [(ngModel)]="l.produitId" (ionChange)="onProduitChange(i)" placeholder="Choisir…">
+              <ion-select-option *ngFor="let p of produits" [value]="p.id">
+                {{ p.nom }} ({{ p.quantite }})
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <ion-item lines="none" style="--padding-start:0;flex:1">
+              <ion-label position="stacked">Quantité</ion-label>
+              <ion-input type="number" [(ngModel)]="l.quantite" min="1"></ion-input>
+            </ion-item>
+            <ion-button fill="clear" color="danger" (click)="supprimerLigne(i)" style="margin-top:16px">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;padding:8px 0">
+        <ion-button expand="block" color="success" style="flex:1" (click)="sauvegarder()">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          {{ editingId ? 'Modifier' : 'Créer' }}
+        </ion-button>
+        <ion-button expand="block" fill="outline" color="medium" (click)="afficherFormulaire=false">
+          Annuler
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- LISTE -->
+  <ion-refresher slot="fixed" (ionRefresh)="charger()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoading" style="display:flex;justify-content:center;padding:40px">
+    <ion-spinner></ion-spinner>
+  </div>
+
+  <ion-list *ngIf="!isLoading && transferts.length > 0">
+    <ion-item *ngFor="let t of transferts" (click)="voirDetail(t)" detail="true" button>
+      <div slot="start" style="text-align:center;min-width:42px">
+        <ion-badge [color]="STATUT_COLORS[t.statut]" style="font-size:.7rem">
+          {{ STATUT_LABELS[t.statut] }}
+        </ion-badge>
+      </div>
+      <ion-label>
+        <h2>{{ t.numeroTransfert }}</h2>
+        <p>{{ t.boutiqueSourceNom }} → {{ t.boutiqueDestNom }}</p>
+        <p style="font-size:.75rem;color:var(--ion-color-medium)">
+          {{ labelPaiement(t.typePaiement) }} · {{ t.dateCreation | date:'dd/MM/yyyy' }}
+        </p>
+      </ion-label>
+      <div slot="end" style="display:flex;flex-direction:column;gap:4px" *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'">
+        <ion-button size="small" fill="outline" color="primary" (click)="$event.stopPropagation();editerTransfert(t)">
+          <ion-icon name="create-outline"></ion-icon>
+        </ion-button>
+        <ion-button size="small" fill="outline" color="success" (click)="$event.stopPropagation();confirmer(t)">
+          <ion-icon name="checkmark-outline"></ion-icon>
+        </ion-button>
+        <ion-button size="small" fill="outline" color="danger" (click)="$event.stopPropagation();annuler(t)">
+          <ion-icon name="close-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-item>
+  </ion-list>
+
+  <div *ngIf="!isLoading && transferts.length === 0"
+       style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:50vh;color:var(--ion-color-medium)">
+    <ion-icon name="swap-horizontal-outline" style="font-size:4rem;margin-bottom:12px"></ion-icon>
+    <p>Aucun transfert</p>
+  </div>
+
+  <!-- MODAL DÉTAIL -->
+  <ion-modal [isOpen]="!!transfertDetail" (didDismiss)="fermerModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title style="font-size:.95rem">{{ transfertDetail?.numeroTransfert }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="fermerModal()" fill="clear" color="light">
+              <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content *ngIf="transfertDetail">
+
+        <!-- Infos générales -->
+        <ion-list lines="full" style="margin-bottom:8px">
+          <ion-item>
+            <ion-label>
+              <p style="font-size:.72rem;color:var(--ion-color-medium)">Source</p>
+              <h3>{{ transfertDetail.boutiqueSourceNom }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <p style="font-size:.72rem;color:var(--ion-color-medium)">Destination</p>
+              <h3>{{ transfertDetail.boutiqueDestNom }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <p style="font-size:.72rem;color:var(--ion-color-medium)">Paiement</p>
+              <h3>{{ labelPaiement(transfertDetail.typePaiement) }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <p style="font-size:.72rem;color:var(--ion-color-medium)">Statut</p>
+              <ion-badge [color]="STATUT_COLORS[transfertDetail.statut]" style="margin-top:4px">
+                {{ STATUT_LABELS[transfertDetail.statut] }}
+              </ion-badge>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <!-- Section Produits — MODE LECTURE -->
+        <div *ngIf="!modalEditMode">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px">
+            <strong style="font-size:.9rem;color:#1a56db">Produits</strong>
+            <ion-button *ngIf="estEditable(transfertDetail)" size="small" fill="outline" color="primary"
+                        (click)="activerEditionModal()">
+              <ion-icon name="create-outline" slot="start"></ion-icon> Modifier
+            </ion-button>
+          </div>
+          <ion-list lines="inset" style="margin-bottom:8px">
+            <ion-item *ngFor="let l of transfertDetail.lignes">
+              <ion-icon name="cube-outline" slot="start" color="primary" style="font-size:1.1rem"></ion-icon>
+              <ion-label>
+                <h3>{{ l.produitNom }}</h3>
+                <p>
+                  <strong>Qté : {{ l.quantite }}</strong>
+                  <span *ngIf="l.prixUnitaire"> &nbsp;·&nbsp; {{ l.prixUnitaire | number:'1.0-0' }} FCFA/u</span>
+                  <span *ngIf="l.prixUnitaire"> &nbsp;=&nbsp; {{ (l.quantite * l.prixUnitaire) | number:'1.0-0' }} FCFA</span>
+                </p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+
+        <!-- Section Produits — MODE ÉDITION -->
+        <div *ngIf="modalEditMode" style="padding:0 12px 8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <strong style="font-size:.9rem;color:#1a56db">Modifier les produits</strong>
+            <ion-button size="small" fill="clear" color="medium" (click)="annulerEditionModal()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </div>
+
+          <div *ngFor="let l of modalLignes; let i = index"
+               style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;margin-bottom:8px;background:#f8faff">
+            <ion-item lines="none" style="--padding-start:0;--background:transparent">
+              <ion-label position="stacked" style="font-size:.75rem">Produit</ion-label>
+              <ion-select [(ngModel)]="l.produitId" (ionChange)="onProduitChangeModal(i)" placeholder="Choisir…"
+                          interface="action-sheet">
+                <ion-select-option *ngFor="let p of produits" [value]="p.id">
+                  {{ p.nom }} (stock: {{ p.quantite }})
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:flex-end">
+              <ion-item lines="none" style="--padding-start:0;--background:transparent;flex:1">
+                <ion-label position="stacked" style="font-size:.75rem">Quantité</ion-label>
+                <ion-input type="number" [(ngModel)]="l.quantite" min="1"></ion-input>
+              </ion-item>
+              <ion-item lines="none" style="--padding-start:0;--background:transparent;flex:1">
+                <ion-label position="stacked" style="font-size:.75rem">Prix unit. (optionnel)</ion-label>
+                <ion-input type="number" [(ngModel)]="l.prixUnitaire" placeholder="0"></ion-input>
+              </ion-item>
+              <ion-button fill="clear" color="danger" (click)="supprimerLigneModal(i)" style="margin-bottom:6px">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+
+          <ion-button expand="block" fill="outline" color="primary" size="small" (click)="ajouterLigneModal()"
+                      style="margin-bottom:12px">
+            <ion-icon name="add-outline" slot="start"></ion-icon> Ajouter un produit
+          </ion-button>
+
+          <div style="display:flex;gap:8px">
+            <ion-button expand="block" color="success" style="flex:1" (click)="sauvegarderModal()">
+              <ion-icon name="checkmark-outline" slot="start"></ion-icon> Enregistrer
+            </ion-button>
+            <ion-button expand="block" fill="outline" color="medium" (click)="annulerEditionModal()">
+              Annuler
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Historique -->
+        <div style="padding:8px 16px 4px">
+          <strong style="font-size:.9rem;color:#64748b">Historique</strong>
+        </div>
+        <ion-list lines="inset">
+          <ion-item *ngFor="let h of transfertDetail.historique">
+            <ion-icon name="time-outline" slot="start" color="medium" style="font-size:1rem"></ion-icon>
+            <ion-label>
+              <h3 style="font-size:.85rem">{{ h.action }}</h3>
+              <p>{{ h.description }}</p>
+              <p style="font-size:.72rem;color:var(--ion-color-medium)">
+                {{ h.dateAction | date:'dd/MM/yyyy HH:mm' }} · {{ h.effectuePar }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

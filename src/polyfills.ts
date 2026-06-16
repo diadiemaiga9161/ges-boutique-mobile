@@ -44,6 +44,9 @@
  
 import './zone-flags';
 
+// Polyfill 'global' requis par SockJS dans un contexte navigateur
+(window as any).global = window;
+
 /***************************************************************************************************
  * Zone JS is required by default for Angular itself.
  */

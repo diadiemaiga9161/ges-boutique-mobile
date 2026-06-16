@@ -1,31 +1,59 @@
 <ion-app>
 
-  <!-- Sidebar Menu -->
+  <!-- ══════════════════ SIDEBAR MENU ══════════════════ -->
   <ion-menu menuId="main-menu" contentId="main-content" type="overlay">
+
+    <!-- En-tête avec logo MC -->
     <ion-header class="ion-no-border">
-      <div class="menu-user">
-        <div class="menu-avatar">
-          <ion-icon name="person-circle-outline"></ion-icon>
+      <div class="menu-header">
+        <!-- Logo + nom app -->
+        <div class="menu-logo-row">
+          <div class="menu-mc-logo">
+            <span class="mc-m">M</span><span class="mc-c">C</span>
+          </div>
+          <div>
+            <p class="menu-app-name">Ges Lafia</p>
+            <p class="menu-app-sub">Maïga Consulting</p>
+          </div>
         </div>
-        <p class="menu-username">{{ getUserName() }}</p>
-        <p class="menu-role">{{ getRole() }}</p>
+
+        <!-- Utilisateur + cloche notification -->
+        <div class="menu-user">
+          <div class="menu-avatar" [class.menu-avatar--photo]="userPhoto">
+            <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" class="menu-avatar-img" />
+            <ion-icon *ngIf="!userPhoto" name="person-circle-outline"></ion-icon>
+          </div>
+          <div class="menu-user-info">
+            <p class="menu-username">{{ getUserName() }}</p>
+            <p class="menu-role">{{ getRole() }}</p>
+          </div>
+          <!-- Cloche notification -->
+          <div class="menu-notif-bell" *ngIf="auth.isAdmin()" (click)="navigate('/tabs/notifications')">
+            <ion-icon name="notifications-outline"></ion-icon>
+            <span class="menu-notif-badge" *ngIf="(notifService.count$ | async) as c">
+              {{ c > 99 ? '99+' : c }}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <!-- Indicateur connexion temps réel -->
+      <!-- Indicateur WebSocket -->
       <div class="ws-indicator" *ngIf="(ws.status$ | async) as status">
         <div class="ws-dot"
           [class.ws-connected]="status === 'connected'"
           [class.ws-connecting]="status === 'connecting'"
           [class.ws-disconnected]="status === 'disconnected'">
         </div>
-        <span class="ws-label">{{ status === 'connected' ? 'En ligne' : status === 'connecting' ? 'Connexion...' : 'Hors ligne' }}</span>
+        <span class="ws-label">
+          {{ status === 'connected' ? 'Connecté en temps réel' : status === 'connecting' ? 'Connexion...' : 'Hors ligne' }}
+        </span>
       </div>
     </ion-header>
 
     <ion-content>
       <ion-list lines="none">
 
-        <!-- ===== MENU COMMUN ===== -->
+        <!-- Navigation commune -->
         <p class="menu-section-label">Navigation</p>
 
         <ion-item class="menu-item" button detail="false" (click)="navigate('/home')">
@@ -33,9 +61,9 @@
           <ion-label>Tableau de bord</ion-label>
         </ion-item>
 
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/clients')">
-          <ion-icon name="people-outline" slot="start"></ion-icon>
-          <ion-label>Clients</ion-label>
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/sales')">
+          <ion-icon name="receipt-outline" slot="start"></ion-icon>
+          <ion-label>Ventes</ion-label>
         </ion-item>
 
         <ion-item class="menu-item" button detail="false" (click)="navigate('/cart')">
@@ -43,7 +71,22 @@
           <ion-label>Nouvelle vente</ion-label>
         </ion-item>
 
-        <!-- ===== MENU ADMIN SEULEMENT ===== -->
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/clients')">
+          <ion-icon name="people-outline" slot="start"></ion-icon>
+          <ion-label>Clients</ion-label>
+        </ion-item>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/credits')">
+          <ion-icon name="time-outline" slot="start"></ion-icon>
+          <ion-label>Crédits clients</ion-label>
+        </ion-item>
+
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/inventory')">
+          <ion-icon name="clipboard-outline" slot="start"></ion-icon>
+          <ion-label>Inventaire</ion-label>
+        </ion-item>
+
+        <!-- Admin seulement -->
         <ng-container *ngIf="auth.isAdmin()">
 
           <div class="menu-divider"></div>
@@ -80,9 +123,19 @@
           <div class="menu-divider"></div>
           <p class="menu-section-label">Paramètres</p>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/fournisseurs')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/fournisseurs')">
             <ion-icon name="business-outline" slot="start"></ion-icon>
             <ion-label>Fournisseurs</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/depots')">
+            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+            <ion-label>Dépôts Garde</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-fournisseur')">
+            <ion-icon name="trophy-outline" slot="start"></ion-icon>
+            <ion-label>Objectifs Fournisseurs</ion-label>
           </ion-item>
 
           <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/vendeurs')">
@@ -95,8 +148,50 @@
             <ion-label>Ma boutique</ion-label>
           </ion-item>
 
+          <div class="menu-divider"></div>
+          <p class="menu-section-label">Transferts inter-boutiques</p>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/transferts')">
+            <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+            <ion-label>Transferts</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/config-transferts')">
+            <ion-icon name="settings-outline" slot="start"></ion-icon>
+            <ion-label>Config boutiques partenaires</ion-label>
+          </ion-item>
+
+          <div class="menu-divider"></div>
+          <p class="menu-section-label">Analyses</p>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/benefices')">
+            <ion-icon name="trending-up-outline" slot="start"></ion-icon>
+            <ion-label>Bénéfices</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/bonus-fournisseurs')">
+            <ion-icon name="gift-outline" slot="start"></ion-icon>
+            <ion-label>Bonus Fournisseurs</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/depenses')">
+            <ion-icon name="trending-down-outline" slot="start"></ion-icon>
+            <ion-label>Dépenses</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resultat-net')">
+            <ion-icon name="analytics-outline" slot="start"></ion-icon>
+            <ion-label>Résultat Net</ion-label>
+          </ion-item>
+
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/notifications')" style="position:relative">
+            <ion-icon name="notifications-outline" slot="start"></ion-icon>
+            <ion-label>Notifications</ion-label>
+            <ion-badge slot="end" color="danger"
+              *ngIf="(notifService.count$ | async) as c">{{ c > 99 ? '99+' : c }}</ion-badge>
+          </ion-item>
+
         </ng-container>
-        <!-- ===== FIN MENU ADMIN ===== -->
 
         <div class="menu-divider"></div>
 
@@ -108,6 +203,13 @@
       </ion-list>
 
       <div class="menu-footer">
+        <a href="https://wa.me/22353417919" target="_blank" class="menu-whatsapp-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.563 4.14 1.542 5.873L.057 23.58a.5.5 0 0 0 .609.61l5.805-1.476A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.794 9.794 0 0 1-5.017-1.382l-.36-.213-3.724.947.988-3.617-.235-.372A9.79 9.79 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+          </svg>
+          Contacter sur WhatsApp
+        </a>
         <ion-button expand="block" fill="clear" color="danger" (click)="logout()">
           <ion-icon name="log-out-outline" slot="start"></ion-icon>
           Déconnexion
@@ -118,7 +220,10 @@
 
   <ion-router-outlet id="main-content"></ion-router-outlet>
 
-  <!-- Statut Offline Global -->
+  <!-- Statut Offline -->
   <app-offline-status></app-offline-status>
+
+  <!-- Bannière PWA -->
+  <app-pwa-install></app-pwa-install>
 
 </ion-app>

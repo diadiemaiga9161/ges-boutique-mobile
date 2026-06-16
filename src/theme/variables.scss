@@ -1,2 +1,393 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// ╔══════════════════════════════════════════════════════════╗
+// ║         GES LAFIA — Design System v2.0                   ║
+// ╚══════════════════════════════════════════════════════════╝
+
+:root {
+  // ── Palette principale ──────────────────────────────────
+  --gl-blue-900:  #081648;
+  --gl-blue-800:  #0d2b85;
+  --gl-blue-700:  #1447c0;
+  --gl-blue-600:  #1a56db;
+  --gl-blue-500:  #2563eb;
+  --gl-blue-400:  #3b72f6;
+  --gl-blue-100:  #dbeafe;
+  --gl-blue-50:   #eff6ff;
+
+  --gl-green-600: #059669;
+  --gl-green-500: #0e9f6e;
+  --gl-green-100: #d1fae5;
+  --gl-green-50:  #ecfdf5;
+
+  --gl-orange-600:#d97706;
+  --gl-orange-500:#f59e0b;
+  --gl-orange-100:#fde68a;
+  --gl-orange-50: #fffbeb;
+
+  --gl-red-600:   #dc2626;
+  --gl-red-500:   #ef4444;
+  --gl-red-100:   #fee2e2;
+  --gl-red-50:    #fef2f2;
+
+  --gl-slate-900: #0f172a;
+  --gl-slate-700: #334155;
+  --gl-slate-500: #64748b;
+  --gl-slate-400: #94a3b8;
+  --gl-slate-200: #e2e8f0;
+  --gl-slate-100: #f1f5f9;
+  --gl-slate-50:  #f8fafc;
+
+  // ── Ionic variables ─────────────────────────────────────
+  --ion-color-primary:          #1a56db;
+  --ion-color-primary-rgb:      26, 86, 219;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade:    #1447c0;
+  --ion-color-primary-tint:     #3b72f6;
+
+  --ion-color-secondary:        #0e9f6e;
+  --ion-color-secondary-rgb:    14, 159, 110;
+  --ion-color-secondary-contrast:#ffffff;
+  --ion-color-secondary-shade:  #059669;
+  --ion-color-secondary-tint:   #31c48d;
+
+  --ion-color-success:          #0e9f6e;
+  --ion-color-success-rgb:      14, 159, 110;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-shade:    #059669;
+  --ion-color-success-tint:     #31c48d;
+
+  --ion-color-warning:          #f59e0b;
+  --ion-color-warning-rgb:      245, 158, 11;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-shade:    #d97706;
+  --ion-color-warning-tint:     #fbbf24;
+
+  --ion-color-danger:           #dc2626;
+  --ion-color-danger-rgb:       220, 38, 38;
+  --ion-color-danger-contrast:  #ffffff;
+  --ion-color-danger-shade:     #b91c1c;
+  --ion-color-danger-tint:      #ef4444;
+
+  --ion-color-medium:           #94a3b8;
+  --ion-color-medium-rgb:       148, 163, 184;
+  --ion-color-medium-contrast:  #0f172a;
+  --ion-color-medium-shade:     #64748b;
+  --ion-color-medium-tint:      #cbd5e1;
+
+  --ion-color-light:            #f1f5f9;
+  --ion-color-light-rgb:        241, 245, 249;
+  --ion-color-light-contrast:   #0f172a;
+  --ion-color-light-shade:      #e2e8f0;
+  --ion-color-light-tint:       #f8fafc;
+
+  // ── Typographie ─────────────────────────────────────────
+  --ion-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  // ── Fond global ─────────────────────────────────────────
+  --ion-background-color:     #f0f4f8;
+  --ion-text-color:           #0f172a;
+  --ion-text-color-rgb:       15, 23, 42;
+
+  // ── Toolbar ─────────────────────────────────────────────
+  --ion-toolbar-background:   #081648;
+  --ion-toolbar-color:        #ffffff;
+
+  // ── Items ───────────────────────────────────────────────
+  --ion-item-background:      #ffffff;
+  --ion-item-color:           #0f172a;
+}
+
+// ══════════════════════════════════════════════════
+//  TOOLBAR
+// ══════════════════════════════════════════════════
+ion-toolbar {
+  --background:   #081648;
+  --color:        #ffffff;
+  --border-width: 0;
+  --min-height:   54px;
+
+  ion-title {
+    font-weight:    800;
+    font-size:      1rem;
+    letter-spacing: -0.3px;
+    color:          #ffffff;
+  }
+
+  ion-back-button,
+  ion-menu-button,
+  ion-button {
+    --color: rgba(255,255,255,0.90);
+  }
+}
+
+ion-header {
+  box-shadow: 0 2px 16px rgba(8,22,72,0.25);
+
+  &::after { display: none; } // supprime la ligne par défaut
+}
+
+ion-content {
+  --background: #f0f4f8;
+}
+
+// ══════════════════════════════════════════════════
+//  SEGMENT
+// ══════════════════════════════════════════════════
+ion-segment {
+  --background:  #e8eef8;
+  border-radius: 12px;
+  padding:       3px;
+}
+
+ion-segment-button {
+  --border-radius:         10px;
+  --color:                 #64748b;
+  --color-checked:         #1a56db;
+  --indicator-color:       #ffffff;
+  --indicator-box-shadow:  0 2px 8px rgba(26,86,219,0.15);
+  min-height: 36px;
+  font-size:  0.82rem;
+  font-weight: 700;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-ITEM — conteneur champs de saisie
+// ══════════════════════════════════════════════════
+ion-item {
+  --background:              #ffffff;
+  --background-focused:      #eff6ff;
+  --background-activated:    #f8fafc;
+  --border-color:            #e2e8f0;
+  --border-width:            0;
+  --highlight-color-focused: #1a56db;
+  --highlight-height:        2px;
+  --color:                   #0f172a;
+  --padding-start:           14px;
+  --inner-padding-end:       14px;
+  --min-height:              54px;
+  border-radius:             12px;
+  border:                    1.5px solid #e2e8f0;
+  margin-bottom:             6px;
+  overflow:                  visible;
+  transition:                border-color 0.2s, box-shadow 0.2s;
+
+  &.item-has-focus {
+    border-color: #1a56db !important;
+    box-shadow:   0 0 0 3px rgba(26,86,219,0.12);
+    --background: #eff6ff;
+  }
+
+  &.ion-invalid.ion-touched {
+    border-color: #dc2626;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  ION-INPUT
+// ══════════════════════════════════════════════════
+ion-input {
+  --color:             #0f172a;
+  --placeholder-color: #94a3b8;
+  --background:        transparent;
+  color:               #0f172a;
+  font-size:           0.93rem;
+  font-weight:         500;
+}
+
+ion-input::part(label) {
+  color:        #475569;
+  font-size:    0.78rem;
+  font-weight:  600;
+}
+
+ion-input::part(native) {
+  color: #0f172a;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-SELECT
+// ══════════════════════════════════════════════════
+ion-select {
+  --color:             #0f172a;
+  --placeholder-color: #94a3b8;
+  color:               #0f172a;
+  font-size:           0.93rem;
+  font-weight:         500;
+}
+
+ion-select::part(label) {
+  color:       #475569;
+  font-size:   0.78rem;
+  font-weight: 600;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-TEXTAREA
+// ══════════════════════════════════════════════════
+ion-textarea {
+  --color:             #0f172a;
+  --placeholder-color: #94a3b8;
+  --background:        transparent;
+  color:               #0f172a;
+  font-size:           0.93rem;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-SEARCHBAR
+// ══════════════════════════════════════════════════
+ion-searchbar {
+  --color:              #0f172a;
+  --placeholder-color:  #94a3b8;
+  --background:         #f1f5f9;
+  --border-radius:      12px;
+  --box-shadow:         none;
+  --icon-color:         #64748b;
+  --clear-button-color: #94a3b8;
+  padding: 0 !important;
+
+  &.searchbar-has-focus {
+    --background:   #eff6ff;
+    --icon-color:   #1a56db;
+    --border-color: #1a56db;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  ION-TOGGLE
+// ══════════════════════════════════════════════════
+ion-toggle {
+  --track-background:           #e2e8f0;
+  --track-background-checked:   #bfdbfe;
+  --handle-background:          #ffffff;
+  --handle-background-checked:  #1a56db;
+  --handle-box-shadow:          0 2px 8px rgba(0,0,0,0.15);
+  padding-inline-end: 0;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-BADGE
+// ══════════════════════════════════════════════════
+ion-badge {
+  border-radius:  8px;
+  font-weight:    700;
+  font-size:      0.68rem;
+  padding:        4px 10px;
+  letter-spacing: 0.3px;
+}
+
+// ══════════════════════════════════════════════════
+//  ION-CHIP
+// ══════════════════════════════════════════════════
+ion-chip {
+  --background:    #eff6ff;
+  --color:         #1a56db;
+  border:          1.5px solid #bfdbfe;
+  border-radius:   10px;
+  font-weight:     600;
+  font-size:       0.8rem;
+  height:          36px;
+  transition:      all 0.15s;
+
+  ion-icon { color: #1a56db; }
+
+  &:active {
+    --background: #dbeafe;
+    transform:    scale(0.97);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  ION-BUTTON
+// ══════════════════════════════════════════════════
+ion-button {
+  --border-radius:  10px;
+  font-weight:      700;
+  letter-spacing:   0.2px;
+  text-transform:   none;
+
+  &[expand="block"] {
+    --border-radius: 14px;
+    height:          52px;
+    font-size:       0.95rem;
+    letter-spacing:  0.3px;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  ION-FAB
+// ══════════════════════════════════════════════════
+ion-fab-button {
+  --background:        #1a56db;
+  --background-hover:  #1447c0;
+  --background-activated: #0d47a1;
+  --box-shadow:        0 6px 20px rgba(26,86,219,0.40);
+  --border-radius:     16px;
+  width:  56px;
+  height: 56px;
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE TABLETTE (720px+)
+// ══════════════════════════════════════════════════
+@media (min-width: 720px) {
+  ion-toolbar {
+    --min-height: 60px;
+    ion-title { font-size: 1.1rem; }
+  }
+
+  ion-item {
+    --min-height: 60px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+  }
+
+  ion-input  { font-size: 0.98rem; }
+  ion-select { font-size: 0.98rem; }
+
+  ion-button[expand="block"] {
+    height:    56px;
+    font-size: 1rem;
+  }
+
+  ion-segment {
+    margin: 0 4px;
+  }
+
+  ion-segment-button {
+    min-height: 42px;
+    font-size:  0.88rem;
+  }
+
+  ion-searchbar {
+    --border-radius: 14px;
+    font-size: 0.95rem;
+  }
+
+  ion-badge {
+    font-size: 0.72rem;
+    padding:   5px 12px;
+  }
+
+  ion-chip {
+    height:    40px;
+    font-size: 0.85rem;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE GRAND ÉCRAN (1024px+)
+// ══════════════════════════════════════════════════
+@media (min-width: 1024px) {
+  ion-toolbar {
+    --min-height: 64px;
+    ion-title { font-size: 1.2rem; }
+  }
+
+  ion-item { --min-height: 64px; font-size: 1rem; }
+  ion-input  { font-size: 1rem; }
+  ion-select { font-size: 1rem; }
+
+  ion-button[expand="block"] {
+    height:    60px;
+    font-size: 1.05rem;
+  }
+}

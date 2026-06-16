@@ -1,0 +1,379 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Produits</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="showCategoriesModal = true">
+        <ion-icon name="pricetags-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button *ngIf="stats" (click)="showStatsModal = true">
+        <ion-icon name="bar-chart-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button (click)="startCreate()">
+        <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- KPI Cards -->
+  <div class="color-cards" style="padding:14px 14px 0" *ngIf="stats">
+    <div class="color-card cc-blue">
+      <ion-icon name="cube-outline"></ion-icon>
+      <p class="cc-label">Total produits</p>
+      <p class="cc-value">{{ stats.totalProduits }}</p>
+    </div>
+    <div class="color-card cc-green">
+      <ion-icon name="trending-up-outline"></ion-icon>
+      <p class="cc-label">Valeur stock</p>
+      <p class="cc-value">{{ money(stats.valeurTotale || 0) }}</p>
+    </div>
+    <div class="color-card cc-orange">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p class="cc-label">Stock faible</p>
+      <p class="cc-value">{{ stats.produitsStockFaible }}</p>
+    </div>
+    <div class="color-card cc-red">
+      <ion-icon name="close-circle-outline"></ion-icon>
+      <p class="cc-label">Rupture</p>
+      <p class="cc-value">{{ stats.produitsRupture }}</p>
+    </div>
+  </div>
+
+  <div class="page-pad stack">
+
+    <ion-searchbar
+      [(ngModel)]="query"
+      placeholder="Nom, code-barres, catégorie..."
+      debounce="300"
+      (ionInput)="applyFilter()"
+      (keyup.enter)="search()">
+    </ion-searchbar>
+
+    <div class="two-cols">
+      <ion-item *ngIf="categories.length">
+        <ion-select label="Catégorie" labelPlacement="stacked" [(ngModel)]="selectedCategorieId" (ionChange)="applyFilter()">
+          <ion-select-option [value]="null">Toutes</ion-select-option>
+          <ion-select-option [value]="cat.id" *ngFor="let cat of categories">{{ cat.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-segment [(ngModel)]="segment" (ionChange)="applyFilter()">
+        <ion-segment-button value="all">Tous</ion-segment-button>
+        <ion-segment-button value="low">⚠ Faible</ion-segment-button>
+        <ion-segment-button value="expired">📅 Exp.</ion-segment-button>
+        <ion-segment-button value="bio">🌿 Bio</ion-segment-button>
+      </ion-segment>
+    </div>
+
+    <p class="section-label">{{ filtered.length }} produit(s)</p>
+    <ion-spinner *ngIf="loading"></ion-spinner>
+
+    <section class="stack" *ngIf="!loading && filtered.length; else empty">
+      <article class="product-card" *ngFor="let product of filtered">
+        <div class="product-card-header">
+          <div class="product-info">
+            <div class="product-name">
+              {{ product.nom }}
+              <ion-badge color="success" *ngIf="product.bio" class="bio-badge">Bio</ion-badge>
+            </div>
+            <div class="product-cat">
+              {{ product.categorieNom || product.categorie?.nom || 'Sans catégorie' }}
+              <span *ngIf="product.fournisseur"> · {{ product.fournisseur.nom }}</span>
+            </div>
+          </div>
+          <div class="product-stock-badge" [class]="'stock-' + getStockClass(product)">
+            <span class="stock-qty">{{ product.quantite }}</span>
+            <span class="stock-label">{{ getStockText(product) }}</span>
+          </div>
+        </div>
+
+        <div class="product-card-body">
+          <div class="price-row">
+            <div>
+              <p class="price-label">Prix vente</p>
+              <p class="price-value">{{ money(product.prixVente) }}</p>
+            </div>
+            <div *ngIf="auth.isAdmin()">
+              <p class="price-label">Prix achat</p>
+              <p class="price-value muted">{{ money(product.prixAchat) }}</p>
+            </div>
+            <div>
+              <p class="price-label">Seuil alerte</p>
+              <p class="price-value muted">{{ product.seuilAlerte }}</p>
+            </div>
+          </div>
+          <div *ngIf="product.perime || product.prochePeremption" class="peremption-badge"
+            [class.danger]="product.perime" [class.warning]="!product.perime && product.prochePeremption">
+            <ion-icon name="time-outline"></ion-icon>
+            {{ product.perime ? 'Périmé' : 'Proche péremption' }} · {{ product.datePeremption }}
+          </div>
+          <p class="muted" *ngIf="product.codeBarre" style="font-size:0.75rem">Code: {{ product.codeBarre }}</p>
+          <p class="alerte-msg" *ngIf="productsService.getProduitAlerteMessage(product)">
+            <ion-icon name="warning-outline"></ion-icon>
+            {{ productsService.getProduitAlerteMessage(product) }}
+          </p>
+        </div>
+
+        <div class="product-card-actions">
+          <ion-button fill="clear" size="small" (click)="startEdit(product)">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Modifier
+          </ion-button>
+          <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(product)">
+            <ion-icon name="trash-outline" slot="start"></ion-icon>
+            Supprimer
+          </ion-button>
+        </div>
+      </article>
+    </section>
+
+    <ng-template #empty>
+      <div class="empty-state" *ngIf="!loading">
+        <ion-icon name="cube-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
+        <p>Aucun produit trouvé</p>
+        <ion-button size="small" (click)="startCreate()">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Ajouter un produit
+        </ion-button>
+      </div>
+    </ng-template>
+
+  </div>
+</ion-content>
+
+<!-- ==================== MODAL AJOUT / MODIFICATION ==================== -->
+<ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar [color]="editing ? 'warning' : 'primary'">
+        <ion-title>{{ editing ? 'Modifier le produit' : 'Nouveau produit' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showForm = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="modal-form stack">
+
+        <!-- Infos de base -->
+        <div class="modal-section">
+          <p class="modal-section-title">Informations de base</p>
+          <ion-item>
+            <ion-input label="Nom du produit *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="form.description" rows="2"></ion-textarea>
+          </ion-item>
+        </div>
+
+        <!-- Catégorie & Fournisseur -->
+        <div class="modal-section">
+          <p class="modal-section-title">Catégorie & Fournisseur</p>
+          <ion-item>
+            <ion-select label="Catégorie *" labelPlacement="stacked" [(ngModel)]="form.categorieId">
+              <ion-select-option [value]="cat.id" *ngFor="let cat of categories">{{ cat.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="inline-create">
+            <ion-input placeholder="Nouvelle catégorie..." [(ngModel)]="categoryName"></ion-input>
+            <ion-button fill="outline" size="small" (click)="createCategory()">
+              <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+          <ion-item *ngIf="fournisseurs.length">
+            <ion-select label="Fournisseur" labelPlacement="stacked" [(ngModel)]="form.fournisseurId">
+              <ion-select-option [value]="undefined">Aucun</ion-select-option>
+              <ion-select-option [value]="f.id" *ngFor="let f of fournisseurs">{{ f.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- Prix & Stock -->
+        <div class="modal-section">
+          <p class="modal-section-title">Prix & Stock</p>
+          <div class="two-cols">
+            <ion-item>
+              <ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="form.prixAchat"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Prix vente *" labelPlacement="floating" type="number" [(ngModel)]="form.prixVente"></ion-input>
+            </ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item>
+              <ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Seuil alerte" labelPlacement="floating" type="number" [(ngModel)]="form.seuilAlerte"></ion-input>
+            </ion-item>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="modal-section">
+          <p class="modal-section-title">Options</p>
+          <ion-item>
+            <ion-input label="Code-barres" labelPlacement="floating" [(ngModel)]="form.codeBarre"></ion-input>
+            <ion-button slot="end" fill="clear" color="primary" (click)="scanCodeBarre()" title="Scanner">
+              <ion-icon name="barcode-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Date péremption" labelPlacement="floating" type="date" [(ngModel)]="form.datePeremption"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-select label="Type de vente" labelPlacement="stacked" [(ngModel)]="form.typeVente">
+              <ion-select-option value="UNITE">Unité</ion-select-option>
+              <ion-select-option value="KG">Kilogramme</ion-select-option>
+              <ion-select-option value="LITRE">Litre</ion-select-option>
+              <ion-select-option value="COMPTANT_UNIQUEMENT">Comptant uniquement</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label>Produit Bio</ion-label>
+            <ion-checkbox slot="end" [(ngModel)]="form.bio"></ion-checkbox>
+          </ion-item>
+        </div>
+
+        <ion-button expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'" style="margin-top:8px">
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ editing ? 'Enregistrer les modifications' : 'Créer le produit' }}
+        </ion-button>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL GESTION CATÉGORIES ==================== -->
+<ion-modal [isOpen]="showCategoriesModal" (didDismiss)="showCategoriesModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Catégories</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showCategoriesModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Nouvelle catégorie</p>
+          <div class="inline-create">
+            <ion-input placeholder="Nom de la catégorie..." [(ngModel)]="categoryName"></ion-input>
+            <ion-button fill="solid" color="primary" (click)="createCategory()">
+              <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <p class="modal-section-title">{{ categories.length }} catégorie(s)</p>
+          <div class="cat-list">
+            <div class="cat-item" *ngFor="let cat of categories">
+
+              <!-- Mode affichage -->
+              <ng-container *ngIf="editingCategoryId !== cat.id">
+                <div class="cat-info">
+                  <span class="cat-name">{{ cat.nom }}</span>
+                  <span class="cat-count muted">{{ countByCategorie(cat.id) }} produit(s)</span>
+                </div>
+                <div class="cat-actions">
+                  <ion-button fill="clear" size="small" color="primary" (click)="startEditCategory(cat)">
+                    <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" size="small" color="danger" (click)="confirmDeleteCategory(cat)">
+                    <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
+              </ng-container>
+
+              <!-- Mode édition -->
+              <ng-container *ngIf="editingCategoryId === cat.id">
+                <ion-input
+                  class="cat-edit-input"
+                  [(ngModel)]="editingCategoryName"
+                  (keyup.enter)="saveEditCategory()">
+                </ion-input>
+                <div class="cat-actions">
+                  <ion-button fill="clear" size="small" color="success" (click)="saveEditCategory()">
+                    <ion-icon name="checkmark-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" size="small" color="medium" (click)="editingCategoryId = undefined">
+                    <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
+              </ng-container>
+
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="!categories.length" style="padding:16px">
+            Aucune catégorie
+          </div>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL STATS STOCK ==================== -->
+<ion-modal [isOpen]="showStatsModal" (didDismiss)="showStatsModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Statistiques stock</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showStatsModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="stats">
+      <div class="color-cards" style="margin-bottom:16px">
+        <div class="color-card cc-blue">
+          <ion-icon name="cube-outline"></ion-icon>
+          <p class="cc-label">Total produits</p>
+          <p class="cc-value">{{ stats.totalProduits }}</p>
+        </div>
+        <div class="color-card cc-green">
+          <ion-icon name="trending-up-outline"></ion-icon>
+          <p class="cc-label">Valeur stock</p>
+          <p class="cc-value">{{ money(stats.valeurTotale || 0) }}</p>
+        </div>
+        <div class="color-card cc-orange">
+          <ion-icon name="alert-outline"></ion-icon>
+          <p class="cc-label">Stock faible</p>
+          <p class="cc-value">{{ stats.produitsStockFaible }}</p>
+        </div>
+        <div class="color-card cc-red">
+          <ion-icon name="close-circle-outline"></ion-icon>
+          <p class="cc-label">Rupture</p>
+          <p class="cc-value">{{ stats.produitsRupture }}</p>
+        </div>
+      </div>
+      <div class="form-panel">
+        <div class="stat-row" *ngIf="stats.produitsPerimes !== undefined">
+          <span>Produits périmés</span>
+          <strong class="danger">{{ stats.produitsPerimes }}</strong>
+        </div>
+        <div class="stat-row" *ngIf="stats.totalFournisseurs !== undefined">
+          <span>Fournisseurs</span>
+          <strong>{{ stats.totalFournisseurs }}</strong>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

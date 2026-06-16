@@ -1,0 +1,421 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Nouvelle vente</ion-title>
+    <ion-buttons slot="end">
+      <ion-button routerLink="/sales" fill="clear">
+        <ion-icon name="receipt-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="cart-content">
+  <div class="cart-wrapper">
+
+    <!-- ══════════════════════════════════════
+         SECTION 1 — RECHERCHE PRODUIT
+    ══════════════════════════════════════ -->
+    <section class="cart-section">
+      <div class="section-head">
+        <div class="section-num">1</div>
+        <div>
+          <p class="section-title">Sélectionner les produits</p>
+          <p class="section-sub">Tapez le nom ou scannez un code-barres</p>
+        </div>
+      </div>
+
+      <!-- Barre de recherche + scan -->
+      <div class="search-wrap">
+        <ion-icon name="search-outline" class="search-icon"></ion-icon>
+        <ion-input
+          class="search-input"
+          [(ngModel)]="query"
+          placeholder="Produit ou code-barres..."
+          (ionInput)="applySearch()"
+          clearInput="true">
+        </ion-input>
+        <button class="scan-btn" (click)="scanPourVente()" title="Scanner un produit">
+          <ion-icon name="barcode-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Grille produits -->
+      <div class="products-grid" *ngIf="filteredProducts.length">
+        <button
+          class="product-chip"
+          *ngFor="let product of filteredProducts"
+          (click)="add(product)"
+          [class.out-of-stock]="product.quantite <= 0">
+          <div class="pc-icon">
+            <ion-icon name="cube-outline"></ion-icon>
+          </div>
+          <div class="pc-info">
+            <span class="pc-name">{{ product.nom }}</span>
+            <span class="pc-price">{{ money(product.prixVente) }}</span>
+          </div>
+          <div class="pc-stock" [class.pc-stock--low]="product.quantite <= 5">
+            {{ product.quantite }}
+          </div>
+          <ion-icon name="add-circle" class="pc-add"></ion-icon>
+        </button>
+      </div>
+
+      <div class="search-empty" *ngIf="query && !filteredProducts.length">
+        <ion-icon name="search-outline"></ion-icon>
+        <p>Aucun produit trouvé</p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         SECTION 2 — PANIER
+    ══════════════════════════════════════ -->
+    <section class="cart-section">
+      <div class="section-head">
+        <div class="section-num">2</div>
+        <div class="section-head-text">
+          <p class="section-title">Panier</p>
+          <p class="section-sub">{{ items.length }} article{{ items.length > 1 ? 's' : '' }}</p>
+        </div>
+        <span class="cart-badge" *ngIf="items.length">{{ items.length }}</span>
+      </div>
+
+      <!-- Panier vide -->
+      <div class="cart-empty" *ngIf="!items.length">
+        <ion-icon name="cart-outline"></ion-icon>
+        <p>Aucun article — sélectionnez des produits ci-dessus</p>
+      </div>
+
+      <!-- Articles -->
+      <div class="cart-items" *ngIf="items.length">
+        <div class="cart-item" *ngFor="let item of items">
+          <div class="ci-left">
+            <div class="ci-avatar">
+              <ion-icon name="cube-outline"></ion-icon>
+            </div>
+            <div class="ci-info">
+              <p class="ci-name">{{ item.product.nom }}</p>
+              <!-- Prix de vente (modifiable) -->
+              <div class="ci-price-row">
+                <p class="ci-unit">
+                  {{ money(item.customPrice) }} / unité
+                  <span *ngIf="item.customPrice !== item.product.prixVente" class="ci-price-badge">modifié</span>
+                </p>
+                <button class="ci-price-btn" (click)="toggleEditPrice(item)" [class.ci-price-btn--active]="item.editingPrice">
+                  <ion-icon [name]="item.editingPrice ? 'close-outline' : 'create-outline'"></ion-icon>
+                </button>
+              </div>
+              <div *ngIf="item.editingPrice" class="ci-price-edit">
+                <ion-icon name="cash-outline" class="ci-price-icon"></ion-icon>
+                <ion-input
+                  class="ci-price-input"
+                  type="number"
+                  min="0"
+                  [(ngModel)]="item.customPrice"
+                  (ionChange)="clampPrice(item)"
+                  [placeholder]="''+item.product.prixVente">
+                </ion-input>
+                <span class="ci-price-currency">FCFA</span>
+              </div>
+              <!-- Remise ligne -->
+              <div class="ci-discount-wrap">
+                <ion-icon name="pricetag-outline"></ion-icon>
+                <ion-input
+                  class="ci-discount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  [(ngModel)]="item.remisePourcentage">
+                </ion-input>
+                <span class="ci-discount-label">% remise</span>
+              </div>
+            </div>
+          </div>
+          <div class="ci-right">
+            <!-- Contrôle quantité -->
+            <div class="ci-qty" [class.ci-qty--maxed]="item.quantity >= item.product.quantite">
+              <button class="ci-qty-btn" (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null">−</button>
+              <ion-input
+                class="ci-qty-input"
+                type="number"
+                min="1"
+                [max]="item.product.quantite"
+                [(ngModel)]="item.quantity"
+                (ionChange)="clampQty(item)">
+              </ion-input>
+              <button class="ci-qty-btn"
+                [disabled]="item.quantity >= item.product.quantite"
+                [class.ci-qty-btn--disabled]="item.quantity >= item.product.quantite"
+                (click)="item.quantity < item.product.quantite ? item.quantity = item.quantity + 1 : null">+</button>
+            </div>
+            <p class="ci-stock-badge"
+              [class.ci-stock-badge--ok]="item.quantity < item.product.quantite"
+              [class.ci-stock-badge--max]="item.quantity >= item.product.quantite">
+              {{ item.quantity }}/{{ item.product.quantite }}
+            </p>
+            <p class="ci-total">{{ money(totalLine(item)) }}</p>
+            <button class="ci-delete" (click)="remove(item.product.id)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         SECTION 3 — PAIEMENT
+    ══════════════════════════════════════ -->
+    <section class="cart-section">
+      <div class="section-head">
+        <div class="section-num">3</div>
+        <div>
+          <p class="section-title">Paiement</p>
+          <p class="section-sub">Remise, client et mode de règlement</p>
+        </div>
+      </div>
+
+      <!-- Sous-total + remise -->
+      <div class="totaux-card">
+        <div class="totaux-row">
+          <span>Sous-total</span>
+          <strong>{{ money(subTotal()) }}</strong>
+        </div>
+
+        <div class="remise-row">
+          <div class="field-group" style="flex:1">
+            <label class="field-label">Remise globale</label>
+            <div class="field-input-wrap">
+              <ion-icon name="pricetag-outline" class="field-icon"></ion-icon>
+              <ion-input
+                class="field-input"
+                type="number"
+                placeholder="0"
+                [(ngModel)]="remiseGlobale">
+              </ion-input>
+            </div>
+          </div>
+          <div class="remise-type-wrap">
+            <label class="field-label">Type</label>
+            <div class="remise-type-btns">
+              <button
+                class="rtype-btn"
+                *ngFor="let type of remiseTypes"
+                [class.rtype-btn--active]="typeRemiseGlobale === type"
+                (click)="typeRemiseGlobale = type">
+                {{ type === 'POURCENTAGE' ? '%' : 'F' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="totaux-total-line">
+          <span class="totaux-total-label">TOTAL À PAYER</span>
+          <strong class="totaux-total-val">{{ money(total()) }}</strong>
+        </div>
+      </div>
+
+      <!-- Client -->
+      <div class="field-group">
+        <label class="field-label">
+          <ion-icon name="people-outline"></ion-icon>
+          Client
+        </label>
+
+        <!-- Recherche client -->
+        <div class="client-search-wrap">
+          <div class="client-search-input-row">
+            <ion-icon name="search-outline" class="cs-icon"></ion-icon>
+            <input
+              class="client-search-input"
+              type="text"
+              [(ngModel)]="clientSearch"
+              (input)="filterClients()"
+              (focus)="filterClients()"
+              placeholder="Rechercher par nom ou téléphone..." />
+            <button class="cs-clear" *ngIf="clientId || clientSearch" (click)="clearClient()">
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Indicateur client sélectionné -->
+          <div class="client-selected-badge" *ngIf="clientId">
+            <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+            <span>{{ clientNom }} {{ clientPrenom }}</span>
+            <span *ngIf="clientTelephone" class="cs-phone">· {{ clientTelephone }}</span>
+          </div>
+
+          <!-- Dropdown résultats -->
+          <div class="client-dropdown" *ngIf="showClientDropdown">
+            <button
+              class="client-option"
+              *ngFor="let c of clientsFiltres"
+              (click)="pickClient(c)">
+              <div class="co-avatar">{{ (c.nom || '?')[0].toUpperCase() }}</div>
+              <div class="co-info">
+                <span class="co-name">{{ c.nom }} {{ c.prenom }}</span>
+                <span class="co-phone" *ngIf="c.telephone || c.numeroTelephone">{{ c.telephone || c.numeroTelephone }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode paiement en chips -->
+      <div class="field-group">
+        <label class="field-label">
+          <ion-icon name="wallet-outline"></ion-icon>
+          Mode de paiement
+        </label>
+        <div class="payment-chips">
+          <button
+            class="payment-chip"
+            *ngFor="let mode of modes"
+            [class.payment-chip--active]="modePaiement === mode"
+            (click)="modePaiement = mode">
+            <ion-icon [name]="getPaymentIcon(mode)"></ion-icon>
+            <span>{{ venteService.getModePaiementLabel(mode) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Référence (si non espèces) -->
+      <div class="field-group" *ngIf="modePaiement !== 'ESPECES'" [@slideDown]>
+        <label class="field-label">
+          <ion-icon name="document-outline"></ion-icon>
+          Référence de paiement
+        </label>
+        <div class="field-input-wrap">
+          <ion-input
+            class="field-input"
+            placeholder="N° transaction, référence..."
+            [(ngModel)]="referencePaiement">
+          </ion-input>
+        </div>
+      </div>
+
+      <!-- Toggle crédit -->
+      <div class="toggle-card" [class.toggle-card--active]="estCredit">
+        <div class="toggle-card-left">
+          <div class="toggle-icon" [class.toggle-icon--active]="estCredit">
+            <ion-icon name="time-outline"></ion-icon>
+          </div>
+          <div>
+            <p class="toggle-title">Vente à crédit</p>
+            <p class="toggle-sub">Le client paiera plus tard</p>
+          </div>
+        </div>
+        <ion-toggle [(ngModel)]="estCredit" color="primary"></ion-toggle>
+      </div>
+
+      <!-- Champs crédit -->
+      <div class="credit-fields" *ngIf="estCredit">
+
+        <!-- Toggle créer client -->
+        <div class="toggle-card toggle-card--sm">
+          <div class="toggle-card-left">
+            <ion-icon name="person-add-outline" style="font-size:1.2rem;color:#1a56db"></ion-icon>
+            <p class="toggle-title">Créer ce client</p>
+          </div>
+          <ion-toggle [(ngModel)]="creerClient" [disabled]="!!clientId" color="primary"></ion-toggle>
+        </div>
+
+        <div class="credit-grid">
+          <div class="field-group">
+            <label class="field-label">Nom</label>
+            <div class="field-input-wrap">
+              <ion-icon name="person-outline" class="field-icon"></ion-icon>
+              <ion-input class="field-input" placeholder="Nom de famille" [(ngModel)]="clientNom"></ion-input>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Prénom</label>
+            <div class="field-input-wrap">
+              <ion-input class="field-input" placeholder="Prénom" [(ngModel)]="clientPrenom"></ion-input>
+            </div>
+          </div>
+          <div class="field-group credit-grid--full">
+            <label class="field-label">Téléphone</label>
+            <div class="field-input-wrap">
+              <ion-icon name="call-outline" class="field-icon"></ion-icon>
+              <ion-input class="field-input" type="tel" placeholder="Ex: 70 00 00 00" [(ngModel)]="clientTelephone"></ion-input>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Date d'échéance</label>
+            <div class="field-input-wrap">
+              <ion-icon name="calendar-outline" class="field-icon"></ion-icon>
+              <input class="field-input-native" type="date" [(ngModel)]="dateEcheance" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Montant versé (acompte)</label>
+            <div class="field-input-wrap">
+              <ion-icon name="cash-outline" class="field-icon"></ion-icon>
+              <ion-input class="field-input" type="number" placeholder="0" [(ngModel)]="montantVerse"></ion-input>
+            </div>
+          </div>
+        </div>
+
+        <!-- Avance client -->
+        <div class="avance-alert" *ngIf="soldeAvanceClient > 0 || isLoadingAvance">
+          <div class="avance-alert-top">
+            <div class="avance-alert-info">
+              <ion-icon name="wallet-outline"></ion-icon>
+              <span *ngIf="isLoadingAvance">
+                <ion-spinner name="crescent" style="width:14px;height:14px"></ion-spinner>
+                Chargement avance...
+              </span>
+              <span *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
+                Avance disponible : <strong>{{ money(soldeAvanceClient) }}</strong>
+              </span>
+            </div>
+            <div class="avance-toggle-wrap" *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
+              <span class="avance-toggle-label">Utiliser</span>
+              <ion-toggle [(ngModel)]="utiliserAvance" color="primary" size="small"></ion-toggle>
+            </div>
+          </div>
+          <div class="avance-input-wrap" *ngIf="utiliserAvance && !isLoadingAvance">
+            <div class="field-input-wrap">
+              <ion-icon name="cash-outline" class="field-icon"></ion-icon>
+              <ion-input
+                class="field-input"
+                type="number"
+                placeholder="0"
+                [max]="soldeAvanceClient"
+                [(ngModel)]="montantAvanceAUtiliser">
+              </ion-input>
+              <button class="avance-max-btn" (click)="utiliserTouteAvance()">Tout</button>
+            </div>
+            <p class="avance-hint">
+              Max : {{ money(soldeAvanceClient) }}
+              <span *ngIf="montantAvanceAUtiliser > 0"> · Reste : {{ money(resteAPayerCredit) }}</span>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bouton valider -->
+      <button
+        class="submit-btn"
+        [class.submit-btn--disabled]="submitting || !items.length"
+        [disabled]="submitting || !items.length"
+        (click)="submit()">
+        <span *ngIf="!submitting">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          Valider la vente · {{ money(total()) }}
+        </span>
+        <span *ngIf="submitting" class="submit-loading">
+          <ion-spinner name="crescent"></ion-spinner>
+          Traitement en cours...
+        </span>
+      </button>
+
+    </section>
+
+    <div style="height: 32px"></div>
+  </div>
+</ion-content>

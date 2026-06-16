@@ -1,0 +1,259 @@
+.total-bonus-card {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-radius: 16px;
+  padding: 18px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tb-label {
+  font-size: 0.72rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 4px;
+}
+
+.tb-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.tb-sub {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin: 4px 0 0;
+}
+
+.filter-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.bonus-list { display: flex; flex-direction: column; gap: 10px; }
+
+.bonus-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 12px 14px;
+}
+
+.bonus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.bonus-fournisseur {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px;
+}
+
+.bonus-date {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.bonus-montant {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #16a34a;
+  margin: 4px 0 0;
+}
+
+.bonus-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 6px 0 8px;
+  font-style: italic;
+}
+
+.bonus-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  justify-content: flex-end;
+}
+
+// Résultat net
+.resultat-main-card {
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+
+  &.gain { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; }
+  &.perte { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
+}
+
+.rm-label {
+  font-size: 0.78rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+.rm-value {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0 0 10px;
+}
+
+.detail-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.dr-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: #334155;
+}
+
+.dr-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.text-success { color: #16a34a; }
+.text-primary { color: #2563eb; }
+.text-danger { color: #dc2626; }
+
+.detail-sep {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+
+  &.total-sep {
+    height: 2px;
+    background: #334155;
+    margin: 8px 0;
+  }
+}
+
+.total-row {
+  padding: 10px 0 4px;
+}
+
+// Modal commun (repris de depenses)
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.modal-sheet {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 32px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+  &.half { flex: 1; }
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  font-family: inherit;
+  &:focus { border-color: #16a34a; }
+}
+
+textarea.form-input { resize: none; }
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .total-bonus-card { padding: 22px 28px; border-radius: 20px; }
+  .tb-value { font-size: 1.9rem; }
+
+  .bonus-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .bonus-card { padding: 16px 18px; }
+  .bonus-fournisseur { font-size: 1rem; }
+  .bonus-montant     { font-size: 1.05rem; }
+
+  .resultat-main-card { padding: 28px; }
+  .rm-value { font-size: 2.5rem; }
+
+  .modal-overlay { align-items: center; }
+  .modal-sheet   { width: min(600px, 95vw); border-radius: 20px; margin: auto; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .bonus-list { grid-template-columns: repeat(3, 1fr); }
+  .tb-value   { font-size: 2.2rem; }
+  .rm-value   { font-size: 2.8rem; }
+  .modal-sheet { width: min(680px, 95vw); }
+}

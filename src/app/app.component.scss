@@ -1,0 +1,283 @@
+// ══════════════════════════════════════════════════
+//  SIDEBAR MENU — Ges Lafia
+// ══════════════════════════════════════════════════
+
+// ── En-tête menu ──────────────────────────────────
+.menu-header {
+  background:  linear-gradient(150deg, #081648 0%, #0d2b85 50%, #1a56db 100%);
+  padding:     32px 18px 20px;
+  position:    relative;
+  overflow:    hidden;
+
+  &::before {
+    content:       '';
+    position:      absolute;
+    width:         180px;
+    height:        180px;
+    border-radius: 50%;
+    background:    rgba(255,255,255,0.05);
+    top:           -60px;
+    right:         -50px;
+  }
+}
+
+.menu-logo-row {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  margin-bottom: 14px;
+  position:      relative;
+  z-index:       1;
+}
+
+.menu-mc-logo {
+  width:         46px;
+  height:        46px;
+  border-radius: 14px;
+  background:    rgba(255,255,255,0.12);
+  border:        1.5px solid rgba(255,255,255,0.22);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  font-size:     1.3rem;
+  font-weight:   900;
+  flex-shrink:   0;
+  box-shadow:    0 4px 12px rgba(0,0,0,0.20);
+
+  .mc-m { color: #ffffff; }
+  .mc-c { color: #60a5fa; }
+}
+
+.menu-app-name {
+  font-size:      1rem;
+  font-weight:    800;
+  color:          #ffffff;
+  margin:         0 0 2px;
+  letter-spacing: 0.5px;
+}
+
+.menu-app-sub {
+  font-size:  0.65rem;
+  color:      rgba(255,255,255,0.50);
+  margin:     0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+// ── Info utilisateur ──────────────────────────────
+.menu-user {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  position:    relative;
+  z-index:     1;
+}
+
+.menu-user-info { flex: 1; }
+
+// ── Cloche notification dans le header menu ────────
+.menu-notif-bell {
+  position:      relative;
+  width:         36px;
+  height:        36px;
+  border-radius: 50%;
+  background:    rgba(255,255,255,0.12);
+  border:        1.5px solid rgba(255,255,255,0.25);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  cursor:        pointer;
+  flex-shrink:   0;
+  transition:    background 0.2s;
+
+  &:active { background: rgba(255,255,255,0.25); }
+
+  ion-icon { font-size: 1.15rem; color: #ffffff; }
+}
+
+.menu-notif-badge {
+  position:      absolute;
+  top:           -4px;
+  right:         -4px;
+  background:    #ef4444;
+  color:         #ffffff;
+  font-size:     9px;
+  font-weight:   700;
+  min-width:     16px;
+  height:        16px;
+  border-radius: 8px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  padding:       0 3px;
+  border:        1.5px solid #081648;
+}
+
+.menu-avatar {
+  width:         40px;
+  height:        40px;
+  border-radius: 50%;
+  background:    rgba(255,255,255,0.15);
+  border:        1.5px solid rgba(255,255,255,0.25);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  flex-shrink:   0;
+  overflow:      hidden;
+
+  ion-icon { font-size: 1.3rem; color: #ffffff; }
+
+  &--photo { background: transparent; border-color: rgba(255,255,255,0.40); }
+}
+
+.menu-avatar-img {
+  width:      100%;
+  height:     100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.menu-username {
+  font-size:   0.92rem;
+  font-weight: 700;
+  color:       #ffffff;
+  margin:      0 0 2px;
+}
+
+.menu-role {
+  font-size:  0.67rem;
+  color:      rgba(255,255,255,0.60);
+  margin:     0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+// ── Indicateur WebSocket ──────────────────────────
+.ws-indicator {
+  display:     flex;
+  align-items: center;
+  gap:         7px;
+  padding:     8px 18px 5px;
+  background:  rgba(0,0,0,0.10);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.ws-dot {
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  flex-shrink:   0;
+
+  &.ws-connected    { background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,0.25); }
+  &.ws-connecting   { background: #fbbf24; animation: pulse 1s infinite; }
+  &.ws-disconnected { background: #94a3b8; }
+}
+
+.ws-label {
+  font-size:   0.68rem;
+  color:       rgba(255,255,255,0.65);
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+// ── Contenu du menu ───────────────────────────────
+ion-menu ion-content {
+  --background: #ffffff;
+}
+
+ion-menu ion-list {
+  padding:    10px 12px 8px;
+  background: transparent;
+}
+
+.menu-section-label {
+  font-size:      0.62rem;
+  font-weight:    800;
+  color:          #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding:        14px 12px 5px;
+}
+
+.menu-item {
+  --padding-start:          12px;
+  --padding-end:            12px;
+  --min-height:             48px;
+  --border-radius:          12px;
+  --background-hover:       #eff6ff;
+  --background-activated:   #eff6ff;
+  --color:                  #334155;
+  margin:                   2px 0;
+  border-radius:            12px;
+  cursor:                   pointer;
+  transition:               background 0.15s;
+
+  ion-icon {
+    color:       #1a56db;
+    font-size:   1.1rem;
+    margin-right: 2px;
+  }
+
+  ion-label {
+    font-size:   0.9rem;
+    font-weight: 600;
+    color:       #334155;
+  }
+
+  &:active {
+    --background: #eff6ff;
+    ion-label { color: #1a56db; }
+  }
+}
+
+.menu-divider {
+  height:     1px;
+  background: #f1f5f9;
+  margin:     8px 12px;
+}
+
+.menu-footer {
+  padding:    12px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 8px;
+
+  ion-button {
+    --border-radius: 12px;
+    font-weight:     700;
+    font-size:       0.88rem;
+    height:          46px;
+  }
+}
+
+.menu-whatsapp-btn {
+  display:         flex;
+  align-items:     center;
+  gap:             10px;
+  width:           100%;
+  padding:         11px 16px;
+  margin-bottom:   8px;
+  border-radius:   12px;
+  background:      #25D366;
+  color:           #ffffff;
+  font-size:       0.88rem;
+  font-weight:     700;
+  text-decoration: none;
+  cursor:          pointer;
+  transition:      background 0.2s;
+
+  &:hover, &:active {
+    background: #1ebe57;
+    color:      #ffffff;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}

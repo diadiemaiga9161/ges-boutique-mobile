@@ -1,9 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'ges-boutique-mobile',
-  webDir: 'www'
+  appId: 'com.ges.lafia',
+  appName: 'Ges Lafia',
+  webDir: 'www',
+  server: {
+    androidScheme: 'https',
+    cleartext: false
+  }
 };
 
 export default config;

@@ -1,37 +1,589 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
-/* Core CSS required for Ionic components to work properly */
+// ── Ionic core ───────────────────────────────────────────────────────────────
 @import "@ionic/angular/css/core.css";
-
-/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
-
-/* Optional CSS utils that can be commented out */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+/* dark.system.css désactivé : design system utilise couleurs hardcodées */
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+// ╔══════════════════════════════════════════════════════════╗
+// ║         GES LAFIA — Global Component Library             ║
+// ╚══════════════════════════════════════════════════════════╝
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+// ══════════════════════════════════════════════════
+//  LAYOUT UTILITAIRES
+// ══════════════════════════════════════════════════
+.page-pad   { padding: 16px; }
+.stack      { display: flex; flex-direction: column; gap: 12px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.two-cols   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.full-col   { grid-column: 1 / -1; }
+
+// ══════════════════════════════════════════════════
+//  HERO CARD (bannière haut de page)
+// ══════════════════════════════════════════════════
+.hero-card {
+  background: linear-gradient(145deg, var(--gl-blue-900) 0%, var(--gl-blue-600) 60%, var(--gl-blue-400) 100%);
+  color:    #ffffff;
+  padding:  20px 18px 22px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content:       '';
+    position:      absolute;
+    width:         200px;
+    height:        200px;
+    border-radius: 50%;
+    background:    rgba(255,255,255,0.06);
+    top:           -70px;
+    right:         -50px;
+  }
+  &::after {
+    content:       '';
+    position:      absolute;
+    width:         120px;
+    height:        120px;
+    border-radius: 50%;
+    background:    rgba(255,255,255,0.04);
+    bottom:        -30px;
+    left:          -20px;
+  }
+
+  .hero-icon  { font-size: 2rem;  opacity: 0.8;  }
+  .hero-label { font-size: 0.68rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 3px; }
+  .hero-value { font-size: 1.85rem; font-weight: 800; margin: 0; letter-spacing: -0.6px; line-height: 1; }
+  .hero-sub   { font-size: 0.75rem; opacity: 0.65; margin: 5px 0 0; }
+}
+
+// ══════════════════════════════════════════════════
+//  CARDS COLORÉES (KPI)
+// ══════════════════════════════════════════════════
+.color-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.color-card {
+  border-radius: 16px;
+  padding:       14px;
+  color:         #ffffff;
+  display:       flex;
+  flex-direction: column;
+  gap:           4px;
+  box-shadow:    0 4px 16px rgba(0,0,0,0.14);
+  position:      relative;
+  overflow:      hidden;
+
+  &::after {
+    content:       '';
+    position:      absolute;
+    width:         80px;
+    height:        80px;
+    border-radius: 50%;
+    background:    rgba(255,255,255,0.08);
+    top:           -20px;
+    right:         -20px;
+  }
+
+  ion-icon { font-size: 1.3rem; opacity: 0.9; margin-bottom: 4px; }
+}
+
+.cc-blue   { background: linear-gradient(135deg, #1a56db 0%, #081648 100%); }
+.cc-green  { background: linear-gradient(135deg, #0e9f6e 0%, #065f46 100%); }
+.cc-orange { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+.cc-red    { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); }
+.cc-purple { background: linear-gradient(135deg, #a855f7 0%, #6d28d9 100%); }
+.cc-teal   { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); }
+.cc-navy   { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); }
+
+.cc-label { font-size: 0.65rem; opacity: 0.8; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+.cc-value { font-size: 1.05rem; font-weight: 800; margin: 0; letter-spacing: -0.3px; }
+.cc-sub   { font-size: 0.68rem; opacity: 0.65; margin: 2px 0 0; }
+
+// ══════════════════════════════════════════════════
+//  CARTE MOBILE (carte de contenu blanche)
+// ══════════════════════════════════════════════════
+.mobile-card {
+  background:    #ffffff;
+  border-radius: 18px;
+  padding:       16px;
+  box-shadow:    0 2px 12px rgba(8,22,72,0.07);
+  border:        1px solid #e8eef8;
+}
+
+.mobile-card.annulee      { opacity: 0.55; background: #f8fafc; }
+.mobile-card.credit-retard { border-left: 3px solid #dc2626; }
+
+.form-panel {
+  background:    #ffffff;
+  border-radius: 18px;
+  padding:       16px;
+  box-shadow:    0 2px 12px rgba(8,22,72,0.07);
+  border:        1px solid #e8eef8;
+}
+
+// ══════════════════════════════════════════════════
+//  METRIC CARDS (stats blanches)
+// ══════════════════════════════════════════════════
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.metric-card {
+  background:    #ffffff;
+  border-radius: 14px;
+  padding:       14px;
+  box-shadow:    0 2px 8px rgba(8,22,72,0.06);
+  border:        1px solid #e8eef8;
+}
+
+.metric-label {
+  color:          var(--gl-slate-400);
+  font-size:      0.68rem;
+  font-weight:    700;
+  margin:         0 0 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.metric-value {
+  color:       var(--gl-slate-900);
+  font-size:   1.1rem;
+  font-weight: 800;
+  margin:      0;
+}
+
+// ══════════════════════════════════════════════════
+//  TYPOGRAPHIE
+// ══════════════════════════════════════════════════
+.card-title {
+  color:       #0f172a;
+  font-size:   1rem;
+  font-weight: 800;
+  margin:      0 0 4px;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+}
+
+.card-subtitle {
+  color:     #94a3b8;
+  font-size: 0.78rem;
+  margin:    0;
+}
+
+.section-title,
+.section-label {
+  font-size:      0.68rem;
+  font-weight:    700;
+  color:          #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin:         4px 0;
+}
+
+.muted  { color: #94a3b8; font-size: 0.82rem; }
+.price  { color: #1a56db; font-weight: 800; }
+
+// ══════════════════════════════════════════════════
+//  ÉTAT VIDE
+// ══════════════════════════════════════════════════
+.empty-state {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            8px;
+  color:          #94a3b8;
+  padding:        32px 12px;
+  text-align:     center;
+  font-size:      0.88rem;
+
+  ion-icon { font-size: 2.4rem; color: #cbd5e1; display: block; }
+}
+
+// ══════════════════════════════════════════════════
+//  UTILITAIRES COULEURS
+// ══════════════════════════════════════════════════
+.success { color: #0e9f6e !important; }
+.danger  { color: #dc2626 !important; }
+.warning { color: #d97706 !important; }
+.info    { color: #1a56db !important; }
+
+.bg-success { background: #dcfce7 !important; color: #15803d !important; }
+.bg-danger  { background: #fee2e2 !important; color: #b91c1c !important; }
+.bg-warning { background: #fff7ed !important; color: #b45309 !important; }
+.bg-info    { background: #eff6ff !important; color: #1a56db !important; }
+
+// ══════════════════════════════════════════════════
+//  STAT ROWS (tableaux simples)
+// ══════════════════════════════════════════════════
+.mini-stats { display: flex; flex-direction: column; gap: 0; }
+
+.stat-row {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  padding:         9px 0;
+  border-bottom:   1px solid #f1f5f9;
+  font-size:       0.88rem;
+  color:           #475569;
+
+  &:last-child { border-bottom: none; }
+  strong { color: #0f172a; font-weight: 700; }
+}
+
+.stat-card {
+  background:    #f8fafc;
+  border-radius: 12px;
+  padding:       12px;
+  border:        1px solid #e8eef8;
+
+  .stat-label { font-size: 0.68rem; color: #94a3b8; margin: 0 0 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-value { font-size: 1.05rem; font-weight: 800; margin: 0; color: #0f172a; }
+}
+
+// ══════════════════════════════════════════════════
+//  CHAMPS PERSONNALISÉS (pattern réutilisable)
+// ══════════════════════════════════════════════════
+
+// Groupe champ avec label au-dessus
+.input-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+}
+
+.input-label {
+  font-size:      0.75rem;
+  font-weight:    700;
+  color:          #334155;
+  letter-spacing: 0.2px;
+}
+
+// Conteneur du champ avec icône
+.input-wrap {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  background:  #f8fafc;
+  border:      1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding:     8px 12px;
+  transition:  border-color 0.2s, box-shadow 0.2s, background 0.2s;
+
+  &:focus-within {
+    border-color: #1a56db;
+    background:   #eff6ff;
+    box-shadow:   0 0 0 3px rgba(26,86,219,0.10);
+  }
+}
+
+.input-icon {
+  font-size:  1rem;
+  color:      #94a3b8;
+  flex-shrink: 0;
+}
+
+.input-field {
+  flex: 1;
+  --background:        transparent;
+  --color:             #0f172a;
+  --placeholder-color: #94a3b8;
+  --padding-start:     0;
+  --padding-end:       0;
+  font-size: 0.92rem;
+  color:     #0f172a;
+  min-height: unset;
+  height:    36px;
+}
+
+.eye-toggle {
+  background: none;
+  border:     none;
+  padding:    6px;
+  color:      #94a3b8;
+  cursor:     pointer;
+  display:    flex;
+  align-items: center;
+  ion-icon { font-size: 1.1rem; }
+  &:active { color: #1a56db; }
+}
+
+// ══════════════════════════════════════════════════
+//  CHAMPS PANIER / FORMULAIRES INLINE
+// ══════════════════════════════════════════════════
+.compact-list ion-item {
+  --background:         transparent;
+  --padding-start:      0;
+  --inner-padding-end:  0;
+  border:               none;
+  box-shadow:           none;
+  margin-bottom:        0;
+}
+
+.qty-input {
+  width:   64px;
+  --padding-start: 6px;
+  --padding-end:   6px;
+  --color: #0f172a;
+  text-align: center;
+}
+
+.discount-input {
+  --padding-start: 4px;
+  --color:         #0f172a;
+  font-size:       0.85rem;
+}
+
+// Dropdown liste déroulante custom
+.dropdown-list {
+  background:    #fff;
+  border:        1.5px solid #e2e8f0;
+  border-radius: 12px;
+  max-height:    200px;
+  overflow-y:    auto;
+  z-index:       100;
+  box-shadow:    0 8px 24px rgba(8,22,72,0.12);
+}
+
+.dropdown-item {
+  padding:       10px 14px;
+  cursor:        pointer;
+  font-size:     0.88rem;
+  border-bottom: 1px solid #f1f5f9;
+  color:         #334155;
+
+  &:last-child     { border-bottom: none; }
+  &:hover, &:active { background: #eff6ff; color: #1a56db; }
+}
+
+// ══════════════════════════════════════════════════
+//  PANIER / PRODUITS
+// ══════════════════════════════════════════════════
+.product-picks {
+  display:    flex;
+  flex-wrap:  wrap;
+  gap:        6px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding:    4px 0;
+}
+
+// ══════════════════════════════════════════════════
+//  TOTAL ROW
+// ══════════════════════════════════════════════════
+.total-row {
+  padding-top:  10px;
+  border-top:   2px solid #e2e8f0;
+  margin-top:   4px;
+
+  .metric-value {
+    font-size: 1.4rem;
+    color:     #1a56db;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  AVATAR / PROFIL
+// ══════════════════════════════════════════════════
+.avatar-circle {
+  width:         84px;
+  height:        84px;
+  border-radius: 50%;
+  background:    linear-gradient(135deg, #081648, #1a56db);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  margin:        0 auto 10px;
+  box-shadow:    0 6px 20px rgba(26,86,219,0.30);
+
+  ion-icon { color: #ffffff; font-size: 2.4rem; }
+}
+
+// ══════════════════════════════════════════════════
+//  ALERT CONTROLLER
+// ══════════════════════════════════════════════════
+.alert-btn-primary  { color: #1a56db !important; font-weight: 700 !important; }
+.alert-btn-danger   { color: #dc2626 !important; font-weight: 700 !important; }
+.alert-btn-warning  { color: #d97706 !important; font-weight: 700 !important; }
+.alert-btn-success  { color: #0e9f6e !important; font-weight: 700 !important; }
+
+.alerte-22h .alert-wrapper {
+  border-top: 4px solid #f59e0b !important;
+  border-radius: 18px !important;
+}
+.alerte-22h .alert-head h2 {
+  color: #b45309 !important;
+  font-size: 1.05rem !important;
+}
+.alerte-22h .alert-message {
+  color: #475569 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+}
+
+ion-alert .alert-head h2 { font-size: 1rem; font-weight: 800; color: #0f172a; }
+ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5; }
+
+// ══════════════════════════════════════════════════
+//  INLINE FORM HELPERS
+// ══════════════════════════════════════════════════
+.inline-create {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  padding:     0 4px;
+
+  ion-input {
+    flex:             1;
+    --padding-start:  10px;
+    --background:     #f8fafc;
+    border:           1.5px solid #e2e8f0;
+    border-radius:    10px;
+    transition:       border-color 0.2s;
+
+    &.has-focus { border-color: #1a56db; }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  GRILLE CARDS RESPONSIVE (utilitaire global)
+// ══════════════════════════════════════════════════
+// Utilisé sur les pages pour lister des cartes en grille
+.gl-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE — Grand téléphone (480px+)
+// ══════════════════════════════════════════════════
+@media (min-width: 480px) {
+  .hero-card {
+    padding: 24px 22px 26px;
+    .hero-value { font-size: 2.1rem; }
+  }
+  .color-card  { padding: 16px; }
+  .cc-value    { font-size: 1.15rem; }
+  .metric-value { font-size: 1.15rem; }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE — Tablette (720px+)
+// ══════════════════════════════════════════════════
+@media (min-width: 720px) {
+  .page-pad {
+    max-width: 960px;
+    margin:    0 auto;
+    padding:   24px 28px;
+  }
+
+  // Grilles KPI
+  .color-cards,
+  .metric-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  // Filtres 2 colonnes → 3 sur tablette
+  .two-cols {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  // Hero banner
+  .hero-card {
+    padding: 28px 28px 30px;
+    .hero-value { font-size: 2.4rem; }
+    .hero-label { font-size: 0.75rem; }
+    .hero-sub   { font-size: 0.85rem; }
+  }
+
+  // Cards colorées KPI
+  .color-card {
+    padding: 18px;
+    .cc-value { font-size: 1.25rem; }
+    .cc-label { font-size: 0.72rem; }
+  }
+
+  // Cards blanches
+  .mobile-card, .form-panel { padding: 22px; }
+  .metric-card { padding: 18px; }
+  .metric-value { font-size: 1.3rem; }
+  .card-title   { font-size: 1.1rem; }
+  .stat-row     { font-size: 0.95rem; padding: 11px 0; }
+
+  // Grille cards responsive
+  .gl-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  // Listes de cartes (section.stack = conteneur *ngFor de cartes)
+  section.stack {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  // Ionic Modal — centré sur tablette
+  ion-modal {
+    --width:         min(640px, 95vw);
+    --height:        auto;
+    --max-height:    92vh;
+    --border-radius: 20px;
+    --box-shadow:    0 20px 60px rgba(8,22,72,0.25);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE — Grand écran (1024px+)
+// ══════════════════════════════════════════════════
+@media (min-width: 1024px) {
+  .page-pad {
+    max-width: 1280px;
+    padding:   32px 48px;
+  }
+
+  .color-cards  { grid-template-columns: repeat(6, 1fr); }
+  .metric-grid  { grid-template-columns: repeat(4, 1fr); }
+  .two-cols     { grid-template-columns: repeat(4, 1fr); }
+
+  .hero-card {
+    .hero-value { font-size: 2.8rem; }
+  }
+
+  .gl-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  section.stack {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  ion-modal {
+    --width: min(720px, 95vw);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  ANIMATION UTILITAIRES
+// ══════════════════════════════════════════════════
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.anim-fade-up { animation: fadeUp 0.28s ease; }

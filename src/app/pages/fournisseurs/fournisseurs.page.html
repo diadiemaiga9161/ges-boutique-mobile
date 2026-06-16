@@ -1,0 +1,481 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Fournisseurs</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openNewFournisseur()">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="segment" (ionChange)="segmentChanged($event)">
+      <ion-segment-button value="liste">
+        <ion-label>Liste</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="achats">
+        <ion-label>Achats</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="paiements">
+        <ion-label>Paiements</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="situation">
+        <ion-label>Situation</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- =========== LISTE =========== -->
+  <ng-container *ngIf="segment === 'liste'">
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      (ionChange)="onSearch()"
+      placeholder="Rechercher un fournisseur..."
+      debounce="400">
+    </ion-searchbar>
+
+    <ion-refresher slot="fixed" (ionRefresh)="loadFournisseurs($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <div class="loading-container" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <ion-list *ngIf="!loading">
+      <ion-item-sliding *ngFor="let f of filteredFournisseurs">
+        <ion-item (click)="selectFournisseur(f)" button detail>
+          <div class="f-avatar" slot="start">{{ getInitiale(f.nom) }}</div>
+          <ion-label>
+            <h2>{{ f.nom }}</h2>
+            <p>{{ f.code || '—' }} · {{ f.telephone || '—' }}</p>
+            <p *ngIf="f.email">{{ f.email }}</p>
+          </ion-label>
+          <ion-badge slot="end" [color]="f.actif !== false ? 'success' : 'medium'">
+            {{ f.actif !== false ? 'Actif' : 'Inactif' }}
+          </ion-badge>
+        </ion-item>
+        <ion-item-options side="end">
+          <ion-item-option color="primary" (click)="editFournisseur(f)">
+            <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+          </ion-item-option>
+          <ion-item-option color="danger" (click)="deleteFournisseur(f)">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+
+    <div class="empty-state" *ngIf="!loading && filteredFournisseurs.length === 0">
+      <ion-icon name="business-outline"></ion-icon>
+      <p>Aucun fournisseur trouvé</p>
+    </div>
+  </ng-container>
+
+  <!-- =========== ACHATS =========== -->
+  <ng-container *ngIf="segment === 'achats'">
+    <div class="segment-header" *ngIf="selectedFournisseur">
+      <span class="f-chip">{{ selectedFournisseur.nom }}</span>
+    </div>
+    <div class="no-selection" *ngIf="!selectedFournisseur">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      <p>Sélectionnez un fournisseur dans la liste</p>
+    </div>
+
+    <ng-container *ngIf="selectedFournisseur">
+      <ion-button expand="block" color="success" class="action-btn" (click)="openAchat()">
+        <ion-icon name="bag-add-outline" slot="start"></ion-icon>
+        Nouvel achat
+      </ion-button>
+
+      <div class="loading-container" *ngIf="loadingAchats">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <ion-list *ngIf="!loadingAchats">
+        <ion-item *ngFor="let a of achats">
+          <ion-label>
+            <h2>Achat #{{ a.id }} — {{ formatDate(a.dateAchat) }}</h2>
+            <p *ngFor="let l of a.lignes">{{ l.produitNom }} × {{ l.quantite }} à {{ money(l.prixAchatUnitaire) }}</p>
+            <p>Total: <strong>{{ money(a.montantTotal) }}</strong> · Payé: {{ money(a.montantPaye) }}</p>
+          </ion-label>
+          <ion-badge slot="end" [color]="a.solde > 0 ? 'warning' : 'success'">
+            {{ a.solde > 0 ? 'Reste ' + money(a.solde) : 'Soldé' }}
+          </ion-badge>
+        </ion-item>
+        <div class="empty-state" *ngIf="achats.length === 0">
+          <ion-icon name="bag-outline"></ion-icon>
+          <p>Aucun achat enregistré</p>
+        </div>
+      </ion-list>
+    </ng-container>
+  </ng-container>
+
+  <!-- =========== PAIEMENTS =========== -->
+  <ng-container *ngIf="segment === 'paiements'">
+    <div class="segment-header" *ngIf="selectedFournisseur">
+      <span class="f-chip">{{ selectedFournisseur.nom }}</span>
+    </div>
+    <div class="no-selection" *ngIf="!selectedFournisseur">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      <p>Sélectionnez un fournisseur dans la liste</p>
+    </div>
+
+    <ng-container *ngIf="selectedFournisseur">
+      <div class="action-row">
+        <ion-button expand="block" color="success" (click)="openPaiement()">
+          <ion-icon name="cash-outline" slot="start"></ion-icon>
+          Paiement
+        </ion-button>
+        <ion-button expand="block" color="warning" (click)="openAvance()">
+          <ion-icon name="wallet-outline" slot="start"></ion-icon>
+          Avance
+        </ion-button>
+      </div>
+
+      <div class="loading-container" *ngIf="loadingPaiements">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <ng-container *ngIf="!loadingPaiements">
+        <ion-list-header>
+          <ion-label>Paiements</ion-label>
+        </ion-list-header>
+        <ion-list>
+          <ion-item *ngFor="let p of paiements">
+            <ion-label>
+              <h2>{{ money(p.montant) }}</h2>
+              <p>{{ p.modePaiement }} · {{ formatDate(p.datePaiement) }}</p>
+              <p *ngIf="p.reference">Réf: {{ p.reference }}</p>
+            </ion-label>
+            <ion-icon name="checkmark-circle-outline" slot="end" color="success"></ion-icon>
+          </ion-item>
+          <div class="empty-state" *ngIf="paiements.length === 0">
+            <p>Aucun paiement</p>
+          </div>
+        </ion-list>
+
+        <ion-list-header>
+          <ion-label>Avances</ion-label>
+        </ion-list-header>
+        <ion-list>
+          <ion-item *ngFor="let av of avances">
+            <ion-label>
+              <h2>{{ money(av.montant) }}</h2>
+              <p>{{ av.modePaiement }} · {{ formatDate(av.dateAvance) }}</p>
+              <p *ngIf="av.reference">Réf: {{ av.reference }}</p>
+            </ion-label>
+            <ion-icon name="time-outline" slot="end" color="warning"></ion-icon>
+          </ion-item>
+          <div class="empty-state" *ngIf="avances.length === 0">
+            <p>Aucune avance</p>
+          </div>
+        </ion-list>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+
+  <!-- =========== SITUATION =========== -->
+  <ng-container *ngIf="segment === 'situation'">
+    <div class="no-selection" *ngIf="!selectedFournisseur">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      <p>Sélectionnez un fournisseur dans la liste</p>
+    </div>
+
+    <ng-container *ngIf="selectedFournisseur">
+      <div class="situation-header">
+        <div class="f-avatar-lg">{{ getInitiale(selectedFournisseur.nom) }}</div>
+        <h2>{{ selectedFournisseur.nom }}</h2>
+        <p *ngIf="selectedFournisseur.telephone">{{ selectedFournisseur.telephone }}</p>
+      </div>
+
+      <div class="loading-container" *ngIf="loadingSituation">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <ng-container *ngIf="!loadingSituation && situation">
+        <ion-grid class="situation-grid">
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-card stat-card--blue">
+                <div class="stat-value">{{ money(situation.totalAchats || 0) }}</div>
+                <div class="stat-label">Total achats</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-card stat-card--green">
+                <div class="stat-value">{{ money(situation.totalPaiements || 0) }}</div>
+                <div class="stat-label">Total payé</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-card stat-card--orange">
+                <div class="stat-value">{{ money(situation.soldeRestant || situation.dette || 0) }}</div>
+                <div class="stat-label">Solde restant</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-card stat-card--purple">
+                <div class="stat-value">{{ money(soldeAvance) }}</div>
+                <div class="stat-label">Solde avances</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <ion-card class="info-card" *ngIf="situation.nbAchats">
+          <ion-card-content>
+            <div class="info-row">
+              <span>Nombre d'achats</span>
+              <strong>{{ situation.nbAchats }}</strong>
+            </div>
+            <div class="info-row" *ngIf="situation.dernierAchat">
+              <span>Dernier achat</span>
+              <strong>{{ formatDate(situation.dernierAchat) }}</strong>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Liste complète des achats -->
+        <div class="section-title" *ngIf="achats.length">
+          <ion-icon name="cart-outline"></ion-icon>
+          Historique achats ({{ achats.length }})
+        </div>
+        <ion-card class="hist-card" *ngFor="let a of achats">
+          <ion-card-content>
+            <div class="hist-row">
+              <span class="hist-date">{{ formatDate(a.dateAchat || a.dateCreation) }}</span>
+              <span class="hist-badge" [class.badge--paid]="a.statut === 'PAYE'"
+                    [class.badge--partial]="a.statut === 'EN_COURS'"
+                    [class.badge--cancelled]="a.statut === 'ANNULE'">
+                {{ a.statut === 'PAYE' ? 'Payé' : a.statut === 'EN_COURS' ? 'En cours' : a.statut === 'ANNULE' ? 'Annulé' : a.statut }}
+              </span>
+            </div>
+            <div class="hist-amounts">
+              <span>Total : <strong>{{ money(a.montantTotal) }}</strong></span>
+              <span class="text-success">Payé : {{ money(a.montantPaye) }}</span>
+              <span class="text-danger" *ngIf="(a.montantRestant || 0) > 0">Reste : {{ money(a.montantRestant) }}</span>
+            </div>
+            <div class="hist-produits" *ngIf="(a.lignes || []).length">
+              <span *ngFor="let l of (a.lignes || [])">{{ l.produit?.nom }} ×{{ l.quantite }}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Liste complète des paiements -->
+        <div class="section-title" *ngIf="paiements.length" style="margin-top:16px">
+          <ion-icon name="cash-outline"></ion-icon>
+          Historique paiements ({{ paiements.length }})
+        </div>
+        <ion-card class="hist-card" *ngFor="let p of paiements">
+          <ion-card-content>
+            <div class="hist-row">
+              <span class="hist-date">{{ formatDate(p.datePaiement) }}</span>
+              <span class="hist-mode">{{ p.modePaiement }}</span>
+            </div>
+            <div class="hist-amounts">
+              <span class="text-success"><strong>{{ money(p.montant) }}</strong></span>
+              <span class="hist-ref" *ngIf="p.reference">Réf: {{ p.reference }}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+      </ng-container>
+
+      <div class="empty-state" *ngIf="!loadingSituation && !situation">
+        <ion-icon name="analytics-outline"></ion-icon>
+        <p>Aucune situation disponible</p>
+      </div>
+    </ng-container>
+  </ng-container>
+
+</ion-content>
+
+<!-- ======== MODAL: Fournisseur ======== -->
+<ion-modal [isOpen]="showFournisseurModal" (didDismiss)="showFournisseurModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ fournisseurForm.id ? 'Modifier' : 'Nouveau' }} fournisseur</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showFournisseurModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Nom *</ion-label>
+        <ion-input [(ngModel)]="fournisseurForm.nom" placeholder="Nom du fournisseur"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Code *</ion-label>
+        <ion-input [(ngModel)]="fournisseurForm.code" placeholder="ex: FOUR-001"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Téléphone</ion-label>
+        <ion-input [(ngModel)]="fournisseurForm.telephone" type="tel"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Email</ion-label>
+        <ion-input [(ngModel)]="fournisseurForm.email" type="email"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Adresse</ion-label>
+        <ion-input [(ngModel)]="fournisseurForm.adresse"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Description</ion-label>
+        <ion-textarea [(ngModel)]="fournisseurForm.description" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-item>
+        <ion-label>Actif</ion-label>
+        <ion-toggle [(ngModel)]="fournisseurForm.actif"></ion-toggle>
+      </ion-item>
+      <ion-button expand="block" color="primary" class="save-btn" (click)="saveFournisseur()">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        Enregistrer
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Achat ======== -->
+<ion-modal [isOpen]="showAchatModal" (didDismiss)="showAchatModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="success">
+        <ion-title>Nouvel achat</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showAchatModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Produit *</ion-label>
+        <ion-select [(ngModel)]="achatForm.produitId" placeholder="Choisir un produit" interface="action-sheet">
+          <ion-select-option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Quantité *</ion-label>
+        <ion-input [(ngModel)]="achatForm.quantite" type="number" min="1"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Prix achat unitaire *</ion-label>
+        <ion-input [(ngModel)]="achatForm.prixAchatUnitaire" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Prix de vente</ion-label>
+        <ion-input [(ngModel)]="achatForm.prixVente" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Montant payé</ion-label>
+        <ion-input [(ngModel)]="achatForm.montantPaye" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Commentaire</ion-label>
+        <ion-textarea [(ngModel)]="achatForm.commentaire" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="success" class="save-btn" (click)="saveAchat()">
+        <ion-icon name="bag-add-outline" slot="start"></ion-icon>
+        Enregistrer l'achat
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Paiement ======== -->
+<ion-modal [isOpen]="showPaiementModal" (didDismiss)="showPaiementModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="success">
+        <ion-title>Paiement fournisseur</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showPaiementModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Montant *</ion-label>
+        <ion-input [(ngModel)]="paiementForm.montant" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Mode de paiement</ion-label>
+        <ion-select [(ngModel)]="paiementForm.modePaiement" interface="action-sheet">
+          <ion-select-option value="ESPECES">Espèces</ion-select-option>
+          <ion-select-option value="VIREMENT">Virement</ion-select-option>
+          <ion-select-option value="CHEQUE">Chèque</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Référence</ion-label>
+        <ion-input [(ngModel)]="paiementForm.reference"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Observation</ion-label>
+        <ion-textarea [(ngModel)]="paiementForm.observation" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="success" class="save-btn" (click)="savePaiement()">
+        <ion-icon name="cash-outline" slot="start"></ion-icon>
+        Enregistrer le paiement
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Avance ======== -->
+<ion-modal [isOpen]="showAvanceModal" (didDismiss)="showAvanceModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="warning">
+        <ion-title>Avance fournisseur</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showAvanceModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Montant *</ion-label>
+        <ion-input [(ngModel)]="avanceForm.montant" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Mode de paiement</ion-label>
+        <ion-select [(ngModel)]="avanceForm.modePaiement" interface="action-sheet">
+          <ion-select-option value="ESPECES">Espèces</ion-select-option>
+          <ion-select-option value="VIREMENT">Virement</ion-select-option>
+          <ion-select-option value="CHEQUE">Chèque</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Référence</ion-label>
+        <ion-input [(ngModel)]="avanceForm.reference"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Observation</ion-label>
+        <ion-textarea [(ngModel)]="avanceForm.observation" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="warning" class="save-btn" (click)="saveAvance()">
+        <ion-icon name="wallet-outline" slot="start"></ion-icon>
+        Enregistrer l'avance
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

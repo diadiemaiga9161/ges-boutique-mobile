@@ -1,0 +1,505 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Clients</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="startCreate()">
+        <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+
+    <ion-searchbar [(ngModel)]="query" placeholder="Nom, téléphone..." (ionInput)="applyFilter()"></ion-searchbar>
+
+    <p class="section-label">{{ filtered.length }} client(s)</p>
+
+    <section class="stack" *ngIf="filtered.length; else empty">
+      <article class="client-card" *ngFor="let client of filtered">
+
+        <!-- En-tête -->
+        <div class="client-header">
+          <div class="client-avatar">
+            {{ (client.prenom || client.nom || '?')[0].toUpperCase() }}
+          </div>
+          <div class="client-info">
+            <h2 class="client-name">{{ clientService.getFullName(client) }}</h2>
+            <p class="client-phone">
+              <ion-icon name="call-outline"></ion-icon>
+              {{ client.telephone || client.numeroTelephone || 'Pas de téléphone' }}
+            </p>
+            <p class="client-email" *ngIf="client.email">
+              <ion-icon name="mail-outline"></ion-icon>
+              {{ client.email }}
+            </p>
+          </div>
+          <div class="client-edit-btns">
+            <ion-button fill="clear" size="small" (click)="startEdit(client)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(client)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Actions principales -->
+        <div class="client-actions">
+          <button class="client-action-btn" (click)="openVentesModal(client)">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <span>Ventes</span>
+          </button>
+          <button class="client-action-btn accent" (click)="openAvanceModal(client)">
+            <ion-icon name="wallet-outline"></ion-icon>
+            <span>Avance</span>
+          </button>
+          <button class="client-action-btn" (click)="openHistoriqueAvancesModal(client)">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Historique</span>
+          </button>
+        </div>
+
+        <!-- Actions PDF / QR -->
+        <div class="client-doc-actions">
+          <button class="doc-btn" (click)="telechargerReleve(client.id)">
+            <ion-icon name="document-text-outline"></ion-icon>
+            <span>PDF Relevé</span>
+          </button>
+          <button class="doc-btn doc-btn--qr" (click)="showQrCode(client)" *ngIf="client.id">
+            <ion-icon name="qr-code-outline"></ion-icon>
+            <span>QR Code</span>
+          </button>
+        </div>
+
+      </article>
+    </section>
+
+    <ng-template #empty>
+      <div class="empty-state">
+        <ion-icon name="people-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
+        <p>Aucun client</p>
+        <ion-button size="small" (click)="startCreate()">Ajouter un client</ion-button>
+      </div>
+    </ng-template>
+  </div>
+</ion-content>
+
+<!-- ==================== MODAL AJOUT / MODIFICATION CLIENT ==================== -->
+<ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar [color]="editing ? 'warning' : 'primary'">
+        <ion-title>{{ editing ? 'Modifier le client' : 'Nouveau client' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showForm = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Identité</p>
+          <div class="two-cols">
+            <ion-item>
+              <ion-input label="Nom *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Prénom" labelPlacement="floating" [(ngModel)]="form.prenom"></ion-input>
+            </ion-item>
+          </div>
+          <ion-item>
+            <ion-input label="Téléphone" labelPlacement="floating" type="tel" [(ngModel)]="form.telephone"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Email" labelPlacement="floating" type="email" [(ngModel)]="form.email"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="form.adresse" rows="2"></ion-textarea>
+          </ion-item>
+        </div>
+        <ion-button expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'">
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ editing ? 'Enregistrer' : 'Créer le client' }}
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL QR CODE CLIENT ==================== -->
+<ion-modal [isOpen]="showQrModal" (didDismiss)="closeQrModal()" [breakpoints]="[0, 0.55]" [initialBreakpoint]="0.55">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>QR Code · {{ selectedClientForQr?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeQrModal()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="selectedClientForQr">
+      <div style="text-align:center;padding:16px">
+        <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px">
+          Le client scanne ce QR code pour télécharger son relevé de compte PDF
+        </p>
+        <img [src]="getQrCodeUrl(selectedClientForQr.id)"
+             alt="QR Code"
+             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px"
+             onerror="this.style.display='none'" />
+        <p style="font-size:0.8rem;color:#94a3b8;margin-top:12px">{{ selectedClientForQr.nom }}</p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+          <ion-button size="small" fill="outline" (click)="telechargerQrCode(selectedClientForQr)">
+            <ion-icon name="download-outline" slot="start"></ion-icon>
+            Télécharger
+          </ion-button>
+          <ion-button size="small" (click)="telechargerReleve(selectedClientForQr.id)">
+            <ion-icon name="document-text-outline" slot="start"></ion-icon>
+            Voir PDF
+          </ion-button>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL VENTES DU CLIENT ==================== -->
+<ion-modal [isOpen]="showVentesModal" (didDismiss)="closeVentesModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ selectedClientForVentes?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="telechargerReleve(selectedClientForVentes?.id)" fill="clear" title="PDF Relevé">
+            <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button (click)="closeVentesModal()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+
+      <!-- Résumé crédits en cours -->
+      <div class="credits-summary-banner" *ngIf="creditsEnCours.length && !loadingVentes">
+        <div class="csb-header">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span>{{ creditsEnCours.length }} crédit(s) en cours</span>
+        </div>
+        <div class="csb-stats">
+          <div class="csb-stat">
+            <span class="csb-label">Total crédits</span>
+            <span class="csb-val">{{ money(getTotalCreditsTotal()) }}</span>
+          </div>
+          <div class="csb-stat">
+            <span class="csb-label">Versé</span>
+            <span class="csb-val csb-val--green">{{ money(getTotalCreditsVerse()) }}</span>
+          </div>
+          <div class="csb-stat">
+            <span class="csb-label">Restant dû</span>
+            <span class="csb-val csb-val--red">{{ money(getTotalCreditsRestant()) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:12px">
+        <ion-segment [(ngModel)]="filterVenteType" (ionChange)="applyVentesFilter()">
+          <ion-segment-button value="">Toutes</ion-segment-button>
+          <ion-segment-button value="COMPTANT">Comptant</ion-segment-button>
+          <ion-segment-button value="CREDIT">Crédit</ion-segment-button>
+          <ion-segment-button value="CREDIT_REGLE">Réglé</ion-segment-button>
+        </ion-segment>
+      </div>
+
+      <ion-spinner *ngIf="loadingVentes" style="display:block;margin:20px auto"></ion-spinner>
+
+      <div class="page-pad stack" *ngIf="!loadingVentes">
+        <div *ngIf="ventesFiltered.length === 0" class="empty-state">Aucune vente</div>
+
+        <article class="vente-detail-card" *ngFor="let vente of ventesFiltered"
+                 [class.vdc--credit]="vente.estCredit && !vente.creditRegle"
+                 [class.vdc--retard]="isCreditEnRetard(vente)">
+
+          <!-- En-tête vente -->
+          <div class="vdc-header" (click)="openVenteDetail(vente)">
+            <div class="vdc-info">
+              <h3 class="vdc-num">{{ vente.numeroVente }}</h3>
+              <p class="vdc-date">{{ formatDate(vente.dateVente) }}</p>
+            </div>
+            <div class="vdc-right">
+              <p class="vdc-amount">{{ money(vente.montantTotal) }}</p>
+              <ion-badge [color]="getVenteBadgeColor(vente)">{{ getVenteBadgeLabel(vente) }}</ion-badge>
+            </div>
+          </div>
+
+          <!-- Barre de progression crédit -->
+          <div class="vdc-credit-bar" *ngIf="vente.estCredit && !vente.creditRegle">
+            <div class="vcb-track">
+              <div class="vcb-fill" [style.width.%]="getPourcentagePaiement(vente)"
+                   [class.vcb-fill--late]="isCreditEnRetard(vente)"></div>
+            </div>
+            <div class="vcb-labels">
+              <span class="vcb-versed">Versé {{ money(vente.montantVerse || 0) }}</span>
+              <span class="vcb-pct">{{ getPourcentagePaiement(vente) }}%</span>
+              <span class="vcb-reste" [class.vcb-reste--late]="isCreditEnRetard(vente)">
+                Reste {{ money(getMontantRestant(vente)) }}
+              </span>
+            </div>
+            <p class="vcb-echeance" *ngIf="vente.dateEcheance">
+              <ion-icon name="calendar-outline"></ion-icon>
+              Échéance: {{ vente.dateEcheance | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+
+          <!-- Produits (aperçu) -->
+          <div class="vdc-products" *ngIf="vente.produits?.length">
+            <div class="vdc-prod-line" *ngFor="let p of (vente.produits | slice:0:2)">
+              <span class="vdp-qty">×{{ p.quantite }}</span>
+              <span class="vdp-name">{{ p.produitNom }}</span>
+              <span class="vdp-total">{{ money(p.sousTotal) }}</span>
+            </div>
+            <p class="vdc-more" *ngIf="vente.produits && vente.produits.length > 2">
+              + {{ vente.produits.length - 2 }} article(s)...
+              <span (click)="openVenteDetail(vente)" style="color:#3b82f6;cursor:pointer">Voir tout</span>
+            </p>
+          </div>
+
+          <!-- Actions par vente -->
+          <div class="vdc-actions">
+            <button class="vda-btn" (click)="openVenteDetail(vente)">
+              <ion-icon name="list-outline"></ion-icon>
+              <span>Détails</span>
+            </button>
+            <button class="vda-btn vda-btn--pdf" (click)="telechargerFacturePdf(vente.id)">
+              <ion-icon name="document-text-outline"></ion-icon>
+              <span>Facture PDF</span>
+            </button>
+          </div>
+        </article>
+
+        <div class="form-panel row-between" *ngIf="ventesFiltered.length">
+          <span class="muted">Total ({{ ventesFiltered.length }} ventes)</span>
+          <strong class="price">{{ money(getTotalVentes()) }}</strong>
+        </div>
+      </div>
+    </ion-content>
+
+    <ion-footer class="ion-no-border" *ngIf="!loadingVentes && ventesFiltered.length">
+      <div style="padding:8px 16px">
+        <ion-button expand="block" fill="outline" (click)="telechargerReleve(selectedClientForVentes?.id)">
+          <ion-icon name="document-text-outline" slot="start"></ion-icon>
+          Télécharger le relevé complet PDF
+        </ion-button>
+      </div>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL DÉTAIL VENTE (produits) ==================== -->
+<ion-modal [isOpen]="showVenteDetailModal" (didDismiss)="closeVenteDetail()" [breakpoints]="[0, 0.85]" [initialBreakpoint]="0.85">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ selectedVenteDetail?.numeroVente }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeVenteDetail()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="selectedVenteDetail">
+
+      <!-- En-tête reçu -->
+      <div style="text-align:center;padding:12px 0 20px">
+        <p style="font-size:0.85rem;color:#64748b">{{ formatDate(selectedVenteDetail.dateVente) }}</p>
+        <ion-badge [color]="getVenteBadgeColor(selectedVenteDetail)" style="margin-top:4px">
+          {{ getVenteBadgeLabel(selectedVenteDetail) }}
+        </ion-badge>
+        <ion-badge color="medium" style="margin-left:4px" *ngIf="selectedVenteDetail.modePaiement">
+          {{ selectedVenteDetail.modePaiement }}
+        </ion-badge>
+      </div>
+
+      <!-- Produits -->
+      <div class="receipt-section">
+        <p class="receipt-section-label">Articles</p>
+        <div class="receipt-product" *ngFor="let p of selectedVenteDetail.produits">
+          <div class="rp-left">
+            <span class="rp-name">{{ p.produitNom }}</span>
+            <span class="rp-qty">{{ p.quantite }} × {{ money(p.prixUnitaire) }}</span>
+          </div>
+          <strong class="rp-total">{{ money(p.sousTotal) }}</strong>
+        </div>
+        <div *ngIf="!selectedVenteDetail.produits?.length" style="color:#94a3b8;font-size:0.85rem;padding:8px">
+          Détail des articles non disponible
+        </div>
+      </div>
+
+      <!-- Totaux -->
+      <div class="receipt-totaux" style="margin-top:16px">
+        <div class="receipt-row receipt-row--sub" *ngIf="selectedVenteDetail.montantRemiseTotal > 0">
+          <span>Remise</span>
+          <strong style="color:#dc2626">-{{ money(selectedVenteDetail.montantRemiseTotal) }}</strong>
+        </div>
+        <div class="receipt-grand-total">
+          <span>TOTAL</span>
+          <strong>{{ money(selectedVenteDetail.montantTotal) }}</strong>
+        </div>
+      </div>
+
+      <!-- Infos crédit -->
+      <div class="modal-section" style="margin-top:16px" *ngIf="selectedVenteDetail.estCredit">
+        <p class="modal-section-title" style="color:#d97706">Crédit</p>
+        <div class="stat-row">
+          <span>Versé</span>
+          <strong style="color:#16a34a">{{ money(selectedVenteDetail.montantVerse || 0) }}</strong>
+        </div>
+        <div class="stat-row">
+          <span>Restant dû</span>
+          <strong style="color:#dc2626">{{ money(getMontantRestant(selectedVenteDetail)) }}</strong>
+        </div>
+        <div class="vcb-track" style="margin-top:8px">
+          <div class="vcb-fill" [style.width.%]="getPourcentagePaiement(selectedVenteDetail)"
+               [class.vcb-fill--late]="isCreditEnRetard(selectedVenteDetail)"></div>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+    </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <div style="padding:8px 16px">
+        <ion-button expand="block" (click)="telechargerFacturePdf(selectedVenteDetail!.id)">
+          <ion-icon name="document-text-outline" slot="start"></ion-icon>
+          Télécharger la facture PDF
+        </ion-button>
+      </div>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL AVANCE CLIENT ==================== -->
+<ion-modal [isOpen]="showAvanceModal" (didDismiss)="showAvanceModal = false" [breakpoints]="[0, 0.75]" [initialBreakpoint]="0.75">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="secondary">
+        <ion-title>Avance · {{ selectedClientForAvance?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showAvanceModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Informations avance</p>
+          <ion-item>
+            <ion-input label="Montant *" labelPlacement="floating" type="number" [(ngModel)]="avanceForm.montant"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-select label="Mode de paiement" labelPlacement="stacked" [(ngModel)]="avanceForm.modePaiement">
+              <ion-select-option value="ESPECES">Espèces</ion-select-option>
+              <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+              <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+              <ion-select-option value="CARTE_BANCAIRE">Carte bancaire</ion-select-option>
+              <ion-select-option value="VIREMENT">Virement</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item *ngIf="avanceForm.modePaiement !== 'ESPECES'">
+            <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="avanceForm.referencePaiement"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Motif (optionnel)" labelPlacement="floating" [(ngModel)]="avanceForm.motif" rows="2"></ion-textarea>
+          </ion-item>
+        </div>
+        <ion-button expand="block" color="secondary" (click)="enregistrerAvance()" [disabled]="loadingAvance">
+          <ion-spinner *ngIf="loadingAvance" slot="start" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!loadingAvance" name="wallet-outline" slot="start"></ion-icon>
+          Enregistrer l'avance
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL HISTORIQUE AVANCES ==================== -->
+<ion-modal [isOpen]="showHistoriqueAvancesModal" (didDismiss)="closeHistoriqueAvancesModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Avances · {{ selectedClientForAvance?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeHistoriqueAvancesModal()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+      <ion-spinner *ngIf="loadingAvance" style="display:block;margin:20px auto"></ion-spinner>
+
+      <div class="page-pad stack" *ngIf="!loadingAvance && historiqueAvances">
+
+        <div class="color-cards">
+          <div class="color-card cc-green">
+            <ion-icon name="wallet-outline"></ion-icon>
+            <p class="cc-label">Solde disponible</p>
+            <p class="cc-value">{{ money(historiqueAvances.soldeDisponible) }}</p>
+          </div>
+          <div class="color-card cc-blue">
+            <ion-icon name="arrow-up-circle-outline"></ion-icon>
+            <p class="cc-label">Total déposé</p>
+            <p class="cc-value">{{ money(historiqueAvances.totalDepose) }}</p>
+          </div>
+          <div class="color-card cc-orange">
+            <ion-icon name="arrow-down-circle-outline"></ion-icon>
+            <p class="cc-label">Total utilisé</p>
+            <p class="cc-value">{{ money(historiqueAvances.totalUtilise) }}</p>
+          </div>
+        </div>
+
+        <h3 class="section-label">Détail des avances</h3>
+
+        <article class="mobile-card" *ngFor="let avance of historiqueAvances.historique">
+          <div class="row-between">
+            <div>
+              <h2 class="card-title">{{ money(avance.montant) }}</h2>
+              <p class="card-subtitle">{{ formatDate(avance.dateDepot) }}</p>
+            </div>
+            <ion-badge [color]="getStatutAvanceBadge(avance.statut)">{{ avance.statut }}</ion-badge>
+          </div>
+          <div class="mini-stats" style="margin-top:8px">
+            <div class="stat-row">
+              <span>Disponible</span>
+              <strong class="success">{{ money(avance.montantDisponible) }}</strong>
+            </div>
+            <div class="stat-row">
+              <span>Utilisé</span>
+              <strong class="warning">{{ money(avance.montantUtilise) }}</strong>
+            </div>
+          </div>
+        </article>
+
+        <div class="empty-state" *ngIf="historiqueAvances.historique.length === 0">
+          Aucune avance enregistrée
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

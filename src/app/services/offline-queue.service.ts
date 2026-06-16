@@ -23,7 +23,12 @@ export class OfflineQueueService {
   private queue$ = new BehaviorSubject<OfflineAction[]>([]);
 
   constructor(private storage: Storage) {
-    this.loadQueue();
+    this.initStorage();
+  }
+
+  private async initStorage(): Promise<void> {
+    await this.storage.create();
+    await this.loadQueue();
   }
 
   private async loadQueue(): Promise<void> {

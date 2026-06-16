@@ -1,0 +1,17 @@
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 6px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  h1 { font-size: 1.7rem; }
+
+  ion-list { max-width: 720px; margin: 0 auto; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  h1 { font-size: 2rem; }
+  ion-list { max-width: 900px; }
+}

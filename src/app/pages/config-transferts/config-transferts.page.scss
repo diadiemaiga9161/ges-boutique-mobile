@@ -1,0 +1,96 @@
+.form-card {
+  margin: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(8,22,72,0.08);
+  padding: 16px;
+
+  .form-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a56db;
+    margin: 0 0 12px;
+  }
+}
+
+.form-item {
+  --border-radius: 10px;
+  --background: #f8faff;
+  --padding-start: 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 24px;
+  gap: 12px;
+  color: #94a3b8;
+
+  ion-icon { font-size: 3rem; }
+  p { font-size: 0.9rem; margin: 0; }
+}
+
+.partenaires-list {
+  padding: 8px 0;
+}
+
+.partenaire-item {
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+}
+
+.partenaire-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+
+  ion-icon { font-size: 1.3rem; }
+
+  &--actif { background: #eff6ff; ion-icon { color: #1a56db; } }
+  &--inactif { background: #f1f5f9; ion-icon { color: #94a3b8; } }
+}
+
+.partenaire-url {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.status-badge {
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .form-card { margin: 20px; padding: 20px; border-radius: 20px; }
+  .form-card .form-title { font-size: 1.05rem; }
+
+  .partenaire-icon { width: 48px; height: 48px; ion-icon { font-size: 1.5rem; } }
+  .partenaire-url  { font-size: 0.82rem; }
+  .status-badge    { font-size: 11px; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .form-card { max-width: 800px; margin: 24px auto; }
+}

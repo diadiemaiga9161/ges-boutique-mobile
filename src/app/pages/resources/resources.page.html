@@ -1,0 +1,1031 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ config?.title || 'Module' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="startCreate()" *ngIf="type !== 'paiement-employe'">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack" *ngIf="config">
+    <ion-searchbar [(ngModel)]="query" placeholder="Rechercher" (keyup.enter)="load()"></ion-searchbar>
+    <ion-button expand="block" fill="outline" (click)="load()">
+      <ion-icon name="search-outline" slot="start"></ion-icon>
+      Rechercher
+    </ion-button>
+
+    <section class="form-panel stack" *ngIf="showForm && type !== 'fournisseurs'">
+      <div class="row-between">
+        <h2 class="card-title">{{ selected ? 'Modifier' : 'Créer' }}</h2>
+        <ion-button fill="clear" (click)="showForm = false">
+          <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+
+      <ng-container [ngSwitch]="type">
+        <ng-container *ngSwitchCase="'factures'">
+          <!-- Client -->
+          <ion-item>
+            <ion-select label="Client existant" labelPlacement="stacked" [(ngModel)]="factureForm.clientId">
+              <ion-select-option [value]="undefined">— Client divers —</ion-select-option>
+              <ion-select-option [value]="client.id" *ngFor="let client of clients">{{ client.prenom }} {{ client.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Nom client" labelPlacement="floating" [(ngModel)]="factureForm.clientNom"></ion-input></ion-item>
+            <ion-item><ion-input label="Téléphone" labelPlacement="floating" [(ngModel)]="factureForm.clientTelephone"></ion-input></ion-item>
+          </div>
+
+          <!-- Séparateur articles -->
+          <div class="facture-section-header">
+            <span>Articles ({{ factureLines.length }})</span>
+            <ion-button fill="clear" size="small" [color]="factureLigneEnCours.modeLibre ? 'success' : 'medium'" (click)="factureLigneEnCours.modeLibre = !factureLigneEnCours.modeLibre">
+              <ion-icon [name]="factureLigneEnCours.modeLibre ? 'pencil-outline' : 'cube-outline'" slot="start"></ion-icon>
+              {{ factureLigneEnCours.modeLibre ? 'Mode libre' : 'Stock' }}
+            </ion-button>
+          </div>
+
+          <!-- Formulaire ajout ligne -->
+          <div class="facture-add-ligne">
+            <!-- Mode catalogue -->
+            <ion-item *ngIf="!factureLigneEnCours.modeLibre">
+              <ion-select label="Produit du stock" labelPlacement="stacked" [(ngModel)]="factureLigneEnCours.produitId"
+                (ionChange)="onFactureProduitChange()">
+                <ion-select-option [value]="undefined">Choisir...</ion-select-option>
+                <ion-select-option [value]="p.id" *ngFor="let p of products">{{ p.nom }} · {{ amount(p) }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <!-- Mode libre -->
+            <ion-item *ngIf="factureLigneEnCours.modeLibre">
+              <ion-input label="Désignation *" labelPlacement="floating" [(ngModel)]="factureLigneEnCours.designation" placeholder="Ex: Transport, Service..."></ion-input>
+            </ion-item>
+
+            <div class="two-cols">
+              <ion-item><ion-input label="Qté" labelPlacement="floating" type="number" min="1" [(ngModel)]="factureLigneEnCours.quantite"></ion-input></ion-item>
+              <ion-item><ion-input label="Prix unit. (FCFA)" labelPlacement="floating" type="number" min="0" [(ngModel)]="factureLigneEnCours.prixUnitaire"></ion-input></ion-item>
+            </div>
+            <ion-item><ion-input label="Remise %" labelPlacement="floating" type="number" min="0" max="100" [(ngModel)]="factureLigneEnCours.remisePourcentage"></ion-input></ion-item>
+            <ion-button expand="block" fill="outline" color="primary" (click)="addFactureLigne()">
+              <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+              Ajouter cet article
+            </ion-button>
+          </div>
+
+          <!-- Liste des lignes -->
+          <div class="facture-lines-list" *ngIf="factureLines.length">
+            <div class="facture-line-item" *ngFor="let l of factureLines; let i = index">
+              <div class="facture-line-info">
+                <span class="facture-line-name">{{ getFactureLigneLabel(l) }}</span>
+                <span class="facture-line-detail">{{ l.quantite }} × {{ l.prixUnitaire | number:'1.0-0' }} FCFA
+                  <span *ngIf="l.remisePourcentage"> (−{{ l.remisePourcentage }}%)</span>
+                </span>
+              </div>
+              <div class="facture-line-actions">
+                <strong>{{ ((l.prixUnitaire * (1 - (l.remisePourcentage || 0)/100)) * l.quantite) | number:'1.0-0' }} F</strong>
+                <ion-button fill="clear" size="small" color="danger" (click)="removeFactureLigne(i)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+            <div class="facture-total-row">
+              <span>Total</span>
+              <strong>{{ getTotalFacture() | number:'1.0-0' }} FCFA</strong>
+            </div>
+          </div>
+
+          <ion-item><ion-textarea label="Notes" labelPlacement="floating" [(ngModel)]="factureForm.notes"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'comptes'">
+          <ion-item><ion-input label="Banque" labelPlacement="floating" [(ngModel)]="compteForm.nomBanque"></ion-input></ion-item>
+          <ion-item><ion-input label="Numéro compte" labelPlacement="floating" [(ngModel)]="compteForm.numeroCompte"></ion-input></ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Agence" labelPlacement="floating" [(ngModel)]="compteForm.agence"></ion-input></ion-item>
+            <ion-item><ion-input label="Titulaire" labelPlacement="floating" [(ngModel)]="compteForm.titulaire"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-input label="Solde initial" labelPlacement="floating" type="number" [(ngModel)]="compteForm.soldeInitial"></ion-input></ion-item>
+          <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="compteForm.description"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'dettes'">
+          <ion-item>
+            <ion-select label="Client" labelPlacement="stacked" [(ngModel)]="detteForm.clientId">
+              <ion-select-option [value]="client.id" *ngFor="let client of clients">{{ client.prenom }} {{ client.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="detteForm.montant"></ion-input></ion-item>
+            <ion-item><ion-input label="Date crédit" labelPlacement="floating" type="date" [(ngModel)]="detteForm.dateCredit"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="detteForm.description"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'employes'">
+          <div class="two-cols">
+            <ion-item><ion-input label="Nom" labelPlacement="floating" [(ngModel)]="employeForm.nom"></ion-input></ion-item>
+            <ion-item><ion-input label="Prénom" labelPlacement="floating" [(ngModel)]="employeForm.prenom"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-input label="Poste" labelPlacement="floating" [(ngModel)]="employeForm.poste"></ion-input></ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Salaire" labelPlacement="floating" type="number" [(ngModel)]="employeForm.salaireMensuel"></ion-input></ion-item>
+            <ion-item><ion-input label="Téléphone" labelPlacement="floating" [(ngModel)]="employeForm.telephone"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-input label="Date embauche" labelPlacement="floating" type="date" [(ngModel)]="employeForm.dateEmbauche"></ion-input></ion-item>
+          <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="employeForm.observation"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'fournisseurs'">
+          <div class="two-cols">
+            <ion-item><ion-input label="Nom" labelPlacement="floating" [(ngModel)]="fournisseurForm.nom"></ion-input></ion-item>
+            <ion-item><ion-input label="Code" labelPlacement="floating" [(ngModel)]="fournisseurForm.code"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Téléphone" labelPlacement="floating" [(ngModel)]="fournisseurForm.telephone"></ion-input></ion-item>
+            <ion-item><ion-input label="Email" labelPlacement="floating" [(ngModel)]="fournisseurForm.email"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="fournisseurForm.adresse"></ion-textarea></ion-item>
+          <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="fournisseurForm.description"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'vendeurs'">
+          <ion-item><ion-input label="Nom utilisateur" labelPlacement="floating" [(ngModel)]="userForm.username"></ion-input></ion-item>
+          <ion-item><ion-input label="Mot de passe" labelPlacement="floating" type="password" [(ngModel)]="userForm.password"></ion-input></ion-item>
+          <ion-item><ion-input label="Nom complet" labelPlacement="floating" [(ngModel)]="userForm.nomComplet"></ion-input></ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Email" labelPlacement="floating" [(ngModel)]="userForm.email"></ion-input></ion-item>
+            <ion-item><ion-input label="Téléphone" labelPlacement="floating" [(ngModel)]="userForm.telephone"></ion-input></ion-item>
+          </div>
+          <ion-item>
+            <ion-select label="Rôle" labelPlacement="stacked" [(ngModel)]="userForm.role">
+              <ion-select-option value="VENDEUR">Vendeur</ion-select-option>
+              <ion-select-option value="ADMIN">Admin</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'depots-garde'">
+          <!-- Recherche client dépôt -->
+          <ion-item>
+            <ion-input label="Rechercher un client" labelPlacement="floating"
+              [(ngModel)]="depotClientSearch"
+              (ionInput)="searchDepotClients()"
+              placeholder="Nom ou téléphone..."></ion-input>
+          </ion-item>
+          <div *ngIf="filteredDepotClients.length && depotClientSearch && !selectedDepotClient" class="dropdown-list">
+            <div *ngFor="let c of filteredDepotClients" class="dropdown-item" (click)="selectDepotClient(c)">
+              <strong>{{ c.nomComplet }}</strong> · {{ c.numero }}
+            </div>
+          </div>
+          <!-- Client sélectionné -->
+          <div *ngIf="selectedDepotClient" class="form-panel" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:8px 12px;border-radius:8px">
+            <div class="row-between">
+              <div>
+                <p style="font-weight:600;color:#16a34a">{{ selectedDepotClient.nomComplet }}</p>
+                <p style="font-size:0.8rem;color:#64748b">{{ selectedDepotClient.numero }}</p>
+              </div>
+              <ion-button fill="clear" size="small" color="medium" (click)="clearDepotClient()">
+                <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <!-- Bouton nouveau client -->
+          <ion-button expand="block" fill="outline" size="small" (click)="showNewDepotClientForm = !showNewDepotClientForm" *ngIf="!selectedDepotClient">
+            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            {{ showNewDepotClientForm ? 'Annuler' : '+ Nouveau client' }}
+          </ion-button>
+          <!-- Formulaire nouveau client inline -->
+          <div *ngIf="showNewDepotClientForm" class="form-panel stack" style="border:1px solid #bfdbfe;border-radius:8px;padding:8px">
+            <p class="modal-section-title">Nouveau client dépôt</p>
+            <div class="two-cols">
+              <ion-item><ion-input label="Nom *" labelPlacement="floating" [(ngModel)]="depotClientForm.nom"></ion-input></ion-item>
+              <ion-item><ion-input label="Prénom" labelPlacement="floating" [(ngModel)]="depotClientForm.prenom"></ion-input></ion-item>
+            </div>
+            <ion-item><ion-input label="Téléphone *" labelPlacement="floating" type="tel" [(ngModel)]="depotClientForm.numero"></ion-input></ion-item>
+            <ion-item><ion-input label="Adresse" labelPlacement="floating" [(ngModel)]="depotClientForm.adresse"></ion-input></ion-item>
+            <ion-button expand="block" size="small" color="success" (click)="saveNewDepotClient()">
+              <ion-icon name="save-outline" slot="start"></ion-icon>
+              Créer et sélectionner
+            </ion-button>
+          </div>
+          <ion-item *ngIf="!depotForm.id">
+            <ion-input label="Montant déposé *" labelPlacement="floating" type="number" [(ngModel)]="depotForm.montant"></ion-input>
+          </ion-item>
+          <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="depotForm.observation" rows="2"></ion-textarea></ion-item>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'objectifs-fournisseur'">
+          <ion-item>
+            <ion-select label="Fournisseur *" labelPlacement="stacked" [(ngModel)]="objectifForm.fournisseurId">
+              <ion-select-option [value]="0">— Sélectionner —</ion-select-option>
+              <ion-select-option [value]="f.id" *ngFor="let f of fournisseurs">{{ f.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-select label="Produit concerné *" labelPlacement="stacked" [(ngModel)]="objectifForm.produitId">
+              <ion-select-option [value]="undefined">— Aucun —</ion-select-option>
+              <ion-select-option [value]="p.id" *ngFor="let p of products">{{ p.nom }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item>
+              <ion-select label="Mois *" labelPlacement="stacked" [(ngModel)]="objectifForm.mois">
+                <ion-select-option [value]="1">Janvier</ion-select-option>
+                <ion-select-option [value]="2">Février</ion-select-option>
+                <ion-select-option [value]="3">Mars</ion-select-option>
+                <ion-select-option [value]="4">Avril</ion-select-option>
+                <ion-select-option [value]="5">Mai</ion-select-option>
+                <ion-select-option [value]="6">Juin</ion-select-option>
+                <ion-select-option [value]="7">Juillet</ion-select-option>
+                <ion-select-option [value]="8">Août</ion-select-option>
+                <ion-select-option [value]="9">Septembre</ion-select-option>
+                <ion-select-option [value]="10">Octobre</ion-select-option>
+                <ion-select-option [value]="11">Novembre</ion-select-option>
+                <ion-select-option [value]="12">Décembre</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item><ion-input label="Année *" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.annee"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Objectif quantité *" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.objectifQuantite" placeholder="ex: 50000"></ion-input></ion-item>
+            <ion-item><ion-input label="Bonus/unité (FCFA) *" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.bonusParUnite" placeholder="ex: 25"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Quantité atteinte (auto)" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.quantiteAtteinte" [disabled]="true"></ion-input></ion-item>
+            <ion-item><ion-input label="Quantité bonus reçue" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.quantiteBonusRecue"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="objectifForm.observation" rows="2"></ion-textarea></ion-item>
+        </ng-container>
+      </ng-container>
+
+      <ion-button expand="block" (click)="save()" *ngIf="type !== 'paiement-employe'">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        Enregistrer
+      </ion-button>
+    </section>
+
+    <section class="form-panel stack" *ngIf="type === 'comptes'">
+      <h2 class="card-title">Opération compte</h2>
+      <ion-item>
+        <ion-select label="Compte" labelPlacement="stacked" [(ngModel)]="compteOperation.compteId">
+          <ion-select-option [value]="compte.id" *ngFor="let compte of comptes">{{ compte.nomBanque }} · {{ amount(compte) }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <div class="two-cols">
+        <ion-item>
+          <ion-select label="Type" labelPlacement="stacked" [(ngModel)]="compteOperation.type">
+            <ion-select-option value="VERSEMENT">Versement</ion-select-option>
+            <ion-select-option value="RETRAIT">Retrait</ion-select-option>
+            <ion-select-option value="CHEQUE">Chèque</ion-select-option>
+            <ion-select-option value="FRAIS">Frais</ion-select-option>
+            <ion-select-option value="BON_CAISSE">Bon caisse</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="compteOperation.montant"></ion-input></ion-item>
+      </div>
+      <ion-item><ion-input label="Motif" labelPlacement="floating" [(ngModel)]="compteOperation.motif"></ion-input></ion-item>
+      <ion-button expand="block" (click)="saveCompteOperation()">Enregistrer opération</ion-button>
+      <ion-button expand="block" fill="outline" (click)="transferCaisseBanque()">Transfert caisse vers banque</ion-button>
+    </section>
+
+    <section class="form-panel stack" *ngIf="type === 'dettes'">
+      <h2 class="card-title">Règlement dette</h2>
+      <ion-item>
+        <ion-select label="Dette" labelPlacement="stacked" [(ngModel)]="detteReglement.detteId">
+          <ion-select-option [value]="dette.id" *ngFor="let dette of items">{{ title(dette) }} · {{ amount(dette) }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="detteReglement.montantPaye"></ion-input></ion-item>
+      <ion-button expand="block" (click)="saveDetteReglement()">Régler</ion-button>
+    </section>
+
+    <section class="form-panel stack" *ngIf="type === 'paiement-employe'">
+      <h2 class="card-title">Payer un employé</h2>
+      <ion-item>
+        <ion-select label="Employé" labelPlacement="stacked" [(ngModel)]="paiementForm.employeId">
+          <ion-select-option [value]="employe.id" *ngFor="let employe of employees">{{ employe.nomComplet || employe.nom }} · {{ amount(employe) }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <div class="two-cols">
+        <ion-item><ion-input label="Nombre mois" labelPlacement="floating" type="number" [(ngModel)]="paiementForm.nombreMois"></ion-input></ion-item>
+        <ion-item><ion-input label="Début période" labelPlacement="floating" type="date" [(ngModel)]="paiementForm.periodeDebut"></ion-input></ion-item>
+      </div>
+      <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="paiementForm.observation"></ion-textarea></ion-item>
+      <ion-button expand="block" (click)="payEmploye()">Payer</ion-button>
+    </section>
+
+    <!-- Achat fournisseur inline (masqué - utilisez les modals) -->
+    <section class="form-panel stack" *ngIf="false">
+      <h2 class="card-title">Achat fournisseur</h2>
+      <ion-item>
+        <ion-select label="Fournisseur" labelPlacement="stacked" [(ngModel)]="achatForm.fournisseurId">
+          <ion-select-option [value]="supplier.id" *ngFor="let supplier of fournisseurs">{{ supplier.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-select label="Produit" labelPlacement="stacked" [(ngModel)]="achatForm.produitId">
+          <ion-select-option [value]="product.id" *ngFor="let product of products">{{ product.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <div class="two-cols">
+        <ion-item><ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
+        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
+      </div>
+      <div class="two-cols">
+        <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
+        <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
+      </div>
+      <ion-button expand="block" (click)="saveAchatFournisseur()">Enregistrer achat</ion-button>
+
+      <h2 class="card-title">Paiement fournisseur</h2>
+      <ion-item>
+        <ion-select label="Fournisseur" labelPlacement="stacked" [(ngModel)]="paiementFournisseur.fournisseurId">
+          <ion-select-option [value]="supplier.id" *ngFor="let supplier of fournisseurs">{{ supplier.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
+      <ion-button expand="block" fill="outline" (click)="payFournisseur()">Payer fournisseur</ion-button>
+
+      <h2 class="card-title">Avance fournisseur</h2>
+      <ion-item>
+        <ion-select label="Fournisseur" labelPlacement="stacked" [(ngModel)]="avanceFournisseur.fournisseurId">
+          <ion-select-option [value]="supplier.id" *ngFor="let supplier of fournisseurs">{{ supplier.nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <div class="two-cols">
+        <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="avanceFournisseur.montant"></ion-input></ion-item>
+        <ion-item><ion-input label="Référence" labelPlacement="floating" [(ngModel)]="avanceFournisseur.reference"></ion-input></ion-item>
+      </div>
+      <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="avanceFournisseur.observation"></ion-textarea></ion-item>
+      <ion-button expand="block" fill="outline" (click)="saveAvanceFournisseur()">Enregistrer avance</ion-button>
+
+      <h2 class="card-title">Situation et historiques</h2>
+      <ion-button expand="block" fill="outline" (click)="loadFournisseurDetails()">
+        Charger situation
+      </ion-button>
+      <div class="mini-stats" *ngIf="fournisseurDetails.situation">
+        <span>Solde: {{ amount(fournisseurDetails.situation) }}</span>
+        <span>Avance: {{ amount({ montant: fournisseurDetails.soldeAvance }) }}</span>
+        <span>Achats: {{ fournisseurDetails.achats.length }}</span>
+        <span>Paiements: {{ fournisseurDetails.paiements.length }}</span>
+      </div>
+
+      <h2 class="card-title">Retour ou annulation achat</h2>
+      <div class="two-cols">
+        <ion-item><ion-input label="N° achat" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.achatId"></ion-input></ion-item>
+        <ion-item>
+          <ion-select label="Produit" labelPlacement="stacked" [(ngModel)]="retourAchatForm.produitId">
+            <ion-select-option [value]="product.id" *ngFor="let product of products">{{ product.nom }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
+      <div class="two-cols">
+        <ion-item><ion-input label="Quantité retournée" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.quantiteRetournee"></ion-input></ion-item>
+        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
+      </div>
+      <ion-item><ion-textarea label="Motif" labelPlacement="floating" [(ngModel)]="retourAchatForm.motif"></ion-textarea></ion-item>
+      <ion-button expand="block" fill="outline" (click)="saveRetourAchat()">Enregistrer retour achat</ion-button>
+      <ion-button expand="block" fill="outline" color="danger" (click)="cancelAchatFournisseur()">Annuler achat fournisseur</ion-button>
+    </section>
+
+    <!-- ======= FOURNISSEURS : design style clients ======= -->
+    <ng-container *ngIf="type === 'fournisseurs'">
+
+      <ion-segment [(ngModel)]="fournisseurSegment" style="margin-bottom:4px">
+        <ion-segment-button value="liste">Fournisseurs</ion-segment-button>
+        <ion-segment-button value="achats">Achats</ion-segment-button>
+        <ion-segment-button value="paiements">Paiements</ion-segment-button>
+      </ion-segment>
+
+      <!-- Liste fournisseurs (style clients) -->
+      <section class="stack" *ngIf="fournisseurSegment === 'liste'">
+        <ion-button expand="block" fill="outline" (click)="openNewFournisseur()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Nouveau fournisseur
+        </ion-button>
+
+        <article class="client-card" *ngFor="let f of items">
+          <div class="client-header">
+            <div class="client-avatar">{{ getFournisseurInitiale(f.nom) }}</div>
+            <div class="client-info">
+              <h2 class="client-name">{{ f.nom }}
+                <ion-badge *ngIf="!f.actif" color="medium" style="font-size:0.65rem">Inactif</ion-badge>
+              </h2>
+              <p class="client-phone" *ngIf="f.telephone">
+                <ion-icon name="call-outline"></ion-icon>{{ f.telephone }}
+              </p>
+              <p class="client-email" *ngIf="f.email">
+                <ion-icon name="mail-outline"></ion-icon>{{ f.email }}
+              </p>
+              <p class="client-phone" *ngIf="f.code">
+                <ion-icon name="barcode-outline"></ion-icon>{{ f.code }}
+              </p>
+            </div>
+            <div class="client-edit-btns">
+              <ion-button fill="clear" size="small" (click)="editFournisseurModal(f)">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="small" color="danger" (click)="confirmDeleteFournisseur(f)">
+                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <div class="client-actions">
+            <button class="client-action-btn" (click)="openAchatForFournisseur(f)">
+              <ion-icon name="bag-add-outline"></ion-icon>
+              <span>Achat</span>
+            </button>
+            <button class="client-action-btn accent" (click)="openPaiementForFournisseur(f)">
+              <ion-icon name="cash-outline"></ion-icon>
+              <span>Payer</span>
+            </button>
+            <button class="client-action-btn" (click)="loadFournisseurDetails(f.id)">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>Historique</span>
+            </button>
+          </div>
+        </article>
+
+        <div class="empty-state" *ngIf="!items.length">
+          <ion-icon name="business-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
+          <p>Aucun fournisseur</p>
+        </div>
+      </section>
+
+      <!-- Achats -->
+      <section class="stack" *ngIf="fournisseurSegment === 'achats'">
+        <div class="form-panel stack" *ngIf="fournisseurDetails.achats.length === 0">
+          <p class="muted" style="text-align:center">Cliquez sur "Historique" d'un fournisseur pour voir ses achats</p>
+        </div>
+        <article class="mobile-card" *ngFor="let achat of fournisseurDetails.achats">
+          <div class="row-between">
+            <div>
+              <h2 class="card-title">{{ achat.fournisseurNom || achat.nomFournisseur || 'Fournisseur' }}</h2>
+              <p class="card-subtitle">{{ date(achat.dateAchat || achat.dateCreation) }}</p>
+            </div>
+            <p class="price">{{ amount(achat) }}</p>
+          </div>
+          <div class="mini-stats">
+            <div class="stat-row" *ngIf="achat.montantPaye !== undefined">
+              <span>Payé</span><strong class="success">{{ amount({ montant: achat.montantPaye }) }}</strong>
+            </div>
+            <div class="stat-row" *ngIf="achat.resteAPayer !== undefined">
+              <span>Reste</span><strong class="warning">{{ amount({ montant: achat.resteAPayer }) }}</strong>
+            </div>
+          </div>
+          <div class="action-wrap">
+            <ion-badge [color]="achat.statut === 'ANNULE' ? 'medium' : (achat.resteAPayer > 0 ? 'warning' : 'success')">
+              {{ achat.statut || (achat.resteAPayer > 0 ? 'En cours' : 'Soldé') }}
+            </ion-badge>
+            <ion-button size="small" fill="clear" color="danger" (click)="action(achat, 'annuler-achat')" *ngIf="achat.statut !== 'ANNULE'">
+              <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+              Annuler
+            </ion-button>
+          </div>
+        </article>
+      </section>
+
+      <!-- Paiements -->
+      <section class="stack" *ngIf="fournisseurSegment === 'paiements'">
+        <div class="form-panel" *ngIf="fournisseurDetails.paiements.length === 0">
+          <p class="muted" style="text-align:center">Cliquez sur "Historique" d'un fournisseur pour voir ses paiements</p>
+        </div>
+        <article class="mobile-card" *ngFor="let p of fournisseurDetails.paiements">
+          <div class="row-between">
+            <div>
+              <h2 class="card-title">{{ p.fournisseurNom || 'Fournisseur' }}</h2>
+              <p class="card-subtitle">{{ date(p.datePaiement || p.dateCreation) }}</p>
+            </div>
+            <p class="price">{{ amount(p) }}</p>
+          </div>
+          <p class="muted" *ngIf="p.reference">Réf: {{ p.reference }}</p>
+          <ion-badge color="primary">{{ p.modePaiement || 'ESPECES' }}</ion-badge>
+        </article>
+      </section>
+
+      <!-- Situation fournisseur sélectionné -->
+      <div class="form-panel stack" *ngIf="fournisseurDetails.situation">
+        <h2 class="card-title">Situation · {{ selectedFournisseur?.nom }}</h2>
+        <div class="color-cards" style="margin-top:8px">
+          <div class="color-card cc-blue">
+            <ion-icon name="business-outline"></ion-icon>
+            <p class="cc-label">Solde</p>
+            <p class="cc-value">{{ amount(fournisseurDetails.situation) }}</p>
+          </div>
+          <div class="color-card cc-green">
+            <ion-icon name="wallet-outline"></ion-icon>
+            <p class="cc-label">Avance</p>
+            <p class="cc-value">{{ amount({ montant: fournisseurDetails.soldeAvance }) }}</p>
+          </div>
+          <div class="color-card cc-orange">
+            <ion-icon name="bag-outline"></ion-icon>
+            <p class="cc-label">Achats</p>
+            <p class="cc-value">{{ fournisseurDetails.achats.length }}</p>
+          </div>
+          <div class="color-card cc-teal">
+            <ion-icon name="cash-outline"></ion-icon>
+            <p class="cc-label">Paiements</p>
+            <p class="cc-value">{{ fournisseurDetails.paiements.length }}</p>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+    <!-- ======= FIN FOURNISSEURS ======= -->
+
+    <!-- Vendeurs et Employés : style carte client -->
+    <ng-container *ngIf="type === 'vendeurs' || type === 'employes'">
+      <section class="stack" *ngIf="items.length; else emptyGeneric">
+        <article class="user-profile-card" *ngFor="let item of items">
+
+          <!-- Bandeau rôle -->
+          <div class="upc-band"
+               [class.upc-band--admin]="item.role === 'ADMIN'"
+               [class.upc-band--employe]="type === 'employes'"></div>
+
+          <!-- Avatar + statut -->
+          <div class="upc-avatar-section">
+            <div class="upc-avatar"
+                 [class.upc-avatar--admin]="item.role === 'ADMIN'"
+                 [class.upc-avatar--employe]="type === 'employes'">
+              <span class="upc-initials">
+                {{ getInitiales(item.nomComplet || item.prenom || item.username || '?') }}
+              </span>
+            </div>
+            <div class="upc-status-dot"
+                 [class.upc-status-dot--active]="item.actif || item.statut === 'ACTIF'"></div>
+          </div>
+
+          <!-- Infos principales -->
+          <div class="upc-body">
+            <div class="upc-name-row">
+              <h2 class="upc-name">{{ item.nomComplet || (item.prenom + ' ' + item.nom) || item.username }}</h2>
+              <ion-button fill="clear" size="small" (click)="edit(item)" class="upc-edit-btn">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+            <p class="upc-username" *ngIf="item.username">
+              <ion-icon name="at-outline"></ion-icon> {{ item.username }}
+            </p>
+
+            <!-- Badges rôle + statut -->
+            <div class="upc-badges">
+              <span class="upc-badge upc-badge--role"
+                    [class.upc-badge--admin]="item.role === 'ADMIN'"
+                    [class.upc-badge--employe]="type === 'employes'" *ngIf="item.role || type === 'employes'">
+                <ion-icon [name]="item.role === 'ADMIN' ? 'shield-checkmark-outline' : (type === 'employes' ? 'briefcase-outline' : 'storefront-outline')"></ion-icon>
+                {{ item.role === 'ADMIN' ? 'Administrateur' : (type === 'employes' ? 'Employé' : 'Vendeur') }}
+              </span>
+              <span class="upc-badge"
+                    [class.upc-badge--active]="item.actif || item.statut === 'ACTIF'"
+                    [class.upc-badge--inactive]="!item.actif && item.statut !== 'ACTIF'">
+                <ion-icon [name]="(item.actif || item.statut === 'ACTIF') ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
+                {{ (item.actif || item.statut === 'ACTIF') ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+
+            <!-- Contacts -->
+            <div class="upc-contacts">
+              <div class="upc-contact" *ngIf="item.telephone">
+                <ion-icon name="call-outline"></ion-icon>
+                <span>{{ item.telephone }}</span>
+              </div>
+              <div class="upc-contact" *ngIf="item.email">
+                <ion-icon name="mail-outline"></ion-icon>
+                <span>{{ item.email }}</span>
+              </div>
+              <div class="upc-contact" *ngIf="item.poste">
+                <ion-icon name="briefcase-outline"></ion-icon>
+                <span>{{ item.poste }}<span *ngIf="item.salaireMensuel"> · {{ amount(item) }}/mois</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="upc-actions">
+            <ng-container *ngIf="type === 'employes'">
+              <button class="upc-action-btn upc-action-btn--success" (click)="action(item, 'activate-employe')" *ngIf="item.statut !== 'ACTIF'">
+                <ion-icon name="checkmark-circle-outline"></ion-icon> Activer
+              </button>
+              <button class="upc-action-btn upc-action-btn--warn" (click)="action(item, 'deactivate-employe')" *ngIf="item.statut === 'ACTIF'">
+                <ion-icon name="pause-circle-outline"></ion-icon> Désactiver
+              </button>
+              <button class="upc-action-btn upc-action-btn--danger" (click)="action(item, 'delete-employe')">
+                <ion-icon name="trash-outline"></ion-icon> Supprimer
+              </button>
+            </ng-container>
+            <ng-container *ngIf="type === 'vendeurs'">
+              <button class="upc-action-btn upc-action-btn--danger" (click)="action(item, 'delete-user')">
+                <ion-icon name="trash-outline"></ion-icon> Supprimer
+              </button>
+            </ng-container>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+
+    <!-- ======= DÉPÔTS GARDE ======= -->
+    <ng-container *ngIf="type === 'depots-garde'">
+      <section class="stack" *ngIf="items.length; else emptyGeneric">
+        <article class="client-card" *ngFor="let depot of items">
+          <div class="client-header">
+            <div class="client-avatar" [style.background]="depot.statut === 'CLOTURE' ? '#94a3b8' : '#2563eb'">
+              {{ (depot.nom || '?')[0].toUpperCase() }}
+            </div>
+            <div class="client-info">
+              <h2 class="client-name">
+                {{ depot.nomComplet }}
+                <ion-badge [color]="depot.statut === 'ACTIF' ? 'success' : 'medium'" style="font-size:0.62rem">{{ depot.statut }}</ion-badge>
+              </h2>
+              <p class="client-phone">
+                <ion-icon name="call-outline"></ion-icon>{{ depot.numero }}
+              </p>
+              <p class="client-phone">
+                <ion-icon name="wallet-outline"></ion-icon>
+                Restant : <strong>{{ formatDepotMontant(depot.montantRestant) }}</strong>
+                &nbsp;/&nbsp; Déposé : {{ formatDepotMontant(depot.montantInitial) }}
+              </p>
+              <div *ngIf="depot.montantRetire > 0" style="margin-top:4px">
+                <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
+                  <div [style.width.%]="getPourcentageRetire(depot)" [style.background]="depot.statut === 'CLOTURE' ? '#94a3b8' : '#f59e0b'" style="height:100%;border-radius:3px"></div>
+                </div>
+                <p style="font-size:0.7rem;color:#64748b;margin-top:2px">{{ getPourcentageRetire(depot) }}% retiré</p>
+              </div>
+            </div>
+            <div class="client-edit-btns">
+              <ion-button fill="clear" size="small" (click)="edit(depot)" *ngIf="depot.statut === 'ACTIF'">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <div class="client-actions">
+            <button class="client-action-btn accent" (click)="openDepotRetrait(depot)" *ngIf="depot.statut === 'ACTIF'">
+              <ion-icon name="cash-outline"></ion-icon>
+              <span>Retrait</span>
+            </button>
+            <button class="client-action-btn" (click)="openDepotDetail(depot)">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>Historique</span>
+            </button>
+            <button class="client-action-btn" style="color:#dc2626" (click)="confirmCloturerDepot(depot)" *ngIf="depot.statut === 'ACTIF'">
+              <ion-icon name="lock-closed-outline" style="color:#dc2626"></ion-icon>
+              <span>Clôturer</span>
+            </button>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+    <!-- ======= FIN DÉPÔTS GARDE ======= -->
+
+    <!-- ======= OBJECTIFS FOURNISSEURS ======= -->
+    <ng-container *ngIf="type === 'objectifs-fournisseur'">
+      <section class="stack" *ngIf="items.length; else emptyGeneric">
+        <article class="client-card" *ngFor="let o of items">
+          <div class="client-header">
+            <div class="client-avatar" [style.background]="o.statut === 'ATTEINT' ? '#16a34a' : '#f59e0b'">
+              {{ (o.fournisseurNom || '?')[0].toUpperCase() }}
+            </div>
+            <div class="client-info">
+              <h2 class="client-name">
+                {{ o.fournisseurNom }}
+                <ion-badge [color]="o.statut === 'ATTEINT' ? 'success' : 'warning'" style="font-size:0.62rem">
+                  {{ o.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint' }}
+                </ion-badge>
+                <ion-badge *ngIf="o.stockAjoute" color="primary" style="font-size:0.58rem">Stock ✓</ion-badge>
+              </h2>
+              <p class="client-phone">
+                <ion-icon name="calendar-outline"></ion-icon>
+                {{ moisLabels[o.mois] }} {{ o.annee }}
+                <span *ngIf="o.produitNom"> · {{ o.produitNom }}</span>
+              </p>
+              <p class="client-phone">
+                <ion-icon name="trophy-outline"></ion-icon>
+                Objectif : {{ o.objectifQuantite | number:'1.0-0' }} u. · Atteint : {{ o.quantiteAtteinte | number:'1.0-0' }} u.
+              </p>
+              <div style="margin-top:4px">
+                <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
+                  <div [style.width.%]="objectifFournisseurService.getPourcentageAtteinte(o)"
+                    [style.background]="o.statut === 'ATTEINT' ? '#16a34a' : '#f59e0b'"
+                    style="height:100%;border-radius:3px"></div>
+                </div>
+                <p style="font-size:0.7rem;color:#64748b;margin-top:2px">
+                  {{ objectifFournisseurService.getPourcentageAtteinte(o) }}% · Bonus : {{ objectifFournisseurService.formatMontant(o.bonusCalcule) }}
+                </p>
+              </div>
+            </div>
+            <div class="client-edit-btns">
+              <ion-button fill="clear" size="small" (click)="edit(o)" *ngIf="!o.stockAjoute">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <div class="client-actions">
+            <button class="client-action-btn accent"
+              *ngIf="o.statut === 'ATTEINT' && !o.stockAjoute"
+              (click)="action(o, 'objectif-valider')">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>Valider stock</span>
+            </button>
+            <button class="client-action-btn" style="color:#dc2626"
+              (click)="action(o, 'objectif-delete')" *ngIf="!o.stockAjoute">
+              <ion-icon name="trash-outline" style="color:#dc2626"></ion-icon>
+              <span>Supprimer</span>
+            </button>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+    <!-- ======= FIN OBJECTIFS FOURNISSEURS ======= -->
+
+    <!-- Autres types : liste générique -->
+    <section class="stack" *ngIf="type !== 'fournisseurs' && type !== 'vendeurs' && type !== 'employes' && type !== 'depots-garde' && type !== 'objectifs-fournisseur' && items.length; else emptyGeneric">
+      <article class="mobile-card" *ngFor="let item of items">
+        <div class="row-between">
+          <div>
+            <h2 class="card-title">{{ title(item) }}</h2>
+            <p class="card-subtitle">{{ subtitle(item) }}</p>
+          </div>
+          <p class="price">{{ amount(item) }}</p>
+        </div>
+        <p class="muted">{{ date(item.dateCreation || item.datePaiement || item.dateCredit || item.dateEmbauche) }}</p>
+
+        <div class="action-wrap">
+          <ion-button size="small" fill="clear" (click)="edit(item)" *ngIf="type !== 'paiement-employe'">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Modifier
+          </ion-button>
+
+          <ng-container [ngSwitch]="type">
+            <ng-container *ngSwitchCase="'factures'">
+              <ion-button size="small" fill="clear" (click)="action(item, 'print')">Imprimer</ion-button>
+              <ion-button size="small" fill="clear" color="primary" (click)="action(item, 'pdf-dl')">
+                <ion-icon name="download-outline" slot="start"></ion-icon>PDF
+              </ion-button>
+              <ion-button size="small" fill="clear" color="tertiary" (click)="action(item, 'pdf-view')">
+                <ion-icon name="eye-outline" slot="start"></ion-icon>Voir
+              </ion-button>
+              <ion-button size="small" fill="clear" color="success" (click)="action(item, 'validate')" *ngIf="item.statut === 'BROUILLON'">Valider</ion-button>
+              <ion-button size="small" fill="clear" color="warning" (click)="action(item, 'cancel-facture')" *ngIf="item.statut !== 'ANNULEE'">Annuler</ion-button>
+              <ion-button size="small" fill="clear" color="danger" (click)="action(item, 'delete-facture')" *ngIf="item.statut === 'BROUILLON'">Supprimer</ion-button>
+            </ng-container>
+            <ng-container *ngSwitchCase="'dettes'">
+              <ion-button size="small" fill="clear" color="danger" (click)="action(item, 'delete-dette')">Supprimer</ion-button>
+            </ng-container>
+            <ng-container *ngSwitchCase="'paiement-employe'">
+              <ion-button size="small" fill="clear" color="warning" (click)="action(item, 'cancel-paie')" *ngIf="item.statut !== 'ANNULE'">Annuler</ion-button>
+            </ng-container>
+          </ng-container>
+        </div>
+      </article>
+    </section>
+
+    <ng-template #emptyGeneric>
+      <div class="empty-state" *ngIf="type !== 'fournisseurs'">Aucune donnée</div>
+    </ng-template>
+  </div>
+</ion-content>
+
+<!-- ==================== MODAL FOURNISSEUR (ajout/modif) ==================== -->
+<ion-modal [isOpen]="showFournisseurFormModal" (didDismiss)="showFournisseurFormModal = false" *ngIf="type === 'fournisseurs'">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar [color]="selected ? 'warning' : 'primary'">
+        <ion-title>{{ selected ? 'Modifier fournisseur' : 'Nouveau fournisseur' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showFournisseurFormModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Informations</p>
+          <div class="two-cols">
+            <ion-item><ion-input label="Nom *" labelPlacement="floating" [(ngModel)]="fournisseurForm.nom" placeholder="Nom du fournisseur"></ion-input></ion-item>
+            <ion-item><ion-input label="Code * (ex: FOUR-001)" labelPlacement="floating" [(ngModel)]="fournisseurForm.code" placeholder="FOUR-001"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Téléphone" labelPlacement="floating" type="tel" [(ngModel)]="fournisseurForm.telephone"></ion-input></ion-item>
+            <ion-item><ion-input label="Email" labelPlacement="floating" type="email" [(ngModel)]="fournisseurForm.email"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="fournisseurForm.adresse" rows="2"></ion-textarea></ion-item>
+          <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="fournisseurForm.description" rows="2"></ion-textarea></ion-item>
+          <ion-item>
+            <ion-label>Fournisseur actif</ion-label>
+            <ion-checkbox slot="end" [(ngModel)]="fournisseurForm.actif"></ion-checkbox>
+          </ion-item>
+        </div>
+        <ion-button expand="block" [color]="selected ? 'warning' : 'primary'" (click)="saveFournisseurModal()">
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ selected ? 'Enregistrer les modifications' : 'Créer le fournisseur' }}
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL ACHAT FOURNISSEUR ==================== -->
+<ion-modal [isOpen]="showAchatModal" (didDismiss)="showAchatModal = false" *ngIf="type === 'fournisseurs'">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Achat · {{ selectedFournisseur?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showAchatModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Produit acheté</p>
+          <ion-item>
+            <ion-select label="Produit *" labelPlacement="stacked" [(ngModel)]="achatForm.produitId">
+              <ion-select-option [value]="p.id" *ngFor="let p of products">{{ p.nom }} · Stock: {{ p.quantite }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Quantité *" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
+            <ion-item><ion-input label="Prix achat *" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
+            <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Commentaire" labelPlacement="floating" [(ngModel)]="achatForm.commentaire" rows="2"></ion-textarea></ion-item>
+        </div>
+        <ion-button expand="block" color="primary" (click)="saveAchatModal()">
+          <ion-icon name="bag-add-outline" slot="start"></ion-icon>
+          Enregistrer l'achat
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL PAIEMENT FOURNISSEUR ==================== -->
+<ion-modal [isOpen]="showPaiementModal" (didDismiss)="showPaiementModal = false" *ngIf="type === 'fournisseurs'">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="secondary">
+        <ion-title>Paiement · {{ selectedFournisseur?.nom }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showPaiementModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Détails du paiement</p>
+          <ion-item><ion-input label="Montant *" labelPlacement="floating" type="number" [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
+          <ion-item>
+            <ion-select label="Mode paiement" labelPlacement="stacked" [(ngModel)]="paiementFournisseur.modePaiement">
+              <ion-select-option value="ESPECES">Espèces</ion-select-option>
+              <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+              <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+              <ion-select-option value="VIREMENT">Virement</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item><ion-input label="Référence" labelPlacement="floating" [(ngModel)]="paiementFournisseur.reference"></ion-input></ion-item>
+          <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="paiementFournisseur.observation" rows="2"></ion-textarea></ion-item>
+        </div>
+        <ion-button expand="block" color="secondary" (click)="savePaiementModal()">
+          <ion-icon name="cash-outline" slot="start"></ion-icon>
+          Enregistrer le paiement
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL RETRAIT DÉPÔT ==================== -->
+<ion-modal [isOpen]="showDepotRetraitModal" (didDismiss)="showDepotRetraitModal = false" *ngIf="type === 'depots-garde'">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="warning">
+        <ion-title>Retrait · {{ selectedDepot?.nomComplet }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showDepotRetraitModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+        <div class="modal-section">
+          <p class="modal-section-title">Solde disponible</p>
+          <div class="color-cards" style="margin-bottom:8px">
+            <div class="color-card cc-blue">
+              <ion-icon name="wallet-outline"></ion-icon>
+              <p class="cc-label">Restant</p>
+              <p class="cc-value">{{ formatDepotMontant(selectedDepot?.montantRestant || 0) }}</p>
+            </div>
+            <div class="color-card cc-orange">
+              <ion-icon name="arrow-up-outline"></ion-icon>
+              <p class="cc-label">Retiré</p>
+              <p class="cc-value">{{ formatDepotMontant(selectedDepot?.montantRetire || 0) }}</p>
+            </div>
+          </div>
+          <p class="modal-section-title">Retrait</p>
+          <ion-item>
+            <ion-input label="Montant à retirer *" labelPlacement="floating" type="number" [(ngModel)]="retraitDepotForm.montant" [max]="selectedDepot?.montantRestant ?? null"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="retraitDepotForm.observation" rows="2"></ion-textarea>
+          </ion-item>
+        </div>
+        <ion-button expand="block" color="warning" (click)="saveDepotRetrait()">
+          <ion-icon name="cash-outline" slot="start"></ion-icon>
+          Effectuer le retrait
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL DÉTAIL DÉPÔT ==================== -->
+<ion-modal [isOpen]="showDepotDetailModal" (didDismiss)="showDepotDetailModal = false" *ngIf="type === 'depots-garde'">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Historique · {{ depotDetail?.nomComplet }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showDepotDetailModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack" *ngIf="depotDetail">
+        <div class="color-cards">
+          <div class="color-card cc-blue">
+            <ion-icon name="archive-outline"></ion-icon>
+            <p class="cc-label">Déposé</p>
+            <p class="cc-value">{{ formatDepotMontant(depotDetail.montantInitial) }}</p>
+          </div>
+          <div class="color-card cc-green">
+            <ion-icon name="wallet-outline"></ion-icon>
+            <p class="cc-label">Restant</p>
+            <p class="cc-value">{{ formatDepotMontant(depotDetail.montantRestant) }}</p>
+          </div>
+          <div class="color-card cc-orange">
+            <ion-icon name="arrow-up-outline"></ion-icon>
+            <p class="cc-label">Retiré</p>
+            <p class="cc-value">{{ formatDepotMontant(depotDetail.montantRetire) }}</p>
+          </div>
+        </div>
+
+        <div class="form-panel stack" style="margin-top:8px">
+          <div class="row-between">
+            <p class="modal-section-title" style="margin:0">Téléphone</p>
+            <p>{{ depotDetail.numero }}</p>
+          </div>
+          <div class="row-between">
+            <p class="modal-section-title" style="margin:0">Statut</p>
+            <ion-badge [color]="depotDetail.statut === 'ACTIF' ? 'success' : 'medium'">{{ depotDetail.statut }}</ion-badge>
+          </div>
+          <div class="row-between">
+            <p class="modal-section-title" style="margin:0">Date dépôt</p>
+            <p>{{ date(depotDetail.dateDepot) }}</p>
+          </div>
+          <p *ngIf="depotDetail.observation" style="font-size:0.85rem;color:#64748b">{{ depotDetail.observation }}</p>
+        </div>
+
+        <h3 style="font-size:0.9rem;font-weight:600;margin:8px 0 4px">Historique des retraits ({{ depotDetail.retraits?.length || 0 }})</h3>
+
+        <div class="empty-state" *ngIf="!depotDetail.retraits?.length">
+          <p>Aucun retrait enregistré</p>
+        </div>
+
+        <article class="mobile-card" *ngFor="let r of depotDetail.retraits">
+          <div class="row-between">
+            <div>
+              <h2 class="card-title">Retrait</h2>
+              <p class="card-subtitle">{{ date(r.dateRetrait) }}</p>
+            </div>
+            <p class="price" style="color:#f59e0b">- {{ formatDepotMontant(r.montant) }}</p>
+          </div>
+          <p class="muted" *ngIf="r.observation">{{ r.observation }}</p>
+        </article>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -1,0 +1,154 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Mobile Money</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="exportCsv()" title="Télécharger CSV">
+        <ion-icon name="download-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Onglets opérations / résumé -->
+  <ion-segment [(ngModel)]="activeTab" style="margin-bottom:12px">
+    <ion-segment-button value="operations">
+      <ion-label>Opérations</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="resume">
+      <ion-label>Résumé</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- ===== ONGLET OPÉRATIONS ===== -->
+  <div *ngIf="activeTab === 'operations'">
+
+    <!-- Filtre type -->
+    <ion-segment [(ngModel)]="type" (ionChange)="onTypeChange($any($event).detail.value)" style="margin-bottom:8px">
+      <ion-segment-button value="TOUS">
+        <ion-label>Tous</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="ORANGE_MONEY">
+        <ion-label>🟠 Orange</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="MOOV_MONEY">
+        <ion-label>🔵 Moov</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <!-- Filtre période -->
+    <ion-segment [(ngModel)]="periode" (ionChange)="onPeriodeChange($any($event).detail.value)" style="margin-bottom:12px">
+      <ion-segment-button value="JOUR"><ion-label>Jour</ion-label></ion-segment-button>
+      <ion-segment-button value="SEMAINE"><ion-label>Semaine</ion-label></ion-segment-button>
+      <ion-segment-button value="MOIS"><ion-label>Mois</ion-label></ion-segment-button>
+      <ion-segment-button value="ANNEE"><ion-label>Année</ion-label></ion-segment-button>
+    </ion-segment>
+
+    <!-- Totaux -->
+    <ion-grid style="margin-bottom:12px">
+      <ion-row>
+        <ion-col size="6">
+          <ion-card color="warning" style="margin:4px;text-align:center">
+            <ion-card-content>
+              <div style="font-size:11px;color:#333">🟠 Orange Money</div>
+              <div style="font-weight:700;font-size:16px;color:#333">{{ formatMontant(totalOrange) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="6">
+          <ion-card color="primary" style="margin:4px;text-align:center">
+            <ion-card-content>
+              <div style="font-size:11px;color:#fff">🔵 Moov Money</div>
+              <div style="font-weight:700;font-size:16px;color:#fff">{{ formatMontant(totalMoov) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12">
+          <ion-card color="success" style="margin:4px;text-align:center">
+            <ion-card-content>
+              <div style="font-size:11px;color:#fff">Total {{ periodeLabel() }} — {{ nombreOperations }} opération(s)</div>
+              <div style="font-weight:700;font-size:18px;color:#fff">{{ formatMontant(totalGlobal) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- Loading -->
+    <div *ngIf="loading" style="text-align:center;padding:20px">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <!-- Liste opérations -->
+    <ion-list *ngIf="!loading">
+      <ion-item *ngFor="let op of operations" lines="full">
+        <ion-label>
+          <h3 style="font-weight:600">
+            {{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}
+          </h3>
+          <p>{{ op.dateVente | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p *ngIf="op.clientNom">Client : {{ op.clientNom }}</p>
+          <p *ngIf="op.referencePaiement" style="color:#666;font-size:11px">Réf : {{ op.referencePaiement }}</p>
+        </ion-label>
+        <ion-note slot="end" color="dark" style="font-weight:700;font-size:15px">
+          {{ formatMontant(op.montantTotal) }}
+        </ion-note>
+      </ion-item>
+      <ion-item *ngIf="operations.length === 0" lines="none">
+        <ion-label style="text-align:center;color:#999;padding:20px">
+          Aucune opération pour cette période
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+  </div>
+
+  <!-- ===== ONGLET RÉSUMÉ ===== -->
+  <div *ngIf="activeTab === 'resume' && resume">
+
+    <ion-card *ngFor="let p of [
+      {label: 'Aujourd\'hui', key: 'jour'},
+      {label: 'Cette semaine', key: 'semaine'},
+      {label: 'Ce mois', key: 'mois'},
+      {label: 'Cette année', key: 'annee'}
+    ]">
+      <ion-card-header>
+        <ion-card-title style="font-size:16px">📅 {{ p.label }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div style="text-align:center">
+                <div style="font-size:11px;color:#888">🟠 Orange ({{ resume[p.key]?.nombreOrange || 0 }})</div>
+                <div style="font-weight:700;font-size:15px">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div style="text-align:center">
+                <div style="font-size:11px;color:#888">🔵 Moov ({{ resume[p.key]?.nombreMoov || 0 }})</div>
+                <div style="font-weight:700;font-size:15px">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <div style="text-align:center;border-top:1px solid #eee;padding-top:8px;margin-top:4px">
+                <div style="font-size:11px;color:#888">Total ({{ resume[p.key]?.nombreTotal || 0 }} opérations)</div>
+                <div style="font-weight:700;font-size:17px;color:var(--ion-color-success)">{{ formatMontant(resume[p.key]?.total || 0) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+
+</ion-content>

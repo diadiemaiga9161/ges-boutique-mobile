@@ -1,0 +1,19 @@
+ion-item { --padding-start: 12px; }
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  ion-card {
+    margin: 10px 0;
+  }
+
+  ion-card-content {
+    font-size: 0.95rem;
+  }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  ion-card-content {
+    font-size: 1rem;
+  }
+}

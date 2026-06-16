@@ -1,0 +1,312 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Factures</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="load()" fill="clear">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ═══ HERO STATS ═══ -->
+  <div class="fact-hero">
+    <div class="hs hs--blue">
+      <p class="hs-label">Total</p>
+      <p class="hs-val">{{ money(totalMontant) }}</p>
+    </div>
+    <div class="hs">
+      <p class="hs-label">Brouillons</p>
+      <p class="hs-val">{{ nbBrouillons }}</p>
+    </div>
+    <div class="hs hs--green">
+      <p class="hs-label">Validées</p>
+      <p class="hs-val">{{ nbValides }}</p>
+    </div>
+    <div class="hs">
+      <p class="hs-label">Payées</p>
+      <p class="hs-val">{{ nbPayees }}</p>
+    </div>
+  </div>
+
+  <!-- ═══ FILTRES ═══ -->
+  <div class="fact-filters">
+    <div class="search-wrap">
+      <ion-icon name="search-outline"></ion-icon>
+      <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()"
+             placeholder="N° facture ou client..." />
+    </div>
+    <div class="statut-chips">
+      <button class="chip chip--brouillon" [class.chip--active]="filterStatut==='BROUILLON'"
+              (click)="setFilterStatut('BROUILLON')">Brouillon</button>
+      <button class="chip chip--valide" [class.chip--active]="filterStatut==='VALIDE'"
+              (click)="setFilterStatut('VALIDE')">Validée</button>
+      <button class="chip chip--payee" [class.chip--active]="filterStatut==='PAYEE'"
+              (click)="setFilterStatut('PAYEE')">Payée</button>
+      <button class="chip chip--annulee" [class.chip--active]="filterStatut==='ANNULEE'"
+              (click)="setFilterStatut('ANNULEE')">Annulée</button>
+    </div>
+  </div>
+
+  <!-- ═══ BOUTON CRÉER ═══ -->
+  <button class="btn-creer" (click)="openCreateModal()">
+    <ion-icon name="add-circle-outline"></ion-icon>
+    Nouvelle facture pro forma
+  </button>
+
+  <!-- ═══ LOADING ═══ -->
+  <div style="text-align:center;padding:30px" *ngIf="loading">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <!-- ═══ LISTE ═══ -->
+  <div class="fact-list" *ngIf="!loading">
+
+    <div class="empty-state" *ngIf="!filtered.length">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <p>Aucune facture trouvée</p>
+    </div>
+
+    <div class="fact-card" *ngFor="let f of filtered" (click)="openDetail(f)">
+      <div class="fact-card-top">
+        <span class="fact-num">{{ f.numeroFacture }}</span>
+        <span class="fact-montant">{{ money(f.montantTotal) }}</span>
+      </div>
+      <div class="fact-card-mid">
+        <span class="fact-client">
+          <ion-icon name="person-outline"></ion-icon>
+          {{ f.clientNom || 'Client divers' }}
+        </span>
+        <span class="fact-date">{{ formatDate(f.dateCreation) }}</span>
+      </div>
+      <div class="fact-card-actions">
+        <ion-badge [color]="statutColor(f.statut)" style="font-size:.7rem;margin-right:auto;align-self:center">
+          {{ statutLabel(f.statut) }}
+        </ion-badge>
+        <button class="act-btn act-btn--eye" (click)="$event.stopPropagation(); openDetail(f)">
+          <ion-icon name="eye-outline"></ion-icon>
+        </button>
+        <button class="act-btn act-btn--qr" (click)="$event.stopPropagation(); ouvrirQr(f)">
+          <ion-icon name="qr-code-outline"></ion-icon>
+        </button>
+        <button class="act-btn act-btn--pdf" (click)="$event.stopPropagation(); telechargerPdf(f)">
+          <ion-icon name="document-outline"></ion-icon> PDF
+        </button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — DÉTAIL FACTURE
+════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showDetailModal" (didDismiss)="closeDetail()" [breakpoints]="[0,0.9]" [initialBreakpoint]="0.9">
+  <ng-template>
+    <div class="detail-header">
+      <p class="detail-title">{{ selectedFacture?.numeroFacture }}</p>
+      <button class="detail-close" (click)="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body" *ngIf="selectedFacture">
+
+      <span class="detail-badge detail-badge--{{ statutColor(selectedFacture.statut) }}">
+        {{ statutLabel(selectedFacture.statut) }}
+      </span>
+
+      <div class="detail-info">
+        <div class="di-row">
+          <span class="di-label">Client</span>
+          <span class="di-val">{{ selectedFacture.clientNom || 'Client divers' }}</span>
+        </div>
+        <div class="di-row" *ngIf="selectedFacture.clientTelephone">
+          <span class="di-label">Téléphone</span>
+          <span class="di-val">{{ selectedFacture.clientTelephone }}</span>
+        </div>
+        <div class="di-row">
+          <span class="di-label">Date</span>
+          <span class="di-val">{{ formatDate(selectedFacture.dateCreation) }}</span>
+        </div>
+        <div class="di-row" *ngIf="selectedFacture.notes">
+          <span class="di-label">Notes</span>
+          <span class="di-val">{{ selectedFacture.notes }}</span>
+        </div>
+      </div>
+
+      <p class="detail-lignes-title">Produits ({{ selectedFacture.lignes?.length || 0 }})</p>
+      <div class="detail-ligne" *ngFor="let l of selectedFacture.lignes">
+        <span class="dl-name">{{ l.designation || l.produitNom || 'Produit' }}</span>
+        <span class="dl-qty">x{{ l.quantite }}</span>
+        <span class="dl-total">{{ money(l.sousTotal || l.quantite * l.prixUnitaire) }}</span>
+      </div>
+
+      <div class="detail-total">
+        <span class="dt-label">Total à payer</span>
+        <span class="dt-val">{{ money(selectedFacture.montantTotal) }}</span>
+      </div>
+
+      <div class="detail-actions">
+        <button class="detail-btn detail-btn--pdf" (click)="telechargerPdf(selectedFacture!)">
+          <ion-icon name="download-outline"></ion-icon> PDF
+        </button>
+        <button class="detail-btn detail-btn--qr" (click)="ouvrirQr(selectedFacture!); closeDetail()">
+          <ion-icon name="qr-code-outline"></ion-icon> QR Code
+        </button>
+      </div>
+
+      <!-- Actions admin -->
+      <div class="admin-actions" *ngIf="auth.isAdmin()">
+        <button class="admin-btn admin-btn--valide"
+                *ngIf="selectedFacture.statut === 'BROUILLON'"
+                (click)="changerStatut(selectedFacture!, 'VALIDE')">
+          ✓ Valider
+        </button>
+        <button class="admin-btn admin-btn--payee"
+                *ngIf="selectedFacture.statut === 'VALIDE'"
+                (click)="changerStatut(selectedFacture!, 'PAYEE')">
+          ✓ Payée
+        </button>
+        <button class="admin-btn admin-btn--annule"
+                *ngIf="selectedFacture.statut !== 'ANNULEE' && selectedFacture.statut !== 'PAYEE'"
+                (click)="changerStatut(selectedFacture!, 'ANNULEE')">
+          ✕ Annuler
+        </button>
+      </div>
+
+    </div>
+  </ng-template>
+</ion-modal>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — QR CODE
+════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showQrModal" (didDismiss)="fermerQr()" [breakpoints]="[0,0.5]" [initialBreakpoint]="0.5">
+  <ng-template>
+    <div class="detail-header" style="padding:14px 16px 0">
+      <p class="detail-title">QR Code Facture</p>
+      <button class="detail-close" (click)="fermerQr()">✕</button>
+    </div>
+    <div class="qr-body">
+      <p>{{ factureForQr?.numeroFacture }} — {{ factureForQr?.clientNom || 'Client divers' }}</p>
+      <img [src]="getQrUrl(factureForQr)" alt="QR Code" width="200" height="200">
+      <p style="font-size:.78rem;color:#94a3b8">Scannez pour télécharger le PDF de la facture</p>
+    </div>
+  </ng-template>
+</ion-modal>
+
+<!-- ════════════════════════════════════════════════════
+     MODAL — NOUVELLE FACTURE PRO FORMA
+════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showCreateModal" (didDismiss)="showCreateModal=false" [breakpoints]="[0,1]" [initialBreakpoint]="1">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title style="font-size:.95rem">Nouvelle facture pro forma</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showCreateModal=false" fill="clear">Fermer</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <!-- Client -->
+      <div class="pf-section">
+        <p class="pf-section-title">
+          <ion-icon name="person-outline"></ion-icon> Client (optionnel)
+        </p>
+        <input class="pf-input" type="text" [(ngModel)]="proformaForm.clientNom"
+               placeholder="Nom du client..." />
+        <input class="pf-input" type="tel" [(ngModel)]="proformaForm.clientTelephone"
+               placeholder="Téléphone..." />
+      </div>
+
+      <!-- Articles -->
+      <div class="pf-section">
+        <p class="pf-section-title">
+          <ion-icon name="cart-outline"></ion-icon> Articles
+        </p>
+
+        <!-- Recherche optionnelle dans le catalogue -->
+        <div class="pf-catalog-wrap">
+          <div class="pf-catalog-search">
+            <ion-icon name="search-outline"></ion-icon>
+            <input type="text" [(ngModel)]="produitSearch"
+                   (focus)="showProduitSearch=true"
+                   (input)="showProduitSearch=true"
+                   placeholder="Chercher un produit du catalogue..." />
+          </div>
+          <div class="pf-catalog-results" *ngIf="showProduitSearch && filteredProduits.length">
+            <div class="pf-catalog-item" *ngFor="let p of filteredProduits"
+                 (click)="selectProduitProforma(p)">
+              <span class="pf-ci-nom">{{ p.nom }}</span>
+              <span class="pf-ci-prix">{{ money(p.prixVente) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saisie nouvelle ligne -->
+        <div class="pf-line-add">
+          <input class="pf-input pf-input--wide" type="text" [(ngModel)]="proformaNewLine.designation"
+                 placeholder="Désignation (modifiable) *" />
+          <div class="pf-line-row">
+            <div class="pf-field">
+              <label class="pf-label">Qté</label>
+              <input class="pf-input pf-input--num" type="number" [(ngModel)]="proformaNewLine.quantite" min="1" />
+            </div>
+            <div class="pf-field pf-field--wide">
+              <label class="pf-label">Prix unit. (FCFA)</label>
+              <input class="pf-input pf-input--num" type="number" [(ngModel)]="proformaNewLine.prixUnitaire" min="0" />
+            </div>
+            <button class="pf-btn-add" (click)="addProformaLine()">
+              <ion-icon name="add-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Liste des lignes -->
+        <div class="pf-empty" *ngIf="!proformaLignes.length">
+          Aucun article ajouté
+        </div>
+        <div class="pf-ligne" *ngFor="let l of proformaLignes; let i = index">
+          <span class="pf-l-name">{{ l.designation }}</span>
+          <span class="pf-l-qty">x{{ l.quantite }}</span>
+          <span class="pf-l-total">{{ money(l.quantite * l.prixUnitaire) }}</span>
+          <button class="pf-btn-del" (click)="removeProformaLine(i)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Total -->
+        <div class="pf-total" *ngIf="proformaLignes.length">
+          <span>Total</span>
+          <span class="pf-total-val">{{ money(proformaTotal) }}</span>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="pf-section">
+        <p class="pf-section-title">
+          <ion-icon name="document-text-outline"></ion-icon> Notes
+        </p>
+        <textarea class="pf-input pf-input--textarea" [(ngModel)]="proformaForm.notes"
+                  placeholder="Informations complémentaires..." rows="3"></textarea>
+      </div>
+    </ion-content>
+
+    <!-- Bouton valider -->
+    <div class="pf-footer">
+      <button class="pf-btn-submit" [disabled]="proformaCreating || !proformaLignes.length"
+              (click)="submitProforma()">
+        <ion-icon name="checkmark-outline"></ion-icon>
+        {{ proformaCreating ? 'Création...' : 'Créer la facture' }}
+      </button>
+    </div>
+  </ng-template>
+</ion-modal>

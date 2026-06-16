@@ -1,0 +1,153 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Résultat Net</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="charger()">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="charger(); $event.target.complete()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+
+    <!-- Onglets période -->
+    <div class="periode-tabs">
+      <button class="periode-btn" [class.active]="periodeActive === 'JOURNALIER'" (click)="selectionner('JOURNALIER')">Jour</button>
+      <button class="periode-btn" [class.active]="periodeActive === 'MENSUEL'" (click)="selectionner('MENSUEL')">Mois</button>
+      <button class="periode-btn" [class.active]="periodeActive === 'ANNUEL'" (click)="selectionner('ANNUEL')">Année</button>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+      <ng-container *ngIf="periodeActive === 'JOURNALIER'">
+        <div class="filter-row">
+          <label>Date</label>
+          <input type="date" class="date-input" [(ngModel)]="dateJour" (change)="charger()" />
+        </div>
+      </ng-container>
+      <ng-container *ngIf="periodeActive === 'MENSUEL'">
+        <div class="filter-row">
+          <select class="date-input" [(ngModel)]="moisSelect" (change)="charger()">
+            <option *ngFor="let m of mois" [value]="m.v">{{ m.l }}</option>
+          </select>
+          <select class="date-input" [(ngModel)]="anneeSelect" (change)="charger()">
+            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="periodeActive === 'ANNUEL'">
+        <div class="filter-row">
+          <select class="date-input" [(ngModel)]="anneeSelect" (change)="charger()">
+            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Loader -->
+    <ion-spinner *ngIf="loading" class="center-spinner"></ion-spinner>
+
+    <!-- Erreur -->
+    <div class="error-card" *ngIf="erreur && !loading">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>{{ erreur }}</p>
+    </div>
+
+    <ng-container *ngIf="data && !loading">
+
+      <!-- Carte principale GAIN/PERTE -->
+      <div class="resultat-card" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
+        <div class="resultat-badge" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
+          <ion-icon [name]="data.etat === 'GAIN' ? 'trending-up-outline' : 'trending-down-outline'"></ion-icon>
+          {{ data.etat }}
+        </div>
+        <div class="resultat-montant" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
+          {{ money(data.resultatNet) }}
+        </div>
+        <p class="resultat-periode">{{ data.periode }} · {{ data.dateDebut }} → {{ data.dateFin }}</p>
+      </div>
+
+      <!-- Détail décomposition -->
+      <div class="detail-card">
+        <div class="detail-row">
+          <div class="detail-icon success">
+            <ion-icon name="trending-up-outline"></ion-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Bénéfices ventes</span>
+            <span class="detail-value success">{{ money(data.benefices) }}</span>
+          </div>
+        </div>
+
+        <div class="detail-sep">+</div>
+
+        <div class="detail-row">
+          <div class="detail-icon primary">
+            <ion-icon name="gift-outline"></ion-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Bonus fournisseurs</span>
+            <span class="detail-value primary">{{ money(data.bonusFournisseurs) }}
+              <small class="detail-pct">({{ pctBonus }}%)</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-sep">−</div>
+
+        <div class="detail-row">
+          <div class="detail-icon danger">
+            <ion-icon name="trending-down-outline"></ion-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Dépenses</span>
+            <span class="detail-value danger">{{ money(data.depenses) }}
+              <small class="detail-pct">({{ pctDepenses }}%)</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-total" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
+          <span>=</span>
+          <span class="detail-total-label">Résultat Net</span>
+          <span class="detail-total-value">{{ money(data.resultatNet) }}</span>
+        </div>
+      </div>
+
+      <!-- Barres de progression -->
+      <div class="bars-card">
+        <div class="bar-row">
+          <span class="bar-label success">Bénéfices</span>
+          <div class="bar-track">
+            <div class="bar-fill success"
+              [style.width.%]="data.benefices + data.bonusFournisseurs > 0 ? (data.benefices / (data.benefices + data.bonusFournisseurs)) * 100 : 0">
+            </div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label primary">Bonus</span>
+          <div class="bar-track">
+            <div class="bar-fill primary" [style.width.%]="pctBonus"></div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label danger">Dépenses</span>
+          <div class="bar-track">
+            <div class="bar-fill danger" [style.width.%]="pctDepenses"></div>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+</ion-content>

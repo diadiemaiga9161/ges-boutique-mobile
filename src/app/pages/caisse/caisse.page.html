@@ -1,0 +1,505 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Caisse</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openTransfertModal()" *ngIf="caisse?.estOuverte">
+        <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Cartes colorées principales -->
+  <div class="color-cards" style="padding: 14px 14px 0;">
+
+    <!-- Caisse Totale — Bleu -->
+    <div class="color-card cc-blue">
+      <ion-icon name="wallet-outline"></ion-icon>
+      <p class="cc-label">Caisse Totale</p>
+      <p class="cc-value">{{ caisseService.formatPrice(caisse?.soldeActuel || 0) }}</p>
+      <p class="cc-sub">{{ caisse?.estOuverte ? 'Ouverte' : 'Fermée' }}</p>
+    </div>
+
+    <!-- Bilan Net — Violet -->
+    <div class="color-card cc-purple">
+      <ion-icon name="trending-up-outline"></ion-icon>
+      <p class="cc-label">Bilan net</p>
+      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.soldeNetPeriode || 0) }}</p>
+      <p class="cc-sub">Entrées - Sorties</p>
+    </div>
+
+    <!-- Entrées — Vert -->
+    <div class="color-card cc-green">
+      <ion-icon name="arrow-up-circle-outline"></ion-icon>
+      <p class="cc-label">Entrées</p>
+      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.totalEntrees || 0) }}</p>
+      <p class="cc-sub">Aujourd'hui</p>
+    </div>
+
+    <!-- Sorties — Rouge -->
+    <div class="color-card cc-red">
+      <ion-icon name="arrow-down-circle-outline"></ion-icon>
+      <p class="cc-label">Sorties</p>
+      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.totalSorties || 0) }}</p>
+      <p class="cc-sub">Aujourd'hui</p>
+    </div>
+
+  </div>
+
+  <div class="page-pad stack">
+
+    <ion-segment [(ngModel)]="segment">
+      <ion-segment-button value="etat">État</ion-segment-button>
+      <ion-segment-button value="credits">Crédits</ion-segment-button>
+      <ion-segment-button value="operations">Opérations</ion-segment-button>
+      <ion-segment-button value="stats">Stats</ion-segment-button>
+    </ion-segment>
+
+    <!-- Onglet État -->
+    <section class="stack" *ngIf="segment === 'etat'">
+      <div class="mobile-card stack">
+        <div class="row-between">
+          <div>
+            <h2 class="card-title">{{ caisse?.numeroCaisse || 'Caisse principale' }}</h2>
+            <p class="card-subtitle">Ouverte: {{ caisse?.dateOuverture ? caisseService.formatDateShort(caisse?.dateOuverture) : '-' }}</p>
+          </div>
+          <ion-badge [color]="caisse?.estOuverte ? 'success' : 'medium'">
+            {{ caisse?.estOuverte ? 'Active' : 'Inactive' }}
+          </ion-badge>
+        </div>
+        <div class="two-cols" *ngIf="caisse">
+          <div class="stat-card">
+            <p class="stat-label">Entrées totales</p>
+            <p class="stat-value success">{{ caisseService.formatPrice(caisse.totalEntrees || 0) }}</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Sorties totales</p>
+            <p class="stat-value danger">{{ caisseService.formatPrice(caisse.totalSorties || 0) }}</p>
+          </div>
+        </div>
+        <ion-button expand="block" color="success" *ngIf="!caisse?.estOuverte" (click)="openCash()">
+          <ion-icon name="lock-open-outline" slot="start"></ion-icon>
+          Ouvrir la caisse
+        </ion-button>
+        <ion-button expand="block" color="danger" *ngIf="caisse?.estOuverte" (click)="confirmCloseCash()">
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+          Fermer la caisse
+        </ion-button>
+      </div>
+
+      <div class="form-panel stack">
+        <h2 class="card-title">Nouvelle opération</h2>
+        <ion-segment [(ngModel)]="operationType">
+          <ion-segment-button value="entree">Entrée</ion-segment-button>
+          <ion-segment-button value="sortie">Sortie</ion-segment-button>
+        </ion-segment>
+        <ion-item>
+          <ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="operationForm.montant"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="operationForm.motif"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-select label="Mode paiement" labelPlacement="stacked" [(ngModel)]="operationForm.modePaiement">
+            <ion-select-option value="ESPECES">Espèces</ion-select-option>
+            <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+            <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+            <ion-select-option value="VIREMENT">Virement</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item *ngIf="operationForm.modePaiement !== ModePaiementCaisse.ESPECES">
+          <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="operationForm.referencePaiement"></ion-input>
+        </ion-item>
+        <ion-button expand="block" (click)="saveOperation()" [disabled]="!caisse?.estOuverte">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          Enregistrer
+        </ion-button>
+      </div>
+    </section>
+
+    <!-- Onglet Crédits -->
+    <section class="stack" *ngIf="segment === 'credits'">
+      <ion-spinner *ngIf="loadingCredits" style="display:block;margin:20px auto"></ion-spinner>
+
+      <!-- Règlement crédit EN HAUT -->
+      <div class="form-panel stack" *ngIf="credits.length">
+        <h2 class="card-title">
+          <ion-icon name="checkmark-circle-outline" style="color:#0e9f6e;margin-right:6px"></ion-icon>
+          Régler un crédit
+        </h2>
+
+        <ion-item>
+          <ion-select label="Sélectionner le crédit *" labelPlacement="stacked"
+            [(ngModel)]="reglement.venteCreditId"
+            (ionChange)="onCreditSelected(reglement.venteCreditId)"
+            interface="action-sheet">
+            <ion-select-option [value]="credit.venteId" *ngFor="let credit of credits">
+              {{ credit.clientNom }} · {{ caisseService.formatPrice(credit.montantRestant) }}
+              {{ credit.enRetard ? '⚠ En retard' : '' }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <div class="credit-selected-info" *ngIf="reglement.venteCreditId">
+          <ng-container *ngFor="let c of credits">
+            <ng-container *ngIf="c.venteId === reglement.venteCreditId">
+              <div class="stat-row"><span>Client</span><strong>{{ c.clientNom }}</strong></div>
+              <div class="stat-row"><span>Total vente</span><strong>{{ caisseService.formatPrice(c.montantTotal) }}</strong></div>
+              <div class="stat-row"><span>Déjà versé</span><strong class="success">{{ caisseService.formatPrice(c.montantVerse) }}</strong></div>
+              <div class="stat-row"><span>Reste à payer</span><strong class="warning">{{ caisseService.formatPrice(c.montantRestant) }}</strong></div>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <ion-item>
+          <ion-input label="Montant à régler *" labelPlacement="floating"
+            type="number" [(ngModel)]="reglement.montantRegle"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select label="Mode paiement *" labelPlacement="stacked" [(ngModel)]="reglement.modePaiement">
+            <ion-select-option value="ESPECES">Espèces</ion-select-option>
+            <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+            <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+            <ion-select-option value="CARTE_BANCAIRE">Carte bancaire</ion-select-option>
+            <ion-select-option value="VIREMENT">Virement</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item *ngIf="reglement.modePaiement !== 'ESPECES'">
+          <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="reglement.referencePaiement"></ion-input>
+        </ion-item>
+
+        <ion-button expand="block" color="success" (click)="saveReglement()"
+          [disabled]="!reglement.venteCreditId || !reglement.montantRegle">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Confirmer le règlement
+        </ion-button>
+      </div>
+
+      <!-- Barre d'actions groupe -->
+      <div class="group-bar" *ngIf="!loadingCredits && credits.length">
+        <div class="group-bar-left">
+          <ion-button fill="outline" size="small" (click)="selectAllCredits()">Tout sélectionner</ion-button>
+          <ion-button fill="clear" size="small" color="medium" (click)="clearSelection()" *ngIf="selectedCreditsForGroup.size">Désélectionner</ion-button>
+        </div>
+        <ion-button size="small" color="success" (click)="regleGroupeCredits()" *ngIf="selectedCreditsForGroup.size">
+          <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+          Régler ({{ selectedCreditsForGroup.size }}) · {{ money(totalGroupSelected()) }}
+        </ion-button>
+      </div>
+
+      <div *ngIf="creditsEnRetard.length" class="mobile-card row-between">
+        <span class="muted">Crédits en retard</span>
+        <ion-badge color="danger">{{ creditsEnRetard.length }}</ion-badge>
+      </div>
+
+      <article class="mobile-card" *ngFor="let credit of credits"
+        [class.credit-retard]="credit.enRetard"
+        [class.credit-selected]="isCreditSelected(credit.venteId || credit.id)">
+        <div class="row-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <ion-checkbox
+              [checked]="isCreditSelected(credit.venteId)"
+              (ionChange)="toggleCreditGroup(credit.venteId)">
+            </ion-checkbox>
+            <div>
+              <h2 class="card-title">{{ credit.clientNom || 'Client' }}</h2>
+              <p class="card-subtitle">{{ credit.numeroVente }} · {{ caisseService.formatDateShort(credit.dateEcheance) }}</p>
+            </div>
+          </div>
+          <ion-button fill="clear" size="small" (click)="prepareReglement(credit)">
+            <ion-icon name="cash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+        <div class="row-between">
+          <span class="muted">Total: {{ caisseService.formatPrice(credit.montantTotal) }}</span>
+          <span class="price">Reste: {{ caisseService.formatPrice(credit.montantRestant) }}</span>
+        </div>
+        <ion-badge [color]="getCreditStatus(credit) === 'Réglé' ? 'success' : (credit.enRetard ? 'danger' : 'warning')">
+          {{ getCreditStatus(credit) }}
+        </ion-badge>
+      </article>
+
+      <div class="empty-state" *ngIf="!credits.length && !loadingCredits">Aucun crédit en cours</div>
+    </section>
+
+    <!-- Onglet Opérations -->
+    <section class="stack" *ngIf="segment === 'operations'">
+
+      <!-- Période rapide -->
+      <div class="period-bar">
+        <button class="period-btn" [class.active]="opPeriode==='today'" (click)="setPeriodeOp('today')">Aujourd'hui</button>
+        <button class="period-btn" [class.active]="opPeriode==='week'" (click)="setPeriodeOp('week')">Semaine</button>
+        <button class="period-btn" [class.active]="opPeriode==='month'" (click)="setPeriodeOp('month')">Mois</button>
+        <button class="period-btn" [class.active]="opPeriode==='year'" (click)="setPeriodeOp('year')">Année</button>
+      </div>
+
+      <!-- Filtres -->
+      <div class="op-filters">
+        <ion-searchbar [(ngModel)]="opSearch" placeholder="Motif, client..." (ionInput)="applyOpFilters()" class="op-search"></ion-searchbar>
+        <ion-item class="op-type-select">
+          <ion-select placeholder="Tous les types" [(ngModel)]="opTypeFilter" (ionChange)="applyOpFilters()" interface="action-sheet">
+            <ion-select-option value="">Tous les types</ion-select-option>
+            <ion-select-option value="OUVERTURE">Ouverture</ion-select-option>
+            <ion-select-option value="FERMETURE">Fermeture</ion-select-option>
+            <ion-select-option value="VENTE_COMPTANT">Vente comptant</ion-select-option>
+            <ion-select-option value="VENTE_CREDIT">Vente crédit</ion-select-option>
+            <ion-select-option value="REGLEMENT_CREDIT">Règlement crédit</ion-select-option>
+            <ion-select-option value="ENTREE">Entrée</ion-select-option>
+            <ion-select-option value="SORTIE">Sortie</ion-select-option>
+            <ion-select-option value="PAIEMENT_FOURNISSEUR">Paiement fournisseur</ion-select-option>
+            <ion-select-option value="PAIEMENT_EMPLOYE">Paiement employé</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
+
+      <!-- Bilan rapide -->
+      <div class="op-summary" *ngIf="operationsFiltrees.length">
+        <span class="muted">{{ operationsFiltrees.length }} opération(s)</span>
+        <span [class.success]="getTotalOps() >= 0" [class.danger]="getTotalOps() < 0">
+          <strong>{{ getTotalOps() >= 0 ? '+' : '' }}{{ caisseService.formatPrice(getTotalOps()) }}</strong>
+        </span>
+      </div>
+
+      <ion-spinner *ngIf="loadingOperations" style="display:block;margin:20px auto"></ion-spinner>
+
+      <ng-container *ngIf="!loadingOperations">
+        <!-- Carte opération -->
+        <article class="op-card" *ngFor="let op of operationsFiltrees"
+          [class.op-annulee]="op.venteAnnulee"
+          (click)="openOpDetail(op)">
+
+          <!-- Indicateur gauche -->
+          <div class="op-indicator"
+            [class.ind-entree]="isOpEntree(op.type)"
+            [class.ind-sortie]="isOpSortie(op.type)"
+            [class.ind-credit]="isOpCredit(op.type)"
+            [class.ind-other]="!isOpEntree(op.type) && !isOpSortie(op.type) && !isOpCredit(op.type)">
+          </div>
+
+          <div class="op-content">
+            <!-- Ligne principale -->
+            <div class="op-row-main">
+              <div class="op-left">
+                <ion-badge [color]="getOpColor(op.type)" class="op-type-badge">
+                  {{ getTypeLabel(op.type) }}
+                </ion-badge>
+                <span class="op-annulee-badge" *ngIf="op.venteAnnulee">ANNULÉE</span>
+              </div>
+              <div class="op-amount-col" [class.op-entree-text]="isOpEntree(op.type)"
+                   [class.op-sortie-text]="isOpSortie(op.type)"
+                   [class.op-credit-text]="isOpCredit(op.type)">
+                {{ getOpSign(op.type) }} {{ caisseService.formatPrice(op.montant) }}
+              </div>
+            </div>
+
+            <!-- Motif / Client -->
+            <div class="op-motif-row">
+              <span *ngIf="op.clientNom"><strong>{{ op.clientNom }}</strong>
+                <span class="muted" *ngIf="op.motif"> · {{ op.motif }}</span>
+              </span>
+              <span *ngIf="!op.clientNom && op.motif">{{ op.motif }}</span>
+              <span class="muted" *ngIf="op.numeroVente"> · {{ op.numeroVente }}</span>
+            </div>
+
+            <!-- Solde avant → après -->
+            <div class="op-soldes" *ngIf="op.soldeAvant !== undefined">
+              <span class="muted">Avant: <strong>{{ caisseService.formatPrice(op.soldeAvant) }}</strong></span>
+              <ion-icon name="arrow-forward-outline" style="font-size:10px;color:#94a3b8"></ion-icon>
+              <span class="muted">Après: <strong>{{ caisseService.formatPrice(op.soldeApres || 0) }}</strong></span>
+            </div>
+
+            <!-- Méta -->
+            <div class="op-meta-row">
+              <span class="muted">{{ caisseService.formatDateShort(op.dateOperation) }} {{ caisseService.formatTime(op.dateOperation) }}</span>
+              <span class="muted" *ngIf="op.modePaiement">· {{ caisseService.getModePaiementLabel(op.modePaiement) }}</span>
+              <span class="muted">· {{ op.utilisateurNom || 'Système' }}</span>
+            </div>
+          </div>
+
+          <ion-icon name="chevron-forward-outline" class="op-chevron"></ion-icon>
+        </article>
+
+        <div class="empty-state" *ngIf="!operationsFiltrees.length">
+          <ion-icon name="receipt-outline" style="font-size:2.5rem;color:#cbd5e1"></ion-icon>
+          <p>Aucune opération trouvée</p>
+        </div>
+      </ng-container>
+    </section>
+
+    <!-- Modal détail opération -->
+    <ion-modal [isOpen]="showOpDetail" (didDismiss)="showOpDetail = false" [breakpoints]="[0,0.6,1]" [initialBreakpoint]="0.6">
+      <ng-template>
+        <ion-header>
+          <ion-toolbar [color]="selectedOp ? getOpColor(selectedOp.type) : 'primary'">
+            <ion-title>{{ selectedOp ? getTypeLabel(selectedOp.type) : '' }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button (click)="showOpDetail = false">
+                <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding" *ngIf="selectedOp">
+          <div class="detail-section">
+            <p class="detail-section-title">Détails de l'opération</p>
+            <div class="detail-row">
+              <span>Montant</span>
+              <strong [class]="'op-' + (isOpEntree(selectedOp.type) ? 'entree' : isOpSortie(selectedOp.type) ? 'sortie' : 'credit') + '-text'">
+                {{ getOpSign(selectedOp.type) }} {{ caisseService.formatPrice(selectedOp.montant) }}
+              </strong>
+            </div>
+            <div class="detail-row">
+              <span>Date / Heure</span>
+              <strong>{{ caisseService.formatDateShort(selectedOp.dateOperation) }} {{ caisseService.formatTime(selectedOp.dateOperation) }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.soldeAvant !== undefined">
+              <span>Solde avant</span>
+              <strong>{{ caisseService.formatPrice(selectedOp.soldeAvant) }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.soldeApres !== undefined">
+              <span>Solde après</span>
+              <strong>{{ caisseService.formatPrice(selectedOp.soldeApres) }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.clientNom">
+              <span>Client</span>
+              <strong>{{ selectedOp.clientNom }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.motif">
+              <span>Motif</span>
+              <strong>{{ selectedOp.motif }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.modePaiement">
+              <span>Mode paiement</span>
+              <strong>{{ caisseService.getModePaiementLabel(selectedOp.modePaiement) }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.referencePaiement">
+              <span>Référence</span>
+              <strong>{{ selectedOp.referencePaiement }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.numeroVente">
+              <span>N° Vente</span>
+              <strong>{{ selectedOp.numeroVente }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Utilisateur</span>
+              <strong>{{ selectedOp.utilisateurNom || 'Système' }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="selectedOp.venteAnnulee">
+              <span>Statut</span>
+              <ion-badge color="danger">VENTE ANNULÉE</ion-badge>
+            </div>
+          </div>
+        </ion-content>
+      </ng-template>
+    </ion-modal>
+
+    <!-- Onglet Stats -->
+    <section class="stack" *ngIf="segment === 'stats'">
+      <ion-spinner *ngIf="loadingStats"></ion-spinner>
+      <div *ngIf="statsJour && !loadingStats">
+
+        <!-- Stats colorées du jour -->
+        <div class="color-cards">
+          <div class="color-card cc-blue">
+            <ion-icon name="cash-outline"></ion-icon>
+            <p class="cc-label">Ventes comptant</p>
+            <p class="cc-value">{{ caisseService.formatPrice(statsJour.totalVentesComptant || 0) }}</p>
+          </div>
+          <div class="color-card cc-orange">
+            <ion-icon name="card-outline"></ion-icon>
+            <p class="cc-label">Nouveaux crédits</p>
+            <p class="cc-value">{{ caisseService.formatPrice(statsJour.totalNouveauxCredits || 0) }}</p>
+          </div>
+          <div class="color-card cc-green">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <p class="cc-label">Règlements</p>
+            <p class="cc-value">{{ caisseService.formatPrice(statsJour.totalReglementsCredit || 0) }}</p>
+          </div>
+          <div class="color-card cc-red">
+            <ion-icon name="arrow-down-circle-outline"></ion-icon>
+            <p class="cc-label">Sorties</p>
+            <p class="cc-value">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
+          </div>
+        </div>
+
+        <!-- Situation crédits -->
+        <div class="form-panel stack" style="margin-top: 12px">
+          <h2 class="card-title">Situation crédits</h2>
+          <div class="mini-stats">
+            <div class="stat-row">
+              <span>Crédits en cours</span>
+              <strong>{{ credits.length }}</strong>
+            </div>
+            <div class="stat-row">
+              <span>En retard</span>
+              <strong class="danger">{{ creditsEnRetard.length }}</strong>
+            </div>
+            <div class="stat-row">
+              <span>Montant restant</span>
+              <strong class="warning">{{ caisseService.formatPrice(totalMontantCredits()) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bilan net -->
+        <div class="color-card" style="margin-top:12px"
+          [class.cc-green]="(statsJour.soldeNetPeriode || 0) >= 0"
+          [class.cc-red]="(statsJour.soldeNetPeriode || 0) < 0">
+          <ion-icon name="trending-up-outline"></ion-icon>
+          <p class="cc-label">Bilan net du jour</p>
+          <p class="cc-value">{{ caisseService.formatPrice(statsJour.soldeNetPeriode || 0) }}</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</ion-content>
+
+<!-- Modal transfert caisse → banque -->
+<ion-modal [isOpen]="showTransfertModal" (didDismiss)="showTransfertModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Transfert → Banque</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showTransfertModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding stack">
+      <p class="muted">Solde caisse: <strong>{{ caisseService.formatPrice(caisse?.soldeActuel || 0) }}</strong></p>
+      <ion-item>
+        <ion-select label="Compte bancaire" labelPlacement="stacked" [(ngModel)]="transfertForm.compteId">
+          <ion-select-option [value]="compte.id" *ngFor="let compte of comptes">
+            {{ compte.nomBanque }} · {{ caisseService.formatPrice(compte.soldeActuel || 0) }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="transfertForm.montant"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="transfertForm.motif"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="transfertForm.reference"></ion-input>
+      </ion-item>
+      <ion-button expand="block" color="warning" (click)="validerTransfert()">
+        <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+        Confirmer le transfert
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

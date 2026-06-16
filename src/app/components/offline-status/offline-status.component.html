@@ -31,7 +31,7 @@
       <div class="queue-summary">
         <p>
           <strong>Actions en attente:</strong>
-          {{ (offlineQueue$ | async)?.filter(a => a.status === 'EN_ATTENTE').length || 0 }}
+          {{ countPending(offlineQueue$ | async) }}
         </p>
         <p>
           <strong>Connexion:</strong>
@@ -63,7 +63,7 @@
       </div>
 
       <ion-button
-        *ngIf="(offlineQueue$ | async)?.some(a => a.status === 'EN_ATTENTE')"
+        *ngIf="hasPending(offlineQueue$ | async)"
         (click)="forceSync()"
         expand="block"
         color="primary"

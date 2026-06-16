@@ -3,7 +3,24 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  appName: 'Ges Lafia',
+  version: '1.0.0',
+  enableDebug: true,
+  isCapacitor: false,
+  apiUrl: '/api',
+
+  boutiques: [] as { nom: string; url: string }[],
+
+  tokenKey: 'boutique_auth_token',
+  userKey: 'boutique_user_data',
+
+  boutique: {
+    currency: 'FCFA',
+    timezone: 'Africa/Abidjan',
+    dateFormat: 'dd/MM/yyyy',
+    timeFormat: 'HH:mm'
+  }
 };
 
 /*

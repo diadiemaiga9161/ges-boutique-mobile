@@ -1,0 +1,146 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Dépenses</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="startCreate()">
+        <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+
+    <!-- Total -->
+    <div class="total-depense-card">
+      <div>
+        <p class="td-label">Total dépenses</p>
+        <p class="td-value">{{ money(totalDepenses) }}</p>
+      </div>
+      <ion-icon name="trending-down-outline" style="font-size:2rem; opacity:0.7"></ion-icon>
+    </div>
+
+    <!-- Filtres période -->
+    <div class="filter-card">
+      <div class="filter-dates">
+        <div class="date-field">
+          <label class="date-label">Du</label>
+          <input type="date" class="date-input" [(ngModel)]="dateDebut" />
+        </div>
+        <div class="date-sep">→</div>
+        <div class="date-field">
+          <label class="date-label">Au</label>
+          <input type="date" class="date-input" [(ngModel)]="dateFin" />
+        </div>
+        <ion-button fill="outline" size="small" (click)="filtrer()">
+          <ion-icon name="funnel-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" color="medium" (click)="load()">
+          <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Liste -->
+    <ion-spinner *ngIf="loading"></ion-spinner>
+
+    <div class="empty-state" *ngIf="!loading && depenses.length === 0">
+      <ion-icon name="trending-down-outline" style="font-size:3rem; color:#cbd5e1"></ion-icon>
+      <p>Aucune dépense enregistrée</p>
+      <ion-button size="small" (click)="startCreate()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Nouvelle dépense
+      </ion-button>
+    </div>
+
+    <article class="depense-card" *ngFor="let d of depenses">
+      <div class="dc-left">
+        <div class="dc-icon">
+          <ion-icon name="trending-down-outline"></ion-icon>
+        </div>
+        <div class="dc-info">
+          <p class="dc-nom">{{ d.nom }}</p>
+          <p class="dc-motif muted">{{ d.motif || 'Sans motif' }}</p>
+          <p class="dc-date muted">{{ d.date }}</p>
+        </div>
+      </div>
+      <div class="dc-right">
+        <p class="dc-montant">{{ money(d.montant) }}</p>
+        <ion-button fill="clear" size="small" color="warning" (click)="startEdit(d)">
+          <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" color="danger" (click)="supprimer(d)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </article>
+
+  </div>
+</ion-content>
+
+<!-- FAB -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button (click)="startCreate()" color="danger">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
+
+<!-- Modal Formulaire -->
+<ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar [color]="editing ? 'warning' : 'danger'">
+        <ion-title>{{ editing ? 'Modifier la dépense' : 'Nouvelle dépense' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showForm = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+
+        <ion-item>
+          <ion-input label="Nom de la dépense *" labelPlacement="floating"
+            [(ngModel)]="form.nom" placeholder="Ex: Électricité, Transport..."></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-textarea label="Motif / Description" labelPlacement="floating"
+            [(ngModel)]="form.motif" rows="2" placeholder="Détails optionnels..."></ion-textarea>
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="Date *" labelPlacement="floating"
+            type="date" [(ngModel)]="form.date"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="Montant (FCFA) *" labelPlacement="floating"
+            type="number" [(ngModel)]="form.montant" placeholder="0"></ion-input>
+        </ion-item>
+
+        <div class="info-box" [class.info-box--warn]="editing">
+          <ion-icon [name]="editing ? 'warning-outline' : 'information-circle-outline'"></ion-icon>
+          <span *ngIf="!editing">Le montant sera <strong>déduit automatiquement</strong> de la caisse.</span>
+          <span *ngIf="editing">La différence de montant sera <strong>ajustée automatiquement</strong> dans la caisse.</span>
+        </div>
+
+        <ion-button expand="block" [color]="editing ? 'warning' : 'danger'" (click)="save()" style="margin-top: 8px">
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ editing ? 'Enregistrer les modifications' : 'Créer la dépense' }}
+        </ion-button>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

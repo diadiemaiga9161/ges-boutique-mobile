@@ -1,0 +1,703 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Ventes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openStatsModal()" class="header-icon-btn">
+        <ion-icon name="analytics-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button routerLink="/cart" class="header-icon-btn header-icon-btn--add">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content pullingIcon="chevron-down-outline" refreshingSpinner="crescent"></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ═══════════════════════════════════════
+       HERO BANNER
+  ════════════════════════════════════════ -->
+  <div class="sales-hero">
+    <div class="hero-bg-deco"></div>
+    <div class="hero-content">
+      <div class="hero-left">
+        <p class="hero-eyebrow">Chiffre d'affaires total</p>
+        <h1 class="hero-amount">{{ money(caTotal()) }}</h1>
+        <p class="hero-sub">
+          <ion-icon name="receipt-outline"></ion-icon>
+          {{ filtered.length }} vente{{ filtered.length > 1 ? 's' : '' }}
+        </p>
+      </div>
+      <div class="hero-right">
+        <div class="hero-mini-card">
+          <ion-icon name="sunny-outline"></ion-icon>
+          <p class="hmc-label">Aujourd'hui</p>
+          <p class="hmc-val">{{ money(caJour()) }}</p>
+        </div>
+        <div class="hero-mini-card">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <p class="hmc-label">Crédits</p>
+          <p class="hmc-val hmc-val--warn">{{ money(totalCredit()) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres période rapide -->
+    <div class="period-chips">
+      <button class="pchip" [class.pchip--active]="activePeriod==='today'" (click)="filterToday()">Aujourd'hui</button>
+      <button class="pchip" [class.pchip--active]="activePeriod==='week'" (click)="filterWeek()">Semaine</button>
+      <button class="pchip" [class.pchip--active]="activePeriod==='month'" (click)="filterMonth()">Mois</button>
+      <button class="pchip" [class.pchip--active]="activePeriod==='all'" (click)="filterAll()">Toutes</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       FILTRES AVANCÉS
+  ════════════════════════════════════════ -->
+  <div class="page-pad stack">
+
+    <div class="filter-card">
+      <ion-searchbar
+        [(ngModel)]="query"
+        placeholder="N° vente, client, vendeur..."
+        (ionInput)="applyFilter()"
+        class="filter-search">
+      </ion-searchbar>
+
+      <div class="filter-row">
+        <div class="filter-select-wrap">
+          <ion-icon name="funnel-outline" class="filter-icon"></ion-icon>
+          <ion-select
+            [(ngModel)]="typeFilter"
+            (ionChange)="applyFilter()"
+            interface="popover"
+            placeholder="Type"
+            class="filter-select">
+            <ion-select-option value="">Tous types</ion-select-option>
+            <ion-select-option value="COMPTANT">Comptant</ion-select-option>
+            <ion-select-option value="CREDIT">Crédit</ion-select-option>
+            <ion-select-option value="CREDIT_EN_RETARD">En retard</ion-select-option>
+          </ion-select>
+        </div>
+
+        <div class="filter-select-wrap">
+          <ion-icon name="wallet-outline" class="filter-icon"></ion-icon>
+          <ion-select
+            [(ngModel)]="modeFilter"
+            (ionChange)="applyFilter()"
+            interface="popover"
+            placeholder="Paiement"
+            class="filter-select">
+            <ion-select-option value="">Tous modes</ion-select-option>
+            <ion-select-option value="ESPECES">Espèces</ion-select-option>
+            <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+            <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+            <ion-select-option value="CARTE_BANCAIRE">Carte</ion-select-option>
+            <ion-select-option value="VIREMENT">Virement</ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+
+      <div class="filter-dates">
+        <div class="date-field">
+          <label class="date-label">Du</label>
+          <input type="date" class="date-input" [(ngModel)]="dateDebut" (change)="applyFilter()" />
+        </div>
+        <div class="date-sep">→</div>
+        <div class="date-field">
+          <label class="date-label">Au</label>
+          <input type="date" class="date-input" [(ngModel)]="dateFin" (change)="applyFilter()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Compteur résultats -->
+    <div class="results-bar">
+      <span class="results-count">{{ filtered.length }} résultat{{ filtered.length > 1 ? 's' : '' }}</span>
+      <ion-spinner *ngIf="loading" name="crescent" class="results-spinner"></ion-spinner>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         LISTE DES VENTES
+    ════════════════════════════════════════ -->
+    <section class="sales-list" *ngIf="!loading && filtered.length; else empty">
+      <article
+        class="sale-card"
+        *ngFor="let sale of filtered"
+        [class.sale-card--annulee]="sale.annulee"
+        [class.sale-card--retard]="sale.estCredit && !sale.creditRegle && isCreditEnRetard(sale)"
+        [class.sale-card--credit]="sale.estCredit && !sale.creditRegle && !isCreditEnRetard(sale)">
+
+        <!-- Ligne statut gauche (accent) -->
+        <div class="sale-accent" [class.accent-green]="!sale.annulee && !sale.estCredit"
+                                 [class.accent-orange]="sale.estCredit && !sale.creditRegle && !isCreditEnRetard(sale)"
+                                 [class.accent-red]="sale.estCredit && !sale.creditRegle && isCreditEnRetard(sale)"
+                                 [class.accent-gray]="sale.annulee"></div>
+
+        <!-- Header cliquable -->
+        <div class="sale-body" (click)="toggleDetail(sale)">
+
+          <div class="sale-top-row">
+            <!-- Icône type paiement -->
+            <div class="sale-type-icon"
+              [class.sti--cash]="!sale.estCredit"
+              [class.sti--credit]="sale.estCredit && !sale.creditRegle && !isCreditEnRetard(sale)"
+              [class.sti--late]="sale.estCredit && !sale.creditRegle && isCreditEnRetard(sale)"
+              [class.sti--done]="sale.creditRegle"
+              [class.sti--off]="sale.annulee">
+              <ion-icon [name]="sale.annulee ? 'ban-outline' : sale.estCredit ? (sale.creditRegle ? 'checkmark-circle-outline' : 'time-outline') : 'checkmark-done-outline'"></ion-icon>
+            </div>
+
+            <div class="sale-info">
+              <p class="sale-num">{{ sale.numeroVente || ('Vente #' + sale.id) }}</p>
+              <p class="sale-meta">{{ venteService.formatDate(sale.dateVente) }}</p>
+            </div>
+
+            <div class="sale-amount-zone">
+              <p class="sale-amount">{{ money(sale.montantTotal) }}</p>
+              <span class="sale-badge"
+                [class.badge-green]="!sale.annulee && (!sale.estCredit || sale.creditRegle)"
+                [class.badge-orange]="sale.estCredit && !sale.creditRegle && !isCreditEnRetard(sale)"
+                [class.badge-red]="sale.estCredit && !sale.creditRegle && isCreditEnRetard(sale)"
+                [class.badge-gray]="sale.annulee">
+                {{ getBadgeLabel(sale) }}
+              </span>
+            </div>
+
+            <ion-icon class="sale-chevron" [class.rotated]="selected?.id === sale.id" name="chevron-down-outline"></ion-icon>
+          </div>
+
+          <!-- Client + vendeur + mode paiement -->
+          <div class="sale-client-row">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>{{ sale.clientNom || 'Client divers' }}</span>
+            <span class="sale-mode-chip">{{ venteService.getModePaiementLabel(sale.modePaiement) }}</span>
+          </div>
+          <div class="sale-vendeur-row" *ngIf="sale.vendeurNom">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <span class="sale-vendeur-label">Vendeur :</span>
+            <span class="sale-vendeur-name">{{ sale.vendeurNom }}</span>
+          </div>
+
+          <!-- Barre crédit -->
+          <div class="sale-credit-bar" *ngIf="sale.estCredit && !sale.creditRegle">
+            <div class="credit-bar-fill">
+              <div class="credit-bar-progress"
+                [style.width.%]="sale.montantTotal > 0 ? ((sale.montantVerse || 0) / sale.montantTotal * 100) : 0"
+                [class.progress-late]="isCreditEnRetard(sale)">
+              </div>
+            </div>
+            <div class="credit-bar-info">
+              <span class="credit-versed">Versé {{ money(sale.montantVerse || 0) }}</span>
+              <span class="credit-due" [class.credit-late]="isCreditEnRetard(sale)">
+                Reste {{ money(sale.montantRestant || 0) }}
+              </span>
+            </div>
+            <p class="credit-echeance" *ngIf="sale.dateEcheance">
+              <ion-icon name="calendar-outline"></ion-icon>
+              Échéance : {{ sale.dateEcheance | date:'dd/MM/yy' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Détail produits expandé -->
+        <div class="sale-expand" *ngIf="selected?.id === sale.id">
+          <div class="expand-head">
+            <span><ion-icon name="person-circle-outline"></ion-icon> {{ sale.vendeurNom || '-' }}</span>
+            <span class="expand-mode">{{ venteService.getModePaiementLabel(sale.modePaiement) }}</span>
+          </div>
+          <div class="expand-products">
+            <div class="expand-line" *ngFor="let line of sale.produits">
+              <div class="expand-line-left">
+                <span class="expand-qty">×{{ line.quantite }}</span>
+                <span class="expand-name">{{ line.produitNom }}</span>
+              </div>
+              <span class="expand-subtotal">{{ money(line.sousTotal) }}</span>
+            </div>
+            <div class="expand-remise" *ngIf="sale.montantRemiseTotal > 0">
+              <span>Remise totale</span>
+              <span class="expand-remise-val">-{{ money(sale.montantRemiseTotal) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="sale-actions">
+          <button class="saction" (click)="openDetailModal(sale)">
+            <ion-icon name="eye-outline"></ion-icon>
+            <span>Détails</span>
+          </button>
+          <button class="saction saction--warn" (click)="doModify(sale)" *ngIf="!sale.annulee">
+            <ion-icon name="create-outline"></ion-icon>
+            <span>Modifier</span>
+          </button>
+          <button class="saction saction--danger" (click)="confirmCancel(sale)" *ngIf="!sale.annulee">
+            <ion-icon name="ban-outline"></ion-icon>
+            <span>Annuler</span>
+          </button>
+          <button class="saction saction--retour" (click)="openRetourModal(sale)" *ngIf="!sale.annulee">
+            <ion-icon name="return-down-back-outline"></ion-icon>
+            <span>Retour</span>
+          </button>
+          <button class="saction saction--primary" (click)="telechargerFactureVente(sale)">
+            <ion-icon name="download-outline"></ion-icon>
+            <span>PDF</span>
+          </button>
+          <button class="saction" (click)="voirFactureVente(sale)">
+            <ion-icon name="eye-outline"></ion-icon>
+            <span>Voir</span>
+          </button>
+          <button class="saction saction--qr" (click)="getQrCodeUrlSale(sale)">
+            <ion-icon name="qr-code-outline"></ion-icon>
+            <span>QR</span>
+          </button>
+        </div>
+
+      </article>
+    </section>
+
+    <!-- État vide -->
+    <ng-template #empty>
+      <div class="empty-screen" *ngIf="!loading">
+        <div class="empty-icon-wrap">
+          <ion-icon name="receipt-outline"></ion-icon>
+        </div>
+        <h3 class="empty-title">Aucune vente trouvée</h3>
+        <p class="empty-sub">Modifiez les filtres ou créez une nouvelle vente</p>
+        <button class="empty-btn" routerLink="/cart">
+          <ion-icon name="add-outline"></ion-icon>
+          Nouvelle vente
+        </button>
+      </div>
+    </ng-template>
+
+  </div>
+</ion-content>
+
+<!-- FAB Nouvelle vente -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button routerLink="/cart" color="primary">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL — DÉTAIL VENTE (style reçu)
+═══════════════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showDetailModal" (didDismiss)="showDetailModal = false" [initialBreakpoint]="0.92" [breakpoints]="[0, 0.92]">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="receipt-toolbar">
+        <ion-title class="receipt-toolbar-title">Reçu de vente</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showDetailModal = false" fill="clear">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="receipt-content" *ngIf="selectedVente">
+
+      <!-- En-tête reçu -->
+      <div class="receipt-header">
+        <div class="receipt-store-icon">
+          <ion-icon name="storefront-outline"></ion-icon>
+        </div>
+        <p class="receipt-num">{{ selectedVente.numeroVente }}</p>
+        <p class="receipt-date">{{ venteService.formatDate(selectedVente.dateVente) }}</p>
+        <div class="receipt-badges">
+          <span class="rbadge"
+            [class.rbadge-green]="!selectedVente.annulee && (!selectedVente.estCredit || selectedVente.creditRegle)"
+            [class.rbadge-orange]="selectedVente.estCredit && !selectedVente.creditRegle && !isCreditEnRetard(selectedVente)"
+            [class.rbadge-red]="selectedVente.estCredit && !selectedVente.creditRegle && isCreditEnRetard(selectedVente)"
+            [class.rbadge-gray]="selectedVente.annulee">
+            {{ getBadgeLabel(selectedVente) }}
+          </span>
+          <span class="rbadge rbadge-blue">{{ venteService.getModePaiementLabel(selectedVente.modePaiement) }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider-dots"></div>
+
+      <!-- Infos générales -->
+      <div class="receipt-section">
+        <p class="receipt-section-label">Informations</p>
+        <div class="receipt-row"><span>Vendeur</span><strong>{{ selectedVente.vendeurNom || '-' }}</strong></div>
+        <div class="receipt-row" *ngIf="selectedVente.referencePaiement">
+          <span>Référence</span><strong>{{ selectedVente.referencePaiement }}</strong>
+        </div>
+      </div>
+
+      <!-- Client / Crédit -->
+      <div class="receipt-section" *ngIf="selectedVente.estCredit">
+        <p class="receipt-section-label" style="color:#d97706">Crédit client</p>
+        <div class="receipt-row">
+          <span>Client</span>
+          <strong>{{ selectedVente.clientNom || 'N/A' }} {{ selectedVente.clientPrenom || '' }}</strong>
+        </div>
+        <div class="receipt-row" *ngIf="selectedVente.clientTelephone">
+          <span>Téléphone</span><strong>{{ selectedVente.clientTelephone }}</strong>
+        </div>
+        <div class="receipt-row" *ngIf="selectedVente.dateEcheance">
+          <span>Échéance</span><strong>{{ selectedVente.dateEcheance | date:'dd/MM/yyyy' }}</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Versé</span>
+          <strong class="receipt-success">{{ money(selectedVente.montantVerse || 0) }}</strong>
+        </div>
+        <div class="receipt-row" *ngIf="!selectedVente.creditRegle">
+          <span>Reste dû</span>
+          <strong class="receipt-warn">{{ money(selectedVente.montantRestant || 0) }}</strong>
+        </div>
+      </div>
+
+      <div class="receipt-divider-dots"></div>
+
+      <!-- Produits -->
+      <div class="receipt-section">
+        <p class="receipt-section-label">Articles</p>
+        <div class="receipt-product" *ngFor="let p of selectedVente.produits">
+          <div class="rp-left">
+            <span class="rp-name">{{ p.produitNom }}</span>
+            <span class="rp-qty">{{ p.quantite }} × {{ money(p.prixUnitaire) }}</span>
+          </div>
+          <strong class="rp-total">{{ money(p.sousTotal) }}</strong>
+        </div>
+      </div>
+
+      <div class="receipt-divider-dots"></div>
+
+      <!-- Totaux -->
+      <div class="receipt-totaux">
+        <div class="receipt-row receipt-row--sub" *ngIf="selectedVente.montantRemiseTotal > 0">
+          <span>Remise</span>
+          <strong class="receipt-danger">-{{ money(selectedVente.montantRemiseTotal) }}</strong>
+        </div>
+        <div class="receipt-grand-total">
+          <span>TOTAL</span>
+          <strong>{{ money(selectedVente.montantTotal) }}</strong>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+    </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <div class="receipt-footer">
+        <button class="rfooter-btn rfooter-btn--warn" (click)="confirmModify(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+          <ion-icon name="create-outline"></ion-icon>
+          Modifier
+        </button>
+        <button class="rfooter-btn rfooter-btn--danger" (click)="confirmCancel(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+          <ion-icon name="ban-outline"></ion-icon>
+          Annuler
+        </button>
+        <button class="rfooter-btn rfooter-btn--primary" (click)="telechargerFactureVente(selectedVente!); showDetailModal=false">
+          <ion-icon name="download-outline"></ion-icon>
+          PDF
+        </button>
+        <button class="rfooter-btn rfooter-btn--qr" (click)="getQrCodeUrlSale(selectedVente!); showDetailModal=false">
+          <ion-icon name="qr-code-outline"></ion-icon>
+          QR
+        </button>
+        <button class="rfooter-btn rfooter-btn--retour" (click)="openRetourModal(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+          <ion-icon name="return-down-back-outline"></ion-icon>
+          Retour
+        </button>
+      </div>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL — MODIFICATION VENTE
+═══════════════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showModifyModal" (didDismiss)="showModifyModal = false">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="modify-toolbar">
+        <ion-title>Modifier · {{ venteAModifier?.numeroVente }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showModifyModal = false" fill="clear">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modify-content" *ngIf="venteAModifier">
+      <!-- Récapitulatif vente -->
+      <div class="modify-recap">
+        <ion-badge [color]="getBadgeColor(venteAModifier)">{{ getBadgeLabel(venteAModifier) }}</ion-badge>
+        <span class="muted">{{ venteAModifier.clientNom || 'Client divers' }}</span>
+        <span class="muted">{{ venteService.getModePaiementLabel(venteAModifier.modePaiement) }}</span>
+      </div>
+
+      <!-- Comparaison totaux -->
+      <div class="modify-totals-banner">
+        <div class="mtb-col">
+          <span class="mtb-label">Ancien total</span>
+          <span class="mtb-val mtb-val--old">{{ money(getModifyOldTotal()) }}</span>
+        </div>
+        <div class="mtb-arrow">→</div>
+        <div class="mtb-col">
+          <span class="mtb-label">Nouveau total</span>
+          <span class="mtb-val">{{ money(getModifyTotal()) }}</span>
+        </div>
+        <div class="mtb-col" *ngIf="getModifyDiff() !== 0">
+          <span class="mtb-label">Différence</span>
+          <span class="mtb-val" [class.mtb-val--plus]="getModifyDiff() > 0" [class.mtb-val--minus]="getModifyDiff() < 0">
+            {{ getModifyDiff() > 0 ? '+' : '' }}{{ money(getModifyDiff()) }}
+          </span>
+        </div>
+      </div>
+
+      <p class="modify-section-title">Articles de la vente</p>
+
+      <div class="modify-line" *ngFor="let line of modifyLines; let i = index">
+        <!-- Sélecteur de produit -->
+        <div class="ml-produit-row">
+          <div class="ml-produit-select-wrap">
+            <select class="ml-produit-select" [(ngModel)]="line.produitId" (change)="onModifyProduitChange(i, line.produitId)">
+              <option [value]="0" disabled>Choisir un produit...</option>
+              <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</option>
+            </select>
+          </div>
+          <ion-button fill="clear" size="small" color="danger" (click)="removeModifyLine(i)">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+        <!-- Contrôles quantité / prix -->
+        <div class="ml-controls">
+          <div class="ml-qty">
+            <button class="ml-qty-btn" (click)="line.quantite = line.quantite > 1 ? line.quantite - 1 : 1; updateModifyLine(i)">−</button>
+            <span class="ml-qty-val">{{ line.quantite }}</span>
+            <button class="ml-qty-btn" (click)="line.quantite = line.quantite + 1; updateModifyLine(i)">+</button>
+          </div>
+          <div class="ml-price-wrap">
+            <label class="ml-price-label">Prix unitaire</label>
+            <ion-input class="ml-price-input" type="number" [(ngModel)]="line.prixUnitaire" (ionChange)="updateModifyLine(i)"></ion-input>
+          </div>
+          <div class="ml-subtotal">
+            <label class="ml-price-label">Sous-total</label>
+            <strong class="ml-subtotal-val">{{ money(line.sousTotal) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ajouter une ligne -->
+      <button class="ml-add-btn" (click)="addModifyLine()">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        Ajouter un article
+      </button>
+
+      <!-- Motif -->
+      <div class="ml-motif-wrap">
+        <label class="ml-price-label">Motif de modification (optionnel)</label>
+        <ion-textarea class="ml-motif-input" [(ngModel)]="modificationMotif" placeholder="Ex: erreur de saisie, échange produit..." rows="2"></ion-textarea>
+      </div>
+    </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <div class="modify-footer">
+        <button class="rfooter-btn rfooter-btn--gray" (click)="showModifyModal = false">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Retour
+        </button>
+        <button class="rfooter-btn rfooter-btn--warn rfooter-btn--full" (click)="saveModify()">
+          <ion-icon name="save-outline"></ion-icon>
+          Enregistrer
+        </button>
+      </div>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL — STATISTIQUES
+═══════════════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showStatsModal" (didDismiss)="showStatsModal = false" [initialBreakpoint]="0.85" [breakpoints]="[0, 0.85]">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>Statistiques ventes</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showStatsModal = false" fill="clear">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <div style="padding:16px" *ngIf="stats && !loadingStats">
+        <div class="color-cards">
+          <div class="color-card cc-blue">
+            <ion-icon name="sunny-outline"></ion-icon>
+            <p class="cc-label">Aujourd'hui</p>
+            <p class="cc-value">{{ money(stats.chiffreAffaireJournalier || 0) }}</p>
+          </div>
+          <div class="color-card cc-teal">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <p class="cc-label">Semaine</p>
+            <p class="cc-value">{{ money(stats.chiffreAffaireHebdomadaire || 0) }}</p>
+          </div>
+          <div class="color-card cc-green">
+            <ion-icon name="bar-chart-outline"></ion-icon>
+            <p class="cc-label">Mois</p>
+            <p class="cc-value">{{ money(stats.chiffreAffaireMensuel || 0) }}</p>
+          </div>
+          <div class="color-card cc-orange">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <p class="cc-label">Ventes / jour</p>
+            <p class="cc-value">{{ stats.nombreVentesJour || 0 }}</p>
+          </div>
+        </div>
+
+        <div class="stats-top-products" *ngIf="stats.topProduits?.length">
+          <p class="stp-title">Top 5 produits</p>
+          <div class="stp-item" *ngFor="let p of stats.topProduits.slice(0,5); let i = index">
+            <div class="stp-rank">{{ i + 1 }}</div>
+            <div class="stp-info">
+              <p class="stp-name">{{ p.produitNom }}</p>
+              <div class="stp-bar-wrap">
+                <div class="stp-bar"
+                  [style.width.%]="stats.topProduits[0].chiffreAffaire > 0 ? (p.chiffreAffaire / stats.topProduits[0].chiffreAffaire * 100) : 0">
+                </div>
+              </div>
+            </div>
+            <strong class="stp-amount">{{ money(p.chiffreAffaire) }}</strong>
+          </div>
+        </div>
+      </div>
+      <div style="padding:32px;text-align:center" *ngIf="loadingStats">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL — RETOUR DE VENTE
+═══════════════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showRetourModal" (didDismiss)="showRetourModal = false">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="retour-toolbar">
+        <ion-title>Retour · {{ selectedVentePourRetour?.numeroVente }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showRetourModal = false" fill="clear">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="retour-content" *ngIf="selectedVentePourRetour">
+
+      <div class="retour-info-banner">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <span>Sélectionnez les produits à retourner et ajustez les quantités.</span>
+      </div>
+
+      <p class="retour-section-title">Produits à retourner</p>
+
+      <div class="retour-line" *ngFor="let l of retourLignes">
+        <div class="retour-line-check">
+          <ion-checkbox [(ngModel)]="l.selected" color="primary"></ion-checkbox>
+        </div>
+        <div class="retour-line-info">
+          <span class="retour-line-name">{{ l.produitNom }}</span>
+          <span class="retour-line-prix">{{ money(l.prixUnitaire) }} / unité</span>
+        </div>
+        <div class="retour-line-qty" *ngIf="l.selected">
+          <button class="retour-qty-btn" (click)="l.quantiteRetournee = l.quantiteRetournee > 1 ? l.quantiteRetournee - 1 : 1">−</button>
+          <span class="retour-qty-val">{{ l.quantiteRetournee }}</span>
+          <button class="retour-qty-btn" (click)="l.quantiteRetournee = l.quantiteRetournee < l.quantiteMax ? l.quantiteRetournee + 1 : l.quantiteMax">+</button>
+          <span class="retour-qty-max">/ {{ l.quantiteMax }}</span>
+        </div>
+        <div class="retour-line-total" *ngIf="l.selected">
+          <strong>{{ money(l.quantiteRetournee * l.prixUnitaire) }}</strong>
+        </div>
+      </div>
+
+      <div class="retour-total-row">
+        <span>Total à rembourser</span>
+        <strong>{{ money(totalRetour) }}</strong>
+      </div>
+
+      <div class="retour-motif-wrap">
+        <label class="retour-motif-label">Motif du retour (optionnel)</label>
+        <ion-textarea class="retour-motif-input" [(ngModel)]="retourMotif" placeholder="Ex: produit défectueux, erreur commande..." rows="2"></ion-textarea>
+      </div>
+
+    </ion-content>
+
+    <ion-footer class="ion-no-border">
+      <div class="retour-footer">
+        <button class="rfooter-btn rfooter-btn--gray" (click)="showRetourModal = false">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Annuler
+        </button>
+        <button class="rfooter-btn rfooter-btn--retour rfooter-btn--full" (click)="submitRetour()">
+          <ion-icon name="return-down-back-outline"></ion-icon>
+          Valider le retour ({{ money(totalRetour) }})
+        </button>
+      </div>
+    </ion-footer>
+  </ng-template>
+</ion-modal>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL — QR CODE VENTE
+═══════════════════════════════════════════════════════════════ -->
+<ion-modal [isOpen]="showQrSaleModal" (didDismiss)="closeQrSaleModal()" [breakpoints]="[0, 0.55]" [initialBreakpoint]="0.55">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>QR · {{ selectedSaleForQr?.numeroVente }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeQrSaleModal()" fill="clear">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="selectedSaleForQr">
+      <div style="text-align:center;padding:16px 0">
+        <p style="color:#64748b;font-size:0.82rem;margin-bottom:16px">
+          Scannez ce QR code pour télécharger la facture PDF
+        </p>
+        <img [src]="getQrCodeImgUrl(selectedSaleForQr)"
+             alt="QR Code"
+             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px"
+             onerror="this.style.display='none'" />
+        <p style="font-size:0.8rem;color:#64748b;margin-top:10px">
+          {{ selectedSaleForQr.clientNom || 'Client' }} · {{ money(selectedSaleForQr.montantTotal) }}
+        </p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+          <ion-button size="small" fill="outline" (click)="telechargerQrVente(selectedSaleForQr!)">
+            <ion-icon name="download-outline" slot="start"></ion-icon>
+            Télécharger QR
+          </ion-button>
+          <ion-button size="small" color="danger" (click)="telechargerFactureVente(selectedSaleForQr)">
+            <ion-icon name="document-text-outline" slot="start"></ion-icon>
+            Facture PDF
+          </ion-button>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

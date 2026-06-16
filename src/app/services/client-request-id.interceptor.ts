@@ -10,33 +10,24 @@ import { OfflineSyncService } from './offline-sync.service';
 
 @Injectable()
 export class ClientRequestIdInterceptor implements HttpInterceptor {
-  private requestIdMap = new Map<string, string>();
 
   constructor(private offlineSyncService: OfflineSyncService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (this.isVenteRequest(request)) {
-      let clientRequestId = this.getOrCreateRequestId(request);
+    // N'ajoute le header que si la requête est vers /ventes et qu'il n'est pas déjà présent
+    // (le service offline-sync pose déjà son propre header lors de la synchronisation)
+    if (this.isVenteRequest(request) && !request.headers.has('X-Client-Request-ID')) {
       request = request.clone({
         setHeaders: {
-          'X-Client-Request-ID': clientRequestId
+          'X-Client-Request-ID': this.offlineSyncService.generateClientRequestId()
         }
       });
     }
-
     return next.handle(request);
   }
 
   private isVenteRequest(request: HttpRequest<any>): boolean {
     return request.url.includes('/ventes') &&
            (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE');
-  }
-
-  private getOrCreateRequestId(request: HttpRequest<any>): string {
-    const key = `${request.method}-${request.url}`;
-    if (!this.requestIdMap.has(key)) {
-      this.requestIdMap.set(key, this.offlineSyncService.generateClientRequestId());
-    }
-    return this.requestIdMap.get(key)!;
   }
 }

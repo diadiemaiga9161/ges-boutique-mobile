@@ -1,0 +1,195 @@
+// -------- Product Card --------
+.product-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.product-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+  gap: 12px;
+}
+
+.product-info { flex: 1; min-width: 0; }
+
+.product-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bio-badge {
+  font-size: 0.65rem !important;
+  padding: 2px 6px !important;
+}
+
+.product-cat { font-size: 0.78rem; color: #94a3b8; }
+
+// Stock badge coloré
+.product-stock-badge {
+  flex-shrink: 0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 56px;
+}
+
+.stock-qty   { display: block; font-size: 1.1rem; font-weight: 800; }
+.stock-label { display: block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+
+.stock-success { background: #f0fdf4; .stock-qty, .stock-label { color: #0e9f6e; } }
+.stock-warning  { background: #fffbeb; .stock-qty, .stock-label { color: #d97706; } }
+.stock-danger   { background: #fef2f2; .stock-qty, .stock-label { color: #dc2626; } }
+
+// Card body
+.product-card-body { padding: 0 14px 10px; }
+
+.price-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.price-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0 0 2px;
+}
+
+.price-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a56db;
+  margin: 0;
+
+  &.muted { color: #64748b; }
+}
+
+.peremption-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+
+  &.danger  { background: #fef2f2; color: #dc2626; }
+  &.warning { background: #fffbeb; color: #d97706; }
+}
+
+.alerte-msg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #d97706;
+  margin: 4px 0 0;
+}
+
+// Card actions
+.product-card-actions {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+  padding: 4px 6px;
+
+  ion-button { font-size: 0.76rem; --padding-start: 8px; --padding-end: 8px; }
+}
+
+// -------- Modal Form --------
+.modal-form {
+  padding-bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+}
+
+// Sur petits écrans : une seule colonne dans le formulaire modal
+@media (max-width: 400px) {
+  .modal-form .two-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e8eef8;
+  margin-bottom: 12px;
+}
+
+.modal-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1a56db;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 10px;
+}
+
+// -------- Catégories --------
+.cat-list { display: grid; gap: 6px; }
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e8eef8;
+}
+
+.cat-info { flex: 1; min-width: 0; }
+.cat-name { font-size: 0.9rem; font-weight: 600; color: #0f172a; display: block; }
+.cat-count { font-size: 0.75rem; }
+.cat-actions { display: flex; align-items: center; flex-shrink: 0; }
+.cat-edit-input {
+  flex: 1;
+  --background: #f8fafc;
+  border: 1.5px solid #1a56db;
+  border-radius: 8px;
+  --padding-start: 8px;
+  font-size: 0.88rem;
+}
+
+// -------- Inline create --------
+.inline-create {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .product-name     { font-size: 1.05rem; }
+  .stock-qty        { font-size: 1.2rem; }
+  .product-stock-badge { min-width: 64px; padding: 10px 12px; }
+
+  .price-row        { gap: 24px; }
+  .price-value      { font-size: 1rem; }
+
+  .product-card-actions ion-button {
+    font-size: 0.82rem;
+    --padding-start: 12px;
+    --padding-end:   12px;
+  }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .product-name { font-size: 1.1rem; }
+  .price-value  { font-size: 1.05rem; }
+}

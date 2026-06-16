@@ -1,0 +1,388 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Dépôts Garde</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openNew()">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Stats -->
+  <ion-grid class="stats-grid" *ngIf="stats">
+    <ion-row>
+      <ion-col size="4">
+        <div class="stat-pill stat-pill--blue">
+          <div class="stat-num">{{ stats.totalActifs }}</div>
+          <div class="stat-lbl">Actifs</div>
+        </div>
+      </ion-col>
+      <ion-col size="4">
+        <div class="stat-pill stat-pill--green">
+          <div class="stat-num">{{ money(stats.totalMontantGarde) }}</div>
+          <div class="stat-lbl">En garde</div>
+        </div>
+      </ion-col>
+      <ion-col size="4">
+        <div class="stat-pill stat-pill--grey">
+          <div class="stat-num">{{ stats.totalClotures }}</div>
+          <div class="stat-lbl">Clôturés</div>
+        </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Toggle Vue -->
+  <ion-segment [(ngModel)]="vueMode" (ionChange)="basculerVue(vueMode)" class="vue-segment">
+    <ion-segment-button value="liste">
+      <ion-icon name="list-outline"></ion-icon>
+      <ion-label>Liste</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="groupes">
+      <ion-icon name="people-outline"></ion-icon>
+      <ion-label>Par client</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- Recherche + filtre (liste seulement) -->
+  <div *ngIf="vueMode === 'liste'">
+    <div class="search-row">
+      <ion-searchbar
+        [(ngModel)]="searchTerm"
+        (ionChange)="onSearch()"
+        placeholder="Rechercher..."
+        debounce="400"
+        class="search-bar">
+      </ion-searchbar>
+    </div>
+
+    <div class="filter-chips">
+      <ion-chip [color]="filterStatut === 'TOUS' ? 'primary' : 'medium'" (click)="setFilter('TOUS')">
+        Tous
+      </ion-chip>
+      <ion-chip [color]="filterStatut === 'ACTIF' ? 'success' : 'medium'" (click)="setFilter('ACTIF')">
+        Actifs
+      </ion-chip>
+      <ion-chip [color]="filterStatut === 'CLOTURE' ? 'dark' : 'medium'" (click)="setFilter('CLOTURE')">
+        Clôturés
+      </ion-chip>
+    </div>
+  </div>
+
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="loading-container" *ngIf="loading || loadingGroupes">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <!-- ===== VUE PAR CLIENT ===== -->
+  <div *ngIf="vueMode === 'groupes' && !loadingGroupes">
+    <div class="empty-state" *ngIf="groupesClient.length === 0">
+      <ion-icon name="people-outline"></ion-icon>
+      <p>Aucun client avec dépôt actif</p>
+    </div>
+
+    <ion-card *ngFor="let client of groupesClient" class="client-card">
+      <ion-card-header class="client-card-header">
+        <div class="client-avatar">{{ client.nomComplet[0].toUpperCase() }}</div>
+        <div class="client-info">
+          <ion-card-title>{{ client.nomComplet }}</ion-card-title>
+          <ion-card-subtitle>{{ client.numero }} · {{ client.nombreDepotsActifs }} dépôt{{ client.nombreDepotsActifs > 1 ? 's' : '' }}</ion-card-subtitle>
+        </div>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="client-montants">
+          <div class="montant-row">
+            <span>Total initial</span>
+            <strong>{{ money(client.totalMontantInitial) }}</strong>
+          </div>
+          <div class="montant-row">
+            <span>Retiré</span>
+            <strong class="text-danger">{{ money(client.totalMontantRetire) }}</strong>
+          </div>
+          <div class="montant-row montant-total">
+            <span>Disponible</span>
+            <strong class="text-success">{{ money(client.totalMontantRestant) }}</strong>
+          </div>
+        </div>
+
+        <!-- Dépôts individuels -->
+        <div class="depots-detail">
+          <div class="depot-mini" *ngFor="let d of client.depots">
+            <small class="text-muted">{{ formatDate(d.dateDepot) }}</small>
+            <span class="depot-mini-amount">{{ money(d.montantRestant) }}</span>
+            <ion-button size="small" fill="outline" color="warning" (click)="openRetrait(d)">
+              <ion-icon name="arrow-down-circle-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <ion-button expand="block" color="danger" (click)="openRetraitGlobal(client)" class="retrait-global-btn">
+          <ion-icon name="arrow-down-circle-outline" slot="start"></ion-icon>
+          Retrait global
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Liste dépôts (liste seulement) -->
+  <ion-list *ngIf="vueMode === 'liste' && !loading">
+    <ion-item-sliding *ngFor="let d of filteredDepots">
+      <ion-item (click)="openDetail(d)" button>
+        <div class="d-avatar" slot="start" [class.d-avatar--cloture]="d.statut === 'CLOTURE'">
+          {{ getInitiale(d.nom) }}
+        </div>
+        <ion-label>
+          <h2>{{ d.nomComplet }}</h2>
+          <p>{{ d.numero }} · Déposé le {{ formatDate(d.dateDepot) }}</p>
+          <div class="depot-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width]="getPourcentage(d) + '%'"></div>
+            </div>
+            <span class="progress-txt">{{ getPourcentage(d) }}% retiré</span>
+          </div>
+          <p>
+            <strong>{{ money(d.montantRestant) }}</strong>
+            <span class="muted"> / {{ money(d.montantInitial) }}</span>
+          </p>
+        </ion-label>
+        <ion-badge slot="end" [color]="d.statut === 'ACTIF' ? 'success' : 'medium'">
+          {{ d.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
+        </ion-badge>
+      </ion-item>
+      <ion-item-options side="end" *ngIf="d.statut === 'ACTIF'">
+        <ion-item-option color="warning" (click)="openRetrait(d)">
+          <ion-icon name="arrow-down-circle-outline" slot="icon-only"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="primary" (click)="editDepot(d)">
+          <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="danger" (click)="cloturerDepot(d)">
+          <ion-icon name="lock-closed-outline" slot="icon-only"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+
+  <div class="empty-state" *ngIf="vueMode === 'liste' && !loading && filteredDepots.length === 0">
+    <ion-icon name="lock-closed-outline"></ion-icon>
+    <p>Aucun dépôt trouvé</p>
+  </div>
+
+</ion-content>
+
+<!-- ======== MODAL: Retrait Global ======== -->
+<ion-modal [isOpen]="showRetraitGlobalModal" (didDismiss)="showRetraitGlobalModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="danger">
+        <ion-title>Retrait global</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showRetraitGlobalModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="clientRetraitGlobal">
+      <div class="retrait-info">
+        <p>Client : <strong>{{ clientRetraitGlobal.nomComplet }}</strong></p>
+        <p>Numéro : <strong>{{ clientRetraitGlobal.numero }}</strong></p>
+        <p>Nombre de dépôts : <strong>{{ clientRetraitGlobal.nombreDepotsActifs }}</strong></p>
+        <p>Total disponible : <strong>{{ money(clientRetraitGlobal.totalMontantRestant) }}</strong></p>
+      </div>
+      <ion-item>
+        <ion-label position="stacked">Montant (0 = retrait total)</ion-label>
+        <ion-input
+          [(ngModel)]="retraitGlobalForm.montant"
+          type="number"
+          min="0"
+          [max]="clientRetraitGlobal.totalMontantRestant"
+          placeholder="0 = retirer tout">
+        </ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Observation</ion-label>
+        <ion-textarea [(ngModel)]="retraitGlobalForm.observation" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="light" class="ion-margin-top"
+        (click)="retraitGlobalForm.montant = clientRetraitGlobal.totalMontantRestant">
+        Retirer tout ({{ money(clientRetraitGlobal.totalMontantRestant) }})
+      </ion-button>
+      <ion-button expand="block" color="danger" class="save-btn" (click)="saveRetraitGlobal()">
+        <ion-icon name="arrow-down-circle-outline" slot="start"></ion-icon>
+        Confirmer le retrait global
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Nouveau / Modifier dépôt ======== -->
+<ion-modal [isOpen]="showDepotModal" (didDismiss)="showDepotModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ depotForm.id ? 'Modifier le' : 'Nouveau' }} dépôt</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showDepotModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Nom *</ion-label>
+        <ion-input [(ngModel)]="depotForm.nom" placeholder="Nom du déposant"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Prénom</ion-label>
+        <ion-input [(ngModel)]="depotForm.prenom"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Numéro (téléphone) *</ion-label>
+        <ion-input [(ngModel)]="depotForm.numero" type="tel"></ion-input>
+      </ion-item>
+      <ion-item *ngIf="!depotForm.id">
+        <ion-label position="stacked">Montant déposé *</ion-label>
+        <ion-input [(ngModel)]="depotForm.montant" type="number" min="0"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Observation</ion-label>
+        <ion-textarea [(ngModel)]="depotForm.observation" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="primary" class="save-btn" (click)="saveDepot()">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        Enregistrer
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Retrait ======== -->
+<ion-modal [isOpen]="showRetraitModal" (didDismiss)="showRetraitModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="warning">
+        <ion-title>Retrait</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showRetraitModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="retrait-info" *ngIf="retraitDepot">
+        <p>Déposant : <strong>{{ retraitDepot.nomComplet }}</strong></p>
+        <p>Solde disponible : <strong>{{ money(retraitDepot.montantRestant) }}</strong></p>
+      </div>
+      <ion-item>
+        <ion-label position="stacked">Montant à retirer *</ion-label>
+        <ion-input
+          [(ngModel)]="retraitForm.montant"
+          type="number"
+          min="0"
+          [max]="retraitDepot?.montantRestant ?? null">
+        </ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Observation</ion-label>
+        <ion-textarea [(ngModel)]="retraitForm.observation" rows="2"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" color="warning" class="save-btn" (click)="saveRetrait()">
+        <ion-icon name="arrow-down-circle-outline" slot="start"></ion-icon>
+        Enregistrer le retrait
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ======== MODAL: Détail ======== -->
+<ion-modal [isOpen]="showDetailModal" (didDismiss)="showDetailModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Détail du dépôt</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showDetailModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding" *ngIf="selectedDepot">
+      <div class="detail-header">
+        <div class="d-avatar d-avatar--lg" [class.d-avatar--cloture]="selectedDepot.statut === 'CLOTURE'">
+          {{ getInitiale(selectedDepot.nom) }}
+        </div>
+        <h2>{{ selectedDepot.nomComplet }}</h2>
+        <p>{{ selectedDepot.numero }}</p>
+        <ion-badge [color]="selectedDepot.statut === 'ACTIF' ? 'success' : 'medium'">
+          {{ selectedDepot.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
+        </ion-badge>
+      </div>
+
+      <ion-card>
+        <ion-card-content>
+          <div class="detail-row">
+            <span>Montant initial</span>
+            <strong>{{ money(selectedDepot.montantInitial) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Montant retiré</span>
+            <strong>{{ money(selectedDepot.montantRetire) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Montant restant</span>
+            <strong class="amount-restant">{{ money(selectedDepot.montantRestant) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Date de dépôt</span>
+            <strong>{{ formatDate(selectedDepot.dateDepot) }}</strong>
+          </div>
+          <div class="detail-row" *ngIf="selectedDepot.observation">
+            <span>Observation</span>
+            <strong>{{ selectedDepot.observation }}</strong>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-list-header>
+        <ion-label>Historique des retraits ({{ selectedDepot.retraits?.length || 0 }})</ion-label>
+      </ion-list-header>
+      <ion-list>
+        <ion-item *ngFor="let r of selectedDepot.retraits">
+          <ion-label>
+            <h3>{{ money(r.montant) }}</h3>
+            <p>{{ formatDate(r.dateRetrait) }}</p>
+            <p *ngIf="r.observation">{{ r.observation }}</p>
+          </ion-label>
+          <ion-icon name="arrow-down-circle-outline" slot="end" color="warning"></ion-icon>
+        </ion-item>
+        <div class="empty-state" *ngIf="!selectedDepot.retraits?.length">
+          <p>Aucun retrait</p>
+        </div>
+      </ion-list>
+
+      <div class="modal-actions" *ngIf="selectedDepot.statut === 'ACTIF'">
+        <ion-button expand="block" color="warning" (click)="showDetailModal = false; openRetrait(selectedDepot!)">
+          <ion-icon name="arrow-down-circle-outline" slot="start"></ion-icon>
+          Effectuer un retrait
+        </ion-button>
+        <ion-button expand="block" color="danger" fill="outline" (click)="showDetailModal = false; cloturerDepot(selectedDepot!)">
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+          Clôturer ce dépôt
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

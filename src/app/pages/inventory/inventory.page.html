@@ -1,0 +1,152 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Inventaire</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+    <section class="metric-grid">
+      <div class="metric-card">
+        <p class="metric-label">Stock faible</p>
+        <p class="metric-value warning">{{ stats?.produitsStockFaible || lowStock.length }}</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Rupture</p>
+        <p class="metric-value danger">{{ stats?.produitsRupture || 0 }}</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Valeur stock</p>
+        <p class="metric-value">{{ money(stats?.valeurTotaleStock || 0) }}</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Mouvements</p>
+        <p class="metric-value">{{ movementsFiltered.length }}</p>
+      </div>
+    </section>
+
+    <ion-segment [(ngModel)]="segment">
+      <ion-segment-button value="move">Mouvement</ion-segment-button>
+      <ion-segment-button value="low">Alertes</ion-segment-button>
+      <ion-segment-button value="history">Historique</ion-segment-button>
+    </ion-segment>
+
+    <!-- Onglet Mouvement -->
+    <section class="form-panel stack" *ngIf="segment === 'move'">
+      <ion-segment [(ngModel)]="typeMouvement">
+        <ion-segment-button value="ENTREE">Entrée</ion-segment-button>
+        <ion-segment-button value="SORTIE">Sortie</ion-segment-button>
+        <ion-segment-button value="AJUSTEMENT">Ajuster</ion-segment-button>
+      </ion-segment>
+
+      <ion-item>
+        <ion-input label="Rechercher produit" labelPlacement="floating"
+          [(ngModel)]="form.searchProduit"
+          (ionInput)="searchProductsForForm()"></ion-input>
+      </ion-item>
+      <div *ngIf="filteredProductsForForm.length && form.searchProduit" class="dropdown-list">
+        <div *ngFor="let p of filteredProductsForForm" class="dropdown-item" (click)="selectProduct(p)">
+          <strong>{{ p.nom }}</strong> · Stock: {{ p.quantite }} · {{ money(p.prixVente) }}
+        </div>
+      </div>
+      <p *ngIf="form.produitId" class="muted ion-padding-start">
+        Produit sélectionné: <strong>{{ form.searchProduit }}</strong>
+      </p>
+
+      <ion-item *ngIf="typeMouvement !== 'AJUSTEMENT'">
+        <ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
+      </ion-item>
+      <ion-item *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT">
+        <ion-input label="Nouvelle quantité" labelPlacement="floating" type="number" [(ngModel)]="form.nouvelleQuantite"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="form.motif"></ion-input>
+      </ion-item>
+      <ion-button expand="block" (click)="saveMovement()" [disabled]="!form.produitId">
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        Enregistrer le mouvement
+      </ion-button>
+    </section>
+
+    <!-- Onglet Alertes -->
+    <section class="stack" *ngIf="segment === 'low'">
+      <article class="mobile-card" *ngFor="let product of lowStock">
+        <div class="row-between">
+          <div>
+            <h2 class="card-title">{{ product.nom }}</h2>
+            <p class="card-subtitle">{{ product.categorie?.nom || 'Produit' }}</p>
+          </div>
+          <ion-badge [color]="product.quantite === 0 ? 'danger' : 'warning'">
+            {{ product.quantite === 0 ? 'Rupture' : product.quantite + ' restant(s)' }}
+          </ion-badge>
+        </div>
+        <p class="muted">Seuil: {{ product.seuilAlerte }} · Prix: {{ money(product.prixVente) }}</p>
+      </article>
+      <div class="empty-state" *ngIf="!lowStock.length">Aucune alerte stock</div>
+    </section>
+
+    <!-- Onglet Historique -->
+    <section class="stack" *ngIf="segment === 'history'">
+      <!-- Filtres -->
+      <div class="form-panel stack">
+        <div class="action-wrap">
+          <ion-button size="small" fill="outline" (click)="filterByPeriod('today')">Aujourd'hui</ion-button>
+          <ion-button size="small" fill="outline" (click)="filterByPeriod('week')">Semaine</ion-button>
+          <ion-button size="small" fill="outline" (click)="filterByPeriod('month')">Mois</ion-button>
+          <ion-button size="small" fill="clear" color="medium" (click)="resetFilters()">Réinitialiser</ion-button>
+        </div>
+        <div class="two-cols">
+          <ion-item>
+            <ion-input label="Du" labelPlacement="floating" type="date" [(ngModel)]="dateDebut" (ionChange)="applyFilters()"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Au" labelPlacement="floating" type="date" [(ngModel)]="dateFin" (ionChange)="applyFilters()"></ion-input>
+          </ion-item>
+        </div>
+        <ion-item>
+          <ion-select label="Type" labelPlacement="stacked" [(ngModel)]="typeMouvFilter" (ionChange)="applyFilters()">
+            <ion-select-option value="">Tous</ion-select-option>
+            <ion-select-option value="ENTREE">Entrée</ion-select-option>
+            <ion-select-option value="SORTIE">Sortie</ion-select-option>
+            <ion-select-option value="AJUSTEMENT">Ajustement</ion-select-option>
+            <ion-select-option value="RETOUR">Retour</ion-select-option>
+            <ion-select-option value="BONUS_FOURNISSEUR">Bonus Fournisseur</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-searchbar [(ngModel)]="searchTerm" placeholder="Rechercher" (ionInput)="applyFilters()"></ion-searchbar>
+      </div>
+
+      <p class="muted ion-padding-start">{{ movementsFiltered.length }} mouvement(s)</p>
+
+      <article class="mobile-card" *ngFor="let m of movementsFiltered.slice(0, 50)">
+        <div class="row-between">
+          <div>
+            <h2 class="card-title">{{ m.produit.nom || 'Produit' }}</h2>
+            <p class="card-subtitle">{{ inventory.formatDateTimeForDisplay(m.dateMouvement) }}</p>
+          </div>
+          <div>
+            <ion-badge [color]="getTypeClass(m.typeMouvement) === 'text-success' ? 'success' : (getTypeClass(m.typeMouvement) === 'text-danger' ? 'danger' : 'medium')">
+              {{ getTypeLabel(m.typeMouvement) }}
+            </ion-badge>
+          </div>
+        </div>
+        <div class="row-between">
+          <span class="muted">{{ m.quantiteAvant || 0 }} → {{ m.quantiteApres || 0 }}</span>
+          <span [class.success]="isVariationPositive(m)" [class.danger]="!isVariationPositive(m)">
+            <strong>{{ getVariation(m) }}</strong>
+          </span>
+        </div>
+        <p class="muted" *ngIf="m.motif">{{ m.motif }}</p>
+        <p class="muted" *ngIf="m.utilisateur?.nomComplet">Par: {{ m.utilisateur?.nomComplet }}</p>
+      </article>
+      <div class="empty-state" *ngIf="!movementsFiltered.length">Aucun mouvement</div>
+    </section>
+  </div>
+</ion-content>

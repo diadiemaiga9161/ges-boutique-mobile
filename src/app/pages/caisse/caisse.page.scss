@@ -1,0 +1,267 @@
+.form-panel h2 { margin: 0; }
+
+// -------- Période bar --------
+.period-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.period-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  &.active { background: #1a56db; border-color: #1a56db; color: #ffffff; }
+}
+
+// -------- Filtres opérations --------
+.op-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.op-search {
+  --background: #ffffff;
+  --border-radius: 10px;
+  --box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 0;
+}
+
+.op-type-select {
+  --background: #ffffff;
+  --border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.op-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  padding: 2px 0;
+}
+
+// -------- Carte opération --------
+.op-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+
+  &:active { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  &.op-annulee { opacity: 0.55; text-decoration: line-through; }
+}
+
+.op-indicator {
+  width: 4px;
+  flex-shrink: 0;
+  &.ind-entree { background: #0e9f6e; }
+  &.ind-sortie { background: #dc2626; }
+  &.ind-credit { background: #d97706; }
+  &.ind-other  { background: #94a3b8; }
+}
+
+.op-content {
+  flex: 1;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.op-row-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.op-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.op-type-badge {
+  font-size: 0.7rem !important;
+  padding: 3px 7px !important;
+}
+
+.op-annulee-badge {
+  font-size: 0.62rem;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 700;
+}
+
+.op-amount-col {
+  font-size: 0.95rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.op-entree-text { color: #0e9f6e; }
+.op-sortie-text { color: #dc2626; }
+.op-credit-text { color: #d97706; }
+
+.op-motif-row {
+  font-size: 0.82rem;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.op-soldes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.op-meta-row {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.op-chevron {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  align-self: center;
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+// -------- Info crédit sélectionné --------
+.credit-selected-info {
+  background: #eff6ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+}
+
+// -------- Règlement groupe --------
+.group-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eff6ff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  border: 1px solid #bfdbfe;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-bar-left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.credit-selected {
+  border: 2px solid #1a56db !important;
+  background: #f0f7ff !important;
+}
+
+// -------- Carte d'opération --------
+.op-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.op-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon { font-size: 1.4rem; }
+
+  &.op-entree { background: #f0fdf4; ion-icon { color: #0e9f6e; } }
+  &.op-sortie { background: #fef2f2; ion-icon { color: #dc2626; } }
+}
+
+.op-body { flex: 1; min-width: 0; }
+
+.op-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.op-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.op-motif {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.op-amount {
+  font-size: 0.95rem;
+  font-weight: 800;
+  flex-shrink: 0;
+
+  &.op-entree { color: #0e9f6e; }
+  &.op-sortie { color: #dc2626; }
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .period-bar   { gap: 8px; }
+  .period-btn   { font-size: 0.88rem; padding: 8px 18px; }
+
+  .op-card      { border-radius: 14px; }
+  .op-content   { padding: 12px 16px; }
+  .op-amount-col, .op-amount { font-size: 1.05rem; }
+  .op-motif-row { font-size: 0.88rem; }
+  .op-meta-row  { font-size: 0.78rem; }
+
+  .group-bar    { padding: 10px 16px; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .op-amount-col, .op-amount { font-size: 1.1rem; }
+  .op-motif-row { font-size: 0.92rem; }
+}

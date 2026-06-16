@@ -1,27 +1,256 @@
-#container {
-  text-align: center;
+// ── Toolbar brand ───────────────────────────────────
+.toolbar-brand {
+  font-size:      1.05rem;
+  font-weight:    800;
+  letter-spacing: 0.5px;
+  background:     linear-gradient(90deg, #ffffff, #93c5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
+// ══════════════════════════════════════════════════
+//  HERO BANNER
+// ══════════════════════════════════════════════════
+.home-hero {
+  background:  linear-gradient(145deg, #081648 0%, #0d2b85 50%, #1a56db 100%);
+  padding:     20px 20px 28px;
+  position:    relative;
+  overflow:    hidden;
+}
+
+.home-hero__deco {
+  position:      absolute;
+  border-radius: 50%;
+  background:    rgba(255,255,255,0.05);
+  pointer-events: none;
+
+  &--1 { width: 220px; height: 220px; top: -80px; right: -60px; }
+  &--2 { width: 140px; height: 140px; bottom: -40px; left: -30px; }
+}
+
+.home-hero__top {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  margin-bottom: 16px;
+  position:    relative;
+  z-index:     1;
+}
+
+.home-hero__avatar {
+  width:         44px;
+  height:        44px;
+  border-radius: 14px;
+  background:    rgba(255,255,255,0.15);
+  border:        1.5px solid rgba(255,255,255,0.25);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  flex-shrink:   0;
+
+  ion-icon { font-size: 1.4rem; color: #ffffff; }
+}
+
+.home-hero__brand { flex: 1; }
+
+.home-hero__store {
+  font-size:   0.92rem;
+  font-weight: 800;
+  color:       #ffffff;
+  margin:      0 0 2px;
+  letter-spacing: 0.2px;
+}
+
+.home-hero__role {
+  font-size: 0.68rem;
+  color:     rgba(255,255,255,0.60);
+  margin:    0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+.home-hero__greeting {
+  position:    relative;
+  z-index:     1;
+  margin-bottom: 18px;
+}
+
+.home-hero__name {
+  font-size:   1.5rem;
+  font-weight: 800;
+  color:       #ffffff;
+  margin:      0 0 4px;
+  letter-spacing: -0.4px;
+}
+
+.home-hero__date {
+  font-size: 0.78rem;
+  color:     rgba(255,255,255,0.60);
+  margin:    0;
+}
+
+.home-hero__ca {
+  background:    rgba(255,255,255,0.12);
+  border:        1.5px solid rgba(255,255,255,0.20);
+  border-radius: 16px;
+  padding:       14px 16px;
+  position:      relative;
+  z-index:       1;
+  backdrop-filter: blur(6px);
+}
+
+.home-hero__ca-label {
+  font-size:   0.67rem;
+  color:       rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  margin:      0 0 4px;
+}
+
+.home-hero__ca-val {
+  font-size:   1.8rem;
+  font-weight: 800;
+  color:       #ffffff;
+  margin:      0 0 6px;
+  letter-spacing: -0.6px;
+  line-height: 1;
+}
+
+.home-hero__ca-sub {
+  display:     flex;
+  align-items: center;
+  gap:         5px;
+  font-size:   0.75rem;
+  color:       rgba(255,255,255,0.65);
+
+  ion-icon { font-size: 0.82rem; }
+}
+
+// ══════════════════════════════════════════════════
+//  KPI TILES
+// ══════════════════════════════════════════════════
+.kpi-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.kpi-tile {
+  background:    #ffffff;
+  border-radius: 16px;
+  padding:       12px 10px;
+  box-shadow:    0 2px 10px rgba(8,22,72,0.07);
+  border:        1px solid #e8eef8;
+  display:       flex;
+  flex-direction: column;
+  align-items:   flex-start;
+  gap:           3px;
+  border-top:    3px solid transparent;
+}
+
+.kpi-tile--blue   { border-top-color: #1a56db; }
+.kpi-tile--orange { border-top-color: #f59e0b; }
+.kpi-tile--red    { border-top-color: #dc2626; }
+
+.kpi-tile__icon {
+  width:         32px;
+  height:        32px;
+  border-radius: 8px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  margin-bottom: 4px;
+
+  ion-icon { font-size: 1rem; }
+
+  .kpi-tile--blue   & { background: #eff6ff; ion-icon { color: #1a56db; } }
+  .kpi-tile--orange & { background: #fff7ed; ion-icon { color: #d97706; } }
+  .kpi-tile--red    & { background: #fee2e2; ion-icon { color: #dc2626; } }
+}
+
+.kpi-tile__label {
+  font-size:   0.62rem;
+  color:       #94a3b8;
+  margin:      0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.kpi-tile__val {
+  font-size:   0.95rem;
+  font-weight: 800;
+  color:       #0f172a;
+  margin:      0;
+  letter-spacing: -0.2px;
+}
+
+// ══════════════════════════════════════════════════
+//  ACCÈS RAPIDE
+// ══════════════════════════════════════════════════
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quick-tile {
+  background:    #ffffff;
+  border:        1px solid #e8eef8;
+  border-radius: 16px;
+  padding:       14px 12px;
+  display:       flex;
+  flex-direction: column;
+  align-items:   flex-start;
+  gap:           5px;
+  box-shadow:    0 2px 8px rgba(8,22,72,0.05);
+  cursor:        pointer;
+  position:      relative;
+  text-align:    left;
+  transition:    transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+
+  &:active {
+    transform:    scale(0.97);
+    box-shadow:   0 1px 4px rgba(8,22,72,0.06);
+    border-color: #bfdbfe;
+  }
+}
+
+.quick-tile__icon {
+  width:         40px;
+  height:        40px;
+  border-radius: 12px;
+  background:    #eff6ff;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  margin-bottom: 2px;
+
+  ion-icon { font-size: 1.2rem; color: #1a56db; }
+}
+
+.quick-tile__title {
+  font-size:   0.9rem;
+  font-weight: 700;
+  color:       #0f172a;
+  margin:      0;
+  line-height: 1.2;
+}
+
+.quick-tile__sub {
+  font-size: 0.72rem;
+  color:     #94a3b8;
+  margin:    0;
+  line-height: 1.2;
+}
+
+.quick-tile__arrow {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+  bottom:   12px;
+  right:    10px;
+  font-size: 0.85rem;
+  color:    #cbd5e1;
 }

@@ -1,0 +1,342 @@
+.client-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.client-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.client-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #1a56db;
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid #bfdbfe;
+}
+
+.client-info { flex: 1; min-width: 0; }
+
+.client-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.client-phone,
+.client-email {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 2px 0;
+
+  ion-icon { font-size: 12px; }
+}
+
+.client-edit-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+// Actions rapides
+.client-actions {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+}
+
+.client-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #f1f5f9;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: background 0.15s;
+
+  &:last-child { border-right: none; }
+  &:active { background: #f8fafc; }
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: #1a56db;
+  }
+
+  &.accent ion-icon { color: #0e9f6e; }
+}
+
+// Modal sections
+.modal-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e8eef8;
+}
+
+.modal-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1a56db;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 10px;
+}
+
+// Boutons PDF / QR code sous les actions
+.client-doc-actions {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+  gap: 0;
+}
+
+.doc-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 4px;
+  background: #f8fafc;
+  border: none;
+  border-right: 1px solid #e8eef8;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1a56db;
+  transition: background 0.15s;
+
+  &:last-child { border-right: none; }
+  &:active { background: #eff6ff; }
+
+  ion-icon { font-size: 0.95rem; }
+
+  &--qr {
+    color: #7c3aed;
+    background: #faf5ff;
+    &:active { background: #ede9fe; }
+  }
+}
+
+// Crédits summary banner
+.credits-summary-banner {
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+  border-bottom: 1px solid #fed7aa;
+  padding: 12px 16px;
+}
+
+.csb-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 10px;
+  ion-icon { font-size: 1rem; color: #d97706; }
+}
+
+.csb-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.csb-stat {
+  flex: 1;
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.csb-label {
+  display: block;
+  font-size: 0.65rem;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.csb-val {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  &--green { color: #16a34a; }
+  &--red { color: #dc2626; }
+}
+
+// Cartes ventes détaillées dans modal client
+.vente-detail-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+
+  &--credit { border-left: 3px solid #f59e0b; }
+  &--retard { border-left: 3px solid #dc2626; }
+}
+
+.vdc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  cursor: pointer;
+}
+
+.vdc-info {}
+.vdc-num { font-size: 0.87rem; font-weight: 700; color: #0f172a; margin: 0; }
+.vdc-date { font-size: 0.75rem; color: #94a3b8; margin: 2px 0 0; }
+.vdc-right { text-align: right; }
+.vdc-amount { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0 0 4px; }
+
+// Barre de progression crédit
+.vdc-credit-bar {
+  padding: 0 14px 12px;
+}
+
+.vcb-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.vcb-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 3px;
+  transition: width 0.3s;
+  &--late { background: #ef4444; }
+}
+
+.vcb-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.vcb-versed { font-size: 0.7rem; color: #16a34a; font-weight: 600; }
+.vcb-pct { font-size: 0.7rem; color: #64748b; }
+.vcb-reste {
+  font-size: 0.7rem;
+  color: #f59e0b;
+  font-weight: 600;
+  &--late { color: #dc2626; }
+}
+
+.vcb-echeance {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  ion-icon { font-size: 11px; }
+}
+
+// Produits dans carte vente
+.vdc-products {
+  padding: 0 14px 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.vdc-prod-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 0.78rem;
+}
+
+.vdp-qty {
+  background: #eff6ff;
+  color: #1a56db;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.vdp-name { flex: 1; color: #374151; }
+.vdp-total { font-weight: 700; color: #0f172a; font-size: 0.8rem; }
+
+.vdc-more {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 4px 0 0;
+}
+
+// Actions par vente dans modal
+.vdc-actions {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+}
+
+.vda-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 4px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #f1f5f9;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: background 0.15s;
+
+  &:last-child { border-right: none; }
+  &:active { background: #f8fafc; }
+  ion-icon { font-size: 1rem; }
+
+  &--pdf {
+    color: #dc2626;
+    ion-icon { color: #dc2626; }
+    &:active { background: #fef2f2; }
+  }
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .client-avatar  { width: 52px; height: 52px; font-size: 1.4rem; }
+  .client-name    { font-size: 1.05rem; }
+  .client-actions { gap: 0; }
+  .client-action-btn {
+    padding: 12px 8px;
+    font-size: 0.78rem;
+    ion-icon { font-size: 1.25rem; }
+  }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .client-avatar { width: 56px; height: 56px; font-size: 1.5rem; }
+}

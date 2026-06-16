@@ -1,0 +1,94 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Paramètres boutique</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-pad stack">
+
+    <!-- Logo -->
+    <section class="mobile-card" style="text-align:center">
+      <div style="margin-bottom:12px">
+        <img *ngIf="getLogoSrc()" [src]="getLogoSrc()" alt="Logo boutique"
+          style="max-width:120px; max-height:120px; border-radius:8px; object-fit:contain">
+        <ion-icon *ngIf="!getLogoSrc()" name="storefront-outline" style="font-size:80px; color: var(--ion-color-medium)"></ion-icon>
+      </div>
+      <h2>{{ form.nom || 'Boutique' }}</h2>
+      <p class="muted">{{ form.ville || form.adresse || 'Adresse non renseignée' }}</p>
+
+      <div style="margin-top:12px">
+        <input type="file" id="logoInput" accept="image/*" style="display:none"
+          (change)="onLogoFileSelected($event)">
+        <ion-button fill="outline" size="small" onclick="document.getElementById('logoInput').click()">
+          <ion-icon name="image-outline" slot="start"></ion-icon>
+          Choisir un logo
+        </ion-button>
+        <ion-button fill="solid" size="small" color="success"
+          *ngIf="selectedLogoFile"
+          (click)="uploadLogo()"
+          [disabled]="uploadingLogo">
+          <ion-spinner *ngIf="uploadingLogo" slot="start" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!uploadingLogo" name="cloud-upload-outline" slot="start"></ion-icon>
+          Envoyer
+        </ion-button>
+      </div>
+    </section>
+
+    <!-- Informations générales -->
+    <section class="form-panel stack">
+      <h2 class="card-title">Informations générales</h2>
+      <ion-item>
+        <ion-input label="Nom de la boutique *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Téléphone" labelPlacement="floating" type="tel" [(ngModel)]="form.telephone"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Email" labelPlacement="floating" type="email" [(ngModel)]="form.email"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="form.adresse"></ion-textarea>
+      </ion-item>
+      <div class="two-cols">
+        <ion-item>
+          <ion-input label="Ville" labelPlacement="floating" [(ngModel)]="form.ville"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label="Pays" labelPlacement="floating" [(ngModel)]="form.pays"></ion-input>
+        </ion-item>
+      </div>
+      <ion-item>
+        <ion-input label="Devise" labelPlacement="floating" [(ngModel)]="form.devise" placeholder="FCFA"></ion-input>
+      </ion-item>
+    </section>
+
+    <!-- Informations légales -->
+    <section class="form-panel stack">
+      <h2 class="card-title">Informations légales</h2>
+      <ion-item>
+        <ion-input label="Numéro RC (Registre du commerce)" labelPlacement="floating" [(ngModel)]="form.numeroRc"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Numéro IFU (Identifiant fiscal)" labelPlacement="floating" [(ngModel)]="form.numeroIfu"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="form.description"></ion-textarea>
+      </ion-item>
+    </section>
+
+    <!-- Actions -->
+    <ion-button expand="block" (click)="save()" [disabled]="saving">
+      <ion-spinner *ngIf="saving" slot="start" name="crescent"></ion-spinner>
+      <ion-icon *ngIf="!saving" name="save-outline" slot="start"></ion-icon>
+      Enregistrer
+    </ion-button>
+    <ion-button expand="block" fill="outline" color="medium" (click)="reset()">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      Réinitialiser
+    </ion-button>
+  </div>
+</ion-content>

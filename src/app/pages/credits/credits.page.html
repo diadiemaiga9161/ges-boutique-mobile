@@ -1,0 +1,416 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Crédits clients</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="load()" fill="clear">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <div class="credits-hero">
+    <div class="hero-stat hero-stat--total">
+      <p class="hs-label">Total dû</p>
+      <p class="hs-val">{{ money(totalCredits) }}</p>
+    </div>
+    <div class="hero-stat">
+      <p class="hs-label">Clients</p>
+      <p class="hs-val">{{ nbClients }}</p>
+    </div>
+    <div class="hero-stat hero-stat--retard">
+      <p class="hs-label">En retard</p>
+      <p class="hs-val">{{ nbCreditsEnRetard }}</p>
+    </div>
+  </div>
+
+  <!-- ═══════════ FILTRES ═══════════ -->
+  <div class="credits-filters">
+    <div class="search-wrap">
+      <ion-icon name="search-outline"></ion-icon>
+      <input class="search-input" type="text" [(ngModel)]="searchTerm"
+             (input)="applyFilter()" placeholder="Nom ou téléphone..." />
+    </div>
+    <button class="retard-btn" [class.retard-btn--active]="filterRetard"
+            (click)="filterRetard = !filterRetard; applyFilter()">
+      <ion-icon name="warning-outline"></ion-icon>
+      En retard
+    </button>
+  </div>
+
+  <!-- ═══════════ LOADING ═══════════ -->
+  <div class="loading-state" *ngIf="loading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- ═══════════ LISTE CLIENTS GROUPÉS ═══════════ -->
+  <div class="credits-list" *ngIf="!loading">
+
+    <div class="empty-state" *ngIf="!filteredGroups.length">
+      <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+      <p>Aucun crédit en attente</p>
+    </div>
+
+    <div class="client-group" *ngFor="let group of filteredGroups"
+         [class.group--retard]="group.enRetard">
+
+      <!-- En-tête groupe -->
+      <div class="group-header" (click)="toggleGroup(group)">
+        <div class="group-avatar" [class.avatar--retard]="group.enRetard">
+          {{ group.clientNom[0].toUpperCase() }}
+        </div>
+        <div class="group-info">
+          <p class="group-nom">{{ group.clientNom }}</p>
+          <p class="group-tel" *ngIf="group.clientTelephone">{{ group.clientTelephone }}</p>
+          <div class="group-badges">
+            <span class="cr-count">{{ group.credits.length }} crédit{{ group.credits.length > 1 ? 's' : '' }}</span>
+            <span class="cr-retard" *ngIf="group.enRetard">
+              <ion-icon name="warning-outline"></ion-icon> En retard
+            </span>
+          </div>
+        </div>
+        <div class="group-right">
+          <p class="group-total" [class.group-total--retard]="group.enRetard">{{ money(group.totalRestant) }}</p>
+          <div class="group-actions">
+            <button class="action-btn action-btn--groupe" (click)="$event.stopPropagation(); openGroupe(group)">
+              <ion-icon name="people-outline"></ion-icon>
+              Groupé
+            </button>
+          </div>
+          <ion-icon class="chevron" [class.chevron--open]="group.expanded" name="chevron-down-outline"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Crédits du client -->
+      <div class="group-credits" *ngIf="group.expanded">
+        <div class="credit-item" *ngFor="let credit of group.credits">
+
+          <div class="credit-top">
+            <div class="credit-left">
+              <span class="credit-num">{{ credit.numeroVente }}</span>
+              <span class="credit-date" *ngIf="credit.dateEcheance">
+                <ion-icon name="calendar-outline"></ion-icon>
+                {{ formatDate(credit.dateEcheance) }}
+              </span>
+            </div>
+            <div class="credit-right">
+              <span class="credit-montant">{{ money(credit.montantRestant) }}</span>
+              <span class="credit-status" [class.status--retard]="credit.enRetard">
+                {{ credit.enRetard ? '⚠ Retard' : 'En cours' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Barre de progression -->
+          <div class="credit-progress">
+            <div class="progress-bar">
+              <div class="progress-fill"
+                   [class.fill--retard]="credit.enRetard"
+                   [style.width.%]="credit.montantTotal > 0 ? ((credit.montantVerse / credit.montantTotal) * 100) : 0">
+              </div>
+            </div>
+            <div class="progress-labels">
+              <span>Versé {{ money(credit.montantVerse) }}</span>
+              <span>/ {{ money(credit.montantTotal) }}</span>
+            </div>
+          </div>
+
+          <!-- Actions crédit -->
+          <div class="credit-btns">
+            <button class="detail-btn" (click)="openDetail(credit)">
+              <ion-icon name="eye-outline"></ion-icon>
+              Voir
+            </button>
+            <button class="pay-btn" (click)="openSimple(credit)">
+              <ion-icon name="cash-outline"></ion-icon>
+              Payer ce crédit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
+
+<!-- ═══════════════════════════════════════
+     MODAL DÉTAIL CRÉDIT (produits achetés)
+════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="showDetailModal = false">
+  <div class="modal-sheet" (click)="$event.stopPropagation()">
+
+    <div class="modal-handle"></div>
+
+    <div class="modal-head">
+      <h3>Détail du crédit</h3>
+      <button class="modal-close" (click)="showDetailModal = false">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="detailCredit">
+
+      <!-- Info crédit -->
+      <div class="credit-info-card">
+        <div class="cic-row">
+          <span class="cic-label">Client</span>
+          <span class="cic-val">{{ detailCredit.clientNom }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">N° vente</span>
+          <span class="cic-val">{{ detailCredit.numeroVente }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Total</span>
+          <span class="cic-val font-bold">{{ money(detailCredit.montantTotal) }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Versé</span>
+          <span class="cic-val text-success">{{ money(detailCredit.montantVerse) }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Reste à payer</span>
+          <span class="cic-val text-danger font-bold">{{ money(detailCredit.montantRestant) }}</span>
+        </div>
+      </div>
+
+      <!-- Produits achetés -->
+      <div class="produits-section">
+        <p class="produits-title">
+          <ion-icon name="bag-outline"></ion-icon>
+          Produits achetés
+        </p>
+
+        <div class="loading-mini" *ngIf="loadingDetail">
+          <ion-spinner name="crescent" style="width:20px;height:20px"></ion-spinner>
+          <p style="font-size:0.8rem;color:#94a3b8;margin:6px 0 0">Chargement...</p>
+        </div>
+
+        <div *ngIf="!loadingDetail && detailVente">
+          <div class="produits-list">
+            <div class="produit-row" *ngFor="let l of (detailVente.produits || detailVente.lignes || [])">
+              <span class="pr-name">{{ l.produitNom }}</span>
+              <span class="pr-qty">× {{ l.quantite }}</span>
+              <span class="pr-price">{{ money(l.sousTotal) }}</span>
+            </div>
+            <div class="produit-row" *ngIf="(detailVente.produits || detailVente.lignes || []).length === 0">
+              <span class="pr-name" style="color:#94a3b8;">Aucun produit trouvé</span>
+            </div>
+          </div>
+          <div class="detail-totaux">
+            <div class="dt-row">
+              <span>Total</span>
+              <span class="font-bold">{{ money(detailCredit.montantTotal) }}</span>
+            </div>
+            <div class="dt-row" *ngIf="detailCredit.montantVerse > 0">
+              <span>Versé</span>
+              <span class="text-success">- {{ money(detailCredit.montantVerse) }}</span>
+            </div>
+            <div class="dt-row dt-row--reste">
+              <span>Reste dû</span>
+              <span class="text-danger font-bold">{{ money(detailCredit.montantRestant) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingDetail && !detailVente" class="empty-detail">
+          <ion-icon name="alert-circle-outline" color="medium"></ion-icon>
+          <p>Impossible de charger les produits</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="showDetailModal = false">Fermer</button>
+      <button class="btn-confirm" (click)="showDetailModal = false; openSimple(detailCredit!)">
+        <ion-icon name="cash-outline"></ion-icon>
+        Régler ce crédit
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL RÈGLEMENT SIMPLE
+════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showSimpleModal" (click)="showSimpleModal = false">
+  <div class="modal-sheet" (click)="$event.stopPropagation()">
+
+    <div class="modal-handle"></div>
+
+    <div class="modal-head">
+      <h3>Règlement crédit</h3>
+      <button class="modal-close" (click)="showSimpleModal = false">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedCredit">
+
+      <!-- Info crédit -->
+      <div class="credit-info-card">
+        <div class="cic-row">
+          <span class="cic-label">Client</span>
+          <span class="cic-val">{{ selectedCredit.clientNom }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">N° vente</span>
+          <span class="cic-val">{{ selectedCredit.numeroVente }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Total</span>
+          <span class="cic-val font-bold">{{ money(selectedCredit.montantTotal) }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Versé</span>
+          <span class="cic-val text-success">{{ money(selectedCredit.montantVerse) }}</span>
+        </div>
+        <div class="cic-row">
+          <span class="cic-label">Reste à payer</span>
+          <span class="cic-val text-danger font-bold">{{ money(selectedCredit.montantRestant) }}</span>
+        </div>
+      </div>
+
+      <!-- Produits achetés -->
+      <div class="produits-section">
+        <p class="produits-title">
+          <ion-icon name="bag-outline"></ion-icon>
+          Produits achetés
+        </p>
+        <div class="loading-mini" *ngIf="loadingVente">
+          <ion-spinner name="crescent" style="width:20px;height:20px"></ion-spinner>
+        </div>
+        <div class="produits-list" *ngIf="!loadingVente && selectedVente">
+          <div class="produit-row" *ngFor="let l of (selectedVente.produits || selectedVente.lignes || [])">
+            <span class="pr-name">{{ l.produitNom }}</span>
+            <span class="pr-qty">× {{ l.quantite }}</span>
+            <span class="pr-price">{{ money(l.sousTotal) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire règlement -->
+      <div class="reglement-form">
+        <div class="form-field">
+          <label>Montant à régler</label>
+          <input type="number" class="field-input" [(ngModel)]="reglementSimple.montant"
+                 [max]="selectedCredit.montantRestant" min="1" />
+        </div>
+
+        <div class="form-field">
+          <label>Mode de paiement</label>
+          <div class="mode-chips">
+            <button class="mode-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
+                    [class.mode-chip--active]="reglementSimple.modePaiement === mode"
+                    (click)="reglementSimple.modePaiement = mode">
+              {{ mode === 'ESPECES' ? 'Espèces' : mode === 'ORANGE_MONEY' ? 'Orange' : mode === 'MOOV_MONEY' ? 'Moov' : 'Virement' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-field" *ngIf="reglementSimple.modePaiement !== ModePaiementCaisse.ESPECES">
+          <label>Référence</label>
+          <input type="text" class="field-input" [(ngModel)]="reglementSimple.reference" placeholder="N° transaction..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="showSimpleModal = false">Annuler</button>
+      <button class="btn-confirm" (click)="saveSimple()" [disabled]="savingSimple">
+        <ion-spinner *ngIf="savingSimple" name="crescent" style="width:16px;height:16px"></ion-spinner>
+        <ion-icon *ngIf="!savingSimple" name="cash-outline"></ion-icon>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL RÈGLEMENT GROUPÉ
+════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showGroupModal" (click)="showGroupModal = false">
+  <div class="modal-sheet modal-sheet--lg" (click)="$event.stopPropagation()">
+
+    <div class="modal-handle"></div>
+
+    <div class="modal-head">
+      <h3>Règlement groupé — {{ selectedGroup?.clientNom }}</h3>
+      <button class="modal-close" (click)="showGroupModal = false">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedGroup">
+
+      <p class="select-hint">Sélectionnez les crédits à inclure :</p>
+
+      <div class="groupe-credits">
+        <div class="groupe-credit-item" *ngFor="let c of selectedGroup.credits"
+             [class.groupe-credit-item--selected]="isCreditSelected(c.venteId)"
+             (click)="toggleCreditSelection(c.venteId)">
+          <div class="gci-check">
+            <ion-icon [name]="isCreditSelected(c.venteId) ? 'checkbox-outline' : 'square-outline'"
+                      [color]="isCreditSelected(c.venteId) ? 'primary' : 'medium'"></ion-icon>
+          </div>
+          <div class="gci-info">
+            <span class="gci-num">{{ c.numeroVente }}</span>
+            <span class="gci-date" *ngIf="c.dateEcheance">Éch. {{ formatDate(c.dateEcheance) }}</span>
+          </div>
+          <span class="gci-montant" [class.text-danger]="c.enRetard">{{ money(c.montantRestant) }}</span>
+        </div>
+      </div>
+
+      <div class="groupe-total">
+        <span>{{ selectedCreditsForGroup.length }} crédit(s) sélectionné(s)</span>
+        <span class="gt-val">{{ money(getGroupTotal()) }}</span>
+      </div>
+
+      <div class="reglement-form">
+        <div class="form-field">
+          <label>Montant total à régler</label>
+          <input type="number" class="field-input" [(ngModel)]="reglementGroupe.montant" min="1" />
+          <small class="field-hint" *ngIf="reglementGroupe.montant < getGroupTotal()">
+            Montant partiel — distribué proportionnellement
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Mode de paiement</label>
+          <div class="mode-chips">
+            <button class="mode-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
+                    [class.mode-chip--active]="reglementGroupe.modePaiement === mode"
+                    (click)="reglementGroupe.modePaiement = mode">
+              {{ mode === 'ESPECES' ? 'Espèces' : mode === 'ORANGE_MONEY' ? 'Orange' : mode === 'MOOV_MONEY' ? 'Moov' : 'Virement' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-field" *ngIf="reglementGroupe.modePaiement !== ModePaiementCaisse.ESPECES">
+          <label>Référence</label>
+          <input type="text" class="field-input" [(ngModel)]="reglementGroupe.reference" placeholder="N° transaction..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="showGroupModal = false">Annuler</button>
+      <button class="btn-confirm" (click)="saveGroupe()" [disabled]="savingGroupe || !selectedCreditsForGroup.length">
+        <ion-spinner *ngIf="savingGroupe" name="crescent" style="width:16px;height:16px"></ion-spinner>
+        <ion-icon *ngIf="!savingGroupe" name="people-outline"></ion-icon>
+        Régler ({{ selectedCreditsForGroup.length }})
+      </button>
+    </div>
+  </div>
+</div>

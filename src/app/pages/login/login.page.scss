@@ -1,0 +1,262 @@
+// ══════════════════════════════════════════════════
+//  LOGIN PAGE — Ges Lafia
+// ══════════════════════════════════════════════════
+.login-content { --background: #f0f4f8; }
+
+.login-wrapper {
+  min-height:     100vh;
+  display:        flex;
+  flex-direction: column;
+}
+
+// ── Hero ──────────────────────────────────────────
+.login-hero {
+  background:  linear-gradient(150deg, #081648 0%, #0d2b85 45%, #1a56db 100%);
+  position:    relative;
+  overflow:    hidden;
+  flex-shrink: 0;
+}
+
+.lh-deco {
+  position:      absolute;
+  border-radius: 50%;
+  background:    rgba(255,255,255,0.05);
+  pointer-events: none;
+
+  &--1 { width: 280px; height: 280px; top: -100px; right: -80px; }
+  &--2 { width: 160px; height: 160px; top: 30px;   left: -60px;  }
+  &--3 { width: 90px;  height: 90px;  bottom: 40px; right: 40px;  opacity: 0.07; }
+}
+
+.lh-body {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  padding:        52px 20px 32px;
+  position:       relative;
+  z-index:        1;
+}
+
+// Logo MC (reproduce l'esprit du logo)
+.lh-logo {
+  width:         80px;
+  height:        80px;
+  border-radius: 22px;
+  background:    rgba(255,255,255,0.12);
+  border:        2px solid rgba(255,255,255,0.25);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow:    0 8px 32px rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+  gap:           0;
+  font-weight:   900;
+  font-size:     2rem;
+  line-height:   1;
+}
+
+.lh-logo__m { color: #ffffff; }
+.lh-logo__c { color: #60a5fa; }
+
+.lh-app-name {
+  font-size:      2.1rem;
+  font-weight:    900;
+  color:          #ffffff;
+  margin:         0 0 6px;
+  letter-spacing: 0.5px;
+  text-align:     center;
+}
+
+.lh-tagline {
+  font-size:  0.82rem;
+  color:      rgba(255,255,255,0.60);
+  margin:     0;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.lh-wave {
+  margin-bottom: -2px;
+  svg {
+    display: block;
+    width:   100%;
+    height:  56px;
+  }
+}
+
+// ── Formulaire ────────────────────────────────────
+.login-form-zone {
+  background:  #f0f4f8;
+  flex:        1;
+  display:     flex;
+  align-items: flex-start;
+  padding:     4px 16px 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+
+.login-card {
+  width:         100%;
+  max-width:     440px;
+  margin:        0 auto;
+  background:    #ffffff;
+  border-radius: 22px;
+  padding:       24px 20px;
+  box-shadow:    0 4px 24px rgba(8,22,72,0.10);
+  border:        1px solid #e8eef8;
+}
+
+.login-card__title {
+  font-size:      1.5rem;
+  font-weight:    800;
+  color:          #0f172a;
+  margin:         0 0 5px;
+  letter-spacing: -0.3px;
+}
+
+.login-card__sub {
+  font-size:     0.88rem;
+  color:         #94a3b8;
+  margin:        0 0 22px;
+}
+
+.login-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+}
+
+// Input label avec icône
+.input-label {
+  display:        flex;
+  align-items:    center;
+  gap:            5px;
+  font-size:      0.76rem;
+  font-weight:    700;
+  color:          #334155;
+  letter-spacing: 0.2px;
+  margin-bottom:  0;
+
+  ion-icon { font-size: 0.85rem; color: #94a3b8; }
+}
+
+.input-wrap {
+  display:       flex;
+  align-items:   center;
+  background:    #f8fafc;
+  border:        1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding:       4px 12px;
+  transition:    border-color 0.2s, box-shadow 0.2s, background 0.2s;
+
+  &:focus-within {
+    border-color: #1a56db;
+    background:   #eff6ff;
+    box-shadow:   0 0 0 4px rgba(26,86,219,0.10);
+  }
+}
+
+.input-field {
+  flex:               1;
+  --background:        transparent;
+  --color:             #0f172a;
+  --placeholder-color: #cbd5e1;
+  --padding-start:     0;
+  --padding-end:       0;
+  font-size:           0.95rem;
+  font-weight:         500;
+  color:               #0f172a;
+  min-height:          unset;
+  height:              44px;
+}
+
+.eye-toggle {
+  background:  none;
+  border:      none;
+  padding:     8px;
+  color:       #94a3b8;
+  cursor:      pointer;
+  display:     flex;
+  align-items: center;
+  transition:  color 0.15s;
+
+  ion-icon { font-size: 1.1rem; }
+  &:active { color: #1a56db; }
+}
+
+// Bouton connexion
+.login-submit {
+  width:          100%;
+  height:         52px;
+  background:     linear-gradient(135deg, #081648 0%, #1a56db 100%);
+  color:          #ffffff;
+  border:         none;
+  border-radius:  14px;
+  font-size:      1rem;
+  font-weight:    800;
+  letter-spacing: 0.4px;
+  cursor:         pointer;
+  display:        flex;
+  align-items:    center;
+  justify-content: center;
+  gap:            8px;
+  box-shadow:     0 6px 22px rgba(26,86,219,0.38);
+  transition:     transform 0.15s, box-shadow 0.15s;
+  margin-top:     4px;
+
+  span {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+  }
+
+  ion-icon { font-size: 1.15rem; }
+
+  &:active:not([disabled]) {
+    transform:  translateY(2px);
+    box-shadow: 0 3px 10px rgba(26,86,219,0.25);
+  }
+
+  &[disabled] {
+    opacity: 0.65;
+    cursor:  not-allowed;
+  }
+}
+
+.login-submit__loading {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  ion-spinner { width: 18px; height: 18px; color: #fff; }
+}
+
+.login-version {
+  text-align: center;
+  font-size:  0.72rem;
+  color:      #cbd5e1;
+  margin:     20px 0 0;
+  letter-spacing: 0.3px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .lh-body { padding: 64px 28px 40px; }
+  .lh-logo  { width: 96px; height: 96px; font-size: 2.5rem; }
+  .lh-app-name { font-size: 2.6rem; }
+
+  .login-form-zone { padding: 16px 24px 48px; align-items: center; }
+  .login-card {
+    max-width: 480px;
+    padding: 32px 28px;
+    border-radius: 28px;
+  }
+  .login-card__title { font-size: 1.7rem; }
+  .input-field  { height: 50px; font-size: 1rem; }
+  .login-submit { height: 58px; font-size: 1.05rem; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .login-card { max-width: 520px; }
+  .lh-app-name { font-size: 3rem; }
+}

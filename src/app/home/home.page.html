@@ -1,20 +1,92 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
     <ion-title>
-      Blank
+      <span class="toolbar-brand">Ges Lafia</span>
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button routerLink="/profile" fill="clear">
+        <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content pullingIcon="chevron-down-outline" refreshingSpinner="crescent"></ion-refresher-content>
+  </ion-refresher>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+  <!-- ══════════════════════ HERO BANNER ══════════════════════ -->
+  <div class="home-hero">
+    <div class="home-hero__deco home-hero__deco--1"></div>
+    <div class="home-hero__deco home-hero__deco--2"></div>
+
+    <div class="home-hero__top">
+      <div class="home-hero__avatar">
+        <ion-icon name="storefront-outline"></ion-icon>
+      </div>
+      <div class="home-hero__brand">
+        <p class="home-hero__store">{{ boutiqueName }}</p>
+        <p class="home-hero__role">{{ auth.getFormattedRole() || 'Utilisateur' }}</p>
+      </div>
+    </div>
+
+    <div class="home-hero__greeting">
+      <h1 class="home-hero__name">{{ auth.getDisplayName() }}</h1>
+      <p class="home-hero__date">{{ today }}</p>
+    </div>
+
+    <!-- CA du jour -->
+    <div class="home-hero__ca">
+      <p class="home-hero__ca-label">CA du jour</p>
+      <p class="home-hero__ca-val">{{ money(stats?.chiffreAffaire?.journalier) }}</p>
+      <div class="home-hero__ca-sub">
+        <ion-icon name="receipt-outline"></ion-icon>
+        <span>{{ stats?.chiffreAffaire?.totalVentes || 0 }} vente(s) aujourd'hui</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-pad stack">
+
+    <!-- ══════════════════════ KPI CARDS ══════════════════════ -->
+    <div class="kpi-row">
+      <div class="kpi-tile kpi-tile--blue">
+        <div class="kpi-tile__icon"><ion-icon name="trending-up-outline"></ion-icon></div>
+        <p class="kpi-tile__label">Ventes</p>
+        <p class="kpi-tile__val">{{ stats?.chiffreAffaire?.totalVentes || 0 }}</p>
+      </div>
+      <div class="kpi-tile kpi-tile--orange">
+        <div class="kpi-tile__icon"><ion-icon name="alert-circle-outline"></ion-icon></div>
+        <p class="kpi-tile__label">Stock faible</p>
+        <p class="kpi-tile__val">{{ stats?.inventaire?.produitsStockFaible || 0 }}</p>
+      </div>
+      <div class="kpi-tile kpi-tile--red">
+        <div class="kpi-tile__icon"><ion-icon name="card-outline"></ion-icon></div>
+        <p class="kpi-tile__label">Crédits</p>
+        <p class="kpi-tile__val">{{ money(stats?.credits?.montantTotalCredits) }}</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ ACCÈS RAPIDE ══════════════════════ -->
+    <p class="section-label">Accès rapide</p>
+
+    <div class="quick-grid">
+      <button
+        class="quick-tile"
+        *ngFor="let action of actions"
+        (click)="go(action.route)">
+        <div class="quick-tile__icon">
+          <ion-icon [name]="action.icon"></ion-icon>
+        </div>
+        <p class="quick-tile__title">{{ action.title }}</p>
+        <p class="quick-tile__sub">{{ action.subtitle }}</p>
+        <ion-icon name="chevron-forward-outline" class="quick-tile__arrow"></ion-icon>
+      </button>
+    </div>
+
   </div>
 </ion-content>

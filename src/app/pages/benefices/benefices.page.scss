@@ -1,0 +1,131 @@
+/* Hero */
+.ben-hero {
+  position: relative;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #fff;
+  padding: 28px 20px 20px;
+  text-align: center;
+  overflow: hidden;
+
+  &__deco {
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+
+  &__label {
+    font-size: 13px;
+    opacity: 0.85;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  &__val {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+
+    &--neg { color: #fca5a5; }
+  }
+
+  &__sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+}
+
+.ben-evo {
+  &--success { color: #d1fae5; }
+  &--danger  { color: #fecaca; }
+  &--medium  { color: rgba(255,255,255,.7); }
+}
+
+/* KPI row */
+.ben-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 12px;
+  padding-bottom: 4px;
+}
+
+.ben-kpi {
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+
+  &__label {
+    font-size: 10px;
+    color: #6b7280;
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__val {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  &--blue   { background: rgba(59,130,246,.1);  .ben-kpi__val { color: #3b82f6; } }
+  &--purple { background: rgba(139,92,246,.1);  .ben-kpi__val { color: #7c3aed; } }
+  &--amber  { background: rgba(245,158,11,.1);  .ben-kpi__val { color: #d97706; } }
+}
+
+/* Chart */
+.chart-wrap {
+  height: 220px;
+  canvas { width: 100% !important; height: 100% !important; }
+}
+
+ion-card-title {
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .ben-hero {
+    padding: 36px 28px 24px;
+    &__val  { font-size: 2.6rem; }
+    &__sub  { font-size: 15px; }
+  }
+
+  .ben-kpis {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding-top: 16px;
+  }
+
+  .ben-kpi {
+    padding: 14px 12px;
+    &__label { font-size: 12px; }
+    &__val   { font-size: 17px; }
+  }
+
+  .chart-wrap { height: 280px; }
+  ion-card-title { font-size: 17px; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .ben-hero {
+    padding: 42px 40px 30px;
+    &__val { font-size: 3rem; }
+  }
+
+  .ben-kpis { grid-template-columns: repeat(3, 1fr); }
+  .ben-kpi__val { font-size: 19px; }
+  .chart-wrap   { height: 340px; }
+}

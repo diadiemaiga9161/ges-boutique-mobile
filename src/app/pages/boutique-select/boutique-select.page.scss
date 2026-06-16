@@ -1,0 +1,80 @@
+// Réutilise les styles de login-hero
+.select-content { --background: #f0f4f8; }
+
+.select-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+
+.select-hero {
+  position: relative;
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 60%, #0a3d91 100%);
+  padding: 48px 24px 0;
+  overflow: hidden;
+
+  .lh-deco {
+    position: absolute; border-radius: 50%; opacity: 0.08;
+    background: #fff;
+    &--1 { width: 200px; height: 200px; top: -60px; right: -60px; }
+    &--2 { width: 120px; height: 120px; bottom: 20px; left: -30px; }
+  }
+
+  .lh-body { position: relative; text-align: center; padding-bottom: 24px; }
+
+  .lh-logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 64px; height: 64px; border-radius: 18px;
+    background: rgba(255,255,255,0.15);
+    margin-bottom: 12px;
+    .lh-logo__m { font-size: 1.6rem; font-weight: 800; color: #fff; }
+    .lh-logo__c { font-size: 1.6rem; font-weight: 800; color: #ffd54f; }
+  }
+
+  .lh-app-name { font-size: 1.6rem; font-weight: 700; color: #fff; margin: 0 0 4px; }
+  .lh-tagline   { font-size: 0.8rem; color: rgba(255,255,255,0.75); margin: 0; }
+
+  .lh-wave { line-height: 0; margin-top: 16px;
+    svg { width: 100%; height: 40px; display: block; }
+  }
+}
+
+.select-zone {
+  flex: 1; padding: 16px;
+  display: flex; align-items: flex-start; justify-content: center;
+}
+
+.select-card {
+  width: 100%; max-width: 420px;
+  background: #fff; border-radius: 20px;
+  padding: 24px 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+  &__title { font-size: 1.15rem; font-weight: 700; color: #1565c0; margin: 0 0 4px; text-align: center; }
+  &__sub    { font-size: 0.8rem; color: #78909c; text-align: center; margin: 0 0 20px; }
+}
+
+.boutique-list { display: flex; flex-direction: column; gap: 10px; }
+
+.boutique-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #f5f7fa; border: 2px solid transparent; border-radius: 14px;
+  padding: 14px 16px; cursor: pointer; transition: all 0.2s ease;
+  width: 100%; text-align: left;
+
+  &:active, &:hover { border-color: #1565c0; background: #e8f0fe; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &__icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #1565c0, #1976d2);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    ion-icon { font-size: 1.4rem; color: #fff; }
+  }
+
+  &__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  &__nom   { font-size: 0.95rem; font-weight: 600; color: #1a237e; }
+  &__url   { font-size: 0.72rem; color: #78909c; }
+
+  &__arrow { font-size: 1rem; color: #1565c0; flex-shrink: 0; }
+}
+
+.select-version {
+  text-align: center; font-size: 0.72rem; color: #b0bec5; margin: 20px 0 0;
+}

@@ -1,0 +1,46 @@
+<ion-progress-bar type="indeterminate" *ngIf="loadingService.loading$ | async" style="position:fixed;top:0;left:0;right:0;z-index:9999;"></ion-progress-bar>
+<ion-tabs>
+  <ion-tab-bar slot="bottom">
+
+    <!-- Caisse — ADMIN seulement -->
+    <ion-tab-button tab="caisse" *ngIf="auth.isAdmin()" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="cash-outline"></ion-icon>
+      </div>
+      <ion-label>Caisse</ion-label>
+    </ion-tab-button>
+
+    <!-- Ventes — tous -->
+    <ion-tab-button tab="sales" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="receipt-outline"></ion-icon>
+      </div>
+      <ion-label>Ventes</ion-label>
+    </ion-tab-button>
+
+    <!-- Produits — tous -->
+    <ion-tab-button tab="products" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="cube-outline"></ion-icon>
+      </div>
+      <ion-label>Produits</ion-label>
+    </ion-tab-button>
+
+    <!-- Inventaire — tous -->
+    <ion-tab-button tab="inventory" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="clipboard-outline"></ion-icon>
+      </div>
+      <ion-label>Inventaire</ion-label>
+    </ion-tab-button>
+
+    <!-- Rapports — ADMIN seulement -->
+    <ion-tab-button tab="reports" *ngIf="auth.isAdmin()" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="bar-chart-outline"></ion-icon>
+      </div>
+      <ion-label>Rapports</ion-label>
+    </ion-tab-button>
+
+  </ion-tab-bar>
+</ion-tabs>

@@ -1,0 +1,21 @@
+.form-panel {
+  display: grid;
+  gap: 12px;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .form-panel {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+    margin: 0 auto;
+  }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .form-panel {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1000px;
+  }
+}

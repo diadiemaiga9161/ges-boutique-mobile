@@ -1,0 +1,104 @@
+.profile-card {
+  text-align: center;
+}
+
+.avatar {
+  align-items: center;
+  background: #e0f2f1;
+  border-radius: 8px;
+  color: #0f766e;
+  display: inline-flex;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.avatar ion-icon {
+  font-size: 2rem;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 12px 0 4px;
+}
+
+// ─── Photo de profil ───
+.avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.avatar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid #bae6fd;
+  position: relative;
+}
+
+.photo-avatar {
+  border-color: #2563eb;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.photo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+
+  &--remove {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  label & {
+    cursor: pointer;
+  }
+}
+
+label.photo-btn {
+  cursor: pointer;
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .avatar-circle { width: 110px; height: 110px; }
+  .avatar        { width: 80px;  height: 80px; }
+  .avatar ion-icon { font-size: 2.5rem; }
+  h1 { font-size: 1.6rem; }
+  .photo-btn { width: 42px; height: 42px; font-size: 1.1rem; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .avatar-circle { width: 130px; height: 130px; }
+  h1 { font-size: 1.8rem; }
+}

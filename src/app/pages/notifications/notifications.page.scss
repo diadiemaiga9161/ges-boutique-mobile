@@ -1,0 +1,13 @@
+ion-item { --padding-start: 12px; }
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  ion-item { --padding-start: 20px; --min-height: 62px; font-size: 0.95rem; }
+  ion-list { max-width: 720px; margin: 0 auto; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  ion-list { max-width: 900px; }
+  ion-item { --padding-start: 28px; }
+}

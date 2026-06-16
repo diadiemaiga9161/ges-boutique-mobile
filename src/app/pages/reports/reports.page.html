@@ -1,0 +1,393 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Rapports</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="refresh()">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content pullingIcon="chevron-down-outline" refreshingSpinner="crescent"></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ══════════════════════════════════
+       HERO DASHBOARD
+  ══════════════════════════════════ -->
+  <div class="rpt-hero">
+    <div class="rpt-hero__deco"></div>
+    <p class="rpt-hero__eyebrow">Vue d'ensemble</p>
+    <h1 class="rpt-hero__ca">{{ money(stats?.chiffreAffaire?.journalier || 0) }}</h1>
+    <p class="rpt-hero__label">Chiffre d'affaires aujourd'hui</p>
+    <div class="rpt-hero__benefice" *ngIf="daily">
+      <ion-icon name="trending-up-outline"></ion-icon>
+      Bénéfice du jour :
+      <strong [class.rpt-benef--pos]="(daily.beneficeTotal || 0) >= 0"
+              [class.rpt-benef--neg]="(daily.beneficeTotal || 0) < 0">
+        {{ money(daily.beneficeTotal || 0) }}
+      </strong>
+    </div>
+
+    <!-- 4 mini KPI -->
+    <div class="rpt-hero__kpis">
+      <div class="rhk">
+        <p class="rhk__val">{{ stats?.chiffreAffaire?.totalVentes || 0 }}</p>
+        <p class="rhk__lbl">Ventes</p>
+      </div>
+      <div class="rhk rhk--sep"></div>
+      <div class="rhk">
+        <p class="rhk__val">{{ money(stats?.chiffreAffaire?.panierMoyen || 0) }}</p>
+        <p class="rhk__lbl">Panier moy.</p>
+      </div>
+      <div class="rhk rhk--sep"></div>
+      <div class="rhk">
+        <p class="rhk__val rpt-warn">{{ stats?.credits?.creditsEnRetard || 0 }}</p>
+        <p class="rhk__lbl">Crédits retard</p>
+      </div>
+      <div class="rhk rhk--sep"></div>
+      <div class="rhk">
+        <p class="rhk__val">{{ money(stats?.inventaire?.valeurTotale || 0) }}</p>
+        <p class="rhk__lbl">Valeur stock</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-pad stack">
+
+    <!-- ══════════════════════════════════
+         SÉLECTEUR DE PÉRIODE
+    ══════════════════════════════════ -->
+    <div class="period-selector">
+      <button class="ps-btn" [class.ps-btn--active]="activeReport==='day'"
+        (click)="switchReport('day')">
+        <ion-icon name="sunny-outline"></ion-icon>
+        Jour
+      </button>
+      <button class="ps-btn" [class.ps-btn--active]="activeReport==='week'"
+        (click)="switchReport('week')">
+        <ion-icon name="calendar-outline"></ion-icon>
+        Semaine
+      </button>
+      <button class="ps-btn" [class.ps-btn--active]="activeReport==='month'"
+        (click)="switchReport('month')">
+        <ion-icon name="bar-chart-outline"></ion-icon>
+        Mois
+      </button>
+      <button class="ps-btn" [class.ps-btn--active]="activeReport==='custom'"
+        (click)="switchReport('custom')">
+        <ion-icon name="options-outline"></ion-icon>
+        Perso
+      </button>
+    </div>
+
+    <!-- Filtre date journalier -->
+    <div class="filter-card" *ngIf="activeReport === 'day'">
+      <div class="filter-date-row">
+        <div class="fdr-field">
+          <label class="fdr-label">
+            <ion-icon name="calendar-outline"></ion-icon>
+            Date du rapport
+          </label>
+          <div class="fdr-input-wrap">
+            <input type="date" class="fdr-input" [(ngModel)]="selectedDate" />
+          </div>
+        </div>
+        <button class="fdr-btn" (click)="loadDaily()">
+          <ion-icon name="analytics-outline"></ion-icon>
+          Générer
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtre dates personnalisées -->
+    <div class="filter-card" *ngIf="activeReport === 'custom'">
+      <div class="filter-date-row">
+        <div class="fdr-field" style="flex:1">
+          <label class="fdr-label">Du</label>
+          <div class="fdr-input-wrap">
+            <input type="date" class="fdr-input" [(ngModel)]="dateDebut" />
+          </div>
+        </div>
+        <div class="fdr-arrow">→</div>
+        <div class="fdr-field" style="flex:1">
+          <label class="fdr-label">Au</label>
+          <div class="fdr-input-wrap">
+            <input type="date" class="fdr-input" [(ngModel)]="dateFin" />
+          </div>
+        </div>
+      </div>
+      <button class="fdr-btn fdr-btn--full" (click)="loadCustom()">
+        <ion-icon name="analytics-outline"></ion-icon>
+        Générer le rapport personnalisé
+      </button>
+    </div>
+
+    <!-- Chargement -->
+    <div class="rpt-loading" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Calcul du rapport...</p>
+    </div>
+
+    <!-- ══════════════════════════════════
+         RÉSUMÉ DU RAPPORT ACTIF
+    ══════════════════════════════════ -->
+
+    <!-- Jour -->
+    <ng-container *ngIf="activeReport === 'day' && daily && !loading">
+      <ng-container *ngTemplateOutlet="resumeCard; context: {
+        titre: 'Rapport du ' + daily.date,
+        ca: daily.chiffreAffaireTotal,
+        ventes: daily.nombreVentes,
+        remises: daily.montantRemisesTotal,
+        benefice: getBenefice(),
+        exportFn: 'exportDaily'
+      }"></ng-container>
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: daily.topProduits }"></ng-container>
+    </ng-container>
+
+    <!-- Semaine -->
+    <ng-container *ngIf="activeReport === 'week' && weekly && !loading">
+      <ng-container *ngTemplateOutlet="resumeCard; context: {
+        titre: 'Semaine du ' + reports.formatDateShort(weekly.debutSemaine) + ' au ' + reports.formatDateShort(weekly.finSemaine),
+        ca: weekly.chiffreAffaireTotal,
+        ventes: weekly.nombreVentes,
+        remises: 0,
+        benefice: getBenefice(),
+        exportFn: 'exportWeekly'
+      }"></ng-container>
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: weekly.topProduits }"></ng-container>
+      <ng-container *ngTemplateOutlet="modesPaiementSection; context: { $implicit: weekly.modePaiementStats }"></ng-container>
+    </ng-container>
+
+    <!-- Mois -->
+    <ng-container *ngIf="activeReport === 'month' && monthly && !loading">
+      <ng-container *ngTemplateOutlet="resumeCard; context: {
+        titre: monthly.mois + ' ' + monthly.annee,
+        ca: monthly.chiffreAffaireTotal,
+        ventes: monthly.nombreVentes,
+        remises: 0,
+        benefice: getBenefice(),
+        exportFn: 'exportMonthly'
+      }"></ng-container>
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: monthly.topProduits }"></ng-container>
+      <ng-container *ngTemplateOutlet="modesPaiementSection; context: { $implicit: monthly.modePaiementStats }"></ng-container>
+    </ng-container>
+
+    <!-- Personnalisé -->
+    <ng-container *ngIf="activeReport === 'custom' && custom && !loading">
+      <ng-container *ngTemplateOutlet="resumeCard; context: {
+        titre: 'Rapport personnalisé',
+        ca: getCA(),
+        ventes: getNombreVentes(),
+        remises: 0,
+        benefice: getBenefice(),
+        exportFn: 'exportCustom'
+      }"></ng-container>
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: getTopProduits() }"></ng-container>
+      <ng-container *ngTemplateOutlet="modesPaiementSection; context: { $implicit: getModePaiementStats() }"></ng-container>
+    </ng-container>
+
+    <!-- ══════════════════════════════════
+         STATISTIQUES GÉNÉRALES
+    ══════════════════════════════════ -->
+
+    <!-- Top produits généraux (si pas de rapport actif) -->
+    <ng-container *ngIf="stats?.produitsPlusVendus?.length && !getActiveReport()">
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: getTopProduitsGeneraux() }"></ng-container>
+    </ng-container>
+
+    <!-- Modes de paiement généraux -->
+    <ng-container *ngIf="stats?.modePaiementStats?.length && !getActiveReport()">
+      <ng-container *ngTemplateOutlet="modesPaiementSection; context: { $implicit: stats!.modePaiementStats }"></ng-container>
+    </ng-container>
+
+    <!-- ══════════════════════════════════
+         CRÉDITS CLIENTS
+    ══════════════════════════════════ -->
+    <div class="credits-panel" *ngIf="situationCredits">
+      <div class="credits-panel__head">
+        <div class="credits-panel__icon">
+          <ion-icon name="hand-right-outline"></ion-icon>
+        </div>
+        <div>
+          <p class="credits-panel__title">Crédits clients</p>
+          <p class="credits-panel__sub">Argent qui vous est dû</p>
+        </div>
+        <div class="credits-panel__total">
+          <p class="cpt-amount">{{ money(situationCredits.montantTotalCredits || situationCredits.montantRestantTotal || 0) }}</p>
+          <p class="cpt-label">total dû</p>
+        </div>
+      </div>
+
+      <div class="credits-chips">
+        <div class="cchip cchip--orange">
+          <ion-icon name="time-outline"></ion-icon>
+          <span class="cchip__val">{{ situationCredits.nombreCreditsNonRegles }}</span>
+          <span class="cchip__lbl">En cours</span>
+        </div>
+        <div class="cchip cchip--red">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span class="cchip__val">{{ situationCredits.nombreCreditsEnRetard }}</span>
+          <span class="cchip__lbl">En retard</span>
+        </div>
+      </div>
+
+      <!-- Liste des 5 premiers crédits -->
+      <div class="credits-list" *ngIf="creditsEnCours.length">
+        <p class="cl-title">Détail ({{ creditsEnCours.length }} crédit(s))</p>
+        <div class="credit-item" *ngFor="let c of creditsEnCours.slice(0,5)">
+          <div class="credit-item__avatar">
+            {{ (c.clientNom || '?')[0].toUpperCase() }}
+          </div>
+          <div class="credit-item__info">
+            <p class="ci-name">{{ c.clientNom }}</p>
+            <div class="ci-progress-wrap">
+              <div class="ci-progress-bar">
+                <div class="ci-progress-fill"
+                  [style.width.%]="c.montantTotal > 0 ? (c.montantVerse / c.montantTotal * 100) : 0">
+                </div>
+              </div>
+              <span class="ci-pct">{{ c.montantTotal > 0 ? ((c.montantVerse / c.montantTotal) * 100).toFixed(0) : 0 }}%</span>
+            </div>
+          </div>
+          <div class="credit-item__right">
+            <p class="ci-rest">{{ money(c.montantRestant) }}</p>
+            <p class="ci-date" *ngIf="c.dateEcheance">{{ c.dateEcheance | date:'dd/MM' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       TEMPLATES RÉUTILISABLES
+  ══════════════════════════════════ -->
+
+  <!-- Résumé rapport -->
+  <ng-template #resumeCard let-titre="titre" let-ca="ca" let-ventes="ventes" let-remises="remises" let-benefice="benefice" let-exportFn="exportFn">
+    <div class="rapport-summary">
+      <div class="rs-header">
+        <div class="rs-dot"></div>
+        <p class="rs-titre">{{ titre }}</p>
+        <button class="rs-export" (click)="onExport(exportFn)">
+          <ion-icon name="download-outline"></ion-icon>
+          PDF
+        </button>
+      </div>
+
+      <!-- Grand CA -->
+      <div class="rs-main-ca">
+        <p class="rs-ca-label">CA total</p>
+        <p class="rs-ca-val">{{ money(ca) }}</p>
+        <p class="rs-ca-sub">{{ ventes }} vente{{ ventes > 1 ? 's' : '' }}</p>
+      </div>
+
+      <!-- 3 métriques -->
+      <div class="rs-metrics">
+        <div class="rs-metric">
+          <div class="rs-metric__icon rs-metric__icon--green">
+            <ion-icon name="trending-up-outline"></ion-icon>
+          </div>
+          <p class="rs-metric__val">{{ money(ca) }}</p>
+          <p class="rs-metric__lbl">Rentré</p>
+        </div>
+        <div class="rs-metric" *ngIf="remises > 0">
+          <div class="rs-metric__icon rs-metric__icon--red">
+            <ion-icon name="pricetag-outline"></ion-icon>
+          </div>
+          <p class="rs-metric__val rs-metric__val--red">-{{ money(remises) }}</p>
+          <p class="rs-metric__lbl">Remises</p>
+        </div>
+        <div class="rs-metric">
+          <div class="rs-metric__icon rs-metric__icon--blue">
+            <ion-icon name="trending-up-outline"></ion-icon>
+          </div>
+          <p class="rs-metric__val rs-metric__val--blue">{{ money(benefice) }}</p>
+          <p class="rs-metric__lbl">Bénéfice</p>
+        </div>
+        <div class="rs-metric">
+          <div class="rs-metric__icon rs-metric__icon--purple">
+            <ion-icon name="receipt-outline"></ion-icon>
+          </div>
+          <p class="rs-metric__val">{{ ventes }}</p>
+          <p class="rs-metric__lbl">Ventes</p>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Top produits -->
+  <ng-template #topProduitsSection let-produits>
+    <div class="section-block" *ngIf="produits?.length">
+      <div class="section-block__head">
+        <ion-icon name="star-outline"></ion-icon>
+        <p class="section-block__title">Top produits</p>
+        <span class="section-block__badge">{{ produits.length }}</span>
+      </div>
+
+      <div class="top-products">
+        <div class="tp-item" *ngFor="let p of produits; let i = index">
+          <div class="tp-rank"
+            [class.tp-rank--gold]="i===0"
+            [class.tp-rank--silver]="i===1"
+            [class.tp-rank--bronze]="i===2">
+            {{ i + 1 }}
+          </div>
+          <div class="tp-info">
+            <p class="tp-name">{{ p.nom }}</p>
+            <div class="tp-bar-wrap">
+              <div class="tp-bar"
+                [style.width.%]="produits[0].chiffreAffaire > 0 ? (p.chiffreAffaire / produits[0].chiffreAffaire * 100) : 0">
+              </div>
+            </div>
+            <p class="tp-qty">{{ p.quantite }} unité(s) vendue(s)</p>
+          </div>
+          <p class="tp-ca">{{ money(p.chiffreAffaire) }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Modes de paiement -->
+  <ng-template #modesPaiementSection let-modes>
+    <div class="section-block" *ngIf="modes?.length">
+      <div class="section-block__head">
+        <ion-icon name="wallet-outline"></ion-icon>
+        <p class="section-block__title">Modes de paiement</p>
+      </div>
+
+      <div class="payment-modes">
+        <div class="pm-item" *ngFor="let m of modes">
+          <div class="pm-icon">
+            <ion-icon [name]="getPaymentIcon(m.mode)"></ion-icon>
+          </div>
+          <div class="pm-info">
+            <p class="pm-name">{{ getModePaiementLabel(m.mode) }}</p>
+            <div class="pm-bar-wrap">
+              <div class="pm-bar"
+                [style.width.%]="m.pourcentage || 0"
+                [class.pm-bar--especes]="m.mode === 'ESPECES'"
+                [class.pm-bar--orange]="m.mode === 'ORANGE_MONEY'"
+                [class.pm-bar--moov]="m.mode === 'MOOV_MONEY'"
+                [class.pm-bar--card]="m.mode === 'CARTE_BANCAIRE'"
+                [class.pm-bar--vir]="m.mode === 'VIREMENT'">
+              </div>
+            </div>
+          </div>
+          <div class="pm-right">
+            <p class="pm-amount">{{ money(m.montant) }}</p>
+            <p class="pm-pct">{{ (m.pourcentage || 0).toFixed(1) }}%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+</ion-content>
