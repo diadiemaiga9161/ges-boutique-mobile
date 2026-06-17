@@ -23,6 +23,8 @@
     "@angular/router": "^20.0.0",
     "@angular/service-worker": "^20.3.24",
     "@capacitor-mlkit/barcode-scanning": "^8.1.0",
+    "@zxing/browser": "^0.1.4",
+    "@zxing/library": "^0.21.3",
     "@capacitor/android": "^8.4.0",
     "@capacitor/app": "8.1.0",
     "@capacitor/core": "^8.4.0",
