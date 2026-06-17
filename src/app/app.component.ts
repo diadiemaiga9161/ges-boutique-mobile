@@ -46,6 +46,8 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.hideSplash();
+
     if (environment.isCapacitor && !this.boutiqueConfig.isConfigured()) {
       this.router.navigateByUrl('/boutique-select', { replaceUrl: true });
     }
@@ -66,6 +68,19 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.auth.isAuthenticated()) {
       this.ws.connect();
       this.userPhoto = this.auth.getPhoto();
+    }
+  }
+
+  private hideSplash(): void {
+    const el = document.getElementById('app-splash');
+    if (el) {
+      el.classList.add('hidden');
+      setTimeout(() => el.remove(), 520);
+    }
+    if (environment.isCapacitor) {
+      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+        SplashScreen.hide({ fadeOutDuration: 400 });
+      }).catch(() => {});
     }
   }
 

@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { Categorie, Fournisseur, ProductService, Produit, ProduitRequest, StatistiquesStock } from '../../services/product.service';
 import { WebSocketService } from '../../services/websocket.service';
 import { BarcodeService } from '../../services/barcode.service';
+import { StockAlertService } from '../../services/stock-alert.service';
 
 @Component({
   selector: 'app-products',
@@ -40,7 +41,8 @@ export class ProductsPage implements OnInit {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private ws: WebSocketService,
-    private barcodeService: BarcodeService
+    private barcodeService: BarcodeService,
+    private stockAlert: StockAlertService
   ) {}
 
   async scanCodeBarre(): Promise<void> {
@@ -49,6 +51,7 @@ export class ProductsPage implements OnInit {
   }
 
   ngOnInit() {
+    this.stockAlert.requestPermission();
     this.load();
   }
 
@@ -77,6 +80,7 @@ export class ProductsPage implements OnInit {
         this.applyFilter();
         this.loading = false;
         event?.target?.complete();
+        this.stockAlert.verifierStock(products);
       },
       error: error => {
         this.loading = false;
