@@ -111,18 +111,42 @@ export class BarcodeService {
       });
 
       try {
+        // Ouvrir la caméra arrière directement
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = stream;
+        controls = { stop: () => stream.getTracks().forEach((t: MediaStreamTrack) => t.stop()) };
+
+        await new Promise<void>(r => {
+          video.onloadedmetadata = () => { video.play(); r(); };
+        });
+
+        // Canvas pour extraire les frames et les envoyer à ZXing
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
         const { BrowserMultiFormatReader } = await import('@zxing/browser');
         const reader = new BrowserMultiFormatReader();
-        controls = await reader.decodeFromConstraints(
-          { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } },
-          video,
-          (result: any) => {
-            if (result && !done) {
-              cleanup();
-              resolve(result.getText());
-            }
+
+        const tick = () => {
+          if (done) return;
+          if (video.readyState >= 2 && video.videoWidth > 0) {
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            try {
+              const result = reader.decodeFromCanvas(canvas);
+              if (result && !done) {
+                cleanup();
+                resolve(result.getText());
+                return;
+              }
+            } catch { /* aucun code détecté sur ce frame, on continue */ }
           }
-        );
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+
       } catch {
         cleanup();
         resolve(undefined); // caméra inaccessible → saisie manuelle
