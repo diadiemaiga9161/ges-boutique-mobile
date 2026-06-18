@@ -1,6 +1,25 @@
 <ion-content [fullscreen]="true" class="login-content">
   <div class="login-wrapper">
 
+    <!-- ══════════ SÉLECTEUR DE LANGUE ══════════ -->
+    <div class="lang-selector">
+      <button class="lang-btn" (click)="showLangMenu = !showLangMenu">
+        <span>{{ langService.getCurrentLang().flag }}</span>
+        <span class="lang-code">{{ langService.getCurrentLang().code | uppercase }}</span>
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </button>
+      <div class="lang-dropdown" *ngIf="showLangMenu">
+        <button
+          *ngFor="let lang of languages"
+          class="lang-option"
+          [class.active]="lang.code === langService.getCurrent()"
+          (click)="selectLang(lang.code)">
+          <span class="lang-flag">{{ lang.flag }}</span>
+          <span class="lang-name">{{ lang.name }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- ══════════ ZONE HAUTE — BRAND ══════════ -->
     <div class="login-hero">
       <div class="lh-deco lh-deco--1"></div>
@@ -8,17 +27,14 @@
       <div class="lh-deco lh-deco--3"></div>
 
       <div class="lh-body">
-        <!-- Logo MC -->
         <div class="lh-logo">
           <span class="lh-logo__m">M</span>
           <span class="lh-logo__c">C</span>
         </div>
-
         <h1 class="lh-app-name">Ges Lafia</h1>
         <p class="lh-tagline">Maïga Consulting · Gestion de boutique</p>
       </div>
 
-      <!-- Vague -->
       <div class="lh-wave">
         <svg viewBox="0 0 375 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0,20 C60,50 120,0 200,25 C270,48 330,5 375,25 L375,60 L0,60 Z" fill="#f0f4f8"/>
@@ -29,24 +45,25 @@
     <!-- ══════════ ZONE BASSE — FORMULAIRE ══════════ -->
     <div class="login-form-zone">
       <div class="login-card">
-        <h2 class="login-card__title">Bienvenue !</h2>
-        <p class="login-card__sub">Connectez-vous pour continuer</p>
+        <h2 class="login-card__title">{{ 'LOGIN.TITLE' | translate }}</h2>
+        <p class="login-card__sub">{{ 'LOGIN.SUBTITLE' | translate }}</p>
 
         <form (ngSubmit)="login()" class="login-form">
 
-          <!-- Nom utilisateur -->
+          <!-- Email / Téléphone / Identifiant -->
           <div class="input-group">
             <label class="input-label">
               <ion-icon name="person-outline"></ion-icon>
-              Nom d'utilisateur
+              {{ 'LOGIN.FIELD_LABEL' | translate }}
             </label>
             <div class="input-wrap">
               <ion-input
                 class="input-field"
-                [(ngModel)]="username"
-                name="username"
-                placeholder="Entrez votre identifiant"
-                autocomplete="username">
+                [(ngModel)]="identifier"
+                name="identifier"
+                [placeholder]="'LOGIN.FIELD_PLACEHOLDER' | translate"
+                autocomplete="username"
+                inputmode="email">
               </ion-input>
             </div>
           </div>
@@ -55,7 +72,7 @@
           <div class="input-group">
             <label class="input-label">
               <ion-icon name="lock-closed-outline"></ion-icon>
-              Mot de passe
+              {{ 'LOGIN.PASSWORD_LABEL' | translate }}
             </label>
             <div class="input-wrap">
               <ion-input
@@ -63,7 +80,7 @@
                 [type]="showPassword ? 'text' : 'password'"
                 [(ngModel)]="password"
                 name="password"
-                placeholder="••••••••"
+                [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
                 autocomplete="current-password">
               </ion-input>
               <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
@@ -76,11 +93,11 @@
           <button type="submit" class="login-submit" [disabled]="isLoading">
             <span *ngIf="!isLoading">
               <ion-icon name="log-in-outline"></ion-icon>
-              Se connecter
+              {{ 'LOGIN.SUBMIT' | translate }}
             </span>
             <span *ngIf="isLoading" class="login-submit__loading">
               <ion-spinner name="crescent"></ion-spinner>
-              Connexion...
+              {{ 'LOGIN.LOADING' | translate }}
             </span>
           </button>
 
@@ -88,7 +105,7 @@
 
         <div class="ion-text-center" style="margin-bottom:8px">
           <a routerLink="/forgot-password" style="font-size:0.82rem;color:var(--ion-color-medium);text-decoration:underline">
-            Mot de passe oublié ?
+            {{ 'LOGIN.FORGOT' | translate }}
           </a>
         </div>
 

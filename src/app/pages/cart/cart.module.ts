@@ -1,18 +1,23 @@
-import { NgModule } from '@angular/core';
+﻿import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { IonicModule } from '@ionic/angular';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { CartPageRoutingModule } from './cart-routing.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { CartPage } from './cart.page';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule,
+    IonicModule,,
+    TranslateModule,,
     CartPageRoutingModule
   ],
   declarations: [CartPage]

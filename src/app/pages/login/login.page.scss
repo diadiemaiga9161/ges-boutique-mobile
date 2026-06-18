@@ -3,6 +3,72 @@
 // ══════════════════════════════════════════════════
 .login-content { --background: #f0f4f8; }
 
+// ── Sélecteur de langue ───────────────────────────
+.lang-selector {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.lang-btn {
+  display:     flex;
+  align-items: center;
+  gap:         5px;
+  background:  rgba(255,255,255,0.15);
+  border:      1.5px solid rgba(255,255,255,0.30);
+  border-radius: 20px;
+  padding:     6px 12px;
+  color:       #ffffff;
+  cursor:      pointer;
+  font-size:   0.82rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  transition:  background 0.2s;
+  ion-icon { font-size: 0.75rem; }
+  &:active { background: rgba(255,255,255,0.25); }
+}
+
+.lang-code { text-transform: uppercase; letter-spacing: 0.5px; }
+
+.lang-dropdown {
+  position:      absolute;
+  top:           calc(100% + 6px);
+  right:         0;
+  background:    #ffffff;
+  border:        1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow:    0 8px 32px rgba(8,22,72,0.15);
+  min-width:     160px;
+  overflow:      hidden;
+  animation:     fadeDown 0.18s ease;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lang-option {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  width:       100%;
+  padding:     10px 16px;
+  background:  none;
+  border:      none;
+  cursor:      pointer;
+  font-size:   0.88rem;
+  color:       #1e293b;
+  text-align:  left;
+  transition:  background 0.15s;
+
+  &:hover, &.active { background: #eff6ff; }
+  &.active { font-weight: 700; color: #1a56db; }
+  .lang-flag { font-size: 1.1rem; }
+  .lang-name { flex: 1; }
+}
+
 .login-wrapper {
   min-height:     100vh;
   display:        flex;

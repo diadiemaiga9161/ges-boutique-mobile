@@ -1,0 +1,104 @@
+{
+  "LANG": {
+    "SELECT": "Language",
+    "FR": "Français",
+    "EN": "English",
+    "AR": "العربية",
+    "ES": "Español",
+    "PT": "Português",
+    "DE": "Deutsch",
+    "ZH": "中文",
+    "HA": "Hausa",
+    "SW": "Kiswahili",
+    "WO": "Wolof"
+  },
+  "LOGIN": {
+    "TITLE": "Welcome!",
+    "SUBTITLE": "Sign in to continue",
+    "FIELD_LABEL": "Email, phone or username",
+    "FIELD_PLACEHOLDER": "Enter your email, phone or username",
+    "PASSWORD_LABEL": "Password",
+    "PASSWORD_PLACEHOLDER": "••••••••",
+    "SUBMIT": "Sign in",
+    "LOADING": "Signing in...",
+    "FORGOT": "Forgot password?",
+    "WELCOME": "Welcome, {{name}}!",
+    "ERROR_REQUIRED": "Username and password are required",
+    "ERROR_FAILED": "Login failed"
+  },
+  "COMMON": {
+    "SAVE": "Save", "CANCEL": "Cancel", "DELETE": "Delete", "EDIT": "Edit",
+    "ADD": "Add", "SEARCH": "Search", "LOADING": "Loading...", "CLOSE": "Close",
+    "CONFIRM": "Confirm", "YES": "Yes", "NO": "No", "ERROR": "Error",
+    "SUCCESS": "Success", "BACK": "Back", "FILTER": "Filter", "TOTAL": "Total",
+    "DATE": "Date", "AMOUNT": "Amount", "ACTIONS": "Actions", "STATUS": "Status",
+    "DETAILS": "Details", "PRINT": "Print", "DOWNLOAD": "Download",
+    "REFRESH": "Refresh", "SEND": "Send", "ALL": "All"
+  },
+  "NAV": {
+    "PRODUCTS": "Products", "SALES": "Sales", "CLIENTS": "Clients",
+    "CAISSE": "Cash Register", "INVENTORY": "Inventory", "REPORTS": "Reports",
+    "PROFILE": "Profile", "MORE": "More"
+  },
+  "PROFILE": {
+    "TITLE": "My Profile", "FULL_NAME": "Full name", "EMAIL": "Email",
+    "PHONE": "Phone", "COUNTRY_CODE": "Country code", "PASSWORD": "New password",
+    "SAVE": "Save changes", "LANGUAGE": "App language", "ROLE": "Role",
+    "BOUTIQUE": "Shop", "LOGOUT": "Sign out",
+    "LOGOUT_CONFIRM": "Do you want to sign out?", "SAVED": "Profile updated"
+  },
+  "PRODUCTS": {
+    "TITLE": "Products", "ADD": "New product", "NAME": "Product name",
+    "PRICE_SELL": "Selling price", "PRICE_BUY": "Purchase price", "STOCK": "Stock",
+    "CATEGORY": "Category", "SUPPLIER": "Supplier", "BARCODE": "Barcode",
+    "ALERT_THRESHOLD": "Alert threshold", "LOW_STOCK": "Low stock",
+    "OUT_OF_STOCK": "Out of stock", "SEARCH": "Search a product",
+    "SAVED": "Product saved", "DELETED": "Product deleted",
+    "CONFIRM_DELETE": "Delete this product?"
+  },
+  "SALES": {
+    "TITLE": "Sales", "NEW": "New sale", "TODAY": "Today", "WEEK": "This week",
+    "MONTH": "This month", "ALL": "All", "CASH": "Cash", "CREDIT": "Credit",
+    "SETTLED": "Settled", "CANCELLED": "Cancelled", "RETURN": "Return",
+    "MODIFY": "Modify", "INVOICE": "PDF Invoice", "QR_CODE": "QR Code",
+    "TOTAL": "Total", "AMOUNT_PAID": "Amount paid", "REMAINING": "Remaining",
+    "DISCOUNT": "Discount", "PAYMENT_MODE": "Payment method",
+    "CASH_PAYMENT": "Cash", "MOBILE_MONEY": "Mobile Money",
+    "CARD": "Card", "CHEQUE": "Cheque", "TRANSFER": "Bank transfer"
+  },
+  "CLIENTS": {
+    "TITLE": "Clients", "ADD": "New client", "NAME": "Last name",
+    "FIRSTNAME": "First name", "PHONE": "Phone", "EMAIL": "Email",
+    "ADDRESS": "Address", "QR_CODE": "Client QR Code", "HISTORY": "History",
+    "CREDITS": "Credits", "ADVANCES": "Advances", "RELEVE": "PDF Statement",
+    "SEARCH": "Search a client", "SAVED": "Client saved", "DELETED": "Client deleted"
+  },
+  "CAISSE": {
+    "TITLE": "Cash Register", "BALANCE": "Current balance", "INCOME": "Income",
+    "EXPENSE": "Expense", "TRANSFER": "Bank transfer", "OPERATIONS": "Operations",
+    "CREDITS": "Credits", "STATS": "Statistics", "SETTLE_CREDIT": "Settle a credit",
+    "AMOUNT": "Amount", "REASON": "Reason", "OVERDUE": "Overdue"
+  },
+  "INVENTORY": {
+    "TITLE": "Inventory", "MOVEMENT": "Movement", "LOW_STOCK": "Low stock",
+    "HISTORY": "History", "IN": "Stock in", "OUT": "Stock out",
+    "CORRECTION": "Correction", "LOSS": "Loss", "PRODUCT": "Product",
+    "QUANTITY": "Quantity", "REASON": "Reason", "SAVED": "Movement saved"
+  },
+  "REPORTS": {
+    "TITLE": "Reports", "DAILY": "Daily", "WEEKLY": "Weekly", "MONTHLY": "Monthly",
+    "CUSTOM": "Custom", "REVENUE": "Revenue", "PROFIT": "Profit",
+    "EXPENSES": "Expenses", "NET": "Net result", "SALES_COUNT": "Sales count",
+    "START_DATE": "Start date", "END_DATE": "End date"
+  },
+  "NOTIFICATIONS": {
+    "LOW_STOCK": "Low stock", "OUT_OF_STOCK": "Out of stock", "CREDIT_OVERDUE": "Overdue credit"
+  },
+  "BOUTIQUE": {
+    "SELECT_TITLE": "Select a shop", "SELECT_SUB": "Select your shop to continue"
+  },
+  "FORGOT_PASSWORD": {
+    "TITLE": "Forgot password", "EMAIL_LABEL": "Email address",
+    "SUBMIT": "Send reset link", "BACK": "Back to login"
+  }
+}

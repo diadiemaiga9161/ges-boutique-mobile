@@ -4,11 +4,18 @@ import { RouteReuseStrategy } from '@angular/router';
 
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { IonicStorageModule } from '@ionic/storage-angular';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+export function createTranslateLoader(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+import { LanguageService } from './services/language.service';
 import { AuthInterceptor } from './services/auth.interceptor';
 import { ClientRequestIdInterceptor } from './services/client-request-id.interceptor';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
@@ -20,8 +27,9 @@ import { DataPreloadService } from './services/data-preload.service';
 import { BoutiqueConfigService } from './services/boutique-config.service';
 import { environment } from '../environments/environment';
 
-export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: DataPreloadService) {
+export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: DataPreloadService, lang: LanguageService) {
   return async () => {
+    lang.init();
     await boutiqueConfig.init();
     await preload.preload();
   };
@@ -34,6 +42,14 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
     HttpClientModule,
     IonicModule.forRoot(),
     IonicStorageModule.forRoot(),
+    TranslateModule.forRoot({
+      defaultLanguage: 'fr',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: createTranslateLoader,
+        deps: [HttpClient]
+      }
+    }),
     AppRoutingModule,
     OfflineStatusModule,
     PwaInstallComponent,
@@ -52,7 +68,7 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
-      deps: [BoutiqueConfigService, DataPreloadService],
+      deps: [BoutiqueConfigService, DataPreloadService, LanguageService],
       multi: true
     }
   ],

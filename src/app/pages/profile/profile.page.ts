@@ -1,6 +1,43 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { AuthService, User } from '../../services/auth.service';
+import { Language, LanguageService, LANGUAGES } from '../../services/language.service';
+
+export const COUNTRY_CODES = [
+  { code: '+223', flag: '🇲🇱', name: 'Mali' },
+  { code: '+225', flag: '🇨🇮', name: 'Côte d\'Ivoire' },
+  { code: '+226', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: '+227', flag: '🇳🇪', name: 'Niger' },
+  { code: '+228', flag: '🇹🇬', name: 'Togo' },
+  { code: '+229', flag: '🇧🇯', name: 'Bénin' },
+  { code: '+221', flag: '🇸🇳', name: 'Sénégal' },
+  { code: '+224', flag: '🇬🇳', name: 'Guinée' },
+  { code: '+222', flag: '🇲🇷', name: 'Mauritanie' },
+  { code: '+245', flag: '🇬🇼', name: 'Guinée-Bissau' },
+  { code: '+232', flag: '🇸🇱', name: 'Sierra Leone' },
+  { code: '+231', flag: '🇱🇷', name: 'Libéria' },
+  { code: '+233', flag: '🇬🇭', name: 'Ghana' },
+  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: '+237', flag: '🇨🇲', name: 'Cameroun' },
+  { code: '+235', flag: '🇹🇩', name: 'Tchad' },
+  { code: '+236', flag: '🇨🇫', name: 'Centrafrique' },
+  { code: '+241', flag: '🇬🇦', name: 'Gabon' },
+  { code: '+242', flag: '🇨🇬', name: 'Congo' },
+  { code: '+243', flag: '🇨🇩', name: 'RD Congo' },
+  { code: '+212', flag: '🇲🇦', name: 'Maroc' },
+  { code: '+213', flag: '🇩🇿', name: 'Algérie' },
+  { code: '+216', flag: '🇹🇳', name: 'Tunisie' },
+  { code: '+20',  flag: '🇪🇬', name: 'Égypte' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+1',   flag: '🇺🇸', name: 'USA / Canada' },
+  { code: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
+  { code: '+32',  flag: '🇧🇪', name: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', name: 'Suisse' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espagne' },
+  { code: '+49',  flag: '🇩🇪', name: 'Allemagne' },
+  { code: '+86',  flag: '🇨🇳', name: 'Chine' },
+];
 
 @Component({
   selector: 'app-profile',
@@ -11,13 +48,18 @@ import { AuthService, User } from '../../services/auth.service';
 export class ProfilePage implements OnInit {
   user: User | null = null;
   form = { nomComplet: '', email: '', telephone: '', password: '' };
+  selectedCountryCode = '+223';
   loading = false;
   loadingPhoto = false;
   showPassword = false;
   photoPreview: string | null = null;
 
+  readonly languages: Language[] = LANGUAGES;
+  readonly countryCodes = COUNTRY_CODES;
+
   constructor(
     public auth: AuthService,
+    public langService: LanguageService,
     private toastCtrl: ToastController
   ) {}
 
@@ -32,28 +74,33 @@ export class ProfilePage implements OnInit {
   load(): void {
     this.user = this.auth.getUser();
     if (this.user) {
-      this.form = {
-        nomComplet: this.user.nomComplet || '',
-        email: this.user.email || '',
-        telephone: this.user.telephone || '',
-        password: ''
-      };
+      this.fillForm(this.user);
       this.photoPreview = this.user.photo || null;
     }
 
     this.auth.getCurrentProfile().subscribe({
       next: user => {
         this.user = user;
-        this.form = {
-          nomComplet: user.nomComplet || '',
-          email: user.email || '',
-          telephone: user.telephone || '',
-          password: ''
-        };
+        this.fillForm(user);
         this.photoPreview = user.photo || null;
       },
       error: () => {}
     });
+  }
+
+  private fillForm(user: User): void {
+    const tel = user.telephone || '';
+    const matched = COUNTRY_CODES.find(c => tel.startsWith(c.code));
+    if (matched) {
+      this.selectedCountryCode = matched.code;
+      this.form = { nomComplet: user.nomComplet || '', email: user.email || '', telephone: tel.slice(matched.code.length).trim(), password: '' };
+    } else {
+      this.form = { nomComplet: user.nomComplet || '', email: user.email || '', telephone: tel, password: '' };
+    }
+  }
+
+  getFullPhone(): string {
+    return this.selectedCountryCode + this.form.telephone.replace(/^0+/, '');
   }
 
   onPhotoSelected(event: Event): void {
@@ -111,7 +158,8 @@ export class ProfilePage implements OnInit {
     const payload: any = {};
     if (this.form.nomComplet !== this.user?.nomComplet) payload.nomComplet = this.form.nomComplet;
     if (this.form.email !== this.user?.email) payload.email = this.form.email;
-    if (this.form.telephone !== this.user?.telephone) payload.telephone = this.form.telephone;
+    const fullPhone = this.getFullPhone();
+    if (fullPhone !== this.user?.telephone) payload.telephone = fullPhone;
     if (this.form.password) payload.password = this.form.password;
 
     if (Object.keys(payload).length === 0) {
