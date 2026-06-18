@@ -680,10 +680,12 @@
         <p style="color:#64748b;font-size:0.82rem;margin-bottom:16px">
           Scannez ce QR code pour télécharger la facture PDF
         </p>
-        <img [src]="getQrCodeImgUrl(selectedSaleForQr)"
+        <div *ngIf="!qrSaleDataUrl" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:2px solid #e2e8f0;border-radius:12px;margin:0 auto">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+        </div>
+        <img *ngIf="qrSaleDataUrl" [src]="qrSaleDataUrl"
              alt="QR Code"
-             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px"
-             onerror="this.style.display='none'" />
+             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px" />
         <p style="font-size:0.8rem;color:#64748b;margin-top:10px">
           {{ selectedSaleForQr.clientNom || 'Client' }} · {{ money(selectedSaleForQr.montantTotal) }}
         </p>

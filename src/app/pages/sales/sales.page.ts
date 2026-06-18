@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { FactureService } from '../../services/facture.service';
@@ -38,6 +40,8 @@ export class SalesPage implements OnDestroy {
   retourMotif = '';
   selectedVente?: VenteMap;
   selectedSaleForQr?: VenteMap;
+  qrSaleDataUrl: SafeUrl | null = null;
+  private qrSaleBlobUrl: string | null = null;
   venteAModifier?: VenteMap;
   modifyLines: { produitId: number; produitNom: string; quantite: number; prixUnitaire: number; sousTotal: number; original: any }[] = [];
   modificationMotif = '';
@@ -52,7 +56,9 @@ export class SalesPage implements OnDestroy {
     private auth: AuthService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
   ) {}
 
   ionViewWillEnter(): void {
@@ -278,11 +284,13 @@ export class SalesPage implements OnDestroy {
   }
 
   getQrCodeUrlSale(vente: VenteMap): void {
+    this.qrSaleDataUrl = null;
     this.factureService.obtenirFacturesParVente(vente.id).subscribe({
       next: factures => {
         if (factures.length > 0) {
           this.selectedSaleForQr = { ...vente, factureId: factures[0].id } as any;
           this.showQrSaleModal = true;
+          this.loadQrSaleImage(factures[0].id);
         } else {
           this.creerFacturePuisAfficherQr(vente);
         }
@@ -297,8 +305,20 @@ export class SalesPage implements OnDestroy {
       next: facture => {
         this.selectedSaleForQr = { ...vente, factureId: facture.id } as any;
         this.showQrSaleModal = true;
+        this.loadQrSaleImage(facture.id);
       },
       error: err => this.presentToast(err.message || 'Impossible de créer la facture pour le QR', 'danger')
+    });
+  }
+
+  private loadQrSaleImage(factureId: number): void {
+    this.http.get(`/api/caisse/factures/${factureId}/qrcode`, { responseType: 'blob' }).subscribe({
+      next: blob => {
+        if (this.qrSaleBlobUrl) URL.revokeObjectURL(this.qrSaleBlobUrl);
+        this.qrSaleBlobUrl = URL.createObjectURL(blob);
+        this.qrSaleDataUrl = this.sanitizer.bypassSecurityTrustUrl(this.qrSaleBlobUrl);
+      },
+      error: () => { this.qrSaleDataUrl = null; }
     });
   }
 

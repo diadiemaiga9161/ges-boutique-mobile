@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { AvanceClientRequest, Client, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
 import { VenteMap, VenteService } from '../../services/vente.service';
 import { AuthService } from '../../services/auth.service';
@@ -34,6 +36,8 @@ export class ClientsPage {
   // QR code client
   showQrModal = false;
   selectedClientForQr?: Client;
+  qrCodeDataUrl: SafeUrl | null = null;
+  private qrBlobUrl: string | null = null;
 
   // Avances client
   showAvanceModal = false;
@@ -49,7 +53,9 @@ export class ClientsPage {
     private auth: AuthService,
     private factureService: FactureService,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
   ) {}
 
   ionViewWillEnter(): void { this.load(); }
@@ -236,12 +242,25 @@ export class ClientsPage {
 
   showQrCode(client: Client): void {
     this.selectedClientForQr = client;
+    this.qrCodeDataUrl = null;
     this.showQrModal = true;
+    if (client.id) {
+      this.http.get(`/api/clients/${client.id}/qrcode`, { responseType: 'blob' }).subscribe({
+        next: blob => {
+          if (this.qrBlobUrl) URL.revokeObjectURL(this.qrBlobUrl);
+          this.qrBlobUrl = URL.createObjectURL(blob);
+          this.qrCodeDataUrl = this.sanitizer.bypassSecurityTrustUrl(this.qrBlobUrl);
+        },
+        error: () => { this.qrCodeDataUrl = null; }
+      });
+    }
   }
 
   closeQrModal(): void {
     this.showQrModal = false;
     this.selectedClientForQr = undefined;
+    if (this.qrBlobUrl) { URL.revokeObjectURL(this.qrBlobUrl); this.qrBlobUrl = null; }
+    this.qrCodeDataUrl = null;
   }
 
   getQrCodeUrl(clientId?: number): string {

@@ -155,10 +155,12 @@
         <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px">
           Le client scanne ce QR code pour télécharger son relevé de compte PDF
         </p>
-        <img [src]="getQrCodeUrl(selectedClientForQr.id)"
+        <div *ngIf="!qrCodeDataUrl" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:2px solid #e2e8f0;border-radius:12px;margin:0 auto">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+        </div>
+        <img *ngIf="qrCodeDataUrl" [src]="qrCodeDataUrl"
              alt="QR Code"
-             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px"
-             onerror="this.style.display='none'" />
+             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px" />
         <p style="font-size:0.8rem;color:#94a3b8;margin-top:12px">{{ selectedClientForQr.nom }}</p>
         <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
           <ion-button size="small" fill="outline" (click)="telechargerQrCode(selectedClientForQr)">
