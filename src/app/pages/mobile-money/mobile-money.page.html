@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>Mobile Money</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="exportCsv()" title="Télécharger CSV">
+      <ion-button (click)="exportCsv()" title="Télécharger tout">
         <ion-icon name="download-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -14,30 +14,22 @@
 
 <ion-content class="ion-padding">
 
-  <!-- Onglets opérations / résumé -->
+  <!-- Onglets -->
   <ion-segment [(ngModel)]="activeTab" style="margin-bottom:12px">
-    <ion-segment-button value="operations">
-      <ion-label>Opérations</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="resume">
-      <ion-label>Résumé</ion-label>
-    </ion-segment-button>
+    <ion-segment-button value="operations"><ion-label>Opérations</ion-label></ion-segment-button>
+    <ion-segment-button value="resume"><ion-label>Résumé</ion-label></ion-segment-button>
+    <ion-segment-button value="telecharger"><ion-label>Télécharger</ion-label></ion-segment-button>
   </ion-segment>
 
   <!-- ===== ONGLET OPÉRATIONS ===== -->
   <div *ngIf="activeTab === 'operations'">
 
-    <!-- Filtre type -->
+    <!-- Filtre opérateur -->
     <ion-segment [(ngModel)]="type" (ionChange)="onTypeChange($any($event).detail.value)" style="margin-bottom:8px">
-      <ion-segment-button value="TOUS">
-        <ion-label>Tous</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="ORANGE_MONEY">
-        <ion-label>🟠 Orange</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="MOOV_MONEY">
-        <ion-label>🔵 Moov</ion-label>
-      </ion-segment-button>
+      <ion-segment-button value="TOUS"><ion-label>Tous</ion-label></ion-segment-button>
+      <ion-segment-button value="ORANGE_MONEY"><ion-label>🟠 Orange</ion-label></ion-segment-button>
+      <ion-segment-button value="MOOV_MONEY"><ion-label>🔵 Moov</ion-label></ion-segment-button>
+      <ion-segment-button value="WAVE_MONEY"><ion-label>🌊 Wave</ion-label></ion-segment-button>
     </ion-segment>
 
     <!-- Filtre période -->
@@ -48,22 +40,30 @@
       <ion-segment-button value="ANNEE"><ion-label>Année</ion-label></ion-segment-button>
     </ion-segment>
 
-    <!-- Totaux -->
+    <!-- Totaux par opérateur -->
     <ion-grid style="margin-bottom:12px">
       <ion-row>
-        <ion-col size="6">
+        <ion-col size="4">
           <ion-card color="warning" style="margin:4px;text-align:center">
-            <ion-card-content>
-              <div style="font-size:11px;color:#333">🟠 Orange Money</div>
-              <div style="font-weight:700;font-size:16px;color:#333">{{ formatMontant(totalOrange) }}</div>
+            <ion-card-content style="padding:8px">
+              <div style="font-size:10px;color:#333;font-weight:600">🟠 Orange</div>
+              <div style="font-weight:700;font-size:13px;color:#333">{{ formatMontant(totalOrange) }}</div>
             </ion-card-content>
           </ion-card>
         </ion-col>
-        <ion-col size="6">
+        <ion-col size="4">
           <ion-card color="primary" style="margin:4px;text-align:center">
-            <ion-card-content>
-              <div style="font-size:11px;color:#fff">🔵 Moov Money</div>
-              <div style="font-weight:700;font-size:16px;color:#fff">{{ formatMontant(totalMoov) }}</div>
+            <ion-card-content style="padding:8px">
+              <div style="font-size:10px;color:#fff;font-weight:600">🔵 Moov</div>
+              <div style="font-weight:700;font-size:13px;color:#fff">{{ formatMontant(totalMoov) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="4">
+          <ion-card color="tertiary" style="margin:4px;text-align:center">
+            <ion-card-content style="padding:8px">
+              <div style="font-size:10px;color:#fff;font-weight:600">🌊 Wave</div>
+              <div style="font-weight:700;font-size:13px;color:#fff">{{ formatMontant(totalWave) }}</div>
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -71,7 +71,7 @@
       <ion-row>
         <ion-col size="12">
           <ion-card color="success" style="margin:4px;text-align:center">
-            <ion-card-content>
+            <ion-card-content style="padding:8px">
               <div style="font-size:11px;color:#fff">Total {{ periodeLabel() }} — {{ nombreOperations }} opération(s)</div>
               <div style="font-weight:700;font-size:18px;color:#fff">{{ formatMontant(totalGlobal) }}</div>
             </ion-card-content>
@@ -89,16 +89,18 @@
     <ion-list *ngIf="!loading">
       <ion-item *ngFor="let op of operations" lines="full">
         <ion-label>
-          <h3 style="font-weight:600">
-            {{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}
-          </h3>
+          <h3 style="font-weight:600">{{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}</h3>
           <p>{{ op.dateVente | date:'dd/MM/yyyy HH:mm' }}</p>
           <p *ngIf="op.clientNom">Client : {{ op.clientNom }}</p>
+          <p *ngIf="op.vendeurNom" style="font-size:11px;color:#888">Vendeur : {{ op.vendeurNom }}</p>
           <p *ngIf="op.referencePaiement" style="color:#666;font-size:11px">Réf : {{ op.referencePaiement }}</p>
         </ion-label>
-        <ion-note slot="end" color="dark" style="font-weight:700;font-size:15px">
-          {{ formatMontant(op.montantTotal) }}
-        </ion-note>
+        <div slot="end" style="text-align:right">
+          <ion-badge [color]="modeColor(op.modePaiement)" style="font-size:10px;margin-bottom:4px;display:block">
+            {{ operateurLabel(op.modePaiement) }}
+          </ion-badge>
+          <div style="font-weight:700;font-size:15px">{{ formatMontant(op.montantTotal) }}</div>
+        </div>
       </ion-item>
       <ion-item *ngIf="operations.length === 0" lines="none">
         <ion-label style="text-align:center;color:#999;padding:20px">
@@ -106,12 +108,10 @@
         </ion-label>
       </ion-item>
     </ion-list>
-
   </div>
 
   <!-- ===== ONGLET RÉSUMÉ ===== -->
   <div *ngIf="activeTab === 'resume' && resume">
-
     <ion-card *ngFor="let p of [
       {label: 'Aujourd\'hui', key: 'jour'},
       {label: 'Cette semaine', key: 'semaine'},
@@ -119,22 +119,22 @@
       {label: 'Cette année', key: 'annee'}
     ]">
       <ion-card-header>
-        <ion-card-title style="font-size:16px">📅 {{ p.label }}</ion-card-title>
+        <ion-card-title style="font-size:15px">📅 {{ p.label }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
           <ion-row>
-            <ion-col size="6">
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#888">🟠 Orange ({{ resume[p.key]?.nombreOrange || 0 }})</div>
-                <div style="font-weight:700;font-size:15px">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</div>
-              </div>
+            <ion-col size="4" style="text-align:center">
+              <div style="font-size:10px;color:#888;font-weight:600">🟠 Orange ({{ resume[p.key]?.nombreOrange || 0 }})</div>
+              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</div>
             </ion-col>
-            <ion-col size="6">
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#888">🔵 Moov ({{ resume[p.key]?.nombreMoov || 0 }})</div>
-                <div style="font-weight:700;font-size:15px">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</div>
-              </div>
+            <ion-col size="4" style="text-align:center">
+              <div style="font-size:10px;color:#888;font-weight:600">🔵 Moov ({{ resume[p.key]?.nombreMoov || 0 }})</div>
+              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</div>
+            </ion-col>
+            <ion-col size="4" style="text-align:center">
+              <div style="font-size:10px;color:#888;font-weight:600">🌊 Wave ({{ resume[p.key]?.nombreWave || 0 }})</div>
+              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.waveMoney || 0) }}</div>
             </ion-col>
           </ion-row>
           <ion-row>
@@ -148,6 +148,63 @@
         </ion-grid>
       </ion-card-content>
     </ion-card>
+  </div>
+
+  <!-- ===== ONGLET TÉLÉCHARGEMENT ===== -->
+  <div *ngIf="activeTab === 'telecharger'">
+
+    <!-- Filtre période -->
+    <ion-segment [(ngModel)]="periode" (ionChange)="onPeriodeChange($any($event).detail.value)" style="margin-bottom:16px">
+      <ion-segment-button value="JOUR"><ion-label>Jour</ion-label></ion-segment-button>
+      <ion-segment-button value="SEMAINE"><ion-label>Semaine</ion-label></ion-segment-button>
+      <ion-segment-button value="MOIS"><ion-label>Mois</ion-label></ion-segment-button>
+      <ion-segment-button value="ANNEE"><ion-label>Année</ion-label></ion-segment-button>
+    </ion-segment>
+
+    <ion-list>
+      <!-- Tous -->
+      <ion-item button (click)="exportCsv('TOUS')" lines="full">
+        <ion-icon name="download-outline" slot="start" color="success"></ion-icon>
+        <ion-label>
+          <h3>Tous les opérateurs</h3>
+          <p>Orange + Moov + Wave — {{ periodeLabel() }}</p>
+        </ion-label>
+        <ion-badge slot="end" color="success">CSV</ion-badge>
+      </ion-item>
+
+      <!-- Orange -->
+      <ion-item button (click)="exportCsv('ORANGE_MONEY')" lines="full">
+        <span slot="start" style="font-size:24px">🟠</span>
+        <ion-label>
+          <h3>Orange Money</h3>
+          <p>Mouvements Orange — {{ periodeLabel() }}</p>
+          <p style="font-weight:700;color:#f97316">{{ formatMontant(totalOrange) }}</p>
+        </ion-label>
+        <ion-badge slot="end" color="warning">CSV</ion-badge>
+      </ion-item>
+
+      <!-- Moov -->
+      <ion-item button (click)="exportCsv('MOOV_MONEY')" lines="full">
+        <span slot="start" style="font-size:24px">🔵</span>
+        <ion-label>
+          <h3>Moov Money</h3>
+          <p>Mouvements Moov — {{ periodeLabel() }}</p>
+          <p style="font-weight:700;color:#3b82f6">{{ formatMontant(totalMoov) }}</p>
+        </ion-label>
+        <ion-badge slot="end" color="primary">CSV</ion-badge>
+      </ion-item>
+
+      <!-- Wave -->
+      <ion-item button (click)="exportCsv('WAVE_MONEY')" lines="full">
+        <span slot="start" style="font-size:24px">🌊</span>
+        <ion-label>
+          <h3>Wave</h3>
+          <p>Mouvements Wave — {{ periodeLabel() }}</p>
+          <p style="font-weight:700;color:#8b5cf6">{{ formatMontant(totalWave) }}</p>
+        </ion-label>
+        <ion-badge slot="end" color="tertiary">CSV</ion-badge>
+      </ion-item>
+    </ion-list>
 
   </div>
 

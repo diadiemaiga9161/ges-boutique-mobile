@@ -16,6 +16,7 @@ export const LANGUAGES: Language[] = [
   { code: 'pt', name: 'Português',   flag: '🇵🇹' },
   { code: 'ha', name: 'Hausa',       flag: '🇳🇬' },
   { code: 'wo', name: 'Wolof',       flag: '🇸🇳' },
+  { code: 'bm', name: 'Bamanakan',   flag: '🇲🇱' },
 ];
 
 const STORAGE_KEY = 'app_language';

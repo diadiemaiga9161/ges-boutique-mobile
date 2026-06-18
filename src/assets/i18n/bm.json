@@ -1,0 +1,112 @@
+{
+  "LANG": {
+    "SELECT": "Kan sugandi",
+    "CURRENT": "Bamanakan"
+  },
+  "LOGIN": {
+    "TITLE": "Bɔ ka don",
+    "IDENTIFIER": "Mail, Telefɔni walima Tɔgɔ",
+    "PASSWORD": "Gundo",
+    "SUBMIT": "Don",
+    "FORGOT_PASSWORD": "Gundo dɔn te i la wa?",
+    "IDENTIFIER_PLACEHOLDER": "I ka mail, telefɔni walima tɔgɔ sɛbɛn",
+    "PASSWORD_PLACEHOLDER": "I ka gundo sɛbɛn"
+  },
+  "COMMON": {
+    "SAVE": "Mara",
+    "CANCEL": "Bali",
+    "DELETE": "Jɔsi",
+    "EDIT": "Yɛlɛma",
+    "ADD": "Fara",
+    "SEARCH": "Ɲini",
+    "LOADING": "Jateminɛ...",
+    "ERROR": "Fili",
+    "SUCCESS": "Ɲɛ",
+    "CONFIRM": "Tiɲɛ",
+    "CLOSE": "Datugu",
+    "YES": "Ɔwɔ",
+    "NO": "Ayi",
+    "TOTAL": "Bɛɛ lajɛlen",
+    "DATE": "Don",
+    "AMOUNT": "Wari hakɛ",
+    "ACTIONS": "Kɛtaw"
+  },
+  "NAV": {
+    "HOME": "Sɔrɔ",
+    "PRODUCTS": "Fɛnw",
+    "SALES": "Feere",
+    "CLIENTS": "Kɔlɔsiliw",
+    "CAISSE": "Caisse",
+    "INVENTORY": "Cogoya",
+    "REPORTS": "Sɛbɛn kura",
+    "NOTIFICATIONS": "Lajɛlen",
+    "PROFILE": "I ka baara",
+    "SETTINGS": "Sɛtigi"
+  },
+  "PROFILE": {
+    "TITLE": "I ka baara",
+    "NAME": "Tɔgɔ",
+    "EMAIL": "Mail",
+    "PHONE": "Telefɔni",
+    "COUNTRY_CODE": "Dugukolo code",
+    "SAVE": "Mara",
+    "LANGUAGE": "Kan"
+  },
+  "PRODUCTS": {
+    "TITLE": "Fɛnw",
+    "ADD": "Fɛn dɔ fara",
+    "NAME": "Fɛn tɔgɔ",
+    "PRICE": "Fɛn dama",
+    "STOCK": "Fɛn hakɛ",
+    "CATEGORY": "Hakɛ"
+  },
+  "SALES": {
+    "TITLE": "Feere",
+    "NEW": "Feere kura",
+    "TOTAL": "Bɛɛ lajɛlen",
+    "PAYMENT": "Sara",
+    "CLIENT": "Kɔlɔsili",
+    "DATE": "Don"
+  },
+  "CLIENTS": {
+    "TITLE": "Kɔlɔsiliw",
+    "ADD": "Kɔlɔsili kura fara",
+    "NAME": "Tɔgɔ",
+    "PHONE": "Telefɔni",
+    "EMAIL": "Mail"
+  },
+  "CAISSE": {
+    "TITLE": "Caisse",
+    "BALANCE": "Wari",
+    "DEPOSIT": "Fara",
+    "WITHDRAW": "Bɔ",
+    "HISTORY": "Kɔfɛ"
+  },
+  "INVENTORY": {
+    "TITLE": "Cogoya",
+    "LOW_STOCK": "Fɛn dɔgɔ",
+    "ADJUST": "Yɛlɛma"
+  },
+  "REPORTS": {
+    "TITLE": "Sɛbɛnw",
+    "DAILY": "Tile kelen",
+    "WEEKLY": "Dɔgɔkun",
+    "MONTHLY": "Kalo",
+    "YEARLY": "San"
+  },
+  "NOTIFICATIONS": {
+    "TITLE": "Lajɛlenw",
+    "MARK_READ": "Kalan kɛ"
+  },
+  "BOUTIQUE": {
+    "TITLE": "Boutiki",
+    "NAME": "Boutiki tɔgɔ",
+    "ADDRESS": "Sigiyɔrɔ"
+  },
+  "FORGOT_PASSWORD": {
+    "TITLE": "Gundo tɛmɛnen",
+    "EMAIL": "I ka mail",
+    "SUBMIT": "Ci",
+    "BACK": "Segin"
+  }
+}

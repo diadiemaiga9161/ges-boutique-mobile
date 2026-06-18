@@ -9,6 +9,7 @@ export enum ModePaiement {
   ESPECES = 'ESPECES',
   ORANGE_MONEY = 'ORANGE_MONEY',
   MOOV_MONEY = 'MOOV_MONEY',
+  WAVE_MONEY = 'WAVE_MONEY',
   CARTE_BANCAIRE = 'CARTE_BANCAIRE',
   VIREMENT = 'VIREMENT'
 }
@@ -536,6 +537,7 @@ export class VenteService {
       ESPECES: 'Espèces',
       ORANGE_MONEY: 'Orange Money',
       MOOV_MONEY: 'Moov Money',
+      WAVE_MONEY: 'Wave',
       CARTE_BANCAIRE: 'Carte bancaire',
       VIREMENT: 'Virement'
     };
