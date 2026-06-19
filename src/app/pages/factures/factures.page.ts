@@ -6,6 +6,7 @@ import { FactureService, Facture, FactureRequest, LigneFactureRequest } from '..
 import { AuthService } from '../../services/auth.service';
 import { ProductService, Produit } from '../../services/product.service';
 import { FactureDesignService, DesignFacture } from '../../services/facture-design.service';
+import { BoutiqueConfigService } from '../../services/boutique-config.service';
 
 @Component({
   selector: 'app-factures',
@@ -67,6 +68,10 @@ export class FacturesPage {
     return this.proformaLignes.reduce((s, l) => s + l.quantite * l.prixUnitaire, 0);
   }
 
+  get boutiqueName(): string {
+    return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
+  }
+
   constructor(
     public auth: AuthService,
     private factureService: FactureService,
@@ -74,6 +79,7 @@ export class FacturesPage {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private designService: FactureDesignService,
+    private boutiqueConfig: BoutiqueConfigService,
     private http: HttpClient,
     private sanitizer: DomSanitizer
   ) {}

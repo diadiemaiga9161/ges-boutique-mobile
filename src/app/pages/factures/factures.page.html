@@ -129,7 +129,7 @@
       <!-- ╚═══════════════════════════════╝ -->
       <div *ngIf="design === 1" class="facture-doc facture-doc--classic">
         <div class="fd-header fd-header--blue">
-          <div class="fd-boutique-name">{{ auth.getBoutiqueName?.() || 'Ma Boutique' }}</div>
+          <div class="fd-boutique-name">{{ boutiqueName }}</div>
           <div class="fd-num">{{ selectedFacture.numeroFacture }}</div>
         </div>
 
@@ -192,7 +192,7 @@
       <div *ngIf="design === 2" class="facture-doc facture-doc--modern">
         <div class="fd-header fd-header--dark">
           <div>
-            <div class="fd-boutique-name fd-boutique--gold">{{ auth.getBoutiqueName?.() || 'Ma Boutique' }}</div>
+            <div class="fd-boutique-name fd-boutique--gold">{{ boutiqueName }}</div>
             <div class="fd-tagline">Facture Officielle</div>
           </div>
           <div class="fd-num fd-num--gold">{{ selectedFacture.numeroFacture }}</div>
@@ -252,7 +252,7 @@
       <div *ngIf="design === 3" class="facture-doc facture-doc--minimal">
         <div class="fd-header fd-header--minimal">
           <div>
-            <div class="fd-boutique-name fd-boutique--black">{{ auth.getBoutiqueName?.() || 'Ma Boutique' }}</div>
+            <div class="fd-boutique-name fd-boutique--black">{{ boutiqueName }}</div>
           </div>
           <div class="fd-num fd-num--minimal">{{ selectedFacture.numeroFacture }}</div>
         </div>
