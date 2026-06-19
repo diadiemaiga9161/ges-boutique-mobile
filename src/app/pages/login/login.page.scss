@@ -304,6 +304,22 @@
   letter-spacing: 0.3px;
 }
 
+// ── Très petit écran (≤360px) ─────────────────────
+@media (max-width: 360px) {
+  .lh-body { padding: 36px 16px 24px; }
+  .lh-logo { width: 64px; height: 64px; font-size: 1.6rem; margin-bottom: 12px; }
+  .lh-app-name { font-size: 1.7rem; }
+  .lh-tagline  { font-size: 0.75rem; }
+
+  .login-form-zone { padding: 2px 12px 24px; }
+  .login-card { padding: 18px 14px; border-radius: 18px; }
+  .login-card__title { font-size: 1.3rem; }
+  .login-card__sub { font-size: 0.82rem; margin-bottom: 16px; }
+  .input-field { height: 40px; font-size: 0.88rem; }
+  .login-submit { height: 46px; font-size: 0.92rem; }
+  .login-form { gap: 13px; }
+}
+
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
   .lh-body { padding: 64px 28px 40px; }

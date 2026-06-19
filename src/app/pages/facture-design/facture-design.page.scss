@@ -108,3 +108,25 @@
 .pv-total--minimal { padding: 5px 8px; text-align: right; font-size: 10px; }
 .pv-qr-zone--minimal { border-color: #18181b; }
 .pv-qr-box--minimal { border-color: #18181b; color: #18181b; }
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  // Grille 2 colonnes sur tablette
+  ion-content {
+    ion-list,
+    .designs-list { /* container wrapping design cards */ }
+  }
+  .design-card {
+    font-size: 1rem;
+    padding: 20px;
+  }
+  .design-name { font-size: 18px; }
+  .design-desc { font-size: 14px; }
+  .design-badge { font-size: 12px; padding: 4px 10px; }
+  .preview { border-radius: 10px; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .design-card { max-width: 800px; margin-left: auto; margin-right: auto; }
+}

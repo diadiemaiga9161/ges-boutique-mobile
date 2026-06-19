@@ -254,3 +254,50 @@
   font-size: 0.85rem;
   color:    #cbd5e1;
 }
+
+// ── Très petit écran (≤360px) ─────────────────────
+@media (max-width: 360px) {
+  .home-hero { padding: 14px 14px 20px; }
+  .home-hero__name { font-size: 1.25rem; }
+  .home-hero__ca-val { font-size: 1.5rem; }
+  .home-hero__ca { padding: 10px 12px; }
+
+  .kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .kpi-tile { padding: 10px 8px; }
+  .kpi-tile__val { font-size: 0.82rem; }
+
+  .quick-grid { gap: 8px; }
+  .quick-tile { padding: 12px 10px; }
+  .quick-tile__title { font-size: 0.82rem; }
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .home-hero { padding: 28px 28px 36px; }
+  .home-hero__name { font-size: 1.8rem; }
+  .home-hero__ca-val { font-size: 2.2rem; }
+  .home-hero__ca { padding: 18px 20px; border-radius: 20px; }
+  .home-hero__ca-label { font-size: 0.75rem; }
+  .home-hero__store { font-size: 1rem; }
+
+  .kpi-row { gap: 12px; }
+  .kpi-tile { padding: 16px 12px; }
+  .kpi-tile__val { font-size: 1.05rem; }
+  .kpi-tile__icon { width: 38px; height: 38px; }
+
+  .quick-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .quick-tile { padding: 18px 14px; }
+  .quick-tile__title { font-size: 1rem; }
+  .quick-tile__sub { font-size: 0.78rem; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .home-hero__name { font-size: 2rem; }
+  .home-hero__ca-val { font-size: 2.6rem; }
+  .kpi-row { gap: 16px; }
+  .kpi-tile__val { font-size: 1.15rem; }
+  .quick-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; }
+}

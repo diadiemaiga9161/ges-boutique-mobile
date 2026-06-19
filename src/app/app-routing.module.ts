@@ -111,6 +111,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/facture-design/facture-design.module').then(m => m.FactureDesignPageModule)
   },
   {
+    path: 'langue',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/langue/langue.module').then(m => m.LanguePageModule)
+  },
+  {
     path: '',
     redirectTo: 'tabs',
     pathMatch: 'full'

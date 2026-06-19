@@ -153,6 +153,11 @@
             <ion-label>Design Factures</ion-label>
           </ion-item>
 
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/langue')">
+            <ion-icon name="language-outline" slot="start"></ion-icon>
+            <ion-label>{{ 'LANG.SELECT' | translate }}</ion-label>
+          </ion-item>
+
           <div class="menu-divider"></div>
           <p class="menu-section-label">Transferts inter-boutiques</p>
 

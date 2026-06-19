@@ -1,0 +1,35 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ 'LANG.SELECT' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="lang-content">
+
+  <div class="lang-hero">
+    <div class="lang-hero-icon">🌍</div>
+    <h2 class="lang-hero-title">{{ 'LANG.SELECT' | translate }}</h2>
+    <p class="lang-hero-sub">Choisissez votre langue préférée</p>
+  </div>
+
+  <div class="lang-grid">
+    <div class="lang-card"
+         *ngFor="let lang of languages"
+         [class.lang-card--active]="lang.code === currentCode"
+         (click)="selectLanguage(lang)">
+
+      <div class="lang-card-flag">{{ lang.flag }}</div>
+      <div class="lang-card-name">{{ lang.name }}</div>
+
+      <div class="lang-card-check" *ngIf="lang.code === currentCode">
+        <ion-icon name="checkmark-circle" color="success"></ion-icon>
+      </div>
+    </div>
+  </div>
+
+</ion-content>

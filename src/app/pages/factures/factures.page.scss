@@ -636,3 +636,40 @@
 }
 .fd-qr--minimal { background: #fafafa; border-top-color: #18181b; }
 
+// ── Très petit écran (≤360px) ─────────────────────
+@media (max-width: 360px) {
+  .fact-hero .hs-val { font-size: 0.95rem; }
+  .fact-num { font-size: 0.8rem; }
+  .act-btn { padding: 4px 7px; font-size: 0.68rem; }
+}
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .fact-filters { padding: 0 20px 12px; }
+  .fact-list {
+    padding: 0 20px 80px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .fact-card { margin-bottom: 0; }
+  .fact-hero .hs-val { font-size: 1.2rem; }
+  .fact-num { font-size: 0.92rem; }
+  .fact-montant { font-size: 1.05rem; }
+  .btn-creer {
+    margin: 0 20px 12px;
+    width: calc(100% - 40px);
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+  // Modaux plus larges
+  .detail-body { padding: 16px 20px; }
+}
+
+// ── Grand écran (1024px+) ─────────────────────────
+@media (min-width: 1024px) {
+  .fact-list { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .fact-filters { padding: 0 28px 12px; }
+  .btn-creer { margin: 0 28px 12px; width: calc(100% - 56px); }
+}
+
