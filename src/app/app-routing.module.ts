@@ -106,6 +106,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/assistant-ia/assistant-ia.module').then(m => m.AssistantIaPageModule)
   },
   {
+    path: 'facture-design',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/facture-design/facture-design.module').then(m => m.FactureDesignPageModule)
+  },
+  {
     path: '',
     redirectTo: 'tabs',
     pathMatch: 'full'

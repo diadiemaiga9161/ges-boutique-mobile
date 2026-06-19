@@ -1,0 +1,110 @@
+.design-card {
+  position: relative;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &--active {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.15);
+  }
+}
+
+.design-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+
+  &--dark {
+    background: #18181b;
+  }
+}
+
+.design-name {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.design-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+/* ===== APERÇU COMMUN ===== */
+.preview {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  font-size: 9px;
+}
+
+.pv-client { padding: 4px 8px; font-size: 9px; }
+.pv-table { width: 100%; border-collapse: collapse; font-size: 9px;
+  th, td { padding: 3px 6px; text-align: left; }
+  thead tr { background: #f1f5f9; }
+}
+.pv-total { padding: 5px 8px; font-weight: 700; font-size: 10px; text-align: right; }
+.pv-qr-zone { display: flex; flex-direction: column; align-items: center; padding: 8px 0; border-top: 1px dashed #cbd5e1; }
+.pv-qr-box { width: 36px; height: 36px; border: 2px solid #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 8px; border-radius: 4px; }
+.pv-qr-text { font-size: 8px; color: #94a3b8; margin-top: 3px; }
+
+/* ===== DESIGN 1 - CLASSIQUE ===== */
+.pv-header--blue {
+  background: #1e40af;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+}
+.pv-boutique { font-weight: 700; font-size: 11px; }
+.pv-num { font-size: 9px; opacity: 0.9; }
+.pv-total--blue { background: #eff6ff; color: #1e40af; }
+
+/* ===== DESIGN 2 - MODERNE ===== */
+.pv-header--dark {
+  background: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+}
+.pv-boutique--gold { color: #f59e0b; font-weight: 700; font-size: 11px; }
+.pv-num--gold { color: #f59e0b; font-size: 9px; }
+.pv-stripe-gold { height: 3px; background: #f59e0b; }
+.pv-client--dark { color: #334155; background: #f8fafc; }
+.pv-table--modern thead tr { background: #f1f5f9; }
+.pv-total--gold { background: #0f172a; color: #f59e0b; }
+.pv-qr-box--gold { border-color: #f59e0b; }
+
+/* ===== DESIGN 3 - MINIMALISTE ===== */
+.pv-header--minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 10px;
+  background: #fff;
+}
+.pv-boutique--black { font-weight: 700; font-size: 11px; color: #18181b; }
+.pv-num--right { font-size: 9px; color: #52525b; font-style: italic; }
+.pv-divider { height: 1px; background: #18181b; margin: 2px 0; }
+.pv-client--minimal { padding: 4px 8px; font-size: 9px; color: #52525b; }
+.pv-table--minimal {
+  thead tr { background: transparent; th { border-bottom: 1px solid #18181b; } }
+  td { border-bottom: 1px solid #e4e4e7; }
+}
+.pv-total--minimal { padding: 5px 8px; text-align: right; font-size: 10px; }
+.pv-qr-zone--minimal { border-color: #18181b; }
+.pv-qr-box--minimal { border-color: #18181b; color: #18181b; }

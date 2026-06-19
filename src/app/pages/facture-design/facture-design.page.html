@@ -1,0 +1,115 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Design des factures</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <p style="color:#64748b;font-size:14px;margin-bottom:16px;text-align:center">
+    Choisissez l'apparence de vos factures. Le QR code est toujours placé en bas de page.
+  </p>
+
+  <!-- ===== DESIGN 1 — CLASSIQUE ===== -->
+  <div class="design-card" [class.design-card--active]="selected === 1" (click)="choisir(1)">
+    <div class="design-badge" *ngIf="selected === 1">✓ Actif</div>
+    <div class="design-name">Design 1 — Classique</div>
+    <p class="design-desc">Professionnel, bleu et blanc, sobre et élégant</p>
+
+    <!-- Aperçu design 1 -->
+    <div class="preview preview--classic">
+      <div class="pv-header pv-header--blue">
+        <div class="pv-boutique">Boutique Example</div>
+        <div class="pv-num">FAC-2024-001</div>
+      </div>
+      <div class="pv-client">Client : Jean Dupont | Date : 01/01/2024</div>
+      <table class="pv-table">
+        <thead><tr><th>Désignation</th><th>Qté</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td>Produit A</td><td>2</td><td>5 000 F</td></tr>
+          <tr><td>Produit B</td><td>1</td><td>3 000 F</td></tr>
+        </tbody>
+      </table>
+      <div class="pv-total pv-total--blue">Total : 8 000 F</div>
+      <div class="pv-qr-zone">
+        <div class="pv-qr-box">[ QR ]</div>
+        <div class="pv-qr-text">Scanner pour obtenir la facture</div>
+      </div>
+    </div>
+    <ion-button expand="block" [fill]="selected === 1 ? 'solid' : 'outline'" color="primary" (click)="choisir(1)">
+      {{ selected === 1 ? '✓ Sélectionné' : 'Choisir ce design' }}
+    </ion-button>
+  </div>
+
+  <!-- ===== DESIGN 2 — MODERNE ===== -->
+  <div class="design-card" [class.design-card--active]="selected === 2" (click)="choisir(2)">
+    <div class="design-badge" *ngIf="selected === 2">✓ Actif</div>
+    <div class="design-name">Design 2 — Moderne</div>
+    <p class="design-desc">En-tête sombre avec accent doré, contemporain</p>
+
+    <!-- Aperçu design 2 -->
+    <div class="preview preview--modern">
+      <div class="pv-header pv-header--dark">
+        <div class="pv-boutique pv-boutique--gold">Boutique Example</div>
+        <div class="pv-num pv-num--gold">FAC-2024-001</div>
+      </div>
+      <div class="pv-stripe-gold"></div>
+      <div class="pv-client pv-client--dark">Client : Jean Dupont | Date : 01/01/2024</div>
+      <table class="pv-table pv-table--modern">
+        <thead><tr><th>Désignation</th><th>Qté</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td>Produit A</td><td>2</td><td>5 000 F</td></tr>
+          <tr><td>Produit B</td><td>1</td><td>3 000 F</td></tr>
+        </tbody>
+      </table>
+      <div class="pv-total pv-total--gold">Total : 8 000 F</div>
+      <div class="pv-qr-zone">
+        <div class="pv-qr-box pv-qr-box--gold">[ QR ]</div>
+        <div class="pv-qr-text">Scanner pour obtenir la facture</div>
+      </div>
+    </div>
+    <ion-button expand="block" [fill]="selected === 2 ? 'solid' : 'outline'" color="dark" (click)="choisir(2)">
+      {{ selected === 2 ? '✓ Sélectionné' : 'Choisir ce design' }}
+    </ion-button>
+  </div>
+
+  <!-- ===== DESIGN 3 — MINIMALISTE ===== -->
+  <div class="design-card" [class.design-card--active]="selected === 3" (click)="choisir(3)">
+    <div class="design-badge design-badge--dark" *ngIf="selected === 3">✓ Actif</div>
+    <div class="design-name">Design 3 — Minimaliste</div>
+    <p class="design-desc">Épuré noir et blanc, ultra lisible, très professionnel</p>
+
+    <!-- Aperçu design 3 -->
+    <div class="preview preview--minimal">
+      <div class="pv-header pv-header--minimal">
+        <div>
+          <div class="pv-boutique pv-boutique--black">Boutique Example</div>
+          <div style="font-size:9px;color:#666">boutique@example.com | +223 XX XX XX XX</div>
+        </div>
+        <div class="pv-num pv-num--right">FAC-2024-001</div>
+      </div>
+      <div class="pv-divider"></div>
+      <div class="pv-client pv-client--minimal">Client : Jean Dupont | 01/01/2024</div>
+      <table class="pv-table pv-table--minimal">
+        <thead><tr><th>Désignation</th><th>Qté</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td>Produit A</td><td>2</td><td>5 000 F</td></tr>
+          <tr><td>Produit B</td><td>1</td><td>3 000 F</td></tr>
+        </tbody>
+      </table>
+      <div class="pv-divider"></div>
+      <div class="pv-total pv-total--minimal">Total : <strong>8 000 F</strong></div>
+      <div class="pv-qr-zone pv-qr-zone--minimal">
+        <div class="pv-qr-box pv-qr-box--minimal">[ QR ]</div>
+        <div class="pv-qr-text">Scanner pour obtenir la facture</div>
+      </div>
+    </div>
+    <ion-button expand="block" [fill]="selected === 3 ? 'solid' : 'outline'" color="medium" (click)="choisir(3)">
+      {{ selected === 3 ? '✓ Sélectionné' : 'Choisir ce design' }}
+    </ion-button>
+  </div>
+
+</ion-content>

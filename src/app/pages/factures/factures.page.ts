@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ToastController, AlertController } from '@ionic/angular';
 import { FactureService, Facture, FactureRequest, LigneFactureRequest } from '../../services/facture.service';
 import { AuthService } from '../../services/auth.service';
 import { ProductService, Produit } from '../../services/product.service';
+import { FactureDesignService, DesignFacture } from '../../services/facture-design.service';
 
 @Component({
   selector: 'app-factures',
@@ -18,6 +21,9 @@ export class FacturesPage {
   filterStatut = '';
   loading = false;
 
+  // Design actif
+  design: DesignFacture = 1;
+
   // Statistiques
   get totalMontant(): number { return this.factures.reduce((s, f) => s + (f.montantTotal || 0), 0); }
   get nbBrouillons(): number { return this.factures.filter(f => f.statut === 'BROUILLON').length; }
@@ -28,7 +34,11 @@ export class FacturesPage {
   showDetailModal = false;
   selectedFacture?: Facture;
 
-  // Modal QR
+  // QR code blob SafeUrl
+  qrDataUrl: SafeUrl | null = null;
+  qrLoading = false;
+
+  // Modal QR (standalone)
   showQrModal = false;
   factureForQr?: Facture;
 
@@ -39,7 +49,7 @@ export class FacturesPage {
   proformaNewLine = { designation: '', quantite: 1, prixUnitaire: 0 };
   proformaCreating = false;
 
-  // Recherche catalogue produits dans le formulaire pro forma
+  // Recherche catalogue produits
   produits: Produit[] = [];
   produitSearch = '';
   showProduitSearch = false;
@@ -62,10 +72,16 @@ export class FacturesPage {
     private factureService: FactureService,
     private productService: ProductService,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private designService: FactureDesignService,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
   ) {}
 
-  ionViewWillEnter(): void { this.load(); }
+  ionViewWillEnter(): void {
+    this.design = this.designService.getDesign();
+    this.load();
+  }
 
   load(event?: any): void {
     this.loading = true;
@@ -104,8 +120,33 @@ export class FacturesPage {
   }
 
   // ── Détail ──────────────────────────────────────────────
-  openDetail(f: Facture): void { this.selectedFacture = f; this.showDetailModal = true; }
-  closeDetail(): void { this.showDetailModal = false; this.selectedFacture = undefined; }
+  openDetail(f: Facture): void {
+    this.selectedFacture = f;
+    this.qrDataUrl = null;
+    this.showDetailModal = true;
+    this.loadQrBlob(f.id);
+  }
+
+  closeDetail(): void {
+    this.showDetailModal = false;
+    this.selectedFacture = undefined;
+    this.qrDataUrl = null;
+  }
+
+  // Charge le QR via blob pour fonctionner dans Capacitor
+  private loadQrBlob(factureId: number): void {
+    this.qrLoading = true;
+    const token = this.auth.getToken() || '';
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get(`/api/caisse/factures/${factureId}/qrcode`, { headers, responseType: 'blob' }).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        this.qrDataUrl = this.sanitizer.bypassSecurityTrustUrl(url);
+        this.qrLoading = false;
+      },
+      error: () => { this.qrLoading = false; }
+    });
+  }
 
   // ── PDF ─────────────────────────────────────────────────
   telechargerPdf(f: Facture): void {
@@ -113,7 +154,7 @@ export class FacturesPage {
     window.location.href = window.location.origin + `/api/caisse/factures/${f.id}/pdf`;
   }
 
-  // ── QR ──────────────────────────────────────────────────
+  // ── QR modal standalone ──────────────────────────────────
   ouvrirQr(f: Facture): void { this.factureForQr = f; this.showQrModal = true; }
   fermerQr(): void { this.showQrModal = false; this.factureForQr = undefined; }
 
