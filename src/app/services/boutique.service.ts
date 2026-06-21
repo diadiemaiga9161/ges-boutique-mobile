@@ -9,6 +9,8 @@ export interface BoutiqueInfo {
   nom: string;
   adresse?: string;
   telephone?: string;
+  telephone2?: string;
+  telephone3?: string;
   email?: string;
   logoUrl?: string;
   logoPath?: string;

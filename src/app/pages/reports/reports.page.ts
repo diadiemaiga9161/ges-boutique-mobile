@@ -8,6 +8,7 @@ import {
   StatistiquesGenerales
 } from '../../services/rapport.service';
 import { CaisseService, CreditInfo, SituationCredits } from '../../services/caisse.service';
+import { RapportWhatsappService } from '../../services/rapport-whatsapp.service';
 
 @Component({
   selector: 'app-reports',
@@ -33,7 +34,8 @@ export class ReportsPage {
   constructor(
     public reports: RapportService,
     public caisseService: CaisseService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private rapportWA: RapportWhatsappService
   ) {}
 
   ionViewWillEnter(): void {
@@ -233,6 +235,21 @@ export class ReportsPage {
       VIREMENT:       'swap-horizontal-outline',
     };
     return icons[mode] ?? 'wallet-outline';
+  }
+
+  envoyerWhatsAppJour(): void {
+    if (!this.daily) { this.presentToast('Rapport journalier non chargé', 'danger'); return; }
+    this.rapportWA.envoyerRapportJour(this.daily);
+  }
+
+  envoyerWhatsAppSemaine(): void {
+    if (!this.weekly) { this.presentToast('Rapport hebdomadaire non chargé', 'danger'); return; }
+    this.rapportWA.envoyerRapportSemaine(this.weekly);
+  }
+
+  envoyerWhatsAppMois(): void {
+    if (!this.monthly) { this.presentToast('Rapport mensuel non chargé', 'danger'); return; }
+    this.rapportWA.envoyerRapportMois(this.monthly);
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {

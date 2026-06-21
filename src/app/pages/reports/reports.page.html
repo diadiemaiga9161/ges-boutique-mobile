@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Rapports</ion-title>
+    <ion-title>{{ 'REPORTS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button fill="clear" (click)="refresh()">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
@@ -56,6 +56,22 @@
         <p class="rhk__lbl">Valeur stock</p>
       </div>
     </div>
+
+    <!-- Bouton WhatsApp rapport -->
+    <div style="display:flex; justify-content:center; margin-top:14px; gap:8px; flex-wrap:wrap">
+      <ion-button *ngIf="activeReport==='day'" color="success" size="small" (click)="envoyerWhatsAppJour()">
+        <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+        Rapport du jour
+      </ion-button>
+      <ion-button *ngIf="activeReport==='week'" color="success" size="small" (click)="envoyerWhatsAppSemaine()">
+        <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+        Rapport semaine
+      </ion-button>
+      <ion-button *ngIf="activeReport==='month'" color="success" size="small" (click)="envoyerWhatsAppMois()">
+        <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+        Rapport du mois
+      </ion-button>
+    </div>
   </div>
 
   <div class="page-pad stack">
@@ -67,17 +83,17 @@
       <button class="ps-btn" [class.ps-btn--active]="activeReport==='day'"
         (click)="switchReport('day')">
         <ion-icon name="sunny-outline"></ion-icon>
-        Jour
+        {{ 'REPORTS.DAILY' | translate }}
       </button>
       <button class="ps-btn" [class.ps-btn--active]="activeReport==='week'"
         (click)="switchReport('week')">
         <ion-icon name="calendar-outline"></ion-icon>
-        Semaine
+        {{ 'REPORTS.WEEKLY' | translate }}
       </button>
       <button class="ps-btn" [class.ps-btn--active]="activeReport==='month'"
         (click)="switchReport('month')">
         <ion-icon name="bar-chart-outline"></ion-icon>
-        Mois
+        {{ 'REPORTS.MONTHLY' | translate }}
       </button>
       <button class="ps-btn" [class.ps-btn--active]="activeReport==='custom'"
         (click)="switchReport('custom')">
