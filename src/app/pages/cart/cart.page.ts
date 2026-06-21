@@ -219,7 +219,7 @@ export class CartPage implements OnInit {
 
     // Vérifier promos puis ajouter avec les infos du niveau
     this.promotionService.getPromosPourProduit(product.id!).subscribe({
-      next: promos => {
+      next: (promos: Promotion[]) => {
         const promo = promos[0];
         const prixOriginal = niveau.prixVente;
         const customPrice = promo
@@ -261,7 +261,7 @@ export class CartPage implements OnInit {
 
   private addWithPromo(product: Produit): void {
     this.promotionService.getPromosPourProduit(product.id!).subscribe({
-      next: promos => {
+      next: (promos: Promotion[]) => {
         const promo = promos[0];
         const prixOriginal = product.prixVente;
         const customPrice = promo
