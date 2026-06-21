@@ -15,10 +15,11 @@ interface CartItem {
   remisePourcentage: number;
   customPrice: number;
   editingPrice: boolean;
-  promo?: Promotion;        // promo active appliquée sur ce produit
-  prixOriginal?: number;    // prix avant promo
-  niveauPrixAchat?: number; // prix achat du niveau (conditionnement)
-  niveauNom?: string;       // nom du niveau choisi
+  promo?: Promotion;          // promo active appliquée sur ce produit
+  prixOriginal?: number;      // prix avant promo
+  niveauPrixAchat?: number;   // prix achat du niveau (conditionnement)
+  niveauNom?: string;         // nom du niveau choisi
+  niveauFacteurTotal?: number; // facteur total vers unité de base (ex: 200 pour 1 Carton = 200 Pièces)
 }
 
 @Component({
@@ -211,9 +212,22 @@ export class CartPage implements OnInit {
     }
   }
 
+  private calculerFacteurTotal(niveaux: ProduitNiveau[], ordreNiveau: number): number {
+    const sorted = [...niveaux].sort((a, b) => a.ordre - b.ordre);
+    const maxOrdre = Math.max(...sorted.map(n => n.ordre));
+    let total = 1;
+    for (const n of sorted) {
+      if (n.ordre >= ordreNiveau && n.ordre < maxOrdre) {
+        total *= n.facteur;
+      }
+    }
+    return total;
+  }
+
   choisirNiveau(niveau: ProduitNiveau): void {
     const product = this.produitEnAttente;
     if (!product) return;
+    const facteurTotal = this.calculerFacteurTotal(this.niveauxDisponibles, niveau.ordre);
     this.showNiveauxVenteModal = false;
     this.produitEnAttente = null;
 
@@ -231,7 +245,8 @@ export class CartPage implements OnInit {
           promo: promo || undefined,
           prixOriginal,
           niveauPrixAchat: niveau.prixAchat,
-          niveauNom: niveau.nom
+          niveauNom: niveau.nom,
+          niveauFacteurTotal: facteurTotal
         }];
         if (promo) {
           const label = promo.typeReduction === 'POURCENTAGE'
@@ -247,7 +262,8 @@ export class CartPage implements OnInit {
           product, quantity: 1, remisePourcentage: 0,
           customPrice: niveau.prixVente, editingPrice: false,
           niveauPrixAchat: niveau.prixAchat,
-          niveauNom: niveau.nom
+          niveauNom: niveau.nom,
+          niveauFacteurTotal: facteurTotal
         }];
       }
     });
@@ -397,8 +413,9 @@ export class CartPage implements OnInit {
         prixUnitaire: item.customPrice,
         remisePourcentage: item.remisePourcentage || null,
         remiseMontant: null,
-        prixAchat: item.niveauPrixAchat || null,   // prix achat du niveau
-        niveauNom: item.niveauNom || null            // nom du niveau
+        prixAchat: item.niveauPrixAchat || null,      // prix achat du niveau
+        niveauNom: item.niveauNom || null,            // nom du niveau
+        niveauFacteur: item.niveauFacteurTotal || 1   // facteur déduction stock
       })),
       modePaiement: this.modePaiement,
       referencePaiement: this.referencePaiement,
