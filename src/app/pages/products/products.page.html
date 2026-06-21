@@ -130,7 +130,7 @@
             <ion-icon name="trash-outline" slot="start"></ion-icon>
             Supprimer
           </ion-button>
-          <ion-button *ngIf="conditionnementActif && auth.isAdmin()" fill="clear" size="small" color="tertiary" (click)="ouvrirNiveaux(product)">
+          <ion-button *ngIf="conditionnementActif" fill="clear" size="small" color="tertiary" (click)="ouvrirNiveaux(product)">
             <ion-icon name="layers-outline" slot="start"></ion-icon>
             Niveaux
           </ion-button>
