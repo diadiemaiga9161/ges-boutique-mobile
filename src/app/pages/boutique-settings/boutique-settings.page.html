@@ -80,6 +80,23 @@
       </ion-item>
     </section>
 
+    <!-- Fonctionnalités avancées -->
+    <section class="form-panel stack">
+      <h2 class="card-title">Fonctionnalités avancées</h2>
+
+      <ion-item lines="none">
+        <ion-icon name="cube-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Gestion par conditionnement</h3>
+          <p class="muted">Vendre par Carton, Cartouche, Pièce... avec prix différents</p>
+        </ion-label>
+        <ion-toggle slot="end"
+          [checked]="conditionnementActif"
+          (ionChange)="toggleConditionnement($event)">
+        </ion-toggle>
+      </ion-item>
+    </section>
+
     <!-- Actions -->
     <ion-button expand="block" (click)="save()" [disabled]="saving">
       <ion-spinner *ngIf="saving" slot="start" name="crescent"></ion-spinner>

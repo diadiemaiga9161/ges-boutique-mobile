@@ -5,6 +5,9 @@ import { Client, ClientService } from '../../services/client.service';
 import { ProductService, Produit } from '../../services/product.service';
 import { ModePaiement, RemiseType, VenteService } from '../../services/vente.service';
 import { BarcodeService } from '../../services/barcode.service';
+import { Promotion, PromotionService } from '../../services/promotion.service';
+import { FonctionnaliteService } from '../../services/fonctionnalite.service';
+import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
 
 interface CartItem {
   product: Produit;
@@ -12,6 +15,10 @@ interface CartItem {
   remisePourcentage: number;
   customPrice: number;
   editingPrice: boolean;
+  promo?: Promotion;        // promo active appliquée sur ce produit
+  prixOriginal?: number;    // prix avant promo
+  niveauPrixAchat?: number; // prix achat du niveau (conditionnement)
+  niveauNom?: string;       // nom du niveau choisi
 }
 
 @Component({
@@ -50,13 +57,23 @@ export class CartPage implements OnInit {
   modes = Object.values(ModePaiement);
   remiseTypes = Object.values(RemiseType);
 
+  // Conditionnement
+  conditionnementActif = false;
+  showNiveauxVenteModal = false;
+  produitEnAttente: Produit | null = null;
+  niveauxDisponibles: ProduitNiveau[] = [];
+  loadingNiveauxVente = false;
+
   constructor(
     private productService: ProductService,
     public clientService: ClientService,
     public venteService: VenteService,
     private auth: AuthService,
     private toastCtrl: ToastController,
-    private barcodeService: BarcodeService
+    private barcodeService: BarcodeService,
+    private promotionService: PromotionService,
+    private fonctionnalite: FonctionnaliteService,
+    private niveauService: ProduitNiveauService
   ) {}
 
   async scanPourVente(): Promise<void> {
@@ -84,11 +101,16 @@ export class CartPage implements OnInit {
   }
 
   ngOnInit() {
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.loadProducts();
     this.loadClients();
     const due = new Date();
     due.setDate(due.getDate() + 30);
     this.dateEcheance = due.toISOString().split('T')[0];
+  }
+
+  ionViewWillEnter(): void {
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
   }
 
   loadClients(): void {
@@ -161,7 +183,110 @@ export class CartPage implements OnInit {
       }
       return;
     }
-    this.items = [...this.items, { product, quantity: 1, remisePourcentage: 0, customPrice: product.prixVente, editingPrice: false }];
+
+    // Si conditionnement actif → vérifier si le produit a des niveaux
+    if (this.conditionnementActif) {
+      this.produitEnAttente = product;
+      this.loadingNiveauxVente = true;
+      this.showNiveauxVenteModal = true;
+      this.niveauxDisponibles = [];
+      this.niveauService.getNiveaux(product.id!).subscribe({
+        next: niveaux => {
+          this.niveauxDisponibles = niveaux;
+          this.loadingNiveauxVente = false;
+          // Si aucun niveau défini, ajouter directement comme avant
+          if (niveaux.length === 0) {
+            this.showNiveauxVenteModal = false;
+            this.addWithPromo(product);
+          }
+        },
+        error: () => {
+          this.loadingNiveauxVente = false;
+          this.showNiveauxVenteModal = false;
+          this.addWithPromo(product);
+        }
+      });
+    } else {
+      this.addWithPromo(product);
+    }
+  }
+
+  choisirNiveau(niveau: ProduitNiveau): void {
+    const product = this.produitEnAttente;
+    if (!product) return;
+    this.showNiveauxVenteModal = false;
+    this.produitEnAttente = null;
+
+    // Vérifier promos puis ajouter avec les infos du niveau
+    this.promotionService.getPromosPourProduit(product.id!).subscribe({
+      next: promos => {
+        const promo = promos[0];
+        const prixOriginal = niveau.prixVente;
+        const customPrice = promo
+          ? this.promotionService.calculerPrixPromo(prixOriginal, promo)
+          : prixOriginal;
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice, editingPrice: false,
+          promo: promo || undefined,
+          prixOriginal,
+          niveauPrixAchat: niveau.prixAchat,
+          niveauNom: niveau.nom
+        }];
+        if (promo) {
+          const label = promo.typeReduction === 'POURCENTAGE'
+            ? `-${promo.valeurReduction}%`
+            : `-${promo.valeurReduction} FCFA`;
+          this.presentToast(`🏷️ ${promo.titre} ${label} appliqué`, 'success');
+        } else {
+          this.presentToast(`${niveau.nom} — ${this.money(niveau.prixVente)} ajouté`);
+        }
+      },
+      error: () => {
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice: niveau.prixVente, editingPrice: false,
+          niveauPrixAchat: niveau.prixAchat,
+          niveauNom: niveau.nom
+        }];
+      }
+    });
+  }
+
+  annulerChoixNiveau(): void {
+    this.showNiveauxVenteModal = false;
+    this.produitEnAttente = null;
+    this.niveauxDisponibles = [];
+  }
+
+  private addWithPromo(product: Produit): void {
+    this.promotionService.getPromosPourProduit(product.id!).subscribe({
+      next: promos => {
+        const promo = promos[0];
+        const prixOriginal = product.prixVente;
+        const customPrice = promo
+          ? this.promotionService.calculerPrixPromo(prixOriginal, promo)
+          : prixOriginal;
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice, editingPrice: false,
+          promo: promo || undefined,
+          prixOriginal
+        }];
+        if (promo) {
+          const label = promo.typeReduction === 'POURCENTAGE'
+            ? `-${promo.valeurReduction}%`
+            : `-${promo.valeurReduction} FCFA`;
+          this.presentToast(`🏷️ ${promo.titre} ${label} appliqué`, 'success');
+        }
+      },
+      error: () => {
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice: product.prixVente, editingPrice: false
+        }];
+      }
+    });
   }
 
   remove(productId: number): void {
@@ -271,7 +396,9 @@ export class CartPage implements OnInit {
         quantite: item.quantity,
         prixUnitaire: item.customPrice,
         remisePourcentage: item.remisePourcentage || null,
-        remiseMontant: null
+        remiseMontant: null,
+        prixAchat: item.niveauPrixAchat || null,   // prix achat du niveau
+        niveauNom: item.niveauNom || null            // nom du niveau
       })),
       modePaiement: this.modePaiement,
       referencePaiement: this.referencePaiement,

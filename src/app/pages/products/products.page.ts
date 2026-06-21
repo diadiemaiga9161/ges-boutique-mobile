@@ -6,6 +6,8 @@ import { Categorie, Fournisseur, ProductService, Produit, ProduitRequest, Statis
 import { WebSocketService } from '../../services/websocket.service';
 import { BarcodeService } from '../../services/barcode.service';
 import { StockAlertService } from '../../services/stock-alert.service';
+import { FonctionnaliteService } from '../../services/fonctionnalite.service';
+import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
 
 @Component({
   selector: 'app-products',
@@ -35,6 +37,14 @@ export class ProductsPage implements OnInit {
   editingCategoryId?: number;
   editingCategoryName = '';
 
+  // Conditionnement
+  conditionnementActif = false;
+  showNiveauxModal = false;
+  produitNiveaux: Produit | null = null;
+  niveaux: ProduitNiveau[] = [];
+  loadingNiveaux = false;
+  newNiveau: Partial<ProduitNiveau> = { nom: '', ordre: 1, facteur: 1, prixAchat: 0, prixVente: 0 };
+
   constructor(
     public productsService: ProductService,
     public auth: AuthService,
@@ -42,7 +52,9 @@ export class ProductsPage implements OnInit {
     private alertCtrl: AlertController,
     private ws: WebSocketService,
     private barcodeService: BarcodeService,
-    private stockAlert: StockAlertService
+    private stockAlert: StockAlertService,
+    private fonctionnalite: FonctionnaliteService,
+    private niveauService: ProduitNiveauService
   ) {}
 
   async scanCodeBarre(): Promise<void> {
@@ -52,10 +64,12 @@ export class ProductsPage implements OnInit {
 
   ngOnInit() {
     this.stockAlert.requestPermission();
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.load();
   }
 
   ionViewWillEnter(): void {
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.ws.connect();
     this.wsSub = this.ws.subscribeTopic('/topic/stock').subscribe(event => {
       if (event?.data?.produitId != null && event?.data?.quantite != null) {
@@ -259,6 +273,87 @@ export class ProductsPage implements OnInit {
     });
     await alert.present();
   }
+
+  // ==================== CONDITIONNEMENT ====================
+
+  ouvrirNiveaux(product: Produit): void {
+    this.produitNiveaux = product;
+    this.showNiveauxModal = true;
+    this.newNiveau = { nom: '', ordre: 1, facteur: 1, prixAchat: 0, prixVente: 0 };
+    this.chargerNiveaux(product.id);
+  }
+
+  chargerNiveaux(produitId: number): void {
+    this.loadingNiveaux = true;
+    this.niveauService.getNiveaux(produitId).subscribe({
+      next: niveaux => {
+        this.niveaux = niveaux;
+        this.loadingNiveaux = false;
+        // Auto-set ordre pour le prochain niveau
+        if (niveaux.length > 0) {
+          this.newNiveau.ordre = Math.max(...niveaux.map(n => n.ordre)) + 1;
+        }
+      },
+      error: () => {
+        this.loadingNiveaux = false;
+        this.presentToast('Chargement des niveaux impossible', 'danger');
+      }
+    });
+  }
+
+  ajouterNiveau(): void {
+    if (!this.produitNiveaux || !this.newNiveau.nom?.trim()) {
+      this.presentToast('Nom du niveau obligatoire', 'danger');
+      return;
+    }
+    if (!this.newNiveau.facteur || this.newNiveau.facteur < 1) {
+      this.presentToast('Facteur doit être >= 1', 'danger');
+      return;
+    }
+    if (!this.newNiveau.prixVente || this.newNiveau.prixVente <= 0) {
+      this.presentToast('Prix de vente obligatoire', 'danger');
+      return;
+    }
+    this.niveauService.creer(this.produitNiveaux.id, this.newNiveau).subscribe({
+      next: () => {
+        this.presentToast('Niveau ajouté');
+        this.chargerNiveaux(this.produitNiveaux!.id);
+        this.newNiveau = {
+          nom: '',
+          ordre: (this.newNiveau.ordre || 1) + 1,
+          facteur: 1,
+          prixAchat: 0,
+          prixVente: 0
+        };
+      },
+      error: error => this.presentToast(error.message || 'Ajout impossible', 'danger')
+    });
+  }
+
+  async supprimerNiveau(niveau: ProduitNiveau): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Supprimer niveau',
+      message: `Supprimer "${niveau.nom}" ?`,
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Supprimer', role: 'destructive',
+          handler: () => {
+            this.niveauService.supprimer(niveau.id!).subscribe({
+              next: () => {
+                this.niveaux = this.niveaux.filter(n => n.id !== niveau.id);
+                this.presentToast('Niveau supprimé');
+              },
+              error: error => this.presentToast(error.message || 'Suppression impossible', 'danger')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // ==================== UTILITAIRES ====================
 
   getStockClass(product: Produit): string {
     if (product.quantite <= 0) return 'danger';

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { BoutiqueInfo, BoutiqueService } from '../../services/boutique.service';
+import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 
 @Component({
   selector: 'app-boutique-settings',
@@ -14,19 +15,31 @@ export class BoutiqueSettingsPage implements OnInit {
   selectedLogoFile: File | null = null;
   saving = false;
   uploadingLogo = false;
+  conditionnementActif = false;
 
   constructor(
     private boutique: BoutiqueService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private fonctionnalite: FonctionnaliteService
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
+  }
 
   ionViewWillEnter(): void {
+    this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.boutique.refreshBoutique().subscribe(info => {
       this.form = { ...info };
       this.previewLogo = info.logoUrl || info.logoPath || '';
     });
+  }
+
+  toggleConditionnement(event: any): void {
+    const actif = event.detail.checked;
+    this.fonctionnalite.setConditionnement(actif);
+    this.conditionnementActif = actif;
+    this.presentToast(actif ? 'Conditionnement activé' : 'Conditionnement désactivé');
   }
 
   onLogoFileSelected(event: any): void {

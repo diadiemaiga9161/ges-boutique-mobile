@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Produits</ion-title>
+    <ion-title>{{ 'PRODUCTS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="showCategoriesModal = true">
         <ion-icon name="pricetags-outline" slot="icon-only"></ion-icon>
@@ -130,6 +130,10 @@
             <ion-icon name="trash-outline" slot="start"></ion-icon>
             Supprimer
           </ion-button>
+          <ion-button *ngIf="conditionnementActif && auth.isAdmin()" fill="clear" size="small" color="tertiary" (click)="ouvrirNiveaux(product)">
+            <ion-icon name="layers-outline" slot="start"></ion-icon>
+            Niveaux
+          </ion-button>
         </div>
       </article>
     </section>
@@ -140,7 +144,7 @@
         <p>Aucun produit trouvé</p>
         <ion-button size="small" (click)="startCreate()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
-          Ajouter un produit
+          {{ 'PRODUCTS.ADD' | translate }}
         </ion-button>
       </div>
     </ng-template>
@@ -324,6 +328,106 @@
           </div>
         </div>
       </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL NIVEAUX CONDITIONNEMENT ==================== -->
+<ion-modal [isOpen]="showNiveauxModal" (didDismiss)="showNiveauxModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>
+          <ion-icon name="layers-outline" style="margin-right:6px"></ion-icon>
+          Niveaux — {{ produitNiveaux?.nom }}
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showNiveauxModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+
+      <!-- Info explication -->
+      <div class="form-panel" style="background:#eff6ff;margin-bottom:16px">
+        <p class="muted" style="margin:0;font-size:0.85rem">
+          <ion-icon name="information-circle-outline" style="vertical-align:middle"></ion-icon>
+          Définissez vos niveaux de vente (ex: Carton → Cartouche → Pièce).
+          Le stock est géré en <strong>unité de base</strong> (dernier niveau, facteur 1).
+        </p>
+      </div>
+
+      <!-- Liste des niveaux existants -->
+      <div *ngIf="loadingNiveaux" style="text-align:center;padding:20px">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div *ngIf="!loadingNiveaux">
+        <div *ngIf="niveaux.length === 0" class="empty-state" style="padding:16px">
+          <p class="muted">Aucun niveau défini. Ajoutez vos niveaux ci-dessous.</p>
+        </div>
+
+        <div class="stack" *ngIf="niveaux.length > 0">
+          <div *ngFor="let n of niveaux" class="form-panel" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <strong style="font-size:1rem">{{ n.ordre }}. {{ n.nom }}</strong>
+                <p class="muted" style="margin:2px 0 0;font-size:0.8rem">
+                  Facteur: {{ n.facteur }} unités
+                  &nbsp;·&nbsp; Achat: {{ money(n.prixAchat) }}
+                  &nbsp;·&nbsp; Vente: {{ money(n.prixVente) }}
+                </p>
+              </div>
+              <ion-button fill="clear" color="danger" size="small" (click)="supprimerNiveau(n)">
+                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaire ajout nouveau niveau -->
+        <div class="form-panel stack" style="margin-top:16px">
+          <h3 class="card-title" style="margin-bottom:12px">Ajouter un niveau</h3>
+          <ion-item>
+            <ion-input label="Nom du niveau *" labelPlacement="floating"
+              placeholder="ex: Carton, Cartouche, Pièce"
+              [(ngModel)]="newNiveau.nom">
+            </ion-input>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item>
+              <ion-input label="Ordre *" labelPlacement="floating" type="number"
+                [(ngModel)]="newNiveau.ordre">
+              </ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Facteur *" labelPlacement="floating" type="number"
+                placeholder="ex: 12 (Carton = 12 pièces)"
+                [(ngModel)]="newNiveau.facteur">
+              </ion-input>
+            </ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item>
+              <ion-input label="Prix achat" labelPlacement="floating" type="number"
+                [(ngModel)]="newNiveau.prixAchat">
+              </ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-input label="Prix vente *" labelPlacement="floating" type="number"
+                [(ngModel)]="newNiveau.prixVente">
+              </ion-input>
+            </ion-item>
+          </div>
+          <ion-button expand="block" (click)="ajouterNiveau()">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Ajouter ce niveau
+          </ion-button>
+        </div>
+      </div>
+
     </ion-content>
   </ng-template>
 </ion-modal>

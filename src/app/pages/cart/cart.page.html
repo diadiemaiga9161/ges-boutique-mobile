@@ -97,11 +97,23 @@
             </div>
             <div class="ci-info">
               <p class="ci-name">{{ item.product.nom }}</p>
+              <!-- Badge niveau conditionnement -->
+              <div *ngIf="item.niveauNom" class="ci-promo-badge" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">
+                <ion-icon name="layers-outline"></ion-icon>
+                {{ item.niveauNom }}
+              </div>
+              <!-- Badge promotion active -->
+              <div *ngIf="item.promo" class="ci-promo-badge">
+                <ion-icon name="pricetag"></ion-icon>
+                {{ item.promo.titre }}
+                <span class="ci-promo-val">{{ item.promo.typeReduction === 'POURCENTAGE' ? '-'+item.promo.valeurReduction+'%' : '-'+item.promo.valeurReduction+' FCFA' }}</span>
+                <span class="ci-promo-original">{{ money(item.prixOriginal!) }}</span>
+              </div>
               <!-- Prix de vente (modifiable) -->
               <div class="ci-price-row">
                 <p class="ci-unit">
                   {{ money(item.customPrice) }} / unité
-                  <span *ngIf="item.customPrice !== item.product.prixVente" class="ci-price-badge">modifié</span>
+                  <span *ngIf="item.customPrice !== item.product.prixVente && !item.promo" class="ci-price-badge">modifié</span>
                 </p>
                 <button class="ci-price-btn" (click)="toggleEditPrice(item)" [class.ci-price-btn--active]="item.editingPrice">
                   <ion-icon [name]="item.editingPrice ? 'close-outline' : 'create-outline'"></ion-icon>
@@ -419,3 +431,49 @@
     <div style="height: 32px"></div>
   </div>
 </ion-content>
+
+<!-- ==================== MODAL SÉLECTION NIVEAU ==================== -->
+<ion-modal [isOpen]="showNiveauxVenteModal" (didDismiss)="annulerChoixNiveau()" [breakpoints]="[0, 0.6, 1]" [initialBreakpoint]="0.6">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>
+          <ion-icon name="layers-outline" style="margin-right:6px"></ion-icon>
+          Choisir le conditionnement
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="annulerChoixNiveau()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p class="muted" style="margin-bottom:12px">{{ produitEnAttente?.nom }}</p>
+
+      <div *ngIf="loadingNiveauxVente" style="text-align:center;padding:20px">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div *ngIf="!loadingNiveauxVente" class="stack">
+        <ion-button *ngFor="let n of niveauxDisponibles"
+          expand="block"
+          fill="outline"
+          (click)="choisirNiveau(n)"
+          style="margin-bottom:8px;--border-radius:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:4px 0">
+            <div style="text-align:left">
+              <div style="font-weight:700;font-size:1rem">{{ n.nom }}</div>
+              <div style="font-size:0.78rem;color:var(--ion-color-medium)">
+                Facteur: {{ n.facteur }} · Achat: {{ money(n.prixAchat) }}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700;color:var(--ion-color-primary)">{{ money(n.prixVente) }}</div>
+            </div>
+          </div>
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
