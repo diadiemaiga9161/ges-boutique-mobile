@@ -8,6 +8,8 @@ import { BarcodeService } from '../../services/barcode.service';
 import { StockAlertService } from '../../services/stock-alert.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
+import { OfflineDbService } from '../../services/offline-db.service';
+import { SyncService } from '../../services/sync.service';
 
 @Component({
   selector: 'app-products',
@@ -56,7 +58,9 @@ export class ProductsPage implements OnInit {
     private barcodeService: BarcodeService,
     private stockAlert: StockAlertService,
     private fonctionnalite: FonctionnaliteService,
-    private niveauService: ProduitNiveauService
+    private niveauService: ProduitNiveauService,
+    private offlineDb: OfflineDbService,
+    private syncService: SyncService,
   ) {}
 
   async scanCodeBarre(): Promise<void> {
@@ -175,17 +179,28 @@ export class ProductsPage implements OnInit {
     this.showForm = true;
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (!this.form.nom.trim()) {
       this.presentToast('Le nom est obligatoire', 'danger');
       return;
     }
-    if (!this.form.categorieId) {
-      this.presentToast('Veuillez sélectionner une catégorie', 'danger');
-      return;
-    }
     if (this.form.prixVente <= 0) {
       this.presentToast('Le prix de vente doit être supérieur à 0', 'danger');
+      return;
+    }
+
+    const connected = await this.syncService.isConnected();
+
+    if (!connected) {
+      // Mode hors ligne
+      if (this.editing) {
+        await this.offlineDb.saveProduitUpdatePending(this.editing.id, this.form);
+        this.presentToast('📡 Modification enregistrée hors ligne — sera synchronisée');
+      } else {
+        await this.offlineDb.saveProduitPending(this.form);
+        this.presentToast('📡 Produit créé hors ligne — sera synchronisé');
+      }
+      this.showForm = false;
       return;
     }
 
@@ -199,7 +214,17 @@ export class ProductsPage implements OnInit {
         this.showForm = false;
         this.load();
       },
-      error: error => this.presentToast(error.message || 'Enregistrement impossible', 'danger')
+      error: async error => {
+        // Fallback hors ligne si erreur réseau
+        if (this.editing) {
+          await this.offlineDb.saveProduitUpdatePending(this.editing.id, this.form);
+          this.presentToast('📡 Modification enregistrée hors ligne');
+        } else {
+          await this.offlineDb.saveProduitPending(this.form);
+          this.presentToast('📡 Produit créé hors ligne');
+        }
+        this.showForm = false;
+      }
     });
   }
 

@@ -5,6 +5,7 @@ import { AuthService } from './services/auth.service';
 import { WebSocketService } from './services/websocket.service';
 import { NotificationService } from './services/notification.service';
 import { BoutiqueConfigService } from './services/boutique-config.service';
+import { SyncService } from './services/sync.service';
 import { environment } from '../environments/environment';
 import { Subscription } from 'rxjs';
 
@@ -42,11 +43,13 @@ export class AppComponent implements OnInit, OnDestroy {
     public auth: AuthService,
     public ws: WebSocketService,
     public notifService: NotificationService,
-    private boutiqueConfig: BoutiqueConfigService
+    private boutiqueConfig: BoutiqueConfigService,
+    private syncService: SyncService,
   ) {}
 
   ngOnInit(): void {
     this.hideSplash();
+    this.syncService.startAutoSync();
 
     if (environment.isCapacitor && !this.boutiqueConfig.isConfigured()) {
       this.router.navigateByUrl('/boutique-select', { replaceUrl: true });

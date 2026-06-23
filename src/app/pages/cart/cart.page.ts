@@ -8,6 +8,8 @@ import { BarcodeService } from '../../services/barcode.service';
 import { Promotion, PromotionService } from '../../services/promotion.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
+import { OfflineDbService } from '../../services/offline-db.service';
+import { SyncService } from '../../services/sync.service';
 
 interface CartItem {
   product: Produit;
@@ -75,7 +77,9 @@ export class CartPage implements OnInit {
     private barcodeService: BarcodeService,
     private promotionService: PromotionService,
     private fonctionnalite: FonctionnaliteService,
-    private niveauService: ProduitNiveauService
+    private niveauService: ProduitNiveauService,
+    private offlineDb: OfflineDbService,
+    private syncService: SyncService,
   ) {}
 
   async scanPourVente(): Promise<void> {
@@ -413,17 +417,15 @@ export class CartPage implements OnInit {
     return true;
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (!this.items.length) {
       this.presentToast('Ajoutez au moins un produit', 'danger');
       return;
     }
-
     if (this.estCredit && !this.clientNom.trim()) {
       this.presentToast('Nom client obligatoire pour un crédit', 'danger');
       return;
     }
-
     if (!this.validateStock()) return;
 
     this.submitting = true;
@@ -435,10 +437,10 @@ export class CartPage implements OnInit {
         prixUnitaire: item.customPrice,
         remisePourcentage: item.remisePourcentage || null,
         remiseMontant: null,
-        prixAchat: item.niveauPrixAchat || null,      // prix achat du niveau
-        niveauId: item.niveauId || null,              // ID du niveau (cascade stock)
-        niveauNom: item.niveauNom || null,            // nom du niveau
-        niveauFacteur: item.niveauFacteurTotal || 1   // facteur déduction stock (fallback)
+        prixAchat: item.niveauPrixAchat || null,
+        niveauId: item.niveauId || null,
+        niveauNom: item.niveauNom || null,
+        niveauFacteur: item.niveauFacteurTotal || 1,
       })),
       modePaiement: this.modePaiement,
       referencePaiement: this.referencePaiement,
@@ -452,8 +454,18 @@ export class CartPage implements OnInit {
       montantVerse: Number(this.montantVerse || 0),
       montantAvanceUtilise: this.utiliserAvance ? Math.min(this.montantAvanceAUtiliser, this.soldeAvanceClient) : 0,
       creerClient: this.creerClient,
-      clientDivers: !this.clientId && !this.clientNom.trim()
+      clientDivers: !this.clientId && !this.clientNom.trim(),
     };
+
+    // Mode hors ligne
+    const connected = await this.syncService.isConnected();
+    if (!connected) {
+      await this.offlineDb.saveVentePending(base);
+      this.submitting = false;
+      this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
+      this.reset();
+      return;
+    }
 
     const request = this.estCredit
       ? this.venteService.createVenteCredit({ ...base, estCredit: true, clientNom: this.clientNom.trim(), dateEcheance: this.dateEcheance })
@@ -466,9 +478,12 @@ export class CartPage implements OnInit {
         this.reset();
         this.loadProducts();
       },
-      error: error => {
+      error: async error => {
+        // Fallback offline si erreur réseau
+        await this.offlineDb.saveVentePending(base);
         this.submitting = false;
-        this.presentToast(error.message || 'Vente impossible', 'danger');
+        this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée');
+        this.reset();
       }
     });
   }
