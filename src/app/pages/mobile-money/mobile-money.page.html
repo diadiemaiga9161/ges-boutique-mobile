@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
     </ion-buttons>
-    <ion-title>Mobile Money</ion-title>
+    <ion-title>{{ 'MOBILE_MONEY.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="exportCsv()" title="Télécharger tout">
         <ion-icon name="download-outline" slot="icon-only"></ion-icon>
@@ -16,8 +16,8 @@
 
   <!-- Onglets -->
   <ion-segment [(ngModel)]="activeTab" style="margin-bottom:12px">
-    <ion-segment-button value="operations"><ion-label>Opérations</ion-label></ion-segment-button>
-    <ion-segment-button value="resume"><ion-label>Résumé</ion-label></ion-segment-button>
+    <ion-segment-button value="operations"><ion-label>{{ 'MOBILE_MONEY.OPERATIONS' | translate }}</ion-label></ion-segment-button>
+    <ion-segment-button value="resume"><ion-label>{{ 'MOBILE_MONEY.SUMMARY' | translate }}</ion-label></ion-segment-button>
     <ion-segment-button value="telecharger"><ion-label>Télécharger</ion-label></ion-segment-button>
   </ion-segment>
 

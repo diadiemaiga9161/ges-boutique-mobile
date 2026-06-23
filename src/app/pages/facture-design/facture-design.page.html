@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
     </ion-buttons>
-    <ion-title>Design des factures</ion-title>
+    <ion-title>{{ 'INVOICE_DESIGN.TITLE' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -15,8 +15,8 @@
 
   <!-- ===== DESIGN 1 — CLASSIQUE ===== -->
   <div class="design-card" [class.design-card--active]="selected === 1" (click)="choisir(1)">
-    <div class="design-badge" *ngIf="selected === 1">✓ Actif</div>
-    <div class="design-name">Design 1 — Classique</div>
+    <div class="design-badge" *ngIf="selected === 1">{{ 'INVOICE_DESIGN.SELECTED' | translate }}</div>
+    <div class="design-name">Design 1 — {{ 'INVOICE_DESIGN.CLASSIC' | translate }}</div>
     <p class="design-desc">Professionnel, bleu et blanc, sobre et élégant</p>
 
     <!-- Aperçu design 1 -->
@@ -40,14 +40,14 @@
       </div>
     </div>
     <ion-button expand="block" [fill]="selected === 1 ? 'solid' : 'outline'" color="primary" (click)="choisir(1)">
-      {{ selected === 1 ? '✓ Sélectionné' : 'Choisir ce design' }}
+      {{ selected === 1 ? ('INVOICE_DESIGN.SELECTED' | translate) : ('INVOICE_DESIGN.SELECT' | translate) }}
     </ion-button>
   </div>
 
   <!-- ===== DESIGN 2 — MODERNE ===== -->
   <div class="design-card" [class.design-card--active]="selected === 2" (click)="choisir(2)">
     <div class="design-badge" *ngIf="selected === 2">✓ Actif</div>
-    <div class="design-name">Design 2 — Moderne</div>
+    <div class="design-name">Design 2 — {{ 'INVOICE_DESIGN.MODERN' | translate }}</div>
     <p class="design-desc">En-tête sombre avec accent doré, contemporain</p>
 
     <!-- Aperçu design 2 -->
@@ -72,14 +72,14 @@
       </div>
     </div>
     <ion-button expand="block" [fill]="selected === 2 ? 'solid' : 'outline'" color="dark" (click)="choisir(2)">
-      {{ selected === 2 ? '✓ Sélectionné' : 'Choisir ce design' }}
+      {{ selected === 2 ? ('INVOICE_DESIGN.SELECTED' | translate) : ('INVOICE_DESIGN.SELECT' | translate) }}
     </ion-button>
   </div>
 
   <!-- ===== DESIGN 3 — MINIMALISTE ===== -->
   <div class="design-card" [class.design-card--active]="selected === 3" (click)="choisir(3)">
     <div class="design-badge design-badge--dark" *ngIf="selected === 3">✓ Actif</div>
-    <div class="design-name">Design 3 — Minimaliste</div>
+    <div class="design-name">Design 3 — {{ 'INVOICE_DESIGN.MINIMAL' | translate }}</div>
     <p class="design-desc">Épuré noir et blanc, ultra lisible, très professionnel</p>
 
     <!-- Aperçu design 3 -->
@@ -108,7 +108,7 @@
       </div>
     </div>
     <ion-button expand="block" [fill]="selected === 3 ? 'solid' : 'outline'" color="medium" (click)="choisir(3)">
-      {{ selected === 3 ? '✓ Sélectionné' : 'Choisir ce design' }}
+      {{ selected === 3 ? ('INVOICE_DESIGN.SELECTED' | translate) : ('INVOICE_DESIGN.SELECT' | translate) }}
     </ion-button>
   </div>
 

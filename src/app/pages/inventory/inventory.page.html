@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Inventaire</ion-title>
+    <ion-title>{{ 'INVENTORY.TITLE' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -36,6 +36,7 @@
       <ion-segment-button value="move">Mouvement</ion-segment-button>
       <ion-segment-button value="low">Alertes</ion-segment-button>
       <ion-segment-button value="history">Historique</ion-segment-button>
+      <ion-segment-button value="niveaux">Niveaux</ion-segment-button>
     </ion-segment>
 
     <!-- Onglet Mouvement -->
@@ -46,11 +47,16 @@
         <ion-segment-button value="AJUSTEMENT">Ajuster</ion-segment-button>
       </ion-segment>
 
-      <ion-item>
-        <ion-input label="Rechercher produit" labelPlacement="floating"
-          [(ngModel)]="form.searchProduit"
-          (ionInput)="searchProductsForForm()"></ion-input>
-      </ion-item>
+      <div class="search-scan-row">
+        <ion-item class="search-scan-input">
+          <ion-input label="Rechercher produit" labelPlacement="floating"
+            [(ngModel)]="form.searchProduit"
+            (ionInput)="searchProductsForForm()"></ion-input>
+        </ion-item>
+        <ion-button class="scan-btn" color="primary" (click)="scanProduit()">
+          <ion-icon name="scan-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
       <div *ngIf="filteredProductsForForm.length && form.searchProduit" class="dropdown-list">
         <div *ngFor="let p of filteredProductsForForm" class="dropdown-item" (click)="selectProduct(p)">
           <strong>{{ p.nom }}</strong> · Stock: {{ p.quantite }} · {{ money(p.prixVente) }}
@@ -148,5 +154,69 @@
       </article>
       <div class="empty-state" *ngIf="!movementsFiltered.length">Aucun mouvement</div>
     </section>
+
+    <!-- Onglet Niveaux conditionnement -->
+    <section *ngIf="segment === 'niveaux'" class="niveaux-section">
+      <ion-searchbar [(ngModel)]="searchNiveaux" placeholder="Rechercher un produit..."
+                     debounce="300" class="nv-search"></ion-searchbar>
+
+      <div *ngIf="!produitsNiveauxFiltres.length" class="nv-empty">
+        <ion-icon name="layers-outline"></ion-icon>
+        <p>Aucun produit trouvé</p>
+      </div>
+
+      <div *ngFor="let produit of produitsNiveauxFiltres" class="pn-card">
+
+        <!-- En-tête produit -->
+        <div class="pn-header" (click)="toggleNiveaux(produit)">
+          <div class="pn-header__left">
+            <div class="pn-header__nom">{{ produit.nom }}</div>
+            <div class="pn-header__stock">
+              <ion-icon name="cube-outline"></ion-icon>
+              Stock principal : <strong>{{ produit.quantite }}</strong>
+            </div>
+          </div>
+          <ion-icon class="pn-chevron"
+                    [name]="expandedProduitId === produit.id ? 'chevron-up-outline' : 'chevron-down-outline'">
+          </ion-icon>
+        </div>
+
+        <!-- Niveaux expandables -->
+        <div *ngIf="expandedProduitId === produit.id" class="pn-body">
+          <div *ngIf="niveauxLoadingMap[produit.id]" class="pn-loading">
+            <ion-spinner name="dots" color="primary"></ion-spinner>
+          </div>
+
+          <ng-container *ngIf="!niveauxLoadingMap[produit.id]">
+            <div *ngIf="!niveauxMap[produit.id]?.length" class="pn-empty-niveau">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              Aucun niveau défini pour ce produit
+            </div>
+
+            <div *ngFor="let niveau of niveauxMap[produit.id]; let i = index" class="nv-row">
+              <div class="nv-row__stock-badge"
+                   [class.nv-row__stock-badge--ok]="(niveau.stock ?? 0) > 5"
+                   [class.nv-row__stock-badge--warn]="(niveau.stock ?? 0) > 0 && (niveau.stock ?? 0) <= 5"
+                   [class.nv-row__stock-badge--zero]="(niveau.stock ?? 0) === 0">
+                {{ niveau.stock ?? 0 }}
+              </div>
+              <div class="nv-row__info">
+                <div class="nv-row__nom">{{ niveau.nom }}</div>
+                <div class="nv-row__facteur">
+                  1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }}
+                  = {{ niveau.facteur }} {{ niveau.nom }}
+                </div>
+              </div>
+              <ion-button size="small" fill="solid" color="primary" class="nv-row__btn"
+                          (click)="decomposer(niveau, produit); $event.stopPropagation()">
+                <ion-icon name="cut-outline" slot="start"></ion-icon>
+                Prendre 1
+              </ion-button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </section>
+
   </div>
 </ion-content>

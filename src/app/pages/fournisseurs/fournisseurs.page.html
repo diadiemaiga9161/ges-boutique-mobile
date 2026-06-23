@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>Fournisseurs</ion-title>
+    <ion-title>{{ 'SUPPLIERS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="openNewFournisseur()">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
@@ -303,7 +303,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>{{ fournisseurForm.id ? 'Modifier' : 'Nouveau' }} fournisseur</ion-title>
+        <ion-title>{{ fournisseurForm.id ? ('COMMON.EDIT' | translate) : ('SUPPLIERS.NEW' | translate) }} fournisseur</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showFournisseurModal = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>

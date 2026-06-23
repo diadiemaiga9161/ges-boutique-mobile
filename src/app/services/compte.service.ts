@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -79,11 +79,11 @@ export class CompteService {
   }
 
   enregistrerOperation(request: OperationCompteRequest): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/operation`, request).pipe(catchError(error => this.handleError(error, 'enregistrer l’opération')));
+    return this.http.post<any>(`${this.apiUrl}/operation`, request).pipe(catchError(error => this.handleError(error, "enregistrer l'opération")));
   }
 
   getHistoriqueOperations(compteId: number): Observable<OperationCompte[]> {
-    return this.http.get<OperationCompte[]>(`${this.apiUrl}/${compteId}/operations`).pipe(catchError(error => this.handleError(error, 'charger l’historique')));
+    return this.http.get<OperationCompte[]>(`${this.apiUrl}/${compteId}/operations`).pipe(catchError(error => this.handleError(error, "charger l'historique")));
   }
 
   transfererCaisseVersBanque(request: TransfertCaisseBanqueRequest): Observable<any> {

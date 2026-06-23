@@ -448,31 +448,49 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
-      <p class="muted" style="margin-bottom:12px">{{ produitEnAttente?.nom }}</p>
+    <ion-content class="nv-content">
+      <div class="nv-produit-nom">{{ produitEnAttente?.nom }}</div>
 
-      <div *ngIf="loadingNiveauxVente" style="text-align:center;padding:20px">
+      <div *ngIf="loadingNiveauxVente" class="nv-loading">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
 
-      <div *ngIf="!loadingNiveauxVente" class="stack">
-        <ion-button *ngFor="let n of niveauxDisponibles"
-          expand="block"
-          fill="outline"
-          (click)="choisirNiveau(n)"
-          style="margin-bottom:8px;--border-radius:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:4px 0">
-            <div style="text-align:left">
-              <div style="font-weight:700;font-size:1rem">{{ n.nom }}</div>
-              <div style="font-size:0.78rem;color:var(--ion-color-medium)">
-                Facteur: {{ n.facteur }} · Achat: {{ money(n.prixAchat) }}
-              </div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-weight:700;color:var(--ion-color-primary)">{{ money(n.prixVente) }}</div>
+      <div *ngIf="!loadingNiveauxVente" class="nv-list">
+
+        <!-- ── Unité principale (ex: Carton) ── -->
+        <div class="nv-card nv-card--principal" (click)="choisirPrincipal()">
+          <div class="nv-card__left">
+            <div class="nv-card__nom">{{ produitEnAttente?.nom }}</div>
+            <div class="nv-card__tag">Unité principale</div>
+            <div class="nv-card__dispo nv-card__dispo--ok">
+              Stock : {{ produitEnAttente?.quantite }}
             </div>
           </div>
-        </ion-button>
+          <div class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</div>
+        </div>
+
+        <div class="nv-separator">── ou choisir un sous-niveau ──</div>
+
+        <!-- ── Sous-niveaux (Cartouche, Pièce…) ── -->
+        <div *ngFor="let n of niveauxDisponibles; let i = index"
+             class="nv-card"
+             [class.nv-card--epuise]="disponibleNiveau(n, i) === 0"
+             (click)="choisirNiveau(n)">
+          <div class="nv-card__left">
+            <div class="nv-card__nom">{{ n.nom }}</div>
+            <div class="nv-card__tag">
+              1 {{ i === 0 ? produitEnAttente?.nom : niveauxDisponibles[i-1].nom }} = {{ n.facteur }} {{ n.nom }}
+            </div>
+            <div class="nv-card__dispo"
+                 [class.nv-card__dispo--ok]="disponibleNiveau(n, i) > 0"
+                 [class.nv-card__dispo--zero]="disponibleNiveau(n, i) === 0">
+              Disponible : {{ disponibleNiveau(n, i) }}
+              <span *ngIf="(n.stock ?? 0) > 0">&nbsp;({{ n.stock }} en main)</span>
+            </div>
+          </div>
+          <div class="nv-card__prix">{{ money(n.prixVente) }}</div>
+        </div>
+
       </div>
     </ion-content>
   </ng-template>

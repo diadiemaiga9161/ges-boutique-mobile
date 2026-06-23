@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -381,7 +381,7 @@ export class ProductService {
 
   creerAchat(request: AchatFournisseurRequest): Observable<any> {
     return this.http.post<any>(`${this.fournisseurAchatApiUrl}/achat`, request).pipe(
-      catchError(error => this.handleError(error, 'créer l’achat fournisseur'))
+      catchError(error => this.handleError(error, "créer l'achat fournisseur"))
     );
   }
 
@@ -421,7 +421,7 @@ export class ProductService {
 
   enregistrerAvanceFournisseur(request: AvanceFournisseurRequest): Observable<any> {
     return this.http.post<any>(`${this.fournisseurAchatApiUrl}/avance`, request).pipe(
-      catchError(error => this.handleError(error, 'enregistrer l’avance fournisseur'))
+      catchError(error => this.handleError(error, "enregistrer l'avance fournisseur"))
     );
   }
 
@@ -469,7 +469,7 @@ export class ProductService {
   annulerAchatFournisseur(achatId: number, utilisateurId?: number): Observable<any> {
     const params = utilisateurId ? new HttpParams().set('utilisateurId', String(utilisateurId)) : undefined;
     return this.http.delete<any>(`${this.fournisseurAchatApiUrl}/achat/${achatId}`, { params }).pipe(
-      catchError(error => this.handleError(error, 'annuler l’achat fournisseur'))
+      catchError(error => this.handleError(error, "annuler l'achat fournisseur"))
     );
   }
 

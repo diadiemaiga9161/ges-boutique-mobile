@@ -12,6 +12,7 @@ export interface ProduitNiveau {
   facteur: number;
   prixAchat: number;
   prixVente: number;
+  stock?: number; // stock propre de ce niveau (ex: nombre de cartouches disponibles)
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +54,20 @@ export class ProduitNiveauService {
     return this.http.delete<any>(`${this.apiUrl}/${produitId}/niveaux`).pipe(
       map(() => void 0),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur')))
+    );
+  }
+
+  ajusterStock(id: number, stock: number): Observable<ProduitNiveau> {
+    return this.http.patch<any>(`${this.apiUrl}/niveaux/${id}/stock`, { stock }).pipe(
+      map(r => r.niveau),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur ajustement stock')))
+    );
+  }
+
+  decomposer(id: number): Observable<{ niveaux: ProduitNiveau[], produitQuantite: number, message: string }> {
+    return this.http.post<any>(`${this.apiUrl}/niveaux/${id}/decomposer`, {}).pipe(
+      map(r => r),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Décomposition impossible')))
     );
   }
 

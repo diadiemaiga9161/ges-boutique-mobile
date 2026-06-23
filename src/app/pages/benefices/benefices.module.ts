@@ -7,7 +7,7 @@ import { BeneficesPage } from './benefices.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, BeneficesPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, BeneficesPageRoutingModule, TranslateModule],
   declarations: [BeneficesPage]
 })
 export class BeneficesPageModule {}

@@ -7,7 +7,7 @@ import { InventoryPage } from './inventory.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, InventoryPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, InventoryPageRoutingModule, TranslateModule],
   declarations: [InventoryPage]
 })
 export class InventoryPageModule {}

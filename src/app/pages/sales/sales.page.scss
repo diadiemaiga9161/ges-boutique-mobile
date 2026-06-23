@@ -1164,6 +1164,34 @@
   flex-shrink: 0;
 }
 
+// ── Très petits téléphones (≤360px) ──────────────
+@media (max-width: 360px) {
+  .receipt-footer {
+    gap: 4px;
+    padding: 8px 8px;
+  }
+  .rfooter-btn {
+    padding: 8px 5px;
+    font-size: 0.7rem;
+    gap: 3px;
+    border-radius: 8px;
+    ion-icon { font-size: 0.85rem; }
+  }
+  .sale-amount  { font-size: 1rem; }
+  .sale-num     { font-size: 0.78rem; }
+  .sale-meta    { font-size: 0.7rem; }
+  .hero-amount  { font-size: 1.55rem; }
+  .hmc-val      { font-size: 0.82rem; }
+  .filter-row   { grid-template-columns: 1fr; gap: 6px; }
+  .saction      { padding: 6px 2px; font-size: 0.6rem; ion-icon { font-size: 0.9rem; } }
+}
+
+// ── Petit téléphone (375px-414px) ────────────────
+@media (min-width: 361px) and (max-width: 414px) {
+  .receipt-footer { gap: 6px; }
+  .rfooter-btn    { padding: 10px 7px; font-size: 0.76rem; }
+}
+
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
   .sales-list {

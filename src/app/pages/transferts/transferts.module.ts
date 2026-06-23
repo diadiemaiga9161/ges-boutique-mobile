@@ -7,7 +7,7 @@ import { TransfertsPage } from './transferts.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, TransfertsPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, TransfertsPageRoutingModule, TranslateModule],
   declarations: [TransfertsPage]
 })
 export class TransfertsPageModule {}

@@ -102,3 +102,34 @@ label.photo-btn {
   .avatar-circle { width: 130px; height: 130px; }
   h1 { font-size: 1.8rem; }
 }
+
+// ── Sélecteur indicatif pays ──────────────────────
+.phone-item {
+  --inner-padding-start: 0;
+}
+
+.country-selector {
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  border-right: 1px solid var(--ion-color-medium, #ccc);
+  margin-right: 8px;
+}
+
+.country-select {
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ion-color-dark, #333);
+  cursor: pointer;
+  padding: 2px 4px;
+  max-width: 90px;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+.country-select:focus {
+  outline: none;
+}

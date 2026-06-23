@@ -1,0 +1,316 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/menu"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'PROMO.TITLE' | translate }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="startCreate()" *ngIf="!showForm">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Formulaire création/édition -->
+  <div *ngIf="showForm" class="form-container ion-padding">
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3>{{ editing ? ('PROMO.EDIT' | translate) : ('PROMO.NEW' | translate) }}</h3>
+        <ion-button fill="clear" size="small" (click)="cancel()">
+          <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+
+      <ion-list lines="none" class="form-list">
+
+        <ion-item>
+          <ion-input label="{{ 'PROMO.LABEL_TITLE' | translate }} *" labelPlacement="floating"
+            [(ngModel)]="form.titre" placeholder="Ex: Promo Ramadan..." maxlength="100">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-textarea label="{{ 'PROMO.LABEL_DESC' | translate }}" labelPlacement="floating"
+            [(ngModel)]="form.description" rows="2"
+            placeholder="{{ 'PROMO.LABEL_DESC_PLACEHOLDER' | translate }}">
+          </ion-textarea>
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="{{ 'PROMO.LABEL_START' | translate }} *" labelPlacement="floating"
+            type="date" [(ngModel)]="form.dateDebut">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="{{ 'PROMO.LABEL_END' | translate }} *" labelPlacement="floating"
+            type="date" [(ngModel)]="form.dateFin" [min]="form.dateDebut">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>{{ 'PROMO.LABEL_TYPE' | translate }} *</ion-label>
+          <ion-select [(ngModel)]="form.typeReduction" interface="action-sheet" slot="end">
+            <ion-select-option value="POURCENTAGE">{{ 'PROMO.TYPE_PCT' | translate }}</ion-select-option>
+            <ion-select-option value="MONTANT_FIXE">{{ 'PROMO.TYPE_FIXED' | translate }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-input [label]="(form.typeReduction === 'POURCENTAGE' ? ('PROMO.LABEL_VALUE_PCT' | translate) : ('PROMO.LABEL_VALUE_FIXED' | translate)) + ' *'"
+            labelPlacement="floating" type="number" [(ngModel)]="form.valeurReduction"
+            [max]="form.typeReduction === 'POURCENTAGE' ? 100 : null" min="0.01">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>{{ 'PROMO.LABEL_ACTIVE' | translate }}</ion-label>
+          <ion-toggle [(ngModel)]="form.active" slot="end"></ion-toggle>
+        </ion-item>
+
+        <!-- TYPE PROMO : Globale ou Par produits -->
+        <div class="promo-type-section">
+          <div class="promo-type-label">Application de la promotion</div>
+          <div class="promo-type-row">
+            <div class="promo-type-btn" [class.active]="form.globale"
+              (click)="form.globale = true; form.produitIds = []">
+              <ion-icon name="globe-outline"></ion-icon>
+              <span>Globale</span>
+              <small>Tous les produits</small>
+            </div>
+            <div class="promo-type-btn" [class.active]="!form.globale"
+              (click)="form.globale = false">
+              <ion-icon name="pricetag-outline"></ion-icon>
+              <span>Par produits</span>
+              <small>Produits spécifiques</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sélecteur produits (si pas globale) -->
+        <div *ngIf="!form.globale" class="produit-selector">
+          <div class="produit-selector-label">
+            <ion-icon name="cube-outline"></ion-icon>
+            Produits concernés
+            <span class="produit-count" *ngIf="form.produitIds?.length">
+              {{ form.produitIds!.length }} sélectionné(s)
+            </span>
+          </div>
+
+          <!-- Produits déjà sélectionnés -->
+          <div class="produits-chips" *ngIf="form.produitIds?.length">
+            <span *ngFor="let id of form.produitIds" class="produit-chip">
+              {{ getProduitNom(id) }}
+              <ion-icon name="close-circle" (click)="retirerProduit(id)"></ion-icon>
+            </span>
+          </div>
+
+          <!-- Recherche produits -->
+          <ion-searchbar [(ngModel)]="produitSearch" placeholder="Rechercher un produit..."
+            (ionFocus)="showProduitDropdown = true" debounce="200" class="produit-searchbar">
+          </ion-searchbar>
+
+          <div class="produit-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
+            <div *ngFor="let p of produitsFiltres" class="produit-option"
+              [class.selected]="isProduitSelectionne(p)"
+              (click)="toggleProduit(p)">
+              <ion-icon [name]="isProduitSelectionne(p) ? 'checkbox' : 'square-outline'"
+                [color]="isProduitSelectionne(p) ? 'primary' : 'medium'">
+              </ion-icon>
+              <span>{{ p.nom }}</span>
+              <span class="produit-prix">{{ p.prixVente | number }} FCFA</span>
+            </div>
+            <div class="produit-dropdown-close" (click)="showProduitDropdown = false">
+              <ion-icon name="checkmark-circle-outline" color="primary"></ion-icon>
+              Fermer
+            </div>
+          </div>
+        </div>
+
+      </ion-list>
+
+      <div class="form-actions ion-padding-top">
+        <ion-button expand="block" (click)="save()" [disabled]="loading">
+          <ion-spinner *ngIf="loading" name="crescent" slot="start"></ion-spinner>
+          {{ editing ? ('PROMO.BTN_SAVE' | translate) : ('PROMO.BTN_CREATE' | translate) }}
+        </ion-button>
+        <ion-button expand="block" fill="outline" color="medium" (click)="cancel()" class="ion-margin-top">
+          {{ 'COMMON.CANCEL' | translate }}
+        </ion-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste -->
+  <div *ngIf="!showForm">
+    <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <div *ngIf="loading" class="ion-text-center ion-padding">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>{{ 'COMMON.LOADING' | translate }}</p>
+    </div>
+
+    <div *ngIf="!loading && promotions.length === 0" class="empty-state ion-text-center ion-padding">
+      <ion-icon name="pricetag-outline" style="font-size: 4rem; color: var(--ion-color-medium)"></ion-icon>
+      <h3>{{ 'PROMO.EMPTY' | translate }}</h3>
+      <p>{{ 'PROMO.EMPTY_SUB' | translate }}</p>
+      <ion-button (click)="startCreate()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        {{ 'PROMO.NEW' | translate }}
+      </ion-button>
+    </div>
+
+    <div class="promos-list ion-padding" *ngIf="!loading && promotions.length > 0">
+      <div class="promo-card" *ngFor="let promo of promotions"
+        [class.promo-expired]="getStatut(promo).label === 'Expirée'">
+
+        <div class="promo-header">
+          <div class="promo-titre">{{ promo.titre }}</div>
+          <ion-badge [color]="getStatut(promo).color">{{ getStatut(promo).label }}</ion-badge>
+        </div>
+
+        <p class="promo-desc" *ngIf="promo.description">{{ promo.description }}</p>
+
+        <div class="promo-reduction">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          <span *ngIf="promo.typeReduction === 'POURCENTAGE'">{{ promo.valeurReduction }}% {{ 'PROMO.REDUCTION' | translate }}</span>
+          <span *ngIf="promo.typeReduction === 'MONTANT_FIXE'">{{ formatPrice(promo.valeurReduction) }} {{ 'PROMO.REDUCTION' | translate }}</span>
+        </div>
+
+        <div class="promo-dates">
+          <ion-icon name="calendar-outline"></ion-icon>
+          Du {{ promo.dateDebut | date:'dd/MM/yyyy' }} au {{ promo.dateFin | date:'dd/MM/yyyy' }}
+        </div>
+
+        <div class="promo-actions">
+          <ion-button expand="block" color="success" size="small" (click)="ouvrirWhatsApp(promo)">
+            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+            WhatsApp
+          </ion-button>
+          <div class="promo-btn-row">
+            <ion-button fill="outline" color="primary" size="small" (click)="startEdit(promo)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="outline" color="danger" size="small" (click)="supprimer(promo)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
+
+<!-- Modal WhatsApp -->
+<div class="wa-modal-backdrop" *ngIf="showWAModal" (click)="fermerWhatsApp()"></div>
+<div class="wa-modal" *ngIf="showWAModal">
+  <div class="wa-modal-content">
+    <div class="wa-modal-header">
+      <div class="wa-modal-title">
+        <ion-icon name="logo-whatsapp"></ion-icon>
+        {{ 'PROMO.WA_TITLE' | translate }}
+      </div>
+      <ion-button fill="clear" size="small" (click)="fermerWhatsApp()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+
+    <div class="wa-modal-body">
+      <div *ngIf="loadingWA" class="ion-text-center ion-padding">
+        <ion-spinner name="crescent" color="success"></ion-spinner>
+        <p>{{ 'PROMO.WA_LOADING' | translate }}</p>
+      </div>
+
+      <ng-container *ngIf="!loadingWA && whatsAppResult">
+
+        <!-- Message preview enrichi avec infos boutique -->
+        <div class="wa-preview">
+          <div class="wa-preview-label">{{ 'PROMO.PREVIEW' | translate }}</div>
+          <div class="wa-bubble wa-bubble--promo">
+            <div class="wa-promo-badge">🎁 PROMOTION SPÉCIALE 🎁</div>
+            <div class="wa-promo-msg">{{ whatsAppResult.message }}</div>
+            <div class="wa-boutique-sig">
+              ━━━━━━━━━━━━━━━<br>
+              🏪 {{ whatsAppResult.promotion?.titre }}<br>
+              <span class="wa-shop-hint">+ vos infos boutique seront ajoutées</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="wa-stats">
+          <div class="wa-stat">
+            <div class="wa-stat-val">{{ whatsAppResult.totalClients }}</div>
+            <div class="wa-stat-lbl">{{ 'PROMO.TOTAL_CLIENTS' | translate }}</div>
+          </div>
+          <div class="wa-stat wa-stat-green">
+            <div class="wa-stat-val">{{ whatsAppResult.clientsAvecTelephone }}</div>
+            <div class="wa-stat-lbl">{{ 'PROMO.WITH_PHONE' | translate }}</div>
+          </div>
+          <div class="wa-stat wa-stat-orange">
+            <div class="wa-stat-val">{{ whatsAppResult.clientsSansTelephone }}</div>
+            <div class="wa-stat-lbl">{{ 'PROMO.WITHOUT_PHONE' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Option envoi automatique -->
+        <div class="wa-auto-row">
+          <ion-toggle [(ngModel)]="autoEnvoi" color="success"></ion-toggle>
+          <div class="wa-auto-label">
+            <strong>Envoi automatique</strong>
+            <span>Ouvre WhatsApp pour chaque client sans confirmation</span>
+          </div>
+        </div>
+
+        <!-- Bouton Tout envoyer (mode auto) -->
+        <div *ngIf="autoEnvoi" class="wa-auto-btn-row">
+          <ion-button expand="block" color="success" [disabled]="envoiEnCours || liensFiltered.length === 0"
+            (click)="lancerEnvoiAuto()">
+            <ion-icon name="send-outline" slot="start"></ion-icon>
+            <span *ngIf="!envoiEnCours">{{ 'PROMO.SEND' | translate }} ({{ liensFiltered.length }} clients)</span>
+            <span *ngIf="envoiEnCours">Envoi {{ envoiIndex }} / {{ liensFiltered.length }}...</span>
+          </ion-button>
+        </div>
+
+        <!-- Recherche -->
+        <div class="wa-search">
+          <ion-searchbar [(ngModel)]="searchWA" placeholder="{{ 'COMMON.SEARCH' | translate }}" debounce="200"></ion-searchbar>
+        </div>
+
+        <!-- Liste clients -->
+        <div *ngIf="liensFiltered.length === 0" class="ion-text-center ion-padding text-muted">
+          {{ 'CLIENTS.NO_RESULTS' | translate }}
+        </div>
+
+        <div class="wa-clients-list">
+          <div class="wa-client-item" *ngFor="let lien of liensFiltered">
+            <div class="wa-client-avatar">{{ lien.nom.charAt(0).toUpperCase() }}</div>
+            <div class="wa-client-info">
+              <div class="wa-client-nom">{{ lien.nom }}</div>
+              <div class="wa-client-tel">{{ lien.telephone }}</div>
+            </div>
+            <a [href]="enrichirUrl(lien.url)" target="_blank" class="wa-send-link">
+              <ion-button size="small" color="success">
+                <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+                {{ 'PROMO.SEND' | translate }}
+              </ion-button>
+            </a>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <div class="wa-modal-footer">
+      <ion-button expand="block" fill="outline" color="medium" (click)="fermerWhatsApp()">
+        {{ 'COMMON.CLOSE' | translate }}
+      </ion-button>
+    </div>
+  </div>
+</div>

@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Clients</ion-title>
+    <ion-title>{{ 'CLIENTS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="startCreate()">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
@@ -87,7 +87,7 @@
       <div class="empty-state">
         <ion-icon name="people-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
         <p>Aucun client</p>
-        <ion-button size="small" (click)="startCreate()">Ajouter un client</ion-button>
+        <ion-button size="small" (click)="startCreate()">{{ 'CLIENTS.ADD' | translate }}</ion-button>
       </div>
     </ng-template>
   </div>
@@ -311,11 +311,11 @@
 </ion-modal>
 
 <!-- ==================== MODAL DÉTAIL VENTE (produits) ==================== -->
-<ion-modal [isOpen]="showVenteDetailModal" (didDismiss)="closeVenteDetail()" [breakpoints]="[0, 0.85]" [initialBreakpoint]="0.85">
+<ion-modal [isOpen]="showVenteDetailModal" (didDismiss)="closeVenteDetail()" [breakpoints]="[0, 0.92]" [initialBreakpoint]="0.92">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ selectedVenteDetail?.numeroVente }}</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar [color]="design === 2 ? 'dark' : 'primary'">
+        <ion-title>Reçu · {{ selectedVenteDetail?.numeroVente }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="closeVenteDetail()">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -323,62 +323,155 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding" *ngIf="selectedVenteDetail">
 
-      <!-- En-tête reçu -->
-      <div style="text-align:center;padding:12px 0 20px">
-        <p style="font-size:0.85rem;color:#64748b">{{ formatDate(selectedVenteDetail.dateVente) }}</p>
-        <ion-badge [color]="getVenteBadgeColor(selectedVenteDetail)" style="margin-top:4px">
-          {{ getVenteBadgeLabel(selectedVenteDetail) }}
-        </ion-badge>
-        <ion-badge color="medium" style="margin-left:4px" *ngIf="selectedVenteDetail.modePaiement">
-          {{ selectedVenteDetail.modePaiement }}
-        </ion-badge>
-      </div>
+    <ion-content *ngIf="selectedVenteDetail">
 
-      <!-- Produits -->
-      <div class="receipt-section">
-        <p class="receipt-section-label">Articles</p>
-        <div class="receipt-product" *ngFor="let p of selectedVenteDetail.produits">
-          <div class="rp-left">
-            <span class="rp-name">{{ p.produitNom }}</span>
-            <span class="rp-qty">{{ p.quantite }} × {{ money(p.prixUnitaire) }}</span>
+      <!-- ══ DESIGN 1 — CLASSIQUE ══ -->
+      <ng-container *ngIf="design === 1">
+        <div class="facture-doc facture-doc--classic">
+          <div class="fd-header--blue">
+            <div>
+              <div class="fd-boutique-name">{{ boutiqueName }}</div>
+              <div class="fd-num">{{ selectedVenteDetail.numeroVente }}</div>
+            </div>
+            <div style="text-align:right;font-size:12px;opacity:.85">
+              {{ formatDate(selectedVenteDetail.dateVente) }}
+            </div>
           </div>
-          <strong class="rp-total">{{ money(p.sousTotal) }}</strong>
+          <div class="fd-meta--blue">
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Statut</span>
+              <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Paiement</span>
+              <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+            </div>
+          </div>
+          <div class="fd-credit-block" *ngIf="selectedVenteDetail.estCredit">
+            <div class="fd-credit-row">
+              <span class="fd-credit-label">Versé</span>
+              <span class="fd-credit-val">{{ money(selectedVenteDetail.montantVerse || 0) }}</span>
+            </div>
+            <div class="fd-credit-row" *ngIf="!selectedVenteDetail.creditRegle">
+              <span class="fd-credit-label">Reste dû</span>
+              <span class="fd-credit-val">{{ money(getMontantRestant(selectedVenteDetail)) }}</span>
+            </div>
+          </div>
+          <table class="fd-table">
+            <thead><tr class="fd-thead--blue">
+              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                <td>{{ p.produitNom }}</td>
+                <td class="fd-center">{{ p.quantite }}</td>
+                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-total--blue">
+            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
+          </div>
         </div>
-        <div *ngIf="!selectedVenteDetail.produits?.length" style="color:#94a3b8;font-size:0.85rem;padding:8px">
-          Détail des articles non disponible
-        </div>
-      </div>
+      </ng-container>
 
-      <!-- Totaux -->
-      <div class="receipt-totaux" style="margin-top:16px">
-        <div class="receipt-row receipt-row--sub" *ngIf="selectedVenteDetail.montantRemiseTotal > 0">
-          <span>Remise</span>
-          <strong style="color:#dc2626">-{{ money(selectedVenteDetail.montantRemiseTotal) }}</strong>
+      <!-- ══ DESIGN 2 — MODERNE ══ -->
+      <ng-container *ngIf="design === 2">
+        <div class="facture-doc facture-doc--modern">
+          <div class="fd-header--dark">
+            <div>
+              <div class="fd-boutique--gold">{{ boutiqueName }}</div>
+              <div class="fd-tagline">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
+            </div>
+            <div class="fd-num--gold">{{ selectedVenteDetail.numeroVente }}</div>
+          </div>
+          <div class="fd-gold-stripe"></div>
+          <div class="fd-meta--modern">
+            <div class="fd-meta-block">
+              <div class="fd-meta-block-title">STATUT</div>
+              <div class="fd-meta-block-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</div>
+            </div>
+            <div class="fd-meta-block fd-meta-block--right">
+              <div class="fd-meta-block-title">PAIEMENT</div>
+              <div class="fd-meta-block-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
+            </div>
+          </div>
+          <div class="fd-notes--modern" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
+            <ion-icon name="alert-circle-outline" style="color:#f59e0b"></ion-icon>
+            <span>Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}</span>
+          </div>
+          <table class="fd-table">
+            <thead><tr class="fd-thead--dark">
+              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                <td>{{ p.produitNom }}</td>
+                <td class="fd-center">{{ p.quantite }}</td>
+                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-total--dark" style="color:#f59e0b">
+            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0" style="font-size:12px;color:#94a3b8">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
+            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
+          </div>
         </div>
-        <div class="receipt-grand-total">
-          <span>TOTAL</span>
-          <strong>{{ money(selectedVenteDetail.montantTotal) }}</strong>
-        </div>
-      </div>
+      </ng-container>
 
-      <!-- Infos crédit -->
-      <div class="modal-section" style="margin-top:16px" *ngIf="selectedVenteDetail.estCredit">
-        <p class="modal-section-title" style="color:#d97706">Crédit</p>
-        <div class="stat-row">
-          <span>Versé</span>
-          <strong style="color:#16a34a">{{ money(selectedVenteDetail.montantVerse || 0) }}</strong>
+      <!-- ══ DESIGN 3 — MINIMALISTE ══ -->
+      <ng-container *ngIf="design === 3">
+        <div class="facture-doc facture-doc--minimal">
+          <div class="fd-header--minimal">
+            <div>
+              <div class="fd-boutique--black">{{ boutiqueName }}</div>
+              <div style="font-size:12px;color:#71717a">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
+            </div>
+            <div class="fd-num--minimal">{{ selectedVenteDetail.numeroVente }}</div>
+          </div>
+          <div class="fd-divider--black"></div>
+          <div class="fd-divider--gray"></div>
+          <div class="fd-meta--minimal">
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Statut</span>
+              <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Paiement</span>
+              <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+            </div>
+          </div>
+          <div class="fd-notes--minimal" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
+            Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}
+          </div>
+          <div class="fd-divider--gray"></div>
+          <table class="fd-table fd-table--minimal">
+            <thead><tr>
+              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits">
+                <td>{{ p.produitNom }}</td>
+                <td class="fd-center">{{ p.quantite }}</td>
+                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-divider--black"></div>
+          <div class="fd-total--minimal">
+            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
+          </div>
         </div>
-        <div class="stat-row">
-          <span>Restant dû</span>
-          <strong style="color:#dc2626">{{ money(getMontantRestant(selectedVenteDetail)) }}</strong>
-        </div>
-        <div class="vcb-track" style="margin-top:8px">
-          <div class="vcb-fill" [style.width.%]="getPourcentagePaiement(selectedVenteDetail)"
-               [class.vcb-fill--late]="isCreditEnRetard(selectedVenteDetail)"></div>
-        </div>
-      </div>
+      </ng-container>
 
       <div style="height:16px"></div>
     </ion-content>

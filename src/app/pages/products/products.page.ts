@@ -44,6 +44,8 @@ export class ProductsPage implements OnInit {
   niveaux: ProduitNiveau[] = [];
   loadingNiveaux = false;
   newNiveau: Partial<ProduitNiveau> = { nom: '', ordre: 1, facteur: 1, prixAchat: 0, prixVente: 0 };
+  editingNiveauId: number | null = null;
+  editNiveau: Partial<ProduitNiveau> = {};
 
   constructor(
     public productsService: ProductService,
@@ -327,6 +329,41 @@ export class ProductsPage implements OnInit {
         };
       },
       error: error => this.presentToast(error.message || 'Ajout impossible', 'danger')
+    });
+  }
+
+  ajusterStockNiveau(niveau: ProduitNiveau, stock: number): void {
+    if (stock == null || stock < 0) return;
+    this.niveauService.ajusterStock(niveau.id!, stock).subscribe({
+      next: updated => {
+        const idx = this.niveaux.findIndex(n => n.id === niveau.id);
+        if (idx >= 0) this.niveaux[idx] = { ...this.niveaux[idx], stock: updated.stock };
+        this.presentToast(`Stock ${niveau.nom} mis à jour : ${updated.stock}`);
+      },
+      error: e => this.presentToast(e.message || 'Ajustement impossible', 'danger')
+    });
+  }
+
+  startEditNiveau(niveau: ProduitNiveau): void {
+    this.editingNiveauId = niveau.id!;
+    this.editNiveau = { nom: niveau.nom, ordre: niveau.ordre, facteur: niveau.facteur, prixAchat: niveau.prixAchat, prixVente: niveau.prixVente };
+  }
+
+  cancelEditNiveau(): void {
+    this.editingNiveauId = null;
+    this.editNiveau = {};
+  }
+
+  saveEditNiveau(): void {
+    if (!this.editingNiveauId) return;
+    this.niveauService.modifier(this.editingNiveauId, this.editNiveau).subscribe({
+      next: () => {
+        this.presentToast('Niveau modifié');
+        this.editingNiveauId = null;
+        this.editNiveau = {};
+        this.chargerNiveaux(this.produitNiveaux!.id);
+      },
+      error: e => this.presentToast(e.message || 'Modification impossible', 'danger')
     });
   }
 

@@ -7,7 +7,7 @@ import { DepensesPage } from './depenses.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, DepensesPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, DepensesPageRoutingModule, TranslateModule],
   declarations: [DepensesPage]
 })
 export class DepensesPageModule {}

@@ -27,22 +27,22 @@
   <div class="color-cards" style="padding:14px 14px 0" *ngIf="stats">
     <div class="color-card cc-blue">
       <ion-icon name="cube-outline"></ion-icon>
-      <p class="cc-label">Total produits</p>
+      <p class="cc-label">{{ 'PRODUCTS.TOTAL_COUNT' | translate }}</p>
       <p class="cc-value">{{ stats.totalProduits }}</p>
     </div>
     <div class="color-card cc-green">
       <ion-icon name="trending-up-outline"></ion-icon>
-      <p class="cc-label">Valeur stock</p>
+      <p class="cc-label">{{ 'PRODUCTS.STOCK_VALUE' | translate }}</p>
       <p class="cc-value">{{ money(stats.valeurTotale || 0) }}</p>
     </div>
     <div class="color-card cc-orange">
       <ion-icon name="alert-circle-outline"></ion-icon>
-      <p class="cc-label">Stock faible</p>
+      <p class="cc-label">{{ 'PRODUCTS.LOW_STOCK' | translate }}</p>
       <p class="cc-value">{{ stats.produitsStockFaible }}</p>
     </div>
     <div class="color-card cc-red">
       <ion-icon name="close-circle-outline"></ion-icon>
-      <p class="cc-label">Rupture</p>
+      <p class="cc-label">{{ 'PRODUCTS.OUT_OF_STOCK' | translate }}</p>
       <p class="cc-value">{{ stats.produitsRupture }}</p>
     </div>
   </div>
@@ -51,7 +51,7 @@
 
     <ion-searchbar
       [(ngModel)]="query"
-      placeholder="Nom, code-barres, catégorie..."
+      [placeholder]="'PRODUCTS.SEARCH_PLACEHOLDER' | translate"
       debounce="300"
       (ionInput)="applyFilter()"
       (keyup.enter)="search()">
@@ -59,20 +59,20 @@
 
     <div class="two-cols">
       <ion-item *ngIf="categories.length">
-        <ion-select label="Catégorie" labelPlacement="stacked" [(ngModel)]="selectedCategorieId" (ionChange)="applyFilter()">
-          <ion-select-option [value]="null">Toutes</ion-select-option>
+        <ion-select [label]="'PRODUCTS.CATEGORY' | translate" labelPlacement="stacked" [(ngModel)]="selectedCategorieId" (ionChange)="applyFilter()">
+          <ion-select-option [value]="null">{{ 'PRODUCTS.ALL_CATEGORIES' | translate }}</ion-select-option>
           <ion-select-option [value]="cat.id" *ngFor="let cat of categories">{{ cat.nom }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-segment [(ngModel)]="segment" (ionChange)="applyFilter()">
-        <ion-segment-button value="all">Tous</ion-segment-button>
-        <ion-segment-button value="low">⚠ Faible</ion-segment-button>
-        <ion-segment-button value="expired">📅 Exp.</ion-segment-button>
+        <ion-segment-button value="all">{{ 'PRODUCTS.ALL' | translate }}</ion-segment-button>
+        <ion-segment-button value="low">⚠ {{ 'PRODUCTS.FILTER_LOW' | translate }}</ion-segment-button>
+        <ion-segment-button value="expired">📅 {{ 'PRODUCTS.FILTER_EXP' | translate }}</ion-segment-button>
         <ion-segment-button value="bio">🌿 Bio</ion-segment-button>
       </ion-segment>
     </div>
 
-    <p class="section-label">{{ filtered.length }} produit(s)</p>
+    <p class="section-label">{{ filtered.length }} {{ 'PRODUCTS.ITEMS' | translate }}</p>
     <ion-spinner *ngIf="loading"></ion-spinner>
 
     <section class="stack" *ngIf="!loading && filtered.length; else empty">
@@ -84,7 +84,7 @@
               <ion-badge color="success" *ngIf="product.bio" class="bio-badge">Bio</ion-badge>
             </div>
             <div class="product-cat">
-              {{ product.categorieNom || product.categorie?.nom || 'Sans catégorie' }}
+              {{ product.categorieNom || product.categorie?.nom || ('PRODUCTS.NO_CATEGORY' | translate) }}
               <span *ngIf="product.fournisseur"> · {{ product.fournisseur.nom }}</span>
             </div>
           </div>
@@ -97,22 +97,22 @@
         <div class="product-card-body">
           <div class="price-row">
             <div>
-              <p class="price-label">Prix vente</p>
+              <p class="price-label">{{ 'PRODUCTS.PRICE_SELL' | translate }}</p>
               <p class="price-value">{{ money(product.prixVente) }}</p>
             </div>
             <div *ngIf="auth.isAdmin()">
-              <p class="price-label">Prix achat</p>
+              <p class="price-label">{{ 'PRODUCTS.PRICE_BUY' | translate }}</p>
               <p class="price-value muted">{{ money(product.prixAchat) }}</p>
             </div>
             <div>
-              <p class="price-label">Seuil alerte</p>
+              <p class="price-label">{{ 'PRODUCTS.ALERT_THRESHOLD' | translate }}</p>
               <p class="price-value muted">{{ product.seuilAlerte }}</p>
             </div>
           </div>
           <div *ngIf="product.perime || product.prochePeremption" class="peremption-badge"
             [class.danger]="product.perime" [class.warning]="!product.perime && product.prochePeremption">
             <ion-icon name="time-outline"></ion-icon>
-            {{ product.perime ? 'Périmé' : 'Proche péremption' }} · {{ product.datePeremption }}
+            {{ product.perime ? ('PRODUCTS.EXPIRED' | translate) : ('PRODUCTS.NEAR_EXPIRY' | translate) }} · {{ product.datePeremption }}
           </div>
           <p class="muted" *ngIf="product.codeBarre" style="font-size:0.75rem">Code: {{ product.codeBarre }}</p>
           <p class="alerte-msg" *ngIf="productsService.getProduitAlerteMessage(product)">
@@ -124,15 +124,15 @@
         <div class="product-card-actions">
           <ion-button fill="clear" size="small" (click)="startEdit(product)">
             <ion-icon name="create-outline" slot="start"></ion-icon>
-            Modifier
+            {{ 'COMMON.EDIT' | translate }}
           </ion-button>
           <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(product)">
             <ion-icon name="trash-outline" slot="start"></ion-icon>
-            Supprimer
+            {{ 'COMMON.DELETE' | translate }}
           </ion-button>
           <ion-button *ngIf="conditionnementActif" fill="clear" size="small" color="tertiary" (click)="ouvrirNiveaux(product)">
             <ion-icon name="layers-outline" slot="start"></ion-icon>
-            Niveaux
+            {{ 'PRODUCTS.LEVELS' | translate }}
           </ion-button>
         </div>
       </article>
@@ -141,7 +141,7 @@
     <ng-template #empty>
       <div class="empty-state" *ngIf="!loading">
         <ion-icon name="cube-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
-        <p>Aucun produit trouvé</p>
+        <p>{{ 'PRODUCTS.EMPTY' | translate }}</p>
         <ion-button size="small" (click)="startCreate()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
           {{ 'PRODUCTS.ADD' | translate }}
@@ -157,7 +157,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar [color]="editing ? 'warning' : 'primary'">
-        <ion-title>{{ editing ? 'Modifier le produit' : 'Nouveau produit' }}</ion-title>
+        <ion-title>{{ editing ? ('PRODUCTS.EDIT_TITLE' | translate) : ('PRODUCTS.NEW_TITLE' | translate) }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showForm = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -170,32 +170,32 @@
 
         <!-- Infos de base -->
         <div class="modal-section">
-          <p class="modal-section-title">Informations de base</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_INFO' | translate }}</p>
           <ion-item>
-            <ion-input label="Nom du produit *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
+            <ion-input [label]="'PRODUCTS.NAME' | translate" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="form.description" rows="2"></ion-textarea>
+            <ion-textarea [label]="'PRODUCTS.DESCRIPTION' | translate" labelPlacement="floating" [(ngModel)]="form.description" rows="2"></ion-textarea>
           </ion-item>
         </div>
 
         <!-- Catégorie & Fournisseur -->
         <div class="modal-section">
-          <p class="modal-section-title">Catégorie & Fournisseur</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_CAT' | translate }}</p>
           <ion-item>
-            <ion-select label="Catégorie *" labelPlacement="stacked" [(ngModel)]="form.categorieId">
+            <ion-select [label]="'PRODUCTS.CATEGORY' | translate" labelPlacement="stacked" [(ngModel)]="form.categorieId">
               <ion-select-option [value]="cat.id" *ngFor="let cat of categories">{{ cat.nom }}</ion-select-option>
             </ion-select>
           </ion-item>
           <div class="inline-create">
-            <ion-input placeholder="Nouvelle catégorie..." [(ngModel)]="categoryName"></ion-input>
+            <ion-input [placeholder]="'PRODUCTS.NEW_CATEGORY_PLACEHOLDER' | translate" [(ngModel)]="categoryName"></ion-input>
             <ion-button fill="outline" size="small" (click)="createCategory()">
               <ion-icon name="add-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
           <ion-item *ngIf="fournisseurs.length">
-            <ion-select label="Fournisseur" labelPlacement="stacked" [(ngModel)]="form.fournisseurId">
-              <ion-select-option [value]="undefined">Aucun</ion-select-option>
+            <ion-select [label]="'PRODUCTS.SUPPLIER' | translate" labelPlacement="stacked" [(ngModel)]="form.fournisseurId">
+              <ion-select-option [value]="undefined">{{ 'PRODUCTS.NO_SUPPLIER' | translate }}</ion-select-option>
               <ion-select-option [value]="f.id" *ngFor="let f of fournisseurs">{{ f.nom }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -203,54 +203,54 @@
 
         <!-- Prix & Stock -->
         <div class="modal-section">
-          <p class="modal-section-title">Prix & Stock</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_PRICE' | translate }}</p>
           <div class="two-cols">
             <ion-item>
-              <ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="form.prixAchat"></ion-input>
+              <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.prixAchat"></ion-input>
             </ion-item>
             <ion-item>
-              <ion-input label="Prix vente *" labelPlacement="floating" type="number" [(ngModel)]="form.prixVente"></ion-input>
+              <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.prixVente"></ion-input>
             </ion-item>
           </div>
           <div class="two-cols">
             <ion-item>
-              <ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
+              <ion-input [label]="'PRODUCTS.QUANTITY' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
             </ion-item>
             <ion-item>
-              <ion-input label="Seuil alerte" labelPlacement="floating" type="number" [(ngModel)]="form.seuilAlerte"></ion-input>
+              <ion-input [label]="'PRODUCTS.ALERT_THRESHOLD' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.seuilAlerte"></ion-input>
             </ion-item>
           </div>
         </div>
 
         <!-- Options -->
         <div class="modal-section">
-          <p class="modal-section-title">Options</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_OPTIONS' | translate }}</p>
           <ion-item>
-            <ion-input label="Code-barres" labelPlacement="floating" [(ngModel)]="form.codeBarre"></ion-input>
+            <ion-input [label]="'PRODUCTS.BARCODE' | translate" labelPlacement="floating" [(ngModel)]="form.codeBarre"></ion-input>
             <ion-button slot="end" fill="clear" color="primary" (click)="scanCodeBarre()" title="Scanner">
               <ion-icon name="barcode-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-item>
           <ion-item>
-            <ion-input label="Date péremption" labelPlacement="floating" type="date" [(ngModel)]="form.datePeremption"></ion-input>
+            <ion-input [label]="'PRODUCTS.EXPIRY_DATE' | translate" labelPlacement="floating" type="date" [(ngModel)]="form.datePeremption"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-select label="Type de vente" labelPlacement="stacked" [(ngModel)]="form.typeVente">
-              <ion-select-option value="UNITE">Unité</ion-select-option>
-              <ion-select-option value="KG">Kilogramme</ion-select-option>
-              <ion-select-option value="LITRE">Litre</ion-select-option>
-              <ion-select-option value="COMPTANT_UNIQUEMENT">Comptant uniquement</ion-select-option>
+            <ion-select [label]="'PRODUCTS.SALE_TYPE' | translate" labelPlacement="stacked" [(ngModel)]="form.typeVente">
+              <ion-select-option value="UNITE">{{ 'PRODUCTS.TYPE_UNITE' | translate }}</ion-select-option>
+              <ion-select-option value="KG">{{ 'PRODUCTS.TYPE_KG' | translate }}</ion-select-option>
+              <ion-select-option value="LITRE">{{ 'PRODUCTS.TYPE_LITRE' | translate }}</ion-select-option>
+              <ion-select-option value="COMPTANT_UNIQUEMENT">{{ 'PRODUCTS.TYPE_CASH_ONLY' | translate }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label>Produit Bio</ion-label>
+            <ion-label>{{ 'PRODUCTS.BIO' | translate }}</ion-label>
             <ion-checkbox slot="end" [(ngModel)]="form.bio"></ion-checkbox>
           </ion-item>
         </div>
 
         <ion-button expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'" style="margin-top:8px">
           <ion-icon name="save-outline" slot="start"></ion-icon>
-          {{ editing ? 'Enregistrer les modifications' : 'Créer le produit' }}
+          {{ editing ? ('PRODUCTS.SAVE_CHANGES' | translate) : ('PRODUCTS.CREATE_BTN' | translate) }}
         </ion-button>
 
       </div>
@@ -263,7 +263,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Catégories</ion-title>
+        <ion-title>{{ 'PRODUCTS.CATEGORIES_TITLE' | translate }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showCategoriesModal = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -274,9 +274,9 @@
     <ion-content class="ion-padding">
       <div class="stack">
         <div class="modal-section">
-          <p class="modal-section-title">Nouvelle catégorie</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.NEW_CATEGORY_TITLE' | translate }}</p>
           <div class="inline-create">
-            <ion-input placeholder="Nom de la catégorie..." [(ngModel)]="categoryName"></ion-input>
+            <ion-input [placeholder]="'PRODUCTS.CAT_NAME_PLACEHOLDER' | translate" [(ngModel)]="categoryName"></ion-input>
             <ion-button fill="solid" color="primary" (click)="createCategory()">
               <ion-icon name="add-outline" slot="icon-only"></ion-icon>
             </ion-button>
@@ -284,7 +284,7 @@
         </div>
 
         <div class="modal-section">
-          <p class="modal-section-title">{{ categories.length }} catégorie(s)</p>
+          <p class="modal-section-title">{{ categories.length }} {{ 'PRODUCTS.CATEGORIES_TITLE' | translate }}</p>
           <div class="cat-list">
             <div class="cat-item" *ngFor="let cat of categories">
 
@@ -292,7 +292,7 @@
               <ng-container *ngIf="editingCategoryId !== cat.id">
                 <div class="cat-info">
                   <span class="cat-name">{{ cat.nom }}</span>
-                  <span class="cat-count muted">{{ countByCategorie(cat.id) }} produit(s)</span>
+                  <span class="cat-count muted">{{ countByCategorie(cat.id) }} {{ 'PRODUCTS.ITEMS' | translate }}</span>
                 </div>
                 <div class="cat-actions">
                   <ion-button fill="clear" size="small" color="primary" (click)="startEditCategory(cat)">
@@ -324,7 +324,7 @@
             </div>
           </div>
           <div class="empty-state" *ngIf="!categories.length" style="padding:16px">
-            Aucune catégorie
+            {{ 'PRODUCTS.NO_CATEGORIES' | translate }}
           </div>
         </div>
       </div>
@@ -339,7 +339,7 @@
       <ion-toolbar>
         <ion-title>
           <ion-icon name="layers-outline" style="margin-right:6px"></ion-icon>
-          Niveaux — {{ produitNiveaux?.nom }}
+          {{ 'PRODUCTS.LEVELS' | translate }} — {{ produitNiveaux?.nom }}
         </ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showNiveauxModal = false">
@@ -350,80 +350,134 @@
     </ion-header>
     <ion-content class="ion-padding">
 
-      <!-- Info explication -->
       <div class="form-panel" style="background:#eff6ff;margin-bottom:16px">
         <p class="muted" style="margin:0;font-size:0.85rem">
           <ion-icon name="information-circle-outline" style="vertical-align:middle"></ion-icon>
-          Définissez vos niveaux de vente (ex: Carton → Cartouche → Pièce).
-          Le stock est géré en <strong>unité de base</strong> (dernier niveau, facteur 1).
+          {{ 'PRODUCTS.LEVELS_INFO' | translate }}
         </p>
       </div>
 
-      <!-- Liste des niveaux existants -->
       <div *ngIf="loadingNiveaux" style="text-align:center;padding:20px">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
 
       <div *ngIf="!loadingNiveaux">
         <div *ngIf="niveaux.length === 0" class="empty-state" style="padding:16px">
-          <p class="muted">Aucun niveau défini. Ajoutez vos niveaux ci-dessous.</p>
+          <p class="muted">{{ 'PRODUCTS.NO_LEVELS' | translate }}</p>
         </div>
 
         <div class="stack" *ngIf="niveaux.length > 0">
           <div *ngFor="let n of niveaux" class="form-panel" style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <strong style="font-size:1rem">{{ n.ordre }}. {{ n.nom }}</strong>
-                <p class="muted" style="margin:2px 0 0;font-size:0.8rem">
-                  Facteur: {{ n.facteur }} unités
-                  &nbsp;·&nbsp; Achat: {{ money(n.prixAchat) }}
-                  &nbsp;·&nbsp; Vente: {{ money(n.prixVente) }}
-                </p>
+
+            <!-- Mode affichage -->
+            <ng-container *ngIf="editingNiveauId !== n.id">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="flex:1">
+                  <strong style="font-size:1rem">{{ n.ordre }}. {{ n.nom }}</strong>
+                  <p class="muted" style="margin:2px 0 6px;font-size:0.8rem">
+                    Facteur: {{ n.facteur }}
+                    &nbsp;·&nbsp; Achat: {{ money(n.prixAchat) }}
+                    &nbsp;·&nbsp; Vente: {{ money(n.prixVente) }}
+                  </p>
+                  <!-- Stock ajustable manuellement -->
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                    <span style="font-size:0.8rem;color:#64748b">Stock :</span>
+                    <ion-input
+                      type="number"
+                      [value]="n.stock ?? 0"
+                      (ionChange)="ajusterStockNiveau(n, $any($event).detail.value)"
+                      style="max-width:80px;--padding-start:6px;--padding-end:6px;background:#f0f4f8;border-radius:8px;font-weight:700;font-size:0.9rem"
+                      min="0">
+                    </ion-input>
+                  </div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                  <ion-button fill="clear" color="primary" size="small" (click)="startEditNiveau(n)">
+                    <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" color="danger" size="small" (click)="supprimerNiveau(n)">
+                    <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
               </div>
-              <ion-button fill="clear" color="danger" size="small" (click)="supprimerNiveau(n)">
-                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-              </ion-button>
-            </div>
+            </ng-container>
+
+            <!-- Mode édition inline -->
+            <ng-container *ngIf="editingNiveauId === n.id">
+              <p style="font-weight:700;margin-bottom:8px;color:var(--ion-color-primary)">
+                <ion-icon name="pencil-outline"></ion-icon> Modifier {{ n.nom }}
+              </p>
+              <ion-item>
+                <ion-input label="Nom" labelPlacement="floating" [(ngModel)]="editNiveau.nom"></ion-input>
+              </ion-item>
+              <div class="two-cols">
+                <ion-item>
+                  <ion-input label="Ordre" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.ordre"></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-input label="Facteur" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.facteur"></ion-input>
+                </ion-item>
+              </div>
+              <div class="two-cols">
+                <ion-item>
+                  <ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.prixAchat"></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-input label="Prix vente" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.prixVente"></ion-input>
+                </ion-item>
+              </div>
+              <ion-item>
+                <ion-input label="Stock actuel" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.stock"></ion-input>
+              </ion-item>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <ion-button expand="block" style="flex:1" (click)="saveEditNiveau()">
+                  <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                  Enregistrer
+                </ion-button>
+                <ion-button expand="block" fill="outline" color="medium" style="flex:1" (click)="cancelEditNiveau()">
+                  Annuler
+                </ion-button>
+              </div>
+            </ng-container>
+
           </div>
         </div>
 
-        <!-- Formulaire ajout nouveau niveau -->
         <div class="form-panel stack" style="margin-top:16px">
-          <h3 class="card-title" style="margin-bottom:12px">Ajouter un niveau</h3>
+          <h3 class="card-title" style="margin-bottom:12px">{{ 'PRODUCTS.ADD_LEVEL_TITLE' | translate }}</h3>
           <ion-item>
-            <ion-input label="Nom du niveau *" labelPlacement="floating"
-              placeholder="ex: Carton, Cartouche, Pièce"
+            <ion-input [label]="'PRODUCTS.LEVEL_NAME' | translate" labelPlacement="floating"
+              [placeholder]="'PRODUCTS.LEVEL_FACTOR_PLACEHOLDER' | translate"
               [(ngModel)]="newNiveau.nom">
             </ion-input>
           </ion-item>
           <div class="two-cols">
             <ion-item>
-              <ion-input label="Ordre *" labelPlacement="floating" type="number"
+              <ion-input [label]="'PRODUCTS.LEVEL_ORDER' | translate" labelPlacement="floating" type="number"
                 [(ngModel)]="newNiveau.ordre">
               </ion-input>
             </ion-item>
             <ion-item>
-              <ion-input label="Facteur *" labelPlacement="floating" type="number"
-                placeholder="ex: 12 (Carton = 12 pièces)"
+              <ion-input [label]="'PRODUCTS.LEVEL_FACTOR' | translate" labelPlacement="floating" type="number"
                 [(ngModel)]="newNiveau.facteur">
               </ion-input>
             </ion-item>
           </div>
           <div class="two-cols">
             <ion-item>
-              <ion-input label="Prix achat" labelPlacement="floating" type="number"
+              <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="number"
                 [(ngModel)]="newNiveau.prixAchat">
               </ion-input>
             </ion-item>
             <ion-item>
-              <ion-input label="Prix vente *" labelPlacement="floating" type="number"
+              <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="number"
                 [(ngModel)]="newNiveau.prixVente">
               </ion-input>
             </ion-item>
           </div>
           <ion-button expand="block" (click)="ajouterNiveau()">
             <ion-icon name="add-outline" slot="start"></ion-icon>
-            Ajouter ce niveau
+            {{ 'PRODUCTS.ADD_LEVEL_BTN' | translate }}
           </ion-button>
         </div>
       </div>
@@ -437,7 +491,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Statistiques stock</ion-title>
+        <ion-title>{{ 'PRODUCTS.STATS_TITLE' | translate }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showStatsModal = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -449,32 +503,32 @@
       <div class="color-cards" style="margin-bottom:16px">
         <div class="color-card cc-blue">
           <ion-icon name="cube-outline"></ion-icon>
-          <p class="cc-label">Total produits</p>
+          <p class="cc-label">{{ 'PRODUCTS.TOTAL_COUNT' | translate }}</p>
           <p class="cc-value">{{ stats.totalProduits }}</p>
         </div>
         <div class="color-card cc-green">
           <ion-icon name="trending-up-outline"></ion-icon>
-          <p class="cc-label">Valeur stock</p>
+          <p class="cc-label">{{ 'PRODUCTS.STOCK_VALUE' | translate }}</p>
           <p class="cc-value">{{ money(stats.valeurTotale || 0) }}</p>
         </div>
         <div class="color-card cc-orange">
           <ion-icon name="alert-outline"></ion-icon>
-          <p class="cc-label">Stock faible</p>
+          <p class="cc-label">{{ 'PRODUCTS.LOW_STOCK' | translate }}</p>
           <p class="cc-value">{{ stats.produitsStockFaible }}</p>
         </div>
         <div class="color-card cc-red">
           <ion-icon name="close-circle-outline"></ion-icon>
-          <p class="cc-label">Rupture</p>
+          <p class="cc-label">{{ 'PRODUCTS.OUT_OF_STOCK' | translate }}</p>
           <p class="cc-value">{{ stats.produitsRupture }}</p>
         </div>
       </div>
       <div class="form-panel">
         <div class="stat-row" *ngIf="stats.produitsPerimes !== undefined">
-          <span>Produits périmés</span>
+          <span>{{ 'PRODUCTS.PERIMES' | translate }}</span>
           <strong class="danger">{{ stats.produitsPerimes }}</strong>
         </div>
         <div class="stat-row" *ngIf="stats.totalFournisseurs !== undefined">
-          <span>Fournisseurs</span>
+          <span>{{ 'NAV.SUPPLIERS' | translate }}</span>
           <strong>{{ stats.totalFournisseurs }}</strong>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { BoutiqueSettingsPage } from './boutique-settings.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, BoutiqueSettingsPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, BoutiqueSettingsPageRoutingModule, TranslateModule],
   declarations: [BoutiqueSettingsPage]
 })
 export class BoutiqueSettingsPageModule {}

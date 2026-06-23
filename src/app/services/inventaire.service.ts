@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -80,7 +80,7 @@ export class InventaireService {
 
   entreeStock(mouvement: MouvementRequest): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/entree`, this.withUser(mouvement)).pipe(
-      catchError(error => this.handleError(error, 'enregistrer l’entrée de stock'))
+      catchError(error => this.handleError(error, "enregistrer l'entrée de stock"))
     );
   }
 

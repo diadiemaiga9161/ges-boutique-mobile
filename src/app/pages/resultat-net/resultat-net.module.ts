@@ -7,7 +7,7 @@ import { ResultatNetPage } from './resultat-net.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, ResultatNetPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, ResultatNetPageRoutingModule, TranslateModule],
   declarations: [ResultatNetPage]
 })
 export class ResultatNetPageModule {}

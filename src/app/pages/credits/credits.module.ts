@@ -7,7 +7,7 @@ import { CreditsPage } from './credits.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, CreditsPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, CreditsPageRoutingModule, TranslateModule],
   declarations: [CreditsPage]
 })
 export class CreditsPageModule {}

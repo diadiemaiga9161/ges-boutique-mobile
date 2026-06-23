@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -152,7 +152,7 @@ export class CaisseService {
   getEtatCaisse(): Observable<Caisse> {
     return this.http.get<any>(`${this.apiUrl}/etat`).pipe(
       map(response => response?.caisse || response?.data || response),
-      catchError(error => this.handleError(error, 'récupérer l’état de la caisse'))
+      catchError(error => this.handleError(error, "récupérer l'état de la caisse"))
     );
   }
 
@@ -169,7 +169,7 @@ export class CaisseService {
   entreeCaisse(request: CaisseRequest): Observable<OperationCaisse> {
     return this.http.post<any>(`${this.apiUrl}/entree`, this.withUser(request)).pipe(
       map(response => response?.operation || response?.data || response),
-      catchError(error => this.handleError(error, 'enregistrer l’entrée'))
+      catchError(error => this.handleError(error, "enregistrer l'entrée"))
     );
   }
 

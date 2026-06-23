@@ -26,8 +26,7 @@
     "ERROR_REQUIRED": "Username and password are required",
     "ERROR_FAILED": "Login failed"
   },
-  "COMMON": {
-    "SAVE": "Save", "CANCEL": "Cancel", "DELETE": "Delete", "EDIT": "Edit",
+  "COMMON": { "SAVE": "Save", "CANCEL": "Cancel", "DELETE": "Delete", "EDIT": "Edit",
     "ADD": "Add", "SEARCH": "Search", "LOADING": "Loading...", "CLOSE": "Close",
     "CONFIRM": "Confirm", "YES": "Yes", "NO": "No", "ERROR": "Error",
     "SUCCESS": "Success", "BACK": "Back", "FILTER": "Filter", "TOTAL": "Total",
@@ -38,7 +37,14 @@
   "NAV": {
     "PRODUCTS": "Products", "SALES": "Sales", "CLIENTS": "Clients",
     "CAISSE": "Cash Register", "INVENTORY": "Inventory", "REPORTS": "Reports",
-    "PROFILE": "Profile", "MORE": "More"
+    "PROFILE": "Profile", "MORE": "More", "BENEFITS": "Benefits",
+    "TRANSFERS": "Transfers", "INVOICES": "Invoices", "SELLERS": "Sellers",
+    "DEBTS": "Old Debts", "CREDITS": "Client Credits", "BANK": "Bank", "SHOP": "Shop", "EMPLOYEES": "Employees",
+    "EMPLOYEE_PAY": "Employee Pay", "SAFE": "Safe Deposits",
+    "SUPPLIER_OBJ": "Supplier Targets", "SUPPLIER_BONUS": "Supplier Bonuses",
+    "EXPENSES": "Expenses", "NET_RESULT": "Net Result", "SUPPLIERS": "Suppliers",
+    "MOBILE_MONEY": "Mobile Money", "INVOICE_DESIGN": "Invoice Design",
+    "REPORT": "Report", "PROMO": "Promotions", "NOTIFICATIONS": "Notifications"
   },
   "PROFILE": {
     "TITLE": "My Profile", "FULL_NAME": "Full name", "EMAIL": "Email",
@@ -48,13 +54,37 @@
     "LOGOUT_CONFIRM": "Do you want to sign out?", "SAVED": "Profile updated"
   },
   "PRODUCTS": {
-    "TITLE": "Products", "ADD": "New product", "NAME": "Product name",
+    "TITLE": "Products", "ADD": "New product", "NAME": "Product name *",
     "PRICE_SELL": "Selling price", "PRICE_BUY": "Purchase price", "STOCK": "Stock",
     "CATEGORY": "Category", "SUPPLIER": "Supplier", "BARCODE": "Barcode",
     "ALERT_THRESHOLD": "Alert threshold", "LOW_STOCK": "Low stock",
     "OUT_OF_STOCK": "Out of stock", "SEARCH": "Search a product",
     "SAVED": "Product saved", "DELETED": "Product deleted",
-    "CONFIRM_DELETE": "Delete this product?"
+    "CONFIRM_DELETE": "Delete this product?",
+    "TOTAL_COUNT": "Total products", "STOCK_VALUE": "Stock value",
+    "SEARCH_PLACEHOLDER": "Name, barcode, category...",
+    "ALL": "All", "FILTER_LOW": "Low", "FILTER_EXP": "Exp.",
+    "NO_CATEGORY": "No category", "EMPTY": "No products found",
+    "EDIT_TITLE": "Edit product", "NEW_TITLE": "New product",
+    "SECTION_INFO": "Basic information", "SECTION_CAT": "Category & Supplier",
+    "SECTION_PRICE": "Price & Stock", "SECTION_OPTIONS": "Options",
+    "DESCRIPTION": "Description", "ALL_CATEGORIES": "All",
+    "NEW_CATEGORY_PLACEHOLDER": "New category...", "NO_SUPPLIER": "None",
+    "SALE_TYPE": "Sale type", "TYPE_UNITE": "Unit", "TYPE_KG": "Kilogram",
+    "TYPE_LITRE": "Litre", "TYPE_CASH_ONLY": "Cash only",
+    "BIO": "Organic product", "SAVE_CHANGES": "Save changes",
+    "CREATE_BTN": "Create product", "EXPIRED": "Expired",
+    "NEAR_EXPIRY": "Near expiry", "EXPIRY_DATE": "Expiry date",
+    "LEVELS": "Levels", "QUANTITY": "Quantity", "ITEMS": "product(s)",
+    "CATEGORIES_TITLE": "Categories", "NEW_CATEGORY_TITLE": "New category",
+    "CAT_NAME_PLACEHOLDER": "Category name...", "NO_CATEGORIES": "No categories",
+    "NO_LEVELS": "No levels defined. Add your levels below.",
+    "LEVELS_INFO": "Define your sale levels (e.g.: Box → Pack → Unit). Stock is managed per level.",
+    "ADD_LEVEL_TITLE": "Add a level", "LEVEL_NAME": "Level name *",
+    "LEVEL_ORDER": "Order *", "LEVEL_FACTOR": "Factor *",
+    "LEVEL_FACTOR_PLACEHOLDER": "e.g.: 20 (Box = 20 packs)",
+    "ADD_LEVEL_BTN": "Add this level", "STATS_TITLE": "Stock statistics",
+    "PERIMES": "Expired products"
   },
   "SALES": {
     "TITLE": "Sales", "NEW": "New sale", "TODAY": "Today", "WEEK": "This week",
@@ -71,7 +101,8 @@
     "FIRSTNAME": "First name", "PHONE": "Phone", "EMAIL": "Email",
     "ADDRESS": "Address", "QR_CODE": "Client QR Code", "HISTORY": "History",
     "CREDITS": "Credits", "ADVANCES": "Advances", "RELEVE": "PDF Statement",
-    "SEARCH": "Search a client", "SAVED": "Client saved", "DELETED": "Client deleted"
+    "SEARCH": "Search a client", "SAVED": "Client saved", "DELETED": "Client deleted",
+    "NO_RESULTS": "No results found"
   },
   "CAISSE": {
     "TITLE": "Cash Register", "BALANCE": "Current balance", "INCOME": "Income",
@@ -100,5 +131,137 @@
   "FORGOT_PASSWORD": {
     "TITLE": "Forgot password", "EMAIL_LABEL": "Email address",
     "SUBMIT": "Send reset link", "BACK": "Back to login"
+  },
+  "EXPENSES": {
+    "TITLE": "Expenses", "SUBTITLE": "Automatic cash deduction",
+    "NEW": "New expense", "EDIT": "Edit expense",
+    "NAME": "Expense name", "REASON": "Reason / Description",
+    "TOTAL": "Total expenses", "PERIOD_TOTAL": "Period total",
+    "EMPTY": "No expenses recorded", "RESET": "Reset",
+    "ADJUST_INFO": "Cash will be adjusted automatically",
+    "DEDUCT_INFO": "Amount will be automatically deducted from cash"
+  },
+  "SELLERS": {
+    "TITLE": "User Management", "SUBTITLE": "Administrators, sellers and access",
+    "TOTAL_USERS": "Total Users", "ADMINS": "Administrators",
+    "SELLERS": "Sellers", "ACTIVE": "Active", "NEW": "New seller",
+    "EMPTY": "No users registered", "ROLE": "Role",
+    "COUNTRY_CODE": "Country code", "ACTIVATE": "Activate", "DEACTIVATE": "Deactivate"
+  },
+  "DEBTS": {
+    "TITLE": "Old Debts", "SUBTITLE": "Management of prior receivables",
+    "NEW": "New debt", "CREDITOR": "Creditor", "PAID": "Paid",
+    "REMAINING": "Remaining", "PAID_STATUS": "Paid", "PARTIAL": "Partial",
+    "PENDING": "Pending", "SETTLE": "Settle", "EMPTY": "No debts recorded"
+  },
+  "ACCOUNTS": {
+    "TITLE": "Bank Accounts", "SUBTITLE": "Manage your bank treasury",
+    "NEW": "New account", "NAME": "Account name", "BALANCE": "Balance",
+    "DEPOSIT": "Deposit", "WITHDRAW": "Withdrawal", "HISTORY": "History",
+    "EMPTY": "No accounts registered"
+  },
+  "EMPLOYEES": {
+    "TITLE": "Employees", "SUBTITLE": "Staff management",
+    "NEW": "New employee", "NAME": "Name", "POST": "Position",
+    "SALARY": "Salary", "START_DATE": "Hire date",
+    "ACTIVE": "Active", "INACTIVE": "Inactive", "EMPTY": "No employees registered"
+  },
+  "EMPLOYEE_PAY": {
+    "TITLE": "Employee Payroll", "SUBTITLE": "Salaries and advances",
+    "PAY": "Pay", "ADVANCE": "Advance", "SALARY": "Salary",
+    "MONTH": "Month", "PAID": "Paid", "PENDING": "Pending",
+    "HISTORY": "Payment history", "EMPTY": "No payments recorded"
+  },
+  "SAFE": {
+    "TITLE": "Safe Deposits", "SUBTITLE": "Goods deposit management",
+    "NEW": "New deposit", "DEPOSITOR": "Depositor", "PRODUCT": "Product",
+    "QUANTITY": "Quantity", "ACTIVE": "Active", "RETURNED": "Returned",
+    "EMPTY": "No deposits recorded"
+  },
+  "SUPPLIER_OBJ": {
+    "TITLE": "Supplier Targets", "SUBTITLE": "Purchase target tracking",
+    "NEW": "New target", "SUPPLIER": "Supplier", "TARGET": "Target",
+    "ACHIEVED": "Achieved", "PROGRESS": "Progress", "EMPTY": "No targets defined"
+  },
+  "SUPPLIERS": {
+    "TITLE": "Suppliers", "SUBTITLE": "Manage your suppliers",
+    "NEW": "New supplier", "NAME": "Name", "PHONE": "Phone",
+    "ADDRESS": "Address", "EMPTY": "No suppliers registered"
+  },
+  "BENEFITS": {
+    "TITLE": "Benefits", "SUBTITLE": "Profit analysis",
+    "GROSS": "Gross profit", "NET": "Net profit",
+    "EXPENSES": "Expenses", "DAILY": "Daily", "MONTHLY": "Monthly", "TOTAL": "Total"
+  },
+  "TRANSFERS": {
+    "TITLE": "Transfers", "SUBTITLE": "Money transfer management",
+    "NEW": "New transfer", "FROM": "From", "TO": "To",
+    "TYPE": "Type", "EMPTY": "No transfers recorded"
+  },
+  "SUPPLIER_BONUS": {
+    "TITLE": "Supplier Bonuses", "SUBTITLE": "Supplier advantages and discounts",
+    "NEW": "New bonus", "SUPPLIER": "Supplier",
+    "TYPE": "Type", "VALUE": "Value", "EMPTY": "No bonuses recorded"
+  },
+  "NET_RESULT": {
+    "TITLE": "Net Result", "SUBTITLE": "Full financial analysis",
+    "REVENUE": "Revenue", "COST": "Cost of goods",
+    "GROSS": "Gross margin", "EXPENSES": "Expenses", "NET": "Net result"
+  },
+  "MOBILE_MONEY": {
+    "TITLE": "Mobile Money", "SUBTITLE": "Orange, Moov, Wave",
+    "OPERATIONS": "Operations", "SUMMARY": "Summary",
+    "DOWNLOAD": "Download", "ALL": "All", "EXPORT_CSV": "Export CSV"
+  },
+  "INVOICE_DESIGN": {
+    "TITLE": "Invoice Design", "SUBTITLE": "Choose your invoice template",
+    "CLASSIC": "Classic", "CLASSIC_DESC": "Blue header, professional style",
+    "MODERN": "Modern", "MODERN_DESC": "Dark and elegant design",
+    "MINIMAL": "Minimalist", "MINIMAL_DESC": "Clean and simple",
+    "SELECTED": "Selected", "SELECT": "Choose"
+  },
+  "INVOICES": {
+    "TITLE": "Invoices", "SUBTITLE": "Your invoice history",
+    "NUMBER": "Invoice #", "CLIENT": "Client", "PAYMENT": "Payment",
+    "DESIGN": "Design", "PRINT": "Print", "DOWNLOAD_PDF": "Download PDF",
+    "EMPTY": "No invoices", "DETAIL": "Invoice detail"
+  },
+  "PROMO": {
+    "TITLE": "Promotions", "SUBTITLE": "Manage your offers and notify clients via WhatsApp",
+    "NEW": "New promotion", "EDIT": "Edit promotion",
+    "NAME": "Title", "DESC": "Description",
+    "START": "Start date", "END": "End date", "TYPE": "Discount type",
+    "PERCENT": "Percentage (%)", "FIXED": "Fixed amount (FCFA)", "VALUE": "Value",
+    "ACTIVE": "Active", "WHATSAPP": "Send WhatsApp",
+    "STATUS_ACTIVE": "Active", "STATUS_UPCOMING": "Upcoming",
+    "STATUS_EXPIRED": "Expired", "STATUS_INACTIVE": "Inactive",
+    "EMPTY": "No promotions", "EMPTY_SUB": "Create your first promotion to get started",
+    "LABEL_TITLE": "Title", "LABEL_DESC": "Description",
+    "LABEL_DESC_PLACEHOLDER": "Message for your customers...",
+    "LABEL_START": "Start date", "LABEL_END": "End date",
+    "LABEL_TYPE": "Discount type",
+    "TYPE_PCT": "Percentage (%)", "TYPE_FIXED": "Fixed amount (FCFA)",
+    "LABEL_VALUE_PCT": "Value (%)", "LABEL_VALUE_FIXED": "Amount (FCFA)",
+    "LABEL_ACTIVE": "Active promotion",
+    "BTN_SAVE": "Save", "BTN_CREATE": "Create promotion",
+    "WA_TITLE": "Send via WhatsApp", "WA_LOADING": "Preparing links...",
+    "REDUCTION": "discount",
+    "PREVIEW": "Message preview:", "TOTAL_CLIENTS": "Total clients",
+    "WITH_PHONE": "With number", "WITHOUT_PHONE": "Without number", "SEND": "Send"
+  },
+  "BOUTIQUE_SETTINGS": {
+    "TITLE": "Shop Settings", "SUBTITLE": "Information and configuration",
+    "NAME": "Shop name", "ADDRESS": "Address", "PHONE": "Phone", "LOGO": "Logo"
+  },
+  "MENU": {
+    "FINANCES": "Finance",
+    "HR": "HR",
+    "CONFIG_PARTNERS": "Partner config",
+    "ANALYSES": "Analysis",
+    "CONTACT_WA": "Contact on WhatsApp",
+    "CONNECTED": "Connected in real time",
+    "CONNECTING": "Connecting...",
+    "OFFLINE": "Offline",
+    "LOGOUT": "Sign out"
   }
 }

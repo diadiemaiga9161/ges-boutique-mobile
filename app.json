@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Ges Lafia",
+    "slug": "ges-boutique-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android"],
+    "android": {
+      "package": "com.ges.lafia",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./resources/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "61924825-31de-49a7-bbff-0708f59a33dc"
+      }
+    }
+  }
+}

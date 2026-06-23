@@ -7,7 +7,7 @@ import { FournisseursPage } from './fournisseurs.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, FournisseursPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, FournisseursPageRoutingModule, TranslateModule],
   declarations: [FournisseursPage]
 })
 export class FournisseursPageModule {}

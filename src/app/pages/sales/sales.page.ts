@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { DesignFacture, FactureDesignService } from '../../services/facture-design.service';
 import { FactureService } from '../../services/facture.service';
 import { Produit, ProductService } from '../../services/product.service';
 import { RemiseType, RetourVenteRequest, Statistiques, VenteMap, VenteService, VentesDuJourResponse } from '../../services/vente.service';
@@ -49,6 +51,12 @@ export class SalesPage implements OnDestroy {
   stats?: Statistiques;
   loadingStats = false;
 
+  design: DesignFacture = 1;
+
+  get boutiqueName(): string {
+    return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
+  }
+
   constructor(
     public venteService: VenteService,
     private factureService: FactureService,
@@ -58,10 +66,13 @@ export class SalesPage implements OnDestroy {
     private toastCtrl: ToastController,
     private ws: WebSocketService,
     private http: HttpClient,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private designService: FactureDesignService,
+    private boutiqueConfig: BoutiqueConfigService
   ) {}
 
   ionViewWillEnter(): void {
+    this.design = this.designService.getDesign();
     this.filterToday();
     this.productService.getProducts().subscribe({ next: p => this.produits = p, error: () => {} });
     this.wsSub = this.ws.subscribeTopic('/topic/ventes').subscribe(() => {
@@ -260,26 +271,32 @@ export class SalesPage implements OnDestroy {
     this.factureService.obtenirFacturesParVente(vente.id).subscribe({
       next: factures => {
         if (factures.length > 0) {
-          this.naviguerVersPdf(`/api/caisse/factures/${factures[0].id}/pdf`);
+          this.factureService.obtenirFacture(factures[0].id).subscribe({
+            next: f => this.factureService.imprimerFacture(f),
+            error: () => this.naviguerVersPdf(`/api/caisse/factures/${factures[0].id}/pdf`)
+          });
         } else {
-          this.creerEtTelechargerFacture(vente, 'pdf');
+          this.creerEtImprimerFacture(vente);
         }
       },
-      error: () => this.creerEtTelechargerFacture(vente, 'pdf')
+      error: () => this.creerEtImprimerFacture(vente)
     });
   }
 
   voirFactureVente(vente: VenteMap): void {
-    this.presentToast('Préparation du PDF...', 'medium');
+    this.presentToast('Préparation...', 'medium');
     this.factureService.obtenirFacturesParVente(vente.id).subscribe({
       next: factures => {
         if (factures.length > 0) {
-          this.naviguerVersPdf(`/api/caisse/factures/${factures[0].id}/pdf/view`);
+          this.factureService.obtenirFacture(factures[0].id).subscribe({
+            next: f => this.factureService.ouvrirFacture(f),
+            error: () => this.naviguerVersPdf(`/api/caisse/factures/${factures[0].id}/pdf/view`)
+          });
         } else {
-          this.creerEtTelechargerFacture(vente, 'pdf/view');
+          this.creerEtOuvrirFacture(vente);
         }
       },
-      error: () => this.creerEtTelechargerFacture(vente, 'pdf/view')
+      error: () => this.creerEtOuvrirFacture(vente)
     });
   }
 
@@ -335,6 +352,40 @@ export class SalesPage implements OnDestroy {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  private creerEtImprimerFacture(vente: VenteMap): void {
+    const userId = this.auth.getUserId();
+    this.factureService.creerFactureDepuisVente(vente.id, null, userId).subscribe({
+      next: facture => {
+        if (facture.lignes?.length > 0) {
+          this.factureService.imprimerFacture(facture);
+        } else {
+          this.factureService.obtenirFacture(facture.id).subscribe({
+            next: f => this.factureService.imprimerFacture(f),
+            error: () => this.naviguerVersPdf(`/api/caisse/factures/${facture.id}/pdf`)
+          });
+        }
+      },
+      error: err => this.presentToast(err.message || 'Impossible de générer la facture', 'danger')
+    });
+  }
+
+  private creerEtOuvrirFacture(vente: VenteMap): void {
+    const userId = this.auth.getUserId();
+    this.factureService.creerFactureDepuisVente(vente.id, null, userId).subscribe({
+      next: facture => {
+        if (facture.lignes?.length > 0) {
+          this.factureService.ouvrirFacture(facture);
+        } else {
+          this.factureService.obtenirFacture(facture.id).subscribe({
+            next: f => this.factureService.ouvrirFacture(f),
+            error: () => this.naviguerVersPdf(`/api/caisse/factures/${facture.id}/pdf/view`)
+          });
+        }
+      },
+      error: err => this.presentToast(err.message || 'Impossible de générer la facture', 'danger')
+    });
   }
 
   private creerEtTelechargerFacture(vente: VenteMap, suffixe: string): void {

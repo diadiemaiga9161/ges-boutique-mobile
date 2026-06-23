@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Caisse</ion-title>
+    <ion-title>{{ 'CAISSE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="openTransfertModal()" *ngIf="caisse?.estOuverte">
         <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>

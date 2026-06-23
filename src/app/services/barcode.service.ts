@@ -96,9 +96,11 @@ export class BarcodeService {
       const video = document.getElementById('zxing-video') as HTMLVideoElement;
       let controls: any = null;
       let done = false;
+      let scanTimer: any = null;
 
       const cleanup = () => {
         done = true;
+        if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
         try { controls?.stop(); } catch {}
         overlay.remove();
       };
@@ -111,12 +113,22 @@ export class BarcodeService {
       });
 
       try {
-        // Ouvrir la caméra arrière directement
+        // Ouvrir la caméra arrière avec autofocus continu
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } as any
         });
         video.srcObject = stream;
         controls = { stop: () => stream.getTracks().forEach((t: MediaStreamTrack) => t.stop()) };
+
+        // Activer l'autofocus continu si supporté (Android Chrome/WebView)
+        try {
+          const track = stream.getVideoTracks()[0];
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as any] });
+        } catch { /* non supporté sur iOS/certains appareils — ignoré */ }
 
         await new Promise<void>(r => {
           video.onloadedmetadata = () => { video.play(); r(); };
@@ -128,24 +140,21 @@ export class BarcodeService {
         const { BrowserMultiFormatReader } = await import('@zxing/browser');
         const reader = new BrowserMultiFormatReader();
 
-        const tick = () => {
+        // Scan toutes les 200ms — laisse le temps à l'autofocus entre chaque frame
+        scanTimer = setInterval(() => {
           if (done) return;
-          if (video.readyState >= 2 && video.videoWidth > 0) {
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            try {
-              const result = reader.decodeFromCanvas(canvas);
-              if (result && !done) {
-                cleanup();
-                resolve(result.getText());
-                return;
-              }
-            } catch { /* aucun code détecté sur ce frame, on continue */ }
-          }
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
+          if (video.readyState < 2 || video.videoWidth === 0) return;
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          try {
+            const result = reader.decodeFromCanvas(canvas);
+            if (result && !done) {
+              cleanup();
+              resolve(result.getText());
+            }
+          } catch { /* pas de code détecté sur ce frame */ }
+        }, 200);
 
       } catch {
         cleanup();

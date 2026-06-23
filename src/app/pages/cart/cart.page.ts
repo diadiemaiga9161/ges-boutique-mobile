@@ -17,6 +17,7 @@ interface CartItem {
   editingPrice: boolean;
   promo?: Promotion;          // promo active appliquée sur ce produit
   prixOriginal?: number;      // prix avant promo
+  niveauId?: number;          // ID du ProduitNiveau vendu (cascade stock)
   niveauPrixAchat?: number;   // prix achat du niveau (conditionnement)
   niveauNom?: string;         // nom du niveau choisi
   niveauFacteurTotal?: number; // facteur total vers unité de base (ex: 200 pour 1 Carton = 200 Pièces)
@@ -244,6 +245,7 @@ export class CartPage implements OnInit {
           customPrice, editingPrice: false,
           promo: promo || undefined,
           prixOriginal,
+          niveauId: niveau.id,
           niveauPrixAchat: niveau.prixAchat,
           niveauNom: niveau.nom,
           niveauFacteurTotal: facteurTotal
@@ -261,12 +263,31 @@ export class CartPage implements OnInit {
         this.items = [...this.items, {
           product, quantity: 1, remisePourcentage: 0,
           customPrice: niveau.prixVente, editingPrice: false,
+          niveauId: niveau.id,
           niveauPrixAchat: niveau.prixAchat,
           niveauNom: niveau.nom,
           niveauFacteurTotal: facteurTotal
         }];
       }
     });
+  }
+
+  choisirPrincipal(): void {
+    const product = this.produitEnAttente;
+    if (!product) return;
+    this.showNiveauxVenteModal = false;
+    this.produitEnAttente = null;
+    this.niveauxDisponibles = [];
+    this.addWithPromo(product);
+  }
+
+  disponibleNiveau(niveau: ProduitNiveau, index: number | undefined): number {
+    const idx = index ?? 0;
+    if (idx === 0) {
+      return (niveau.stock ?? 0) + (this.produitEnAttente?.quantite ?? 0) * niveau.facteur;
+    }
+    const parent = this.niveauxDisponibles[idx - 1];
+    return (niveau.stock ?? 0) + ((parent as ProduitNiveau | undefined)?.stock ?? 0) * niveau.facteur;
   }
 
   annulerChoixNiveau(): void {
@@ -379,7 +400,8 @@ export class CartPage implements OnInit {
         this.presentToast(`Quantité invalide pour ${item.product.nom}`, 'danger');
         return false;
       }
-      if (item.quantity > item.product.quantite) {
+      // Si vente par niveau (cascade), le backend vérifie le stock disponible
+      if (!item.niveauId && item.quantity > item.product.quantite) {
         this.presentToast(`Stock insuffisant pour ${item.product.nom}. Disponible : ${item.product.quantite}`, 'danger');
         return false;
       }
@@ -414,8 +436,9 @@ export class CartPage implements OnInit {
         remisePourcentage: item.remisePourcentage || null,
         remiseMontant: null,
         prixAchat: item.niveauPrixAchat || null,      // prix achat du niveau
+        niveauId: item.niveauId || null,              // ID du niveau (cascade stock)
         niveauNom: item.niveauNom || null,            // nom du niveau
-        niveauFacteur: item.niveauFacteurTotal || 1   // facteur déduction stock
+        niveauFacteur: item.niveauFacteurTotal || 1   // facteur déduction stock (fallback)
       })),
       modePaiement: this.modePaiement,
       referencePaiement: this.referencePaiement,

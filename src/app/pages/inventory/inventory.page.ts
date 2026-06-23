@@ -4,6 +4,8 @@ import { Subscription } from 'rxjs';
 import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement } from '../../services/inventaire.service';
 import { Categorie, ProductService, Produit } from '../../services/product.service';
 import { WebSocketService } from '../../services/websocket.service';
+import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
+import { BarcodeService } from '../../services/barcode.service';
 
 @Component({
   selector: 'app-inventory',
@@ -18,7 +20,14 @@ export class InventoryPage {
   movements: MouvementStock[] = [];
   movementsFiltered: MouvementStock[] = [];
   stats?: StatistiquesInventaire;
-  segment: 'move' | 'low' | 'history' = 'move';
+  segment: 'move' | 'low' | 'history' | 'niveaux' = 'move';
+
+  // Niveaux conditionnement
+  niveauxMap: { [produitId: number]: ProduitNiveau[] } = {};
+  niveauxLoadingMap: { [produitId: number]: boolean } = {};
+  expandedProduitId: number | null = null;
+  produitsAvecNiveaux: Produit[] = [];
+  searchNiveaux = '';
   typeMouvement: TypeMouvement = TypeMouvement.ENTREE;
   loading = false;
 
@@ -46,7 +55,9 @@ export class InventoryPage {
     public inventory: InventaireService,
     private productsService: ProductService,
     private toastCtrl: ToastController,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private niveauService: ProduitNiveauService,
+    private barcodeService: BarcodeService
   ) {}
 
   ionViewWillEnter(): void {
@@ -74,6 +85,7 @@ export class InventoryPage {
     this.productsService.getProducts().subscribe(products => {
       this.products = products;
       this.filteredProductsForForm = products.slice(0, 20);
+      this.produitsAvecNiveaux = products;
     });
     this.productsService.getAllCategories().subscribe(cats => this.categories = cats);
     this.inventory.obtenirProduitsStockFaible().subscribe(products => this.lowStock = products);
@@ -157,9 +169,17 @@ export class InventoryPage {
       this.filteredProductsForForm = this.products.slice(0, 20);
       return;
     }
-    this.filteredProductsForForm = this.products.filter(p =>
+    const filtered = this.products.filter(p =>
       p.nom.toLowerCase().includes(term) || (p.codeBarre || '').toLowerCase().includes(term)
-    ).slice(0, 20);
+    );
+    this.filteredProductsForForm = filtered.slice(0, 20);
+
+    // Auto-sélection immédiate si code-barres exact (scanner physique USB/Bluetooth)
+    const exact = filtered.find(p => (p.codeBarre || '').toLowerCase() === term);
+    if (exact) {
+      this.selectProduct(exact);
+      this.presentToast(`✓ ${exact.nom}`, 'success');
+    }
   }
 
   selectProduct(product: Produit): void {
@@ -167,6 +187,28 @@ export class InventoryPage {
     this.form.searchProduit = product.nom;
     this.form.nouvelleQuantite = product.quantite;
     this.filteredProductsForForm = [];
+  }
+
+  async scanProduit(): Promise<void> {
+    const code = await this.barcodeService.scan();
+    if (!code) return;
+
+    // Recherche locale immédiate (sans attendre HTTP)
+    const found = this.products.find(p =>
+      (p.codeBarre || '').toLowerCase() === code.toLowerCase() ||
+      p.nom.toLowerCase().includes(code.toLowerCase())
+    );
+    if (found) {
+      this.selectProduct(found);
+      this.presentToast(`✓ ${found.nom}`, 'success');
+      return;
+    }
+
+    // Fallback API si pas trouvé localement
+    this.productsService.getProductByCodeBarre(code).subscribe({
+      next: produit => { this.selectProduct(produit); this.presentToast(`✓ ${produit.nom}`, 'success'); },
+      error: () => this.presentToast(`Produit introuvable : ${code}`, 'danger')
+    });
   }
 
   saveMovement(): void {
@@ -210,6 +252,52 @@ export class InventoryPage {
 
   getTypeClass(type: string): string {
     return this.inventory.getTypeMouvementClass(type as TypeMouvement);
+  }
+
+  // ─── Niveaux conditionnement ──────────────────────────────────────────────
+
+  get produitsNiveauxFiltres(): Produit[] {
+    const term = this.searchNiveaux.toLowerCase().trim();
+    if (!term) return this.produitsAvecNiveaux;
+    return this.produitsAvecNiveaux.filter(p => p.nom.toLowerCase().includes(term));
+  }
+
+  toggleNiveaux(produit: Produit): void {
+    if (this.expandedProduitId === produit.id) {
+      this.expandedProduitId = null;
+      return;
+    }
+    this.expandedProduitId = produit.id;
+    if (!this.niveauxMap[produit.id]) {
+      this.niveauxLoadingMap[produit.id] = true;
+      this.niveauService.getNiveaux(produit.id).subscribe({
+        next: niveaux => {
+          this.niveauxMap[produit.id] = niveaux;
+          this.niveauxLoadingMap[produit.id] = false;
+        },
+        error: () => { this.niveauxLoadingMap[produit.id] = false; }
+      });
+    }
+  }
+
+  decomposer(niveau: ProduitNiveau, produit: Produit): void {
+    this.niveauService.decomposer(niveau.id!).subscribe({
+      next: res => {
+        this.niveauxMap[produit.id] = res.niveaux;
+        // Mettre à jour le stock produit dans la liste
+        const idx = this.produitsAvecNiveaux.findIndex(p => p.id === produit.id);
+        if (idx >= 0) this.produitsAvecNiveaux[idx] = { ...this.produitsAvecNiveaux[idx], quantite: res.produitQuantite };
+        this.presentToast(res.message || 'Décomposition effectuée');
+      },
+      error: e => this.presentToast(e.message || 'Erreur décomposition', 'danger')
+    });
+  }
+
+  niveauStockColor(n: ProduitNiveau): string {
+    const s = n.stock ?? 0;
+    if (s === 0) return 'danger';
+    if (s <= 5) return 'warning';
+    return 'success';
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {

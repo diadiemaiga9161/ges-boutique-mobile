@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Profil</ion-title>
+    <ion-title>{{ 'PROFILE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button color="danger" (click)="logout()">
         <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
@@ -66,11 +66,23 @@
           [(ngModel)]="form.email"></ion-input>
       </ion-item>
 
-      <ion-item>
+      <!-- Téléphone avec sélecteur indicatif pays -->
+      <ion-item class="phone-item">
+        <div slot="start" class="country-selector">
+          <select [(ngModel)]="selectedCountryCode" class="country-select">
+            <option *ngFor="let c of countryCodes" [value]="c.code">
+              {{ c.flag }} {{ c.code }}
+            </option>
+          </select>
+        </div>
         <ion-input label="Téléphone *" labelPlacement="floating"
           type="tel"
-          [(ngModel)]="form.telephone"></ion-input>
+          [(ngModel)]="form.telephone"
+          placeholder="123456789"></ion-input>
       </ion-item>
+      <ion-note class="ion-padding-start" color="medium" style="font-size:0.78rem">
+        Numéro complet : {{ getFullPhone() }}
+      </ion-note>
 
       <ion-item>
         <ion-input
@@ -88,7 +100,7 @@
       <ion-button expand="block" [disabled]="loading || !isFormValid" (click)="save()">
         <ion-spinner *ngIf="loading" slot="start" name="crescent"></ion-spinner>
         <ion-icon *ngIf="!loading" name="save-outline" slot="start"></ion-icon>
-        Enregistrer les modifications
+        {{ 'PROFILE.SAVE' | translate }}
       </ion-button>
     </section>
 
@@ -112,7 +124,7 @@
 
     <ion-button expand="block" fill="outline" color="danger" (click)="logout()">
       <ion-icon name="log-out-outline" slot="start"></ion-icon>
-      Se déconnecter
+      {{ 'PROFILE.LOGOUT' | translate }}
     </ion-button>
   </div>
 </ion-content>

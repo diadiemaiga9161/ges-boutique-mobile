@@ -7,7 +7,7 @@ import { MobileMoneyPage } from './mobile-money.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, MobileMoneyPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, MobileMoneyPageRoutingModule, TranslateModule],
   declarations: [MobileMoneyPage]
 })
 export class MobileMoneyPageModule {}

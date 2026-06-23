@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Dépenses</ion-title>
+    <ion-title>{{ 'EXPENSES.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="startCreate()">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
@@ -22,7 +22,7 @@
     <!-- Total -->
     <div class="total-depense-card">
       <div>
-        <p class="td-label">Total dépenses</p>
+        <p class="td-label">{{ 'EXPENSES.TOTAL' | translate }}</p>
         <p class="td-value">{{ money(totalDepenses) }}</p>
       </div>
       <ion-icon name="trending-down-outline" style="font-size:2rem; opacity:0.7"></ion-icon>
@@ -54,10 +54,10 @@
 
     <div class="empty-state" *ngIf="!loading && depenses.length === 0">
       <ion-icon name="trending-down-outline" style="font-size:3rem; color:#cbd5e1"></ion-icon>
-      <p>Aucune dépense enregistrée</p>
+      <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
       <ion-button size="small" (click)="startCreate()">
         <ion-icon name="add-outline" slot="start"></ion-icon>
-        Nouvelle dépense
+        {{ 'EXPENSES.NEW' | translate }}
       </ion-button>
     </div>
 
@@ -98,7 +98,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar [color]="editing ? 'warning' : 'danger'">
-        <ion-title>{{ editing ? 'Modifier la dépense' : 'Nouvelle dépense' }}</ion-title>
+        <ion-title>{{ editing ? ('EXPENSES.EDIT' | translate) : ('EXPENSES.NEW' | translate) }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showForm = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>

@@ -7,7 +7,7 @@ import { CaissePage } from './caisse.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, CaissePageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, CaissePageRoutingModule, TranslateModule],
   declarations: [CaissePage]
 })
 export class CaissePageModule {}

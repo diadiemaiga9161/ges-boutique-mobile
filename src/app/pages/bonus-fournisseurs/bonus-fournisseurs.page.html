@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Bonus Fournisseurs</ion-title>
+    <ion-title>{{ 'SUPPLIER_BONUS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="startCreate()">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
@@ -54,10 +54,10 @@
 
     <div class="empty-state" *ngIf="!loading && bonus.length === 0">
       <ion-icon name="gift-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
-      <p>Aucun bonus enregistré</p>
+      <p>{{ 'SUPPLIER_BONUS.EMPTY' | translate }}</p>
       <ion-button size="small" (click)="startCreate()">
         <ion-icon name="add-outline" slot="start"></ion-icon>
-        Ajouter un bonus
+        {{ 'SUPPLIER_BONUS.NEW' | translate }}
       </ion-button>
     </div>
 

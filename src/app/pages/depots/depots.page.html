@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>Dépôts Garde</ion-title>
+    <ion-title>{{ 'SAFE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="openNew()">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
@@ -174,7 +174,7 @@
 
   <div class="empty-state" *ngIf="vueMode === 'liste' && !loading && filteredDepots.length === 0">
     <ion-icon name="lock-closed-outline"></ion-icon>
-    <p>Aucun dépôt trouvé</p>
+    <p>{{ 'SAFE.EMPTY' | translate }}</p>
   </div>
 
 </ion-content>

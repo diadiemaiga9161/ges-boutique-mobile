@@ -7,7 +7,7 @@ import { ClientsPage } from './clients.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, ClientsPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, ClientsPageRoutingModule, TranslateModule],
   declarations: [ClientsPage]
 })
 export class ClientsPageModule {}

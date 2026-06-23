@@ -156,8 +156,15 @@ export class FacturesPage {
 
   // ── PDF ─────────────────────────────────────────────────
   telechargerPdf(f: Facture): void {
-    this.toast('Téléchargement...', 'medium');
-    window.location.href = window.location.origin + `/api/caisse/factures/${f.id}/pdf`;
+    this.toast('Préparation...', 'medium');
+    if (f.lignes?.length > 0) {
+      this.factureService.imprimerFacture(f);
+    } else {
+      this.factureService.obtenirFacture(f.id).subscribe({
+        next: full => this.factureService.imprimerFacture(full),
+        error: () => { window.location.href = window.location.origin + `/api/caisse/factures/${f.id}/pdf`; }
+      });
+    }
   }
 
   // ── QR modal standalone ──────────────────────────────────

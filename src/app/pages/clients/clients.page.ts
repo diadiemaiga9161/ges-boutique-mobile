@@ -5,6 +5,8 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { AvanceClientRequest, Client, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
 import { VenteMap, VenteService } from '../../services/vente.service';
 import { AuthService } from '../../services/auth.service';
+import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { DesignFacture, FactureDesignService } from '../../services/facture-design.service';
 import { FactureService } from '../../services/facture.service';
 
 @Component({
@@ -47,6 +49,12 @@ export class ClientsPage {
   loadingAvance = false;
   avanceForm: AvanceClientRequest = this.emptyAvanceForm();
 
+  design: DesignFacture = 1;
+
+  get boutiqueName(): string {
+    return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
+  }
+
   constructor(
     public clientService: ClientService,
     public venteService: VenteService,
@@ -55,10 +63,15 @@ export class ClientsPage {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private http: HttpClient,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private designService: FactureDesignService,
+    private boutiqueConfig: BoutiqueConfigService
   ) {}
 
-  ionViewWillEnter(): void { this.load(); }
+  ionViewWillEnter(): void {
+    this.design = this.designService.getDesign();
+    this.load();
+  }
 
   load(event?: any): void {
     this.clientService.getAll().subscribe({
