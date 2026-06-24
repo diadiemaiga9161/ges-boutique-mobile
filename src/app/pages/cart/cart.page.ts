@@ -120,9 +120,25 @@ export class CartPage implements OnInit {
   }
 
   loadClients(): void {
-    this.clientService.getAll().subscribe({
-      next: clients => { this.clients = clients; this.clientsFiltres = clients.slice(0, 8); },
-      error: () => this.clients = []
+    this.syncService.isConnected().then(connected => {
+      if (connected) {
+        this.clientService.getAll().subscribe({
+          next: async clients => {
+            this.clients = clients;
+            this.clientsFiltres = clients.slice(0, 8);
+            await this.offlineDb.cacheClients(clients);
+          },
+          error: async () => {
+            this.clients = await this.offlineDb.getClientsCache();
+            this.clientsFiltres = this.clients.slice(0, 8);
+          }
+        });
+      } else {
+        this.offlineDb.getClientsCache().then(cached => {
+          this.clients = cached;
+          this.clientsFiltres = cached.slice(0, 8);
+        });
+      }
     });
   }
 
@@ -159,12 +175,28 @@ export class CartPage implements OnInit {
   }
 
   loadProducts(): void {
-    this.productService.getProducts().subscribe({
-      next: products => {
-        this.products = products.filter(product => product.quantite > 0);
-        this.applySearch();
-      },
-      error: error => this.presentToast(error.message || 'Produits indisponibles', 'danger')
+    this.syncService.isConnected().then(connected => {
+      if (connected) {
+        this.productService.getProducts().subscribe({
+          next: async products => {
+            this.products = products.filter(p => p.quantite > 0);
+            await this.offlineDb.cacheProduits(products);
+            this.applySearch();
+          },
+          error: async () => {
+            const cached = await this.offlineDb.getProduitsCache();
+            this.products = cached.filter((p: any) => p.quantite > 0);
+            this.applySearch();
+            this.presentToast('Hors connexion — produits depuis le cache', 'warning');
+          }
+        });
+      } else {
+        this.offlineDb.getProduitsCache().then(cached => {
+          this.products = cached.filter((p: any) => p.quantite > 0);
+          this.applySearch();
+          this.presentToast('Hors connexion — produits depuis le cache', 'warning');
+        });
+      }
     });
   }
 
@@ -461,6 +493,7 @@ export class CartPage implements OnInit {
     const connected = await this.syncService.isConnected();
     if (!connected) {
       await this.offlineDb.saveVentePending(base);
+      this.mettreAJourStockLocal();
       this.submitting = false;
       this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
       this.reset();
@@ -473,19 +506,31 @@ export class CartPage implements OnInit {
 
     request.subscribe({
       next: vente => {
+        this.mettreAJourStockLocal();
         this.submitting = false;
         this.presentToast(`Vente ${vente.numeroVente || vente.id} enregistrée`);
         this.reset();
-        this.loadProducts();
       },
       error: async error => {
         // Fallback offline si erreur réseau
         await this.offlineDb.saveVentePending(base);
+        this.mettreAJourStockLocal();
         this.submitting = false;
         this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée');
         this.reset();
       }
     });
+  }
+
+  private mettreAJourStockLocal(): void {
+    for (const item of this.items) {
+      const produit = this.products.find(p => p.id === item.product.id);
+      if (produit) {
+        produit.quantite = Math.max(0, produit.quantite - item.quantity);
+      }
+    }
+    this.offlineDb.cacheProduits(this.products);
+    this.applySearch();
   }
 
   reset(): void {
