@@ -77,6 +77,8 @@
       box-shadow: 0 0 0 12px rgba(26,86,219,0.15), 0 0 0 24px rgba(26,86,219,0.07), 0 20px 60px rgba(0,0,0,0.5);
       margin-bottom: 28px;
       position: relative;
+      animation: spl-logo-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
     }
     .spl-logo-ring::before {
       content: '';
@@ -94,6 +96,13 @@
       text-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
+    .spl-texts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: spl-fade-up 0.5s ease 0.45s forwards;
+      opacity: 0;
+    }
     .spl-company {
       color: rgba(255,255,255,0.55);
       font-size: 0.7rem;
@@ -130,6 +139,14 @@
     .spl-dots span:nth-child(2) { animation-delay: 0.2s; }
     .spl-dots span:nth-child(3) { animation-delay: 0.4s; }
 
+    @keyframes spl-logo-in {
+      from { opacity: 0; transform: scale(0.75); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes spl-fade-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
     @keyframes spl-pulse {
       0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
       40%            { transform: scale(1.1); opacity: 1; background: #1a56db; }
@@ -145,9 +162,11 @@
       <div class="spl-logo-ring">
         <span class="spl-initials">GL</span>
       </div>
-      <p class="spl-company">Maiga Consulting</p>
-      <h1 class="spl-appname">Ges Lafia</h1>
-      <p class="spl-tagline">Gestion de Boutique</p>
+      <div class="spl-texts">
+        <p class="spl-company">Maiga Consulting</p>
+        <h1 class="spl-appname">Ges Lafia</h1>
+        <p class="spl-tagline">Gestion de Boutique</p>
+      </div>
       <div class="spl-dots">
         <span></span><span></span><span></span>
       </div>
