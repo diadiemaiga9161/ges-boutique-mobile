@@ -83,7 +83,8 @@
     "INVOICE_DESIGN": "Design Factures",
     "REPORT": "Rapport",
     "PROMO": "Promotions",
-    "NOTIFICATIONS": "Notifications"
+    "NOTIFICATIONS": "Notifications",
+    "ORDERS": "Commandes"
   },
   "PROFILE": {
     "TITLE": "Mon Profil",

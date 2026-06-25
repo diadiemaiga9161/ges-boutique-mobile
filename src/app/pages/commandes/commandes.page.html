@@ -1,0 +1,282 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Commandes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="charger()">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button fill="solid" color="light" (click)="ouvrirCreer()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Nouvelle
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="cmd-content">
+
+  <!-- Stats cards -->
+  <div class="stats-row">
+    <div class="stat-card stat-card--blue">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <div>
+        <p class="stat-val">{{ nbBrouillons }}</p>
+        <p class="stat-lbl">Brouillons</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card--green">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <div>
+        <p class="stat-val">{{ nbValidees }}</p>
+        <p class="stat-lbl">Validées</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card--purple">
+      <ion-icon name="cash-outline"></ion-icon>
+      <div>
+        <p class="stat-val">{{ formatMontant(totalValidees) }}</p>
+        <p class="stat-lbl">CA validé</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-bar">
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      (ionInput)="appliquerFiltres()"
+      placeholder="Rechercher..."
+      debounce="200">
+    </ion-searchbar>
+    <div class="filter-chips">
+      <ion-chip [class.active]="statutFilter === ''" (click)="statutFilter = ''; appliquerFiltres()">Toutes</ion-chip>
+      <ion-chip [class.active]="statutFilter === 'BROUILLON'" (click)="statutFilter = 'BROUILLON'; appliquerFiltres()">Brouillons</ion-chip>
+      <ion-chip [class.active]="statutFilter === 'VALIDEE'" (click)="statutFilter = 'VALIDEE'; appliquerFiltres()">Validées</ion-chip>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-wrap">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+  </div>
+
+  <!-- Liste vide -->
+  <div *ngIf="!isLoading && commandesFiltrees.length === 0" class="empty-state">
+    <ion-icon name="document-outline"></ion-icon>
+    <p>Aucune commande</p>
+    <ion-button (click)="ouvrirCreer()" fill="outline">Créer une commande</ion-button>
+  </div>
+
+  <!-- Liste commandes -->
+  <div class="cmd-list" *ngIf="!isLoading && commandesFiltrees.length > 0">
+    <div class="cmd-card" *ngFor="let c of commandesFiltrees" [class.cmd-card--validee]="c.statut === StatutCommande.VALIDEE">
+
+      <!-- En-tête carte -->
+      <div class="cmd-card__header">
+        <div>
+          <span class="cmd-numero">{{ c.numeroCommande }}</span>
+          <ion-badge [color]="c.statut === StatutCommande.VALIDEE ? 'success' : 'warning'">
+            {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : 'Brouillon' }}
+          </ion-badge>
+        </div>
+        <span class="cmd-date">{{ formatDate(c.dateCommande) }}</span>
+      </div>
+
+      <!-- Client & montant -->
+      <div class="cmd-card__body">
+        <div class="cmd-client">
+          <ion-icon name="person-outline"></ion-icon>
+          {{ getClientNom(c) }}
+        </div>
+        <div class="cmd-montant">{{ formatMontant(c.montantTotal) }}</div>
+      </div>
+
+      <!-- Lignes (aperçu) -->
+      <div class="cmd-lines">
+        <span *ngFor="let l of c.lignes | slice:0:3" class="cmd-line-chip">
+          {{ l.produit?.nom || l.produitNom }} ×{{ l.quantite }}
+        </span>
+        <span *ngIf="c.lignes.length > 3" class="cmd-line-more">+{{ c.lignes.length - 3 }}</span>
+      </div>
+
+      <!-- Crédit info -->
+      <div class="cmd-credit" *ngIf="c.estCredit">
+        <ion-icon name="card-outline" color="danger"></ion-icon>
+        <span>Versé : {{ formatMontant(c.montantVerse) }} · Reste : {{ formatMontant(c.montantRestant) }}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="cmd-actions">
+        <ion-button fill="outline" size="small" (click)="ouvrirModifier(c)">
+          <ion-icon name="create-outline" slot="start"></ion-icon>Modifier
+        </ion-button>
+        <ion-button fill="solid" color="success" size="small" *ngIf="c.statut === StatutCommande.BROUILLON" (click)="valider(c)">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>Valider
+        </ion-button>
+        <ion-button fill="clear" color="danger" size="small" *ngIf="c.statut === StatutCommande.BROUILLON" (click)="supprimer(c)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
+
+<!-- ══════════════════ MODAL FORMULAIRE ══════════════════ -->
+<ion-modal [isOpen]="showModal" (didDismiss)="fermerModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ editingId ? 'Modifier commande' : 'Nouvelle commande' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="fermerModal()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="modal-content">
+
+      <!-- Section client -->
+      <div class="form-section">
+        <h3 class="section-title"><ion-icon name="person-outline"></ion-icon> Client</h3>
+
+        <div class="search-box" *ngIf="!form.clientId">
+          <ion-input
+            [(ngModel)]="searchClient"
+            (ionInput)="filtrerClients()"
+            placeholder="Rechercher un client..."
+            fill="outline">
+          </ion-input>
+          <div class="dropdown" *ngIf="showClientDropdown && clientsFiltres.length > 0">
+            <div class="dropdown-item" *ngFor="let cl of clientsFiltres" (click)="selectionnerClient(cl)">
+              {{ cl.nom }} {{ cl.prenom }} — {{ cl.numeroTelephone }}
+            </div>
+          </div>
+        </div>
+
+        <div class="selected-client" *ngIf="form.clientId">
+          <ion-icon name="checkmark-circle" color="success"></ion-icon>
+          <span>{{ form.clientNom }} {{ form.clientPrenom }} · {{ form.clientTelephone }}</span>
+          <ion-button fill="clear" size="small" color="danger" (click)="effacerClient()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Saisie manuelle si pas de client sélectionné -->
+        <div *ngIf="!form.clientId" class="manual-fields">
+          <ion-input fill="outline" label="Nom" [(ngModel)]="form.clientNom" labelPlacement="floating"></ion-input>
+          <ion-input fill="outline" label="Prénom" [(ngModel)]="form.clientPrenom" labelPlacement="floating"></ion-input>
+          <ion-input fill="outline" label="Téléphone" [(ngModel)]="form.clientTelephone" labelPlacement="floating"></ion-input>
+        </div>
+      </div>
+
+      <!-- Section produits -->
+      <div class="form-section">
+        <h3 class="section-title"><ion-icon name="cube-outline"></ion-icon> Produits</h3>
+
+        <div class="search-box">
+          <ion-input
+            [(ngModel)]="searchProduit"
+            (ionInput)="filtrerProduits()"
+            placeholder="Rechercher un produit..."
+            fill="outline">
+          </ion-input>
+          <div class="dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
+            <div class="dropdown-item" *ngFor="let p of produitsFiltres" (click)="selectionnerProduit(p)">
+              {{ p.nom }} — {{ formatMontant(p.prixVente) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Tableau lignes -->
+        <div class="lignes-table" *ngIf="lignesForm.length > 0">
+          <div class="ligne-row" *ngFor="let l of lignesForm; let i = index">
+            <div class="ligne-nom">{{ l.produitNom }}</div>
+            <div class="ligne-controls">
+              <button class="qty-btn" (click)="changerQuantite(l, -1)">−</button>
+              <span class="qty-val">{{ l.quantite }}</span>
+              <button class="qty-btn" (click)="changerQuantite(l, 1)">+</button>
+            </div>
+            <input type="number" class="prix-input" [(ngModel)]="l.prixUnitaire" [name]="'prix_' + i" min="0">
+            <span class="ligne-total">{{ formatMontant(l.prixUnitaire * l.quantite) }}</span>
+            <button class="del-btn" (click)="supprimerLigne(i)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="total-bar">
+          <span>Total</span>
+          <strong>{{ formatMontant(totalCommande) }}</strong>
+        </div>
+      </div>
+
+      <!-- Section paiement -->
+      <div class="form-section">
+        <h3 class="section-title"><ion-icon name="cash-outline"></ion-icon> Paiement</h3>
+
+        <ion-select fill="outline" label="Mode de paiement" [(ngModel)]="form.modePaiement" labelPlacement="floating">
+          <ion-select-option value="ESPECES">Espèces</ion-select-option>
+          <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
+          <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
+          <ion-select-option value="WAVE_MONEY">Wave</ion-select-option>
+          <ion-select-option value="CARTE_BANCAIRE">Carte bancaire</ion-select-option>
+          <ion-select-option value="VIREMENT">Virement</ion-select-option>
+        </ion-select>
+
+        <ion-input fill="outline" label="Référence paiement" [(ngModel)]="form.referencePaiement" labelPlacement="floating"></ion-input>
+
+        <!-- Toggle crédit -->
+        <div class="credit-toggle">
+          <span>Paiement à crédit</span>
+          <ion-toggle [(ngModel)]="form.estCredit" color="primary"></ion-toggle>
+        </div>
+
+        <div *ngIf="form.estCredit" class="credit-fields">
+          <ion-input
+            fill="outline"
+            label="Montant versé maintenant"
+            type="number"
+            [(ngModel)]="form.montantVerse"
+            labelPlacement="floating">
+          </ion-input>
+          <div class="reste-info" *ngIf="totalCommande > 0">
+            Reste à payer : <strong>{{ formatMontant(resteAPayer) }}</strong>
+          </div>
+          <ion-input
+            fill="outline"
+            label="Date d'échéance"
+            type="date"
+            [(ngModel)]="form.dateEcheance"
+            labelPlacement="floating">
+          </ion-input>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-section">
+        <ion-textarea
+          fill="outline"
+          label="Notes"
+          [(ngModel)]="form.notes"
+          labelPlacement="floating"
+          rows="2">
+        </ion-textarea>
+      </div>
+
+    </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-button expand="block" (click)="enregistrer()" [disabled]="isSubmitting" color="primary">
+          <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
+          {{ editingId ? 'Modifier' : 'Enregistrer' }}
+        </ion-button>
+      </ion-toolbar>
+    </ion-footer>
+  </ng-template>
+</ion-modal>

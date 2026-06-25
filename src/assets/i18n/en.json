@@ -44,7 +44,7 @@
     "SUPPLIER_OBJ": "Supplier Targets", "SUPPLIER_BONUS": "Supplier Bonuses",
     "EXPENSES": "Expenses", "NET_RESULT": "Net Result", "SUPPLIERS": "Suppliers",
     "MOBILE_MONEY": "Mobile Money", "INVOICE_DESIGN": "Invoice Design",
-    "REPORT": "Report", "PROMO": "Promotions", "NOTIFICATIONS": "Notifications"
+    "REPORT": "Report", "PROMO": "Promotions", "NOTIFICATIONS": "Notifications", "ORDERS": "Orders"
   },
   "PROFILE": {
     "TITLE": "My Profile", "FULL_NAME": "Full name", "EMAIL": "Email",

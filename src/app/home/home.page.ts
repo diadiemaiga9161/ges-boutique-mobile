@@ -27,6 +27,7 @@ export class HomePage implements OnDestroy {
     { title: 'Rapports', subtitle: 'Chiffres clés', icon: 'bar-chart-outline', route: '/tabs/reports' },
     { title: 'Nouvelle vente', subtitle: 'Panier mobile', icon: 'cart-outline', route: '/cart' },
     { title: 'Clients', subtitle: 'Fidélité et crédits', icon: 'people-outline', route: '/clients' },
+    { title: 'Commandes', subtitle: 'Bons de commande', icon: 'document-text-outline', route: '/commandes' },
     { title: 'Boutique', subtitle: 'Paramètres', icon: 'storefront-outline', route: '/boutique' },
     { title: 'Mobile Money', subtitle: 'Orange & Moov', icon: 'phone-portrait-outline', route: '/mobile-money' },
     // { title: 'Assistant IA', subtitle: 'Questions & Conseils', icon: 'sparkles-outline', route: '/assistant-ia' }, // désactivé temporairement

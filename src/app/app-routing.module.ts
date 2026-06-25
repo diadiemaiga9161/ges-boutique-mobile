@@ -121,6 +121,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/promotions/promotions.module').then(m => m.PromotionsPageModule)
   },
   {
+    path: 'commandes',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/commandes/commandes.module').then(m => m.CommandesPageModule)
+  },
+  {
     path: '',
     redirectTo: 'tabs',
     pathMatch: 'full'

@@ -158,7 +158,13 @@ export class InventaireService {
       SORTIE: 'Sortie',
       AJUSTEMENT: 'Ajustement',
       RETOUR: 'Retour',
-      BONUS_FOURNISSEUR: 'Bonus Fournisseur'
+      BONUS_FOURNISSEUR: 'Bonus Fournisseur',
+      VENTE: 'Vente',
+      ANNULATION_VENTE: 'Annulation vente',
+      CREDIT: 'Crédit',
+      ANNULATION_CREDIT: 'Annulation crédit',
+      DECOMPOSITION: 'Décomposition',
+      RECOMPOSITION: 'Recomposition'
     };
     return labels[type] || type;
   }
@@ -169,7 +175,13 @@ export class InventaireService {
       SORTIE: 'text-danger',
       AJUSTEMENT: 'text-warning',
       RETOUR: 'text-info',
-      BONUS_FOURNISSEUR: 'text-success'
+      BONUS_FOURNISSEUR: 'text-success',
+      VENTE: 'text-danger',
+      ANNULATION_VENTE: 'text-success',
+      CREDIT: 'text-warning',
+      ANNULATION_CREDIT: 'text-success',
+      DECOMPOSITION: 'text-primary',
+      RECOMPOSITION: 'text-primary'
     };
     return classes[type] || 'text-muted';
   }
