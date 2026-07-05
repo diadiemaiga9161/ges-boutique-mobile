@@ -320,7 +320,11 @@ export class ProductsPage implements OnInit {
   }
 
   resetNewNiveau(): void {
-    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
+    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0, stock: 0 };
+  }
+
+  onParentChange(): void {
+    this.newNiveau.facteur = this.newNiveau.facteur && this.newNiveau.facteur >= 1 ? this.newNiveau.facteur : 1;
   }
 
   chargerNiveaux(produitId: number): void {
@@ -353,11 +357,12 @@ export class ProductsPage implements OnInit {
       return;
     }
     const payload: Partial<ProduitNiveau> = {
-      nom: this.newNiveau.nom,
-      parentId: this.newNiveau.parentId || undefined,
-      facteur: this.newNiveau.parentId ? (this.newNiveau.facteur || 1) : 1,
-      prixAchat: this.newNiveau.prixAchat || 0,
-      prixVente: this.newNiveau.prixVente
+      nom: this.newNiveau.nom?.trim(),
+      parentId: this.newNiveau.parentId ? Number(this.newNiveau.parentId) : null as any,
+      facteur: this.newNiveau.parentId ? Math.max(1, Number(this.newNiveau.facteur) || 1) : 1,
+      prixAchat: Number(this.newNiveau.prixAchat) || 0,
+      prixVente: Number(this.newNiveau.prixVente) || 0,
+      stock: Number(this.newNiveau.stock) || 0,
     };
     this.niveauService.creer(this.produitNiveaux.id, payload).subscribe({
       next: () => {
@@ -366,7 +371,10 @@ export class ProductsPage implements OnInit {
         this.chargerNiveaux(this.produitNiveaux!.id);
         this.resetNewNiveau();
       },
-      error: error => this.presentToast(error.message || 'Ajout impossible', 'danger')
+      error: (err) => {
+        const msg = err?.error?.message || err?.message || 'Erreur lors de la création du niveau';
+        this.presentToast(msg, 'danger');
+      }
     });
   }
 
