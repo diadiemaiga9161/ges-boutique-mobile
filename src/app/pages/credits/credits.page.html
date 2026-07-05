@@ -96,6 +96,58 @@
     </button>
   </div>
 
+  <!-- ═══════════ FILTRES AVANCÉS ═══════════ -->
+  <ion-card class="filtres-card" style="margin:6px 12px 4px;">
+    <ion-card-content style="padding:10px 12px;">
+
+      <!-- Filtre par client -->
+      <ion-item lines="none" style="--padding-start:0;--inner-padding-end:0;margin-bottom:6px;">
+        <ion-icon name="person-outline" slot="start" style="color:#64748b;font-size:1rem;margin-right:8px;"></ion-icon>
+        <ion-select
+          [(ngModel)]="clientSelectionne"
+          (ionChange)="applyFilter()"
+          placeholder="Tous les clients"
+          interface="action-sheet"
+          style="width:100%;font-size:0.85rem;">
+          <ion-select-option value="">Tous les clients</ion-select-option>
+          <ion-select-option *ngFor="let nom of clientsUniques" [value]="nom">{{ nom }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Filtre par plage de dates -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px;">
+          <ion-icon name="calendar-outline" style="color:#64748b;font-size:1rem;flex-shrink:0;"></ion-icon>
+          <ion-input
+            type="date"
+            [(ngModel)]="dateDebut"
+            (ionChange)="applyFilter()"
+            placeholder="Du"
+            style="font-size:0.82rem;--padding-start:0;">
+          </ion-input>
+        </div>
+        <span style="color:#94a3b8;font-size:0.8rem;flex-shrink:0;">au</span>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px;">
+          <ion-input
+            type="date"
+            [(ngModel)]="dateFin"
+            (ionChange)="applyFilter()"
+            placeholder="Au"
+            style="font-size:0.82rem;--padding-start:0;">
+          </ion-input>
+        </div>
+        <button
+          *ngIf="dateDebut || dateFin"
+          (click)="effacerDates()"
+          style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+          <ion-icon name="close-outline" style="vertical-align:middle;"></ion-icon>
+          Effacer
+        </button>
+      </div>
+
+    </ion-card-content>
+  </ion-card>
+
   <!-- ═══════════ LOADING ═══════════ -->
   <div class="loading-state" *ngIf="loading">
     <ion-spinner name="crescent"></ion-spinner>
@@ -111,7 +163,14 @@
       <p>{{ statutFilter === 'REGLES' ? 'Aucun crédit réglé' : statutFilter === 'EN_COURS' ? 'Aucun crédit en attente' : 'Aucun crédit trouvé' }}</p>
     </div>
 
-    <div class="client-group" *ngFor="let group of filteredGroups"
+    <!-- Résumé pagination -->
+    <div *ngIf="filteredGroups.length > 0"
+         style="display:flex;justify-content:space-between;align-items:center;padding:4px 14px 2px;font-size:0.75rem;color:#94a3b8;">
+      <span>{{ filteredGroups.length }} client(s) trouvé(s)</span>
+      <span *ngIf="totalPages > 1">Page {{ pageActuelle }} / {{ totalPages }}</span>
+    </div>
+
+    <div class="client-group" *ngFor="let group of groupesPagines"
          [class.group--retard]="group.enRetard && statutFilter !== 'REGLES'">
 
       <!-- En-tête groupe -->
@@ -230,6 +289,42 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══════════ PAGINATION ═══════════ -->
+    <div *ngIf="filteredGroups.length > itemsParPage"
+         style="display:flex;justify-content:center;align-items:center;gap:6px;padding:14px 12px 20px;flex-wrap:wrap;">
+
+      <!-- Précédent -->
+      <button
+        (click)="allerPage(pageActuelle - 1)"
+        [disabled]="pageActuelle === 1"
+        style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;min-height:36px;opacity:1;"
+        [style.opacity]="pageActuelle === 1 ? '0.4' : '1'">
+        <ion-icon name="chevron-back-outline" style="vertical-align:middle;"></ion-icon>
+        Préc.
+      </button>
+
+      <!-- Numéros de page -->
+      <button
+        *ngFor="let p of pageNumbers"
+        (click)="allerPage(p)"
+        [style.background]="p === pageActuelle ? '#1a56db' : '#f1f5f9'"
+        [style.color]="p === pageActuelle ? '#fff' : '#475569'"
+        style="border:none;border-radius:8px;padding:8px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;min-width:36px;min-height:36px;">
+        {{ p }}
+      </button>
+
+      <!-- Suivant -->
+      <button
+        (click)="allerPage(pageActuelle + 1)"
+        [disabled]="pageActuelle === totalPages"
+        style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;min-height:36px;"
+        [style.opacity]="pageActuelle === totalPages ? '0.4' : '1'">
+        Suiv.
+        <ion-icon name="chevron-forward-outline" style="vertical-align:middle;"></ion-icon>
+      </button>
+    </div>
+
   </div>
 
   </div><!-- fin activeTab === 'credits' -->
@@ -444,34 +539,138 @@
             </div>
           </div>
 
-          <div class="produit-row" style="font-weight:600;font-size:0.75rem;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
-            <span style="flex:2">Date</span>
-            <span style="flex:1;text-align:right">Montant</span>
-            <span style="flex:1;text-align:center">Mode</span>
+          <!-- Barre de recherche versements -->
+          <ion-searchbar
+            [(ngModel)]="rechercheVersement"
+            placeholder="Rechercher un versement…"
+            [debounce]="200"
+            style="--border-radius:10px;--box-shadow:none;--background:#f8fafc;padding:0 0 8px;font-size:0.82rem;">
+          </ion-searchbar>
+
+          <!-- Versements simples -->
+          <div *ngIf="versementsSimples.length > 0">
+            <div class="produit-row" style="font-weight:600;font-size:0.75rem;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
+              <span style="flex:2">Date</span>
+              <span style="flex:1;text-align:right">Montant</span>
+              <span style="flex:1;text-align:center">Mode</span>
+            </div>
+
+            <div *ngIf="versementsFiltres.length === 0" class="empty-detail" style="padding:10px 0;">
+              <ion-icon name="search-outline" color="medium"></ion-icon>
+              <p style="font-size:0.8rem;color:#94a3b8;">Aucun versement correspondant</p>
+            </div>
+
+            <div class="produit-row" *ngFor="let v of versementsFiltres"
+                 style="align-items:flex-start;flex-direction:column;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.8rem;color:#475569;">{{ formatDate(v.dateOperation) }}</span>
+                <span style="font-weight:700;color:#16a34a;">+{{ money(v.montant) }}</span>
+                <span style="font-size:0.75rem;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">{{ v.modePaiement || 'ESPECES' }}</span>
+              </div>
+              <div *ngIf="v.referencePaiement" style="font-size:0.73rem;color:#94a3b8;margin-top:2px;">
+                Réf : {{ v.referencePaiement }}
+              </div>
+              <div *ngIf="v.utilisateurNom" style="font-size:0.73rem;color:#94a3b8;">
+                Par {{ v.utilisateurNom }}
+              </div>
+            </div>
           </div>
-          <div class="produit-row" *ngFor="let v of versements" style="align-items:flex-start;flex-direction:column;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-            <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
-              <span style="font-size:0.8rem;color:#475569;">{{ formatDate(v.dateOperation) }}</span>
-              <span style="font-weight:700;color:#16a34a;">+{{ money(v.montant) }}</span>
-              <span style="font-size:0.75rem;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">{{ v.modePaiement || 'ESPECES' }}</span>
+
+          <!-- Versements avec referenceGroupe inclus dans les simples (affichage avec badge) -->
+          <div *ngIf="versementsSimples.length === 0 && versements.length > 0">
+            <!-- Tous sont groupés, on affiche quand même le tableau complet -->
+            <div class="produit-row" style="font-weight:600;font-size:0.75rem;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
+              <span style="flex:2">Date</span>
+              <span style="flex:1;text-align:right">Montant</span>
+              <span style="flex:1;text-align:center">Mode</span>
             </div>
-            <div *ngIf="v.referencePaiement" style="font-size:0.73rem;color:#94a3b8;margin-top:2px;">
-              Réf : {{ v.referencePaiement }}
-            </div>
-            <div *ngIf="v.utilisateurNom" style="font-size:0.73rem;color:#94a3b8;">
-              Par {{ v.utilisateurNom }}
-            </div>
-            <!-- Indicateur paiement groupé sur la ligne elle-même -->
-            <div *ngIf="(v.motif || '').includes('Paiement groupé')"
-                 style="font-size:0.7rem;color:#92400e;background:#fef9c3;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-flex;align-items:center;gap:3px;">
-              <ion-icon name="people-outline" style="font-size:0.75rem;"></ion-icon>
-              Paiement groupé
+            <div class="produit-row" *ngFor="let v of versements"
+                 style="align-items:flex-start;flex-direction:column;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.8rem;color:#475569;">{{ formatDate(v.dateOperation) }}</span>
+                <span style="font-weight:700;color:#16a34a;">+{{ money(v.montant) }}</span>
+                <span style="font-size:0.75rem;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">{{ v.modePaiement || 'ESPECES' }}</span>
+              </div>
+              <div *ngIf="v.referencePaiement" style="font-size:0.73rem;color:#94a3b8;margin-top:2px;">
+                Réf : {{ v.referencePaiement }}
+              </div>
+              <div *ngIf="v.utilisateurNom" style="font-size:0.73rem;color:#94a3b8;">
+                Par {{ v.utilisateurNom }}
+              </div>
+              <!-- Badge GROUPÉ sur chaque ligne -->
+              <div *ngIf="v.referenceGroupe"
+                   style="margin-top:3px;">
+                <ion-chip color="warning" style="height:20px;font-size:0.68rem;padding:0 8px;">
+                  <ion-icon name="people-outline" style="font-size:0.75rem;margin-right:3px;"></ion-icon>
+                  GROUPÉ
+                </ion-chip>
+              </div>
+              <!-- Ancien indicateur motif -->
+              <div *ngIf="!v.referenceGroupe && (v.motif || '').includes('Paiement groupé')"
+                   style="font-size:0.7rem;color:#92400e;background:#fef9c3;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-flex;align-items:center;gap:3px;">
+                <ion-icon name="people-outline" style="font-size:0.75rem;"></ion-icon>
+                Paiement groupé
+              </div>
             </div>
           </div>
+
           <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;border-top:2px solid #e2e8f0;margin-top:4px;">
             <span style="color:#475569;">Total versé</span>
             <span style="color:#16a34a;">{{ money(detailCredit!.montantVerse) }}</span>
           </div>
+
+          <!-- ══ Section Paiements groupés dans le modal ══ -->
+          <div *ngIf="paiementsGroupesDetail.size > 0" style="margin-top:14px;">
+            <p class="produits-title" style="margin-bottom:8px;">
+              <ion-icon name="people-circle-outline"></ion-icon>
+              Paiements groupés ({{ paiementsGroupesDetail.size }} groupe(s))
+            </p>
+
+            <ion-accordion-group [multiple]="true">
+              <ion-accordion *ngFor="let ref of groupesDetailKeys" [value]="ref"
+                             style="border:1px solid #fde68a;border-radius:10px;margin-bottom:8px;overflow:hidden;">
+
+                <ion-item slot="header" style="--background:#fef3c7;--color:#92400e;--inner-padding-end:8px;">
+                  <ion-label>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;">
+                      <div>
+                        <span style="font-weight:700;font-size:0.85rem;">Groupe {{ refCourte(ref) }}</span>
+                        <span style="font-size:0.75rem;color:#b45309;margin-left:8px;">{{ dateGroupe(ref) }}</span>
+                      </div>
+                      <strong style="color:#92400e;font-size:0.9rem;">{{ money(montantTotalGroupe(ref)) }}</strong>
+                    </div>
+                  </ion-label>
+                </ion-item>
+
+                <div slot="content" style="background:#fffbeb;padding:8px 12px;">
+                  <!-- En-tête tableau -->
+                  <div style="display:flex;font-size:0.7rem;font-weight:700;color:#92400e;padding:4px 0;border-bottom:1px solid #fde68a;margin-bottom:4px;">
+                    <span style="flex:2">Date</span>
+                    <span style="flex:1;text-align:right">Montant</span>
+                    <span style="flex:1;text-align:center">Mode</span>
+                    <span style="flex:1.5;text-align:center">Référence</span>
+                    <span style="flex:1;text-align:right">Par</span>
+                  </div>
+                  <!-- Lignes -->
+                  <div *ngFor="let op of paiementsGroupesDetail.get(ref)"
+                       style="display:flex;align-items:center;font-size:0.75rem;padding:4px 0;border-bottom:1px solid #fef9c3;">
+                    <span style="flex:2;color:#475569;">{{ formatDate(op.dateOperation) }}</span>
+                    <span style="flex:1;text-align:right;font-weight:700;color:#92400e;">{{ money(op.montant) }}</span>
+                    <span style="flex:1;text-align:center;font-size:0.68rem;background:#fde68a;padding:2px 4px;border-radius:4px;color:#92400e;">{{ op.modePaiement || 'ESPECES' }}</span>
+                    <span style="flex:1.5;text-align:center;font-size:0.68rem;color:#94a3b8;">{{ op.referencePaiement || '—' }}</span>
+                    <span style="flex:1;text-align:right;font-size:0.68rem;color:#64748b;">{{ op.utilisateurNom || '—' }}</span>
+                  </div>
+                  <!-- Total groupe -->
+                  <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:0.8rem;border-top:1px solid #fde68a;margin-top:4px;">
+                    <span style="color:#92400e;">Total groupe</span>
+                    <span style="color:#92400e;">{{ money(montantTotalGroupe(ref)) }}</span>
+                  </div>
+                </div>
+
+              </ion-accordion>
+            </ion-accordion-group>
+          </div>
+
         </div>
       </div>
 

@@ -36,6 +36,18 @@ export class CreditsPage {
   filterRetard = false;
   statutFilter: StatutFilter = 'EN_COURS';
 
+  // ── Filtre par plage de dates ──────────────────────────────
+  dateDebut: string = '';
+  dateFin: string = '';
+
+  // ── Filtre par client ──────────────────────────────────────
+  clientSelectionne: string = '';
+  clientsUniques: string[] = [];
+
+  // ── Pagination ────────────────────────────────────────────
+  pageActuelle: number = 1;
+  itemsParPage: number = 10;
+
   // Modal détail crédit
   showDetailModal = false;
   detailCredit?: CreditInfo;
@@ -43,6 +55,11 @@ export class CreditsPage {
   loadingDetail = false;
   versements: OperationCaisse[] = [];
   versementsLoading = false;
+
+  // ── Paiements groupés dans modal détail ───────────────────
+  versementsSimples: OperationCaisse[] = [];
+  paiementsGroupesDetail: Map<string, OperationCaisse[]> = new Map();
+  rechercheVersement: string = '';
 
   // Modal règlement simple
   showSimpleModal = false;
@@ -103,6 +120,7 @@ export class CreditsPage {
             }
             return this.venteMapToCredit(v);
           });
+        this.buildClientsUniques();
         this.applyStatutFilter();
         this.loading = false;
         event?.target?.complete();
@@ -152,9 +170,17 @@ export class CreditsPage {
     };
   }
 
+  // ── Clients uniques ─────────────────────────────────────────
+  private buildClientsUniques(): void {
+    const noms = new Set<string>();
+    this.allCredits.forEach(c => { if (c.clientNom) noms.add(c.clientNom); });
+    this.clientsUniques = Array.from(noms).sort((a, b) => a.localeCompare(b, 'fr'));
+  }
+
   setStatut(s: StatutFilter): void {
     this.statutFilter = s;
     this.filterRetard = false;
+    this.pageActuelle = 1;
     this.applyStatutFilter();
   }
 
@@ -193,14 +219,71 @@ export class CreditsPage {
 
   applyFilter(): void {
     const term = this.searchTerm.trim().toLowerCase();
+    const debut = this.dateDebut ? new Date(this.dateDebut) : null;
+    const fin = this.dateFin ? new Date(this.dateFin + 'T23:59:59') : null;
+
     this.filteredGroups = this.groups.filter(g => {
+      // Filtre retard
       if (this.filterRetard && !g.enRetard) return false;
+      // Filtre par client sélectionné
+      if (this.clientSelectionne && g.clientNom !== this.clientSelectionne) return false;
+      // Filtre texte
       if (term) {
         const nom = (g.clientNom + ' ' + (g.clientPrenom || '')).toLowerCase();
-        return nom.includes(term) || (g.clientTelephone || '').includes(term);
+        if (!nom.includes(term) && !(g.clientTelephone || '').includes(term)) return false;
+      }
+      // Filtre par date : au moins un crédit du groupe dans la plage
+      if (debut || fin) {
+        const creditsDansPeriode = g.credits.filter(c => {
+          const d = c.dateOperation ? new Date(c.dateOperation) : null;
+          if (!d) return false;
+          if (debut && d < debut) return false;
+          if (fin && d > fin) return false;
+          return true;
+        });
+        if (!creditsDansPeriode.length) return false;
       }
       return true;
     });
+
+    this.pageActuelle = 1;
+  }
+
+  // ── Réinitialiser dates ─────────────────────────────────────
+  effacerDates(): void {
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.pageActuelle = 1;
+    this.applyFilter();
+  }
+
+  // ── Pagination ──────────────────────────────────────────────
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredGroups.length / this.itemsParPage));
+  }
+
+  get groupesPagines(): ClientGroup[] {
+    const debut = (this.pageActuelle - 1) * this.itemsParPage;
+    return this.filteredGroups.slice(debut, debut + this.itemsParPage);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const actuelle = this.pageActuelle;
+    const rayon = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, actuelle - rayon); i <= Math.min(total, actuelle + rayon); i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  allerPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.pageActuelle = page;
+    // Remonter en haut de la liste
+    const el = document.querySelector('.credits-list');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   toggleGroup(g: ClientGroup): void {
@@ -213,6 +296,9 @@ export class CreditsPage {
     this.detailCredit = credit;
     this.detailVente = undefined;
     this.versements = [];
+    this.versementsSimples = [];
+    this.paiementsGroupesDetail = new Map();
+    this.rechercheVersement = '';
     this.showDetailModal = true;
     this.loadingDetail = true;
     this.versementsLoading = true;
@@ -223,6 +309,7 @@ export class CreditsPage {
       next: ({ vente, vers }) => {
         this.detailVente = vente;
         this.versements = vers;
+        this.buildVersementsGroupesDetail(vers);
         this.loadingDetail = false;
         this.versementsLoading = false;
       },
@@ -231,6 +318,53 @@ export class CreditsPage {
         this.versementsLoading = false;
       }
     });
+  }
+
+  /** Sépare les versements simples des paiements groupés dans le modal détail */
+  private buildVersementsGroupesDetail(vers: OperationCaisse[]): void {
+    this.versementsSimples = vers.filter(v => !v.referenceGroupe);
+    const grouped = vers.filter(v => !!v.referenceGroupe);
+    const map = new Map<string, OperationCaisse[]>();
+    grouped.forEach(v => {
+      const ref = v.referenceGroupe!;
+      if (!map.has(ref)) map.set(ref, []);
+      map.get(ref)!.push(v);
+    });
+    this.paiementsGroupesDetail = map;
+  }
+
+  /** Versements simples filtrés par rechercheVersement */
+  get versementsFiltres(): OperationCaisse[] {
+    const term = this.rechercheVersement.trim().toLowerCase();
+    if (!term) return this.versementsSimples;
+    return this.versementsSimples.filter(v =>
+      (v.modePaiement || '').toLowerCase().includes(term) ||
+      (v.referencePaiement || '').toLowerCase().includes(term) ||
+      (v.utilisateurNom || '').toLowerCase().includes(term) ||
+      this.formatDate(v.dateOperation).includes(term) ||
+      this.money(v.montant).includes(term)
+    );
+  }
+
+  /** Clés des groupes dans le modal détail */
+  get groupesDetailKeys(): string[] {
+    return Array.from(this.paiementsGroupesDetail.keys());
+  }
+
+  /** Montant total d'un groupe */
+  montantTotalGroupe(ref: string): number {
+    return (this.paiementsGroupesDetail.get(ref) || []).reduce((s, v) => s + v.montant, 0);
+  }
+
+  /** Référence courte (8 premiers caractères) */
+  refCourte(ref: string): string {
+    return ref.length > 8 ? ref.substring(0, 8).toUpperCase() + '…' : ref.toUpperCase();
+  }
+
+  /** Date du premier versement d'un groupe */
+  dateGroupe(ref: string): string {
+    const vers = this.paiementsGroupesDetail.get(ref) || [];
+    return vers.length ? this.formatDate(vers[0].dateOperation) : '—';
   }
 
   openSimple(credit: CreditInfo): void {
@@ -475,8 +609,45 @@ export class CreditsPage {
         <td>${v.referencePaiement || '—'}</td>
         <td>${v.utilisateurNom || '—'}</td>
         <td>${v.motif || '—'}</td>
+        <td>${v.referenceGroupe ? `<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">GROUPÉ</span>` : '—'}</td>
       </tr>`
-    ).join('') : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:14px">Aucun versement</td></tr>`;
+    ).join('') : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:14px">Aucun versement</td></tr>`;
+
+    // Section paiements groupés PDF
+    let groupesSectionHtml = '';
+    if (this.paiementsGroupesDetail.size > 0) {
+      const groupesRows = Array.from(this.paiementsGroupesDetail.entries()).map(([ref, ops]) => {
+        const total = ops.reduce((s, o) => s + o.montant, 0);
+        const dateRef = ops.length ? this.formatDate(ops[0].dateOperation) : '—';
+        const refC = ref.length > 8 ? ref.substring(0, 8).toUpperCase() + '…' : ref.toUpperCase();
+        const lignes = ops.map((o, i) =>
+          `<tr style="background:${i % 2 === 0 ? '#fffbeb' : '#fef9c3'}">
+            <td style="padding:5px 8px">${this.formatDate(o.dateOperation)}</td>
+            <td style="padding:5px 8px;text-align:right;font-weight:700;color:#92400e">${this.money(o.montant)}</td>
+            <td style="padding:5px 8px">${o.modePaiement || 'ESPECES'}</td>
+            <td style="padding:5px 8px;font-size:10px;color:#94a3b8">${o.referencePaiement || '—'}</td>
+            <td style="padding:5px 8px">${o.utilisateurNom || '—'}</td>
+          </tr>`
+        ).join('');
+        return `<div style="border:1.5px solid #f59e0b;border-radius:10px;margin-bottom:12px;overflow:hidden">
+          <div style="background:#fef3c7;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-weight:700;color:#92400e;font-size:12px">Groupe ${refC}</span>
+              <span style="color:#b45309;font-size:11px;margin-left:8px">${dateRef}</span>
+            </div>
+            <strong style="color:#92400e">${this.money(total)}</strong>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr style="background:#fde68a"><th style="padding:5px 8px;text-align:left">Date</th><th style="padding:5px 8px;text-align:right">Montant</th><th style="padding:5px 8px">Mode</th><th style="padding:5px 8px">Référence</th><th style="padding:5px 8px">Par</th></tr></thead>
+            <tbody>${lignes}</tbody>
+          </table>
+        </div>`;
+      }).join('');
+      groupesSectionHtml = `
+        <div class="sec-title" style="margin-top:18px">Paiements groupés (${this.paiementsGroupesDetail.size} groupe(s))</div>
+        ${groupesRows}
+      `;
+    }
 
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Versements — ${credit.clientNom}</title>
 <style>
@@ -533,11 +704,12 @@ td{padding:6px 9px;border-bottom:1px solid #f1f5f9}
     </div>
     <div class="sec-title">Versements effectués (${vers.length})</div>
     <table>
-      <thead><tr><th>Date</th><th style="text-align:right">Montant</th><th>Mode</th><th>Référence</th><th>Enregistré par</th><th>Motif</th></tr></thead>
+      <thead><tr><th>Date</th><th style="text-align:right">Montant</th><th>Mode</th><th>Référence</th><th>Enregistré par</th><th>Motif</th><th>Type</th></tr></thead>
       <tbody>${versRows}</tbody>
-      <tfoot><tr style="background:#eff6ff;font-weight:700"><td>Total versé</td><td style="text-align:right;color:#166534">${this.money(credit.montantVerse)}</td><td colspan="4"></td></tr></tfoot>
+      <tfoot><tr style="background:#eff6ff;font-weight:700"><td>Total versé</td><td style="text-align:right;color:#166534">${this.money(credit.montantVerse)}</td><td colspan="5"></td></tr></tfoot>
     </table>
     ${!credit.estReglee ? `<div style="margin-top:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;text-align:center"><span style="color:#dc2626;font-weight:700">Reste à payer : ${this.money(credit.montantRestant)}</span></div>` : ''}
+    ${groupesSectionHtml}
   </div>
   <div class="ftr">${boutiqueName} &middot; Historique versements &middot; ${new Date().toLocaleDateString('fr-FR')}</div>
 </div></body></html>`;
@@ -639,7 +811,7 @@ td{padding:6px 9px;border-bottom:1px solid #f1f5f9}
     btnClose.style.cssText = 'background:#fff;color:#0f766e;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
     btnClose.addEventListener('click', () => overlay.remove());
     const btnPrint = document.createElement('button');
-    btnPrint.textContent = '🖨 Imprimer';
+    btnPrint.textContent = 'Imprimer';
     btnPrint.style.cssText = 'background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
     btnPrint.addEventListener('click', () => frame.contentWindow?.print());
     bar.appendChild(btnClose);
