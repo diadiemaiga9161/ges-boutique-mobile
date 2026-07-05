@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { Categorie, Fournisseur, ProductService, Produit, ProduitRequest, StatistiquesStock } from '../../services/product.service';
 import { WebSocketService } from '../../services/websocket.service';
+import { BoutiqueService } from '../../services/boutique.service';
 import { BarcodeService } from '../../services/barcode.service';
 import { StockAlertService } from '../../services/stock-alert.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
@@ -44,10 +45,12 @@ export class ProductsPage implements OnInit {
   showNiveauxModal = false;
   produitNiveaux: Produit | null = null;
   niveaux: ProduitNiveau[] = [];
+  niveauxChaine: ProduitNiveau[] = [];
   loadingNiveaux = false;
-  newNiveau: Partial<ProduitNiveau> = { nom: '', ordre: 1, facteur: 1, prixAchat: 0, prixVente: 0 };
+  newNiveau: Partial<ProduitNiveau> = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
   editingNiveauId: number | null = null;
   editNiveau: Partial<ProduitNiveau> = {};
+  showAjoutNiveauModal = false;
 
   constructor(
     public productsService: ProductService,
@@ -61,6 +64,7 @@ export class ProductsPage implements OnInit {
     private niveauService: ProduitNiveauService,
     private offlineDb: OfflineDbService,
     private syncService: SyncService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   async scanCodeBarre(): Promise<void> {
@@ -306,8 +310,17 @@ export class ProductsPage implements OnInit {
   ouvrirNiveaux(product: Produit): void {
     this.produitNiveaux = product;
     this.showNiveauxModal = true;
-    this.newNiveau = { nom: '', ordre: 1, facteur: 1, prixAchat: 0, prixVente: 0 };
+    this.resetNewNiveau();
     this.chargerNiveaux(product.id);
+  }
+
+  ouvrirAjoutNiveau(): void {
+    this.resetNewNiveau();
+    this.showAjoutNiveauModal = true;
+  }
+
+  resetNewNiveau(): void {
+    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
   }
 
   chargerNiveaux(produitId: number): void {
@@ -315,11 +328,8 @@ export class ProductsPage implements OnInit {
     this.niveauService.getNiveaux(produitId).subscribe({
       next: niveaux => {
         this.niveaux = niveaux;
+        this.niveauxChaine = this.niveauService.buildNiveauxChaine(niveaux);
         this.loadingNiveaux = false;
-        // Auto-set ordre pour le prochain niveau
-        if (niveaux.length > 0) {
-          this.newNiveau.ordre = Math.max(...niveaux.map(n => n.ordre)) + 1;
-        }
       },
       error: () => {
         this.loadingNiveaux = false;
@@ -330,31 +340,63 @@ export class ProductsPage implements OnInit {
 
   ajouterNiveau(): void {
     if (!this.produitNiveaux || !this.newNiveau.nom?.trim()) {
-      this.presentToast('Nom du niveau obligatoire', 'danger');
+      this.presentToast('Nom de l\'emballage obligatoire', 'danger');
       return;
     }
-    if (!this.newNiveau.facteur || this.newNiveau.facteur < 1) {
-      this.presentToast('Facteur doit être >= 1', 'danger');
+    // Le facteur n'est requis que si un parent est sélectionné
+    if (this.newNiveau.parentId && (!this.newNiveau.facteur || this.newNiveau.facteur < 1)) {
+      this.presentToast('La quantité doit être >= 1', 'danger');
       return;
     }
     if (!this.newNiveau.prixVente || this.newNiveau.prixVente <= 0) {
       this.presentToast('Prix de vente obligatoire', 'danger');
       return;
     }
-    this.niveauService.creer(this.produitNiveaux.id, this.newNiveau).subscribe({
+    const payload: Partial<ProduitNiveau> = {
+      nom: this.newNiveau.nom,
+      parentId: this.newNiveau.parentId || undefined,
+      facteur: this.newNiveau.parentId ? (this.newNiveau.facteur || 1) : 1,
+      prixAchat: this.newNiveau.prixAchat || 0,
+      prixVente: this.newNiveau.prixVente
+    };
+    this.niveauService.creer(this.produitNiveaux.id, payload).subscribe({
       next: () => {
         this.presentToast('Niveau ajouté');
+        this.showAjoutNiveauModal = false;
         this.chargerNiveaux(this.produitNiveaux!.id);
-        this.newNiveau = {
-          nom: '',
-          ordre: (this.newNiveau.ordre || 1) + 1,
-          facteur: 1,
-          prixAchat: 0,
-          prixVente: 0
-        };
+        this.resetNewNiveau();
       },
       error: error => this.presentToast(error.message || 'Ajout impossible', 'danger')
     });
+  }
+
+  private resetNewNiveau(): void {
+    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
+  }
+
+  decomposerNiveau(niveau: ProduitNiveau): void {
+    const parentNom = this.niveauService.nomParent(niveau, this.niveaux);
+    this.niveauService.decomposer(niveau.id!).subscribe({
+      next: result => {
+        this.presentToast(result.message || `1 ${parentNom || niveau.nom} ouvert`);
+        this.chargerNiveaux(this.produitNiveaux!.id);
+      },
+      error: e => this.presentToast(e.message || 'Ouverture impossible', 'danger')
+    });
+  }
+
+  nomParentNiveau(niveau: ProduitNiveau): string {
+    return this.niveauService.nomParent(niveau, this.niveaux);
+  }
+
+  labelFacteurNiveau(niveau: ProduitNiveau): string {
+    return this.niveauService.labelFacteur(niveau, this.niveaux);
+  }
+
+  // Retourne l'enfant direct d'un niveau (pour bouton "Ouvrir")
+  niveauEnfantDirect(parentId?: number): ProduitNiveau | null {
+    if (!parentId) return null;
+    return this.niveaux.find(n => n.parentId === parentId) || null;
   }
 
   ajusterStockNiveau(niveau: ProduitNiveau, stock: number): void {
@@ -371,7 +413,14 @@ export class ProductsPage implements OnInit {
 
   startEditNiveau(niveau: ProduitNiveau): void {
     this.editingNiveauId = niveau.id!;
-    this.editNiveau = { nom: niveau.nom, ordre: niveau.ordre, facteur: niveau.facteur, prixAchat: niveau.prixAchat, prixVente: niveau.prixVente };
+    this.editNiveau = {
+      nom: niveau.nom,
+      parentId: niveau.parentId,
+      facteur: niveau.facteur,
+      prixAchat: niveau.prixAchat,
+      prixVente: niveau.prixVente,
+      stock: niveau.stock
+    };
   }
 
   cancelEditNiveau(): void {
@@ -460,6 +509,97 @@ export class ProductsPage implements OnInit {
       bio: false,
       typeVente: 'UNITE'
     };
+  }
+
+  telechargerStockPdf(): void {
+    const shop = this.boutiqueService.getInfo();
+    const date = new Date().toLocaleDateString('fr-FR');
+    const liste = this.filtered.length ? this.filtered : this.allProducts;
+    const totalArticles = liste.reduce((s, p) => s + (p.quantite || 0), 0);
+    const valeurTotale = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixVente || 0), 0);
+
+    const qrData = encodeURIComponent('Stock ' + (shop.nom || '') + ' ' + date + ' ' + liste.length + ' produits');
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=' + qrData;
+
+    const lignes = liste.map((p, i) => {
+      const stockColor = p.quantite <= 0 ? '#ef4444' : (p.stockFaible ? '#d97706' : '#16a34a');
+      const stockLabel = p.quantite <= 0 ? 'Rupture' : (p.stockFaible ? 'Faible' : 'OK');
+      return '<tr style="background:' + (i % 2 === 0 ? '#fff' : '#f8fafc') + '">' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;font-weight:600">' + p.nom + '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;color:#64748b">' + (p.categorieNom || p.categorie?.nom || '—') + '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:center">' +
+        '<span style="background:' + stockColor + '22;color:' + stockColor + ';border-radius:4px;padding:2px 8px;font-weight:700;font-size:11px">' + (p.quantite || 0) + ' · ' + stockLabel + '</span>' +
+        '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right">' + this.money(p.prixAchat || 0) + '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;font-weight:700">' + this.money(p.prixVente || 0) + '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;color:#1d4ed8">' + this.money((p.quantite || 0) * (p.prixVente || 0)) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Stock Produits</title>' +
+      '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px;color:#1e293b}' +
+      '.sheet{background:#fff;max-width:960px;margin:0 auto;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.08);overflow:hidden}' +
+      '.hdr{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;padding:24px 32px;display:flex;justify-content:space-between;align-items:flex-start}' +
+      '.hdr h1{font-size:22px;font-weight:900;margin-bottom:4px}.hdr p{font-size:12px;opacity:.75;margin-top:3px}' +
+      '.body{padding:24px 32px}' +
+      '.kpis{display:flex;gap:12px;margin-bottom:20px}' +
+      '.kpi{flex:1;border-radius:10px;padding:14px 16px;text-align:center}' +
+      '.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.75;margin-bottom:4px}' +
+      '.kpi-val{font-size:18px;font-weight:900}' +
+      '.kpi--blue{background:#dbeafe;color:#1d4ed8}.kpi--slate{background:#f1f5f9;color:#475569}.kpi--green{background:#dcfce7;color:#15803d}' +
+      'table{width:100%;border-collapse:collapse}thead tr{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff}' +
+      'thead th{padding:9px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;border:1px solid rgba(255,255,255,.1)}' +
+      '.ftr{background:#eff6ff;padding:14px 32px;font-size:11px;color:#1e40af;text-align:center}' +
+      '.btn-bar{display:flex;gap:8px;margin-bottom:16px}' +
+      '.btn-print{background:#1d4ed8;color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}' +
+      '.btn-close{background:#64748b;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}' +
+      '@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}' +
+      '</style></head><body>' +
+      '<div class="sheet">' +
+      '<div class="hdr"><div><h1>Stock Produits</h1><p>' + (shop.nom || 'Ges Boutique') + '</p><p>Genere le ' + date + '</p></div>' +
+      '<div style="text-align:right"><img src="' + qrUrl + '" width="80" height="80" style="border-radius:6px;background:#fff;padding:3px" alt="QR"></div></div>' +
+      '<div class="body">' +
+      '<div class="btn-bar"><button class="btn-print" onclick="window.print()">Imprimer / PDF</button><button class="btn-close" onclick="window.close()">Fermer</button></div>' +
+      '<div class="kpis">' +
+      '<div class="kpi kpi--blue"><div class="kpi-lbl">Produits</div><div class="kpi-val">' + liste.length + '</div></div>' +
+      '<div class="kpi kpi--slate"><div class="kpi-lbl">Total articles</div><div class="kpi-val">' + totalArticles + '</div></div>' +
+      '<div class="kpi kpi--green"><div class="kpi-lbl">Valeur stock</div><div class="kpi-val">' + this.money(valeurTotale) + '</div></div>' +
+      '</div>' +
+      (liste.length ? '<table><thead><tr><th>Produit</th><th>Categorie</th><th style="text-align:center">Stock</th><th style="text-align:right">P. Achat</th><th style="text-align:right">P. Vente</th><th style="text-align:right">Valeur</th></tr></thead><tbody>' + lignes + '</tbody></table>' : '<p style="text-align:center;color:#64748b;padding:24px">Aucun produit</p>') +
+      '</div><div class="ftr">' + (shop.nom || 'Ges Boutique') + ' · Stock · ' + date + ' · ' + liste.length + ' produit(s)</div></div>' +
+      '</body></html>';
+
+    this.openLocalOverlay(html);
+  }
+
+  private openLocalOverlay(html: string): void {
+    document.getElementById('products-pdf-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'products-pdf-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+    const btnFloat = document.createElement('button');
+    btnFloat.textContent = '✕';
+    btnFloat.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;font-weight:700;cursor:pointer;z-index:2;line-height:1';
+    btnFloat.addEventListener('click', () => overlay.remove());
+    overlay.appendChild(btnFloat);
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f0f4f8';
+    frame.setAttribute('srcdoc', html);
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1d4ed8;padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap';
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#fff;color:#1d4ed8;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnClose.addEventListener('click', () => overlay.remove());
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer';
+    btnPrint.style.cssText = 'background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+    overlay.appendChild(frame);
+    overlay.appendChild(bar);
+    document.body.appendChild(overlay);
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {

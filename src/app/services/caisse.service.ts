@@ -84,16 +84,21 @@ export interface CreditInfo {
   venteId: number;
   numeroVente: string;
   clientNom: string;
+  clientPrenom?: string;
   clientTelephone?: string;
   montantTotal: number;
   montantVerse: number;
   montantRestant: number;
+  dateOperation?: string;
   dateEcheance?: string;
+  dateReglement?: string;
   estReglee?: boolean;
   enRetard?: boolean;
   joursRetard?: number;
   venteAnnulee?: boolean;
   progression?: number;
+  regleParNom?: string;
+  vendeurNom?: string;
 }
 
 export interface SituationCredits {
@@ -110,6 +115,8 @@ export interface ReglementCreditRequest {
   utilisateurId?: number;
   modePaiement: string;
   referencePaiement?: string;
+  motif?: string;
+  referenceGroupe?: string;
 }
 
 export interface StatistiquesCaisse {
@@ -196,13 +203,23 @@ export class CaisseService {
   }
 
   getCreditsNonRegles(): Observable<CreditInfo[]> {
-    return this.http.get<any>(`${this.apiUrl}/credits`).pipe(
+    return this.http.get<any>(`${environment.apiUrl}/ventes/credits/non-regles`).pipe(
       map(response => {
         const raw = this.extractList<any>(response, 'credits');
         return raw.filter((c: any) => !c.venteAnnulee && !c.annulee)
                   .map((c: any) => this.enrichirCredit(c));
       }),
       catchError(error => this.handleError(error, 'récupérer les crédits'))
+    );
+  }
+
+  getCreditsRegles(): Observable<CreditInfo[]> {
+    return this.http.get<any>(`${environment.apiUrl}/ventes/credits/regles`).pipe(
+      map(response => {
+        const raw = this.extractList<any>(response, 'credits');
+        return raw.map((c: any) => this.enrichirCredit(c));
+      }),
+      catchError(error => this.handleError(error, 'récupérer les crédits réglés'))
     );
   }
 
@@ -234,16 +251,20 @@ export class CaisseService {
       venteId,
       numeroVente: c.numeroVente || c.numero || '',
       clientNom: c.clientNom || c.client?.nom || 'Client',
+      clientPrenom: c.clientPrenom || c.client?.prenom || '',
       clientTelephone: c.clientTelephone || c.client?.telephone || '',
       montantTotal,
       montantVerse,
       montantRestant,
       dateEcheance: c.dateEcheance || '',
+      dateReglement: c.dateReglement || '',
       estReglee: !!c.creditRegle || !!c.estReglee || montantRestant <= 0,
-      enRetard,
+      enRetard: !c.creditRegle && enRetard,
       joursRetard,
       progression: montantTotal > 0 ? (montantVerse / montantTotal) * 100 : 0,
-      venteAnnulee: !!c.venteAnnulee || !!c.annulee
+      venteAnnulee: !!c.venteAnnulee || !!c.annulee,
+      regleParNom: c.regleParNom || '',
+      vendeurNom: c.vendeur?.nomComplet || c.vendeurNom || ''
     };
   }
 
@@ -280,6 +301,13 @@ export class CaisseService {
     return this.http.post<any>(`${this.apiUrl}/transfert-banque`, this.withUser(request)).pipe(
       map(response => response?.data || response),
       catchError(error => this.handleError(error, 'transférer vers la banque'))
+    );
+  }
+
+  getPaiementsGroupes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/paiements-groupes`).pipe(
+      map(response => Array.isArray(response) ? response : []),
+      catchError(error => this.handleError(error, 'récupérer les paiements groupés'))
     );
   }
 
