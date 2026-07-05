@@ -69,6 +69,8 @@ export interface OperationCaisse {
   dateOperation: string;
   numeroVente?: string;
   venteAnnulee?: boolean;
+  referenceGroupe?: string;
+  venteCreditId?: number;
 }
 
 export interface CaisseRequest {
