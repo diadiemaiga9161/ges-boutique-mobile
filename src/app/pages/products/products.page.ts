@@ -370,10 +370,6 @@ export class ProductsPage implements OnInit {
     });
   }
 
-  private resetNewNiveau(): void {
-    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
-  }
-
   decomposerNiveau(niveau: ProduitNiveau): void {
     const parentNom = this.niveauService.nomParent(niveau, this.niveaux);
     this.niveauService.decomposer(niveau.id!).subscribe({
