@@ -92,7 +92,7 @@ export class DepenseService {
 
   getTypes(): Observable<TypeDepense[]> {
     return this.http.get<any>(this.typesUrl).pipe(
-      map(r => r.types || []),
+      map(r => Array.isArray(r) ? r : (r.types || [])),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur types')))
     );
   }

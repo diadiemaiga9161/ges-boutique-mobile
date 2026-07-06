@@ -808,6 +808,138 @@ ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5;
 }
 
 // ══════════════════════════════════════════════════
+//  RESPONSIVE — Boutons globaux (toutes pages)
+// ══════════════════════════════════════════════════
+
+// ── Très petit téléphone (≤360px) ────────────────
+@media (max-width: 360px) {
+
+  // ion-button natif Ionic
+  ion-button {
+    font-size: 11px !important;
+    --padding-start: 8px !important;
+    --padding-end: 8px !important;
+  }
+
+  // Boutons action dans les toolbars (icône seule)
+  ion-toolbar ion-button {
+    --padding-start: 6px !important;
+    --padding-end: 6px !important;
+  }
+
+  // Boutons action dans les listes de cartes (classes communes)
+  // Clients : .client-action-btn
+  .client-action-btn {
+    padding: 8px 2px;
+    font-size: 0.65rem;
+    ion-icon { font-size: 1rem; }
+  }
+
+  // Commandes : .cmd-act-btn
+  .cmd-act-btn {
+    font-size: 10px !important;
+    padding: 6px 4px !important;
+    gap: 2px !important;
+    ion-icon { font-size: 13px !important; }
+  }
+
+  // Crédits : .detail-btn, .pay-btn, .action-btn
+  .detail-btn, .pay-btn, .action-btn--groupe {
+    font-size: 10px !important;
+    padding: 6px 4px !important;
+    gap: 2px !important;
+    ion-icon { font-size: 13px !important; }
+  }
+
+  // Inventaire : boutons periode filtres
+  .action-wrap {
+    flex-wrap: wrap;
+    gap: 4px;
+    ion-button { font-size: 10px !important; min-width: unset; }
+  }
+
+  // Promotions : boutons dans listes
+  .form-list ion-button,
+  ion-list ion-button {
+    --padding-start: 6px !important;
+    --padding-end: 6px !important;
+  }
+
+  // FAB bouton flottant : légèrement réduit
+  ion-fab-button {
+    --size: 46px !important;
+  }
+
+  // Hero banner commandes
+  .cmd-hero-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  // ion-segment-button
+  ion-segment-button {
+    font-size: 11px !important;
+    --padding-start: 6px !important;
+    --padding-end: 6px !important;
+  }
+}
+
+// ── Petit téléphone (361px – 414px) ──────────────
+@media (min-width: 361px) and (max-width: 414px) {
+
+  ion-button {
+    font-size: 12px !important;
+  }
+
+  .client-action-btn {
+    padding: 9px 3px;
+    font-size: 0.68rem;
+  }
+
+  .cmd-act-btn {
+    font-size: 11px !important;
+    padding: 7px 5px !important;
+  }
+
+  .detail-btn, .pay-btn, .action-btn--groupe {
+    font-size: 11px !important;
+    padding: 7px 5px !important;
+  }
+
+  ion-segment-button {
+    font-size: 12px !important;
+  }
+}
+
+// ── Tablette (720px+) : agrandissement ───────────
+@media (min-width: 720px) {
+
+  ion-button {
+    font-size: 14px;
+  }
+
+  .client-action-btn {
+    font-size: 0.8rem;
+    padding: 12px 8px;
+    ion-icon { font-size: 1.2rem; }
+  }
+
+  .cmd-act-btn {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .detail-btn, .pay-btn {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  ion-fab-button {
+    --size: 56px;
+  }
+}
+
+// ══════════════════════════════════════════════════
 //  ANIMATION UTILITAIRES
 // ══════════════════════════════════════════════════
 @keyframes fadeUp {
@@ -821,3 +953,56 @@ ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5;
 }
 
 .anim-fade-up { animation: fadeUp 0.28s ease; }
+
+// ══════════════════════════════════════════════════
+//  ION-FOOTER BOUTONS — toujours pleine largeur
+// ══════════════════════════════════════════════════
+ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
+  width: 100%;
+}
+
+// ══════════════════════════════════════════════════
+//  BOUTONS D'ACTION EN BAS DE PAGE (.footer-actions)
+// ══════════════════════════════════════════════════
+.footer-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+
+  ion-button {
+    flex: 1;
+    font-size: 13px;
+  }
+
+  @media (max-width: 360px) {
+    gap: 6px;
+    padding: 10px 12px;
+    ion-button { font-size: 11px; }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE — Complément ≤360px (chips, segments)
+// ══════════════════════════════════════════════════
+@media (max-width: 360px) {
+  // Chips Ionic
+  ion-chip {
+    font-size: 0.72rem !important;
+    height: 26px !important;
+  }
+
+  // Metric label (pas encore couvert)
+  .metric-label { font-size: 0.60rem !important; }
+
+  // hero-value dans le bloc boutons (complément)
+  .hero-card .hero-value { font-size: 1.5rem !important; }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE — Complément 361px–414px (chips)
+// ══════════════════════════════════════════════════
+@media (min-width: 361px) and (max-width: 414px) {
+  ion-chip { font-size: 0.75rem; }
+}

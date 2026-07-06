@@ -133,12 +133,11 @@ export class SalesPage implements OnDestroy {
 
   private loadAll(): void {
     this.loading = true;
-    this.venteService.getAllVentes().subscribe({
-      next: (result: VenteMap[]) => {
-        this.sales = result;
-        this.applyFilter();
-        this.loading = false;
-      },
+    const obs$ = (this.dateDebut && this.dateFin)
+      ? this.venteService.getVentesParPeriode(this.dateDebut, this.dateFin)
+      : this.venteService.getAllVentes();
+    obs$.subscribe({
+      next: (result: VenteMap[]) => { this.sales = result; this.applyFilter(); this.loading = false; },
       error: () => { this.loading = false; }
     });
   }
@@ -263,7 +262,8 @@ export class SalesPage implements OnDestroy {
   // ==================== FACTURE PDF ====================
 
   private naviguerVersPdf(urlRelative: string): void {
-    window.location.href = window.location.origin + urlRelative;
+    const baseUrl = this.boutiqueConfig.getApiBaseUrl();
+    window.open(baseUrl + urlRelative, '_blank');
   }
 
   telechargerFactureVente(vente: VenteMap): void {
@@ -346,8 +346,9 @@ export class SalesPage implements OnDestroy {
 
   telechargerQrVente(vente: VenteMap): void {
     const id = (vente as any)?.factureId || vente?.id;
+    const baseUrl = this.boutiqueConfig.getApiBaseUrl();
     const link = document.createElement('a');
-    link.href = `/api/caisse/factures/${id}/qrcode`;
+    link.href = `${baseUrl}/api/caisse/factures/${id}/qrcode`;
     link.download = `qr-${vente.numeroVente}.png`;
     document.body.appendChild(link);
     link.click();
@@ -415,7 +416,7 @@ export class SalesPage implements OnDestroy {
             try {
               this.venteService.imprimerFacture(sale);
             } catch {
-              this.presentToast('Activez les popups pour imprimer', 'danger');
+              this.presentToast('Erreur lors de l\'ouverture de la facture', 'danger');
             }
           }
         }

@@ -1,5 +1,24 @@
 import { Injectable } from '@angular/core';
 import { AlertController } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
+import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
+
+// Tous les formats supportés par MLKit (Android) et Vision (iOS)
+const TOUS_FORMATS: BarcodeFormat[] = [
+  BarcodeFormat.QrCode,
+  BarcodeFormat.Ean13,
+  BarcodeFormat.Ean8,
+  BarcodeFormat.Code128,
+  BarcodeFormat.Code39,
+  BarcodeFormat.Code93,
+  BarcodeFormat.Codabar,
+  BarcodeFormat.UpcA,
+  BarcodeFormat.UpcE,
+  BarcodeFormat.Itf,
+  BarcodeFormat.DataMatrix,
+  BarcodeFormat.Pdf417,
+  BarcodeFormat.Aztec,
+];
 
 @Injectable({ providedIn: 'root' })
 export class BarcodeService {
@@ -7,19 +26,65 @@ export class BarcodeService {
   constructor(private alertCtrl: AlertController) {}
 
   async scan(): Promise<string | null> {
-    // Essayer d'abord le scan caméra ZXing (fonctionne dans WebView et navigateur)
-    const supported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    if (supported) {
-      const result = await this.scanAvecCamera();
-      if (result !== undefined) return result; // null = annulé, string = code trouvé
+    if (Capacitor.isNativePlatform()) {
+      return this.scanNatif();
     }
-    // Fallback : saisie manuelle
+    // Navigateur web : ZXing
+    const webResult = await this.scanAvecCamera();
+    if (webResult !== undefined) return webResult;
     return this.scanManuel();
   }
 
+  // ── SCAN NATIF (Android MLKit + iOS Vision) ─────────────────────────────
+  private async scanNatif(): Promise<string | null> {
+    try {
+      // Vérifier support (nécessite Google Play Services sur Android)
+      const { supported } = await BarcodeScanner.isSupported();
+      if (!supported) {
+        return this.scanFallbackWeb();
+      }
+
+      // Vérifier / demander permission caméra
+      const { camera } = await BarcodeScanner.checkPermissions();
+      if (camera !== 'granted') {
+        const req = await BarcodeScanner.requestPermissions();
+        if (req.camera !== 'granted') {
+          await this.alertePermission();
+          return null;
+        }
+      }
+
+      // Lancer le scanner natif (affiche UI native plein écran)
+      const { barcodes } = await BarcodeScanner.scan({ formats: TOUS_FORMATS });
+      if (barcodes.length > 0) {
+        return barcodes[0].rawValue ?? null;
+      }
+      return null;
+
+    } catch (err: any) {
+      const msg = String(err?.message || err || '').toLowerCase();
+      // Annulation volontaire de l'utilisateur
+      if (msg.includes('cancel') || msg.includes('dismiss') || msg.includes('user')) {
+        return null;
+      }
+      // Erreur inattendue → fallback caméra web puis saisie manuelle
+      console.warn('[BarcodeService] Scan natif échoué, fallback web:', err);
+      return this.scanFallbackWeb();
+    }
+  }
+
+  private async scanFallbackWeb(): Promise<string | null> {
+    const webResult = await this.scanAvecCamera();
+    if (webResult !== undefined) return webResult;
+    return this.scanManuel();
+  }
+
+  // ── SCAN CAMÉRA WEB (ZXing) ─────────────────────────────────────────────
   private scanAvecCamera(): Promise<string | null | undefined> {
     return new Promise(async (resolve) => {
-      // Créer l'overlay plein écran
+      const supported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      if (!supported) { resolve(undefined); return; }
+
       const overlay = document.createElement('div');
       overlay.id = 'zxing-overlay';
       overlay.innerHTML = `
@@ -47,18 +112,10 @@ export class BarcodeService {
           .zx-line {
             position: absolute; left: 10px; right: 10px; height: 2px;
             background: linear-gradient(90deg, transparent, #1a56db, transparent);
-            animation: zxscan 2s ease-in-out infinite;
-            top: 50%;
+            animation: zxscan 2s ease-in-out infinite; top: 50%;
           }
-          @keyframes zxscan {
-            0%   { top: 15%; }
-            50%  { top: 80%; }
-            100% { top: 15%; }
-          }
-          .zx-corner {
-            position: absolute; width: 24px; height: 24px;
-            border-color: #fff; border-style: solid; border-width: 0;
-          }
+          @keyframes zxscan { 0% { top: 15%; } 50% { top: 80%; } 100% { top: 15%; } }
+          .zx-corner { position: absolute; width: 24px; height: 24px; border-color: #fff; border-style: solid; border-width: 0; }
           .zx-corner.tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
           .zx-corner.tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
           .zx-corner.bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
@@ -80,10 +137,8 @@ export class BarcodeService {
         <div class="zx-ui">
           <div class="zx-frame">
             <div class="zx-line"></div>
-            <div class="zx-corner tl"></div>
-            <div class="zx-corner tr"></div>
-            <div class="zx-corner bl"></div>
-            <div class="zx-corner br"></div>
+            <div class="zx-corner tl"></div><div class="zx-corner tr"></div>
+            <div class="zx-corner bl"></div><div class="zx-corner br"></div>
           </div>
           <p class="zx-label">Scanner un code-barres ou QR</p>
           <p class="zx-sub">Maintenir l'appareil stable face au code</p>
@@ -105,15 +160,10 @@ export class BarcodeService {
         overlay.remove();
       };
 
-      document.getElementById('zx-btn-cancel')!.addEventListener('click', () => {
-        cleanup(); resolve(null);
-      });
-      document.getElementById('zx-btn-manual')!.addEventListener('click', () => {
-        cleanup(); resolve(undefined); // undefined = passer à saisie manuelle
-      });
+      document.getElementById('zx-btn-cancel')!.addEventListener('click', () => { cleanup(); resolve(null); });
+      document.getElementById('zx-btn-manual')!.addEventListener('click', () => { cleanup(); resolve(undefined); });
 
       try {
-        // Ouvrir la caméra arrière avec autofocus continu
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
@@ -124,23 +174,18 @@ export class BarcodeService {
         video.srcObject = stream;
         controls = { stop: () => stream.getTracks().forEach((t: MediaStreamTrack) => t.stop()) };
 
-        // Activer l'autofocus continu si supporté (Android Chrome/WebView)
         try {
           const track = stream.getVideoTracks()[0];
           await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as any] });
-        } catch { /* non supporté sur iOS/certains appareils — ignoré */ }
+        } catch { /* non supporté sur certains appareils */ }
 
-        await new Promise<void>(r => {
-          video.onloadedmetadata = () => { video.play(); r(); };
-        });
+        await new Promise<void>(r => { video.onloadedmetadata = () => { video.play(); r(); }; });
 
-        // Canvas pour extraire les frames et les envoyer à ZXing
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d')!;
         const { BrowserMultiFormatReader } = await import('@zxing/browser');
         const reader = new BrowserMultiFormatReader();
 
-        // Scan toutes les 200ms — laisse le temps à l'autofocus entre chaque frame
         scanTimer = setInterval(() => {
           if (done) return;
           if (video.readyState < 2 || video.videoWidth === 0) return;
@@ -149,20 +194,18 @@ export class BarcodeService {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           try {
             const result = reader.decodeFromCanvas(canvas);
-            if (result && !done) {
-              cleanup();
-              resolve(result.getText());
-            }
-          } catch { /* pas de code détecté sur ce frame */ }
+            if (result && !done) { cleanup(); resolve(result.getText()); }
+          } catch { /* pas de code sur ce frame */ }
         }, 200);
 
       } catch {
         cleanup();
-        resolve(undefined); // caméra inaccessible → saisie manuelle
+        resolve(undefined);
       }
     });
   }
 
+  // ── SAISIE MANUELLE (fallback final) ────────────────────────────────────
   private async scanManuel(): Promise<string | null> {
     const alert = await this.alertCtrl.create({
       header: 'Code-barres',
@@ -179,5 +222,15 @@ export class BarcodeService {
       return data.values.code.trim();
     }
     return null;
+  }
+
+  private async alertePermission(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Caméra refusée',
+      message: 'Veuillez autoriser l\'accès à la caméra dans les paramètres de l\'application pour scanner des codes.',
+      buttons: ['OK']
+    });
+    await alert.present();
+    await alert.onDidDismiss();
   }
 }

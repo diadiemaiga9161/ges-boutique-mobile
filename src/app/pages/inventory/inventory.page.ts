@@ -5,6 +5,7 @@ import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire
 import { Categorie, ProductService, Produit } from '../../services/product.service';
 import { WebSocketService } from '../../services/websocket.service';
 import { BarcodeService } from '../../services/barcode.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-inventory',
@@ -49,10 +50,14 @@ export class InventoryPage {
     private productsService: ProductService,
     private toastCtrl: ToastController,
     private ws: WebSocketService,
-    private barcodeService: BarcodeService
+    private barcodeService: BarcodeService,
+    private authService: AuthService
   ) {}
 
+  get isVendeur(): boolean { return this.authService.isVendeur(); }
+
   ionViewWillEnter(): void {
+    if (this.isVendeur) this.segment = 'low';
     this.ws.connect();
     this.wsSub = this.ws.subscribeTopic('/topic/stock').subscribe(event => {
       if (event?.data?.produitId != null && event?.data?.quantite != null) {
@@ -81,14 +86,24 @@ export class InventoryPage {
     this.productsService.getAllCategories().subscribe(cats => this.categories = cats);
     this.inventory.obtenirProduitsStockFaible().subscribe(products => this.lowStock = products);
     this.inventory.obtenirStatistiquesInventaire().subscribe(stats => this.stats = stats);
-    this.inventory.obtenirTousMouvements().subscribe({
-      next: movements => {
-        this.movements = movements;
-        this.applyFilters();
-        event?.target?.complete();
-      },
-      error: () => event?.target?.complete()
-    });
+    this.loadMovements(event);
+  }
+
+  private loadMovements(event?: any): void {
+    if (this.dateDebut && this.dateFin) {
+      this.inventory.obtenirMouvementsParDate(
+        this.dateDebut + 'T00:00:00',
+        this.dateFin + 'T23:59:59'
+      ).subscribe({
+        next: movements => { this.movements = movements; this.applyFilters(); event?.target?.complete(); },
+        error: () => event?.target?.complete()
+      });
+    } else {
+      this.inventory.obtenirTousMouvements().subscribe({
+        next: movements => { this.movements = movements; this.applyFilters(); event?.target?.complete(); },
+        error: () => event?.target?.complete()
+      });
+    }
   }
 
   applyFilters(): void {
@@ -151,7 +166,7 @@ export class InventoryPage {
     } else {
       this.dateDebut = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     }
-    this.applyFilters();
+    this.loadMovements();
   }
 
   searchProductsForForm(): void {

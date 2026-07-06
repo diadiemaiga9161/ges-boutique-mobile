@@ -26,10 +26,10 @@ export class CommandesPage {
   clients: Client[] = [];
   isLoading = false;
 
-  statutFilter: '' | 'BROUILLON' | 'VALIDEE' = '';
+  statutFilter: '' | 'BROUILLON' | 'VALIDEE' | 'CREDIT' | 'ANNULEE' = '';
   searchTerm = '';
 
-  // Modal
+  // Modal formulaire
   showModal = false;
   editingId: number | null = null;
   lignesForm: LigneForm[] = [];
@@ -56,6 +56,17 @@ export class CommandesPage {
 
   isSubmitting = false;
   StatutCommande = StatutCommande;
+
+  // Modal règlement individuel
+  showReglementModal = false;
+  commandeSelectionnee: Commande | null = null;
+  montantReglement = 0;
+
+  // Modal règlement groupé
+  showReglementGroupeModal = false;
+  commandesCredit: Commande[] = [];
+  idsSelectionnes: number[] = [];
+  montantReglementGroupe = 0;
 
   constructor(
     private commandeService: CommandeService,
@@ -90,7 +101,13 @@ export class CommandesPage {
 
   appliquerFiltres(): void {
     let liste = [...this.commandes];
-    if (this.statutFilter) liste = liste.filter(c => c.statut === this.statutFilter);
+    if (this.statutFilter === 'CREDIT') {
+      liste = liste.filter(c => c.estCredit && c.montantRestant > 0);
+    } else if (this.statutFilter === 'ANNULEE') {
+      liste = liste.filter((c: any) => c.statut === 'ANNULEE');
+    } else if (this.statutFilter) {
+      liste = liste.filter(c => c.statut === this.statutFilter);
+    }
     if (this.searchTerm.trim()) {
       const t = this.searchTerm.toLowerCase();
       liste = liste.filter(c =>
@@ -114,7 +131,7 @@ export class CommandesPage {
 
   selectionnerProduit(p: Produit): void {
     const existing = this.lignesForm.find(l => l.produitId === p.id);
-    if (existing) { existing.quantite++; }
+    if (existing) { existing.quantite = existing.quantite + 1; }
     else { this.lignesForm.push({ produitId: p.id, produitNom: p.nom, prixOriginal: p.prixVente, prixUnitaire: p.prixVente, quantite: 1 }); }
     this.searchProduit = '';
     this.showProduitDropdown = false;
@@ -253,7 +270,7 @@ export class CommandesPage {
   async valider(commande: Commande): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Valider la commande ?',
-      message: `La commande ${commande.numeroCommande} sera convertie en vente. Le stock sera décrémenté.`,
+      message: `${commande.numeroCommande} sera convertie en vente. Le stock sera décrémenté.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -270,17 +287,47 @@ export class CommandesPage {
     await alert.present();
   }
 
+  // ─── Annuler ───────────────────────────────────────────────────────────────
+
+  async annuler(commande: Commande): Promise<void> {
+    const isValidee = commande.statut === StatutCommande.VALIDEE;
+    const alert = await this.alertCtrl.create({
+      header: 'Annuler la commande ?',
+      message: isValidee
+        ? `${commande.numeroCommande} est validée — la vente liée sera annulée et le stock restauré.`
+        : `Annuler la commande ${commande.numeroCommande} ?`,
+      buttons: [
+        { text: 'Non', role: 'cancel' },
+        {
+          text: 'Oui, annuler',
+          cssClass: 'alert-button-danger',
+          handler: () => {
+            this.commandeService.annuler(commande.id, this.auth.getUserId()).subscribe({
+              next: () => {
+                this.statutFilter = '';
+                this.charger();
+                this.toast(`${commande.numeroCommande} annulée avec succès`, 'success');
+              },
+              error: (e: any) => this.toast(e.error?.message || 'Erreur lors de l\'annulation', 'danger')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   // ─── Supprimer ─────────────────────────────────────────────────────────────
 
   async supprimer(commande: Commande): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: 'Supprimer ?',
+      header: 'Supprimer définitivement ?',
       message: `Supprimer la commande ${commande.numeroCommande} ?`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
           text: 'Supprimer',
-          cssClass: 'alert-danger',
+          cssClass: 'alert-button-danger',
           handler: () => {
             this.commandeService.supprimer(commande.id).subscribe({
               next: () => { this.charger(); this.toast('Commande supprimée', 'success'); },
@@ -293,6 +340,79 @@ export class CommandesPage {
     await alert.present();
   }
 
+  // ─── Facture ───────────────────────────────────────────────────────────────
+
+  imprimerFacture(commande: Commande): void {
+    this.commandeService.imprimerBonCommande(commande);
+  }
+
+  // ─── Règlement individuel ──────────────────────────────────────────────────
+
+  ouvrirReglementIndividuel(commande: Commande): void {
+    this.commandeSelectionnee = commande;
+    this.montantReglement = commande.montantRestant;
+    this.showReglementModal = true;
+  }
+
+  fermerReglementModal(): void {
+    this.showReglementModal = false;
+    this.commandeSelectionnee = null;
+    this.montantReglement = 0;
+  }
+
+  confirmerReglementIndividuel(): void {
+    if (!this.commandeSelectionnee || this.montantReglement <= 0) return;
+    this.commandeService.payerCredit(this.commandeSelectionnee.id, this.montantReglement).subscribe({
+      next: () => {
+        this.fermerReglementModal();
+        this.charger();
+        this.toast('Paiement enregistré', 'success');
+      },
+      error: (e: any) => this.toast(e.error?.message || 'Erreur règlement', 'danger')
+    });
+  }
+
+  // ─── Règlement groupé ──────────────────────────────────────────────────────
+
+  ouvrirReglementGroupe(): void {
+    this.commandesCredit = this.commandes.filter(c => c.estCredit && c.montantRestant > 0);
+    this.idsSelectionnes = this.commandesCredit.map(c => c.id);
+    this.montantReglementGroupe = this.totalCreditsRestants;
+    this.showReglementGroupeModal = true;
+  }
+
+  fermerReglementGroupeModal(): void {
+    this.showReglementGroupeModal = false;
+    this.idsSelectionnes = [];
+    this.montantReglementGroupe = 0;
+  }
+
+  toggleSelectionCredit(id: number): void {
+    const idx = this.idsSelectionnes.indexOf(id);
+    if (idx >= 0) this.idsSelectionnes.splice(idx, 1);
+    else this.idsSelectionnes.push(id);
+  }
+
+  selectionnerTousCredits(): void {
+    if (this.idsSelectionnes.length === this.commandesCredit.length) {
+      this.idsSelectionnes = [];
+    } else {
+      this.idsSelectionnes = this.commandesCredit.map(c => c.id);
+    }
+  }
+
+  confirmerReglementGroupe(): void {
+    if (this.idsSelectionnes.length === 0 || this.montantReglementGroupe <= 0) return;
+    this.commandeService.payerCreditsGroupes(this.idsSelectionnes, this.montantReglementGroupe).subscribe({
+      next: () => {
+        this.fermerReglementGroupeModal();
+        this.charger();
+        this.toast('Règlement groupé enregistré', 'success');
+      },
+      error: (e: any) => this.toast(e.error?.message || 'Erreur règlement groupé', 'danger')
+    });
+  }
+
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   formatMontant(v: number): string { return this.commandeService.formatMontant(v); }
@@ -302,9 +422,11 @@ export class CommandesPage {
   get nbBrouillons(): number { return this.commandes.filter(c => c.statut === StatutCommande.BROUILLON).length; }
   get nbValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).length; }
   get totalValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).reduce((s, c) => s + (c.montantTotal || 0), 0); }
+  get nbCreditsEnCours(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).length; }
+  get totalCreditsRestants(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).reduce((s, c) => s + (c.montantRestant || 0), 0); }
 
   private async toast(message: string, color: string): Promise<void> {
-    const t = await this.toastCtrl.create({ message, duration: 2000, color, position: 'bottom' });
+    const t = await this.toastCtrl.create({ message, duration: 2500, color, position: 'bottom' });
     await t.present();
   }
 }

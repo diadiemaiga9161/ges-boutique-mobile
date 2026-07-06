@@ -9,6 +9,7 @@ import {
 } from '../../services/rapport.service';
 import { CaisseService, CreditInfo, SituationCredits } from '../../services/caisse.service';
 import { RapportWhatsappService } from '../../services/rapport-whatsapp.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-reports',
@@ -35,8 +36,11 @@ export class ReportsPage {
     public reports: RapportService,
     public caisseService: CaisseService,
     private toastCtrl: ToastController,
-    private rapportWA: RapportWhatsappService
+    private rapportWA: RapportWhatsappService,
+    private authService: AuthService
   ) {}
+
+  get isVendeur(): boolean { return this.authService.isVendeur(); }
 
   ionViewWillEnter(): void {
     this.load();

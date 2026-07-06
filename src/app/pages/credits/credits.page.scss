@@ -423,6 +423,21 @@
   ion-icon { font-size: 1rem; }
 }
 
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  ion-icon { font-size: 15px; }
+}
+
 // ─── Infos crédit dans modal ───
 .credit-info-card {
   background: #f8fafc;
@@ -659,3 +674,212 @@
   .credits-list { grid-template-columns: repeat(3, 1fr); }
   .credits-hero { grid-template-columns: repeat(4, 1fr); }
 }
+
+// ─── Onglets statut ───
+.statut-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 12px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+
+  .stab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 9px 6px;
+    border: none;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all .15s;
+    ion-icon { font-size: 0.9rem; }
+
+    &--active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+  }
+}
+
+// ─── Belle barre de recherche ───
+.search-bar-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.search-bar-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  transition: border-color .15s, box-shadow .15s;
+
+  &:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+  }
+}
+
+.search-bar-icon {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 12px 0;
+  font-size: 0.875rem;
+  color: #1e293b;
+
+  &::placeholder { color: #cbd5e1; }
+}
+
+.search-bar-clear {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.retard-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  ion-icon { font-size: 0.85rem; }
+
+  &--active {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    ion-icon { color: #dc2626; }
+  }
+}
+
+// ─── Hero réglés ───
+.hero-stat--regle { background: #f0fdf4; }
+.hero-stat--regle .hs-val { color: #16a34a; }
+
+// ─── Avatar réglé ───
+.avatar--regle { background: #16a34a !important; }
+
+// ─── Badge réglé dans group ───
+.cr-regle {
+  font-size: 0.68rem;
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  ion-icon { font-size: 0.7rem; }
+}
+
+// ─── Prénom client ───
+.group-prenom { color: #475569; font-weight: 400; }
+.group-tel ion-icon { font-size: 0.7rem; vertical-align: middle; }
+
+// ─── Total réglé ───
+.group-total--regle { color: #16a34a !important; }
+
+// ─── Crédit réglé ───
+.credit-item--regle {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.credit-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+
+  &.badge--retard   { background: #fef2f2; color: #dc2626; }
+  &.badge--encours  { background: #eff6ff; color: #1a56db; }
+  &.badge--regle    { background: #f0fdf4; color: #16a34a; }
+}
+
+.credit-date--regle {
+  color: #16a34a !important;
+  ion-icon { color: #16a34a; }
+}
+
+.credit-montant--regle { color: #16a34a !important; }
+
+.fill--regle { background: #16a34a !important; }
+
+// ─── Réglé par / Vendeur ───
+.credit-regle-par,
+.credit-vendeur {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 4px;
+  ion-icon { font-size: 0.8rem; color: #94a3b8; }
+  strong { color: #374151; }
+}
+
+// ─── Statut badge modal ───
+.detail-statut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  ion-icon { font-size: 1rem; }
+
+  &.statut--regle  { background: #f0fdf4; color: #16a34a; }
+  &.statut--retard { background: #fef2f2; color: #dc2626; }
+  &.statut--encours { background: #eff6ff; color: #2563eb; }
+}
+
+// ─── Items réglés dans modal groupé ───
+.groupe-credit-item--regle {
+  opacity: 0.65;
+  cursor: default;
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.gci-date--regle { color: #16a34a !important; }

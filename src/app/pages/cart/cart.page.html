@@ -148,25 +148,25 @@
           </div>
           <div class="ci-right">
             <!-- Contrôle quantité -->
-            <div class="ci-qty" [class.ci-qty--maxed]="item.quantity >= item.product.quantite">
+            <div class="ci-qty" [class.ci-qty--maxed]="item.quantity >= getStockMax(item)">
               <button class="ci-qty-btn" (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null">−</button>
               <ion-input
                 class="ci-qty-input"
                 type="number"
                 min="1"
-                [max]="item.product.quantite"
+                [max]="getStockMax(item)"
                 [(ngModel)]="item.quantity"
                 (ionChange)="clampQty(item)">
               </ion-input>
               <button class="ci-qty-btn"
-                [disabled]="item.quantity >= item.product.quantite"
-                [class.ci-qty-btn--disabled]="item.quantity >= item.product.quantite"
-                (click)="item.quantity < item.product.quantite ? item.quantity = item.quantity + 1 : null">+</button>
+                [disabled]="item.quantity >= getStockMax(item)"
+                [class.ci-qty-btn--disabled]="item.quantity >= getStockMax(item)"
+                (click)="item.quantity < getStockMax(item) ? item.quantity = item.quantity + 1 : null">+</button>
             </div>
             <p class="ci-stock-badge"
-              [class.ci-stock-badge--ok]="item.quantity < item.product.quantite"
-              [class.ci-stock-badge--max]="item.quantity >= item.product.quantite">
-              {{ item.quantity }}/{{ item.product.quantite }}
+              [class.ci-stock-badge--ok]="item.quantity < getStockMax(item)"
+              [class.ci-stock-badge--max]="item.quantity >= getStockMax(item)">
+              {{ item.quantity }}/{{ getStockMax(item) }}
             </p>
             <p class="ci-total">{{ money(totalLine(item)) }}</p>
             <button class="ci-delete" (click)="remove(item.product.id)">
@@ -481,11 +481,13 @@
             <div class="nv-card__tag">
               1 {{ i === 0 ? produitEnAttente?.nom : niveauxDisponibles[i-1].nom }} = {{ n.facteur }} {{ n.nom }}
             </div>
+            <!-- Stock propre du niveau (tri-états) -->
             <div class="nv-card__dispo"
-                 [class.nv-card__dispo--ok]="disponibleNiveau(n, i) > 0"
-                 [class.nv-card__dispo--zero]="disponibleNiveau(n, i) === 0">
-              Disponible : {{ disponibleNiveau(n, i) }}
-              <span *ngIf="(n.stock ?? 0) > 0">&nbsp;({{ n.stock }} en main)</span>
+                 [style.color]="(n.stock ?? 0) > 0 ? '#16a34a' : (disponibleNiveau(n, i) > 0 ? '#d97706' : '#dc2626')"
+                 [style.font-weight]="'600'">
+              <span *ngIf="(n.stock ?? 0) > 0">Stock : {{ n.stock }}</span>
+              <span *ngIf="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) > 0">Cascade disponible ({{ disponibleNiveau(n, i) }} via parent)</span>
+              <span *ngIf="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) === 0">Rupture</span>
             </div>
           </div>
           <div class="nv-card__prix">{{ money(n.prixVente) }}</div>

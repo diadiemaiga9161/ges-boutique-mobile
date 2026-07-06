@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { BoutiqueService } from './boutique.service';
+import { FactureDesignService } from './facture-design.service';
 
 export enum ModePaiement {
   ESPECES = 'ESPECES',
@@ -135,6 +136,9 @@ export interface VenteMap {
   montantVerse?: number;
   montantRestant?: number;
   creditRegle?: boolean;
+  dateReglement?: string;
+  regleParNom?: string;
+  regleParId?: number;
   annulee?: boolean;
 }
 
@@ -172,7 +176,7 @@ export interface CreditsNonReglesResponse {
 export class VenteService {
   private readonly apiUrl = `${environment.apiUrl}/ventes`;
 
-  constructor(private http: HttpClient, private boutiqueService: BoutiqueService) {}
+  constructor(private http: HttpClient, private boutiqueService: BoutiqueService, private designService: FactureDesignService) {}
 
   createVente(vente: VenteRequest): Observable<VenteMap> {
     if (!vente.vendeurId) return throwError(() => new Error('Vendeur invalide'));
@@ -312,11 +316,7 @@ export class VenteService {
       <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
       </body></html>`;
 
-    const win = window.open('', '_blank');
-    if (!win) throw new Error('Impossible d\'ouvrir la fenêtre d\'impression');
-    win.document.write(html);
-    win.document.close();
-    win.onload = () => setTimeout(() => { win.focus(); win.print(); win.addEventListener('afterprint', () => win.close()); }, 300);
+    this.openOverlay(html, true);
   }
 
   exportVentesClientDetailToPDF(ventes: VenteMap[], clientNom: string, clientPrenom = ''): void {
@@ -394,7 +394,7 @@ export class VenteService {
     const params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
     return this.http.get<any>(`${this.apiUrl}/periode`, { params }).pipe(
       map(response => this.mapVenteList(response)),
-      catchError(error => this.handleError(error, 'récupérer les ventes par période'))
+      catchError(() => this.getAllVentes())
     );
   }
 
@@ -501,15 +501,37 @@ export class VenteService {
   }
 
   imprimerFacture(vente: VenteMap): void {
-    const win = window.open('', '_blank');
-    if (!win) throw new Error("Impossible d'ouvrir la fenêtre d'impression");
-    win.document.write(this.buildFactureHtml(vente));
-    win.document.close();
-    win.onload = () => setTimeout(() => {
-      win.focus();
-      win.print();
-      win.addEventListener('afterprint', () => win.close());
-    }, 300);
+    this.openOverlay(this.buildFactureHtml(vente), true);
+  }
+
+  ouvrirFacture(vente: VenteMap): void {
+    this.openOverlay(this.buildFactureHtml(vente), false);
+  }
+
+  private openOverlay(html: string, autoprint: boolean): void {
+    document.getElementById('inv-overlay-root')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-overlay-root';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+    bar.innerHTML = `
+      <button onclick="document.getElementById('inv-overlay-root').remove()" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer">✕ Fermer</button>
+      <button onclick="document.getElementById('inv-frame-root').contentWindow.print()" style="background:#fff;color:#1a56db;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer">🖨 Imprimer / PDF</button>
+    `;
+    const frame = document.createElement('iframe');
+    frame.id = 'inv-frame-root';
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+    if (autoprint) {
+      frame.addEventListener('load', () => setTimeout(() => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      }, 400));
+    }
   }
 
   formatPrice(value: number): string {
@@ -645,130 +667,225 @@ export class VenteService {
   }
 
   private buildFactureHtml(vente: VenteMap): string {
-    const b = this.boutiqueService.getInfo();
-    const rawLogo = b.logoUrl || (b as any).logoPath || '';
-    const makeAbsolute = (url: string): string => {
-      if (!url) return '';
-      if (url.startsWith('http')) return url;
-      if (url.startsWith('data:')) return url;
-      return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
-    const absoluteLogo = makeAbsolute(rawLogo);
-    const logoHtml = absoluteLogo
-      ? `<img src="${absoluteLogo}" alt="Logo" style="height:70px;max-width:200px;margin-bottom:8px;object-fit:contain" crossorigin="anonymous" onerror="this.style.display='none'">`
-      : `<div style="width:64px;height:64px;background:#1a56db;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:800;margin-bottom:8px">${(b.nom || 'B')[0].toUpperCase()}</div>`;
-    const adresseLigne = [b.adresse, b.ville, b.pays].filter(Boolean).join(', ');
+    const design = this.designService.getDesign();
+    const shop = this.boutiqueService.getInfo();
+    const nom   = shop.nom || 'Ges Lafia';
+    const adr   = shop.adresse || '';
+    const ville = shop.ville || '';
+    const tel   = shop.telephone || '';
+    const email = shop.email || '';
+    const rc    = shop.numeroRc || '';
+    const ifu   = shop.numeroIfu || '';
 
-    const rows = vente.produits.map(item => `
-      <tr>
-        <td>${item.produitNom}</td>
-        <td style="text-align:center">${item.quantite}</td>
-        <td style="text-align:right">${this.formatPrice(item.prixUnitaire)}</td>
-        <td style="text-align:center">${item.remisePourcentage ? item.remisePourcentage + '%'
-          : item.remiseMontant ? this.formatPrice(item.remiseMontant) : '-'}</td>
-        <td style="text-align:right"><strong>${this.formatPrice(item.sousTotal)}</strong></td>
-      </tr>`).join('');
+    const rawLogo = shop.logoUrl || (shop as any).logoPath || '';
+    let logoAbsUrl = '';
+    if (rawLogo) {
+      logoAbsUrl = rawLogo.startsWith('http') ? rawLogo : `${window.location.origin}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    }
+    const initial = (nom.charAt(0) || 'B').toUpperCase();
+    const logoBlock = logoAbsUrl
+      ? `<img src="${logoAbsUrl}" alt="${nom}" class="inv-logo-img" onerror="this.style.display='none';document.getElementById('inv-logo-fb').style.display='flex'">
+         <div id="inv-logo-fb" class="inv-logo-fallback" style="display:none">${initial}</div>`
+      : `<div class="inv-logo-fallback">${initial}</div>`;
+
+    const lignes = vente.produits || vente.lignes || [];
+    const rows = lignes.map((item: any, i: number) => {
+      const remise = item.remisePourcentage ? `${item.remisePourcentage}%`
+        : item.remiseMontant ? this.formatPrice(item.remiseMontant) : '—';
+      return `<tr class="${i % 2 === 0 ? 'even' : ''}">
+        <td class="td-name">${item.produitNom || item.designation || 'Produit'}</td>
+        <td class="td-center">${item.quantite}</td>
+        <td class="td-right">${this.formatPrice(item.prixUnitaire)}</td>
+        <td class="td-center td-remise">${remise}</td>
+        <td class="td-right td-bold">${this.formatPrice(item.sousTotal ?? (item.quantite * item.prixUnitaire))}</td>
+      </tr>`;
+    }).join('');
 
     const sousTotal = (vente.montantTotal || 0) + (vente.montantRemiseTotal || 0);
+    const hasRemise = vente.montantRemiseTotal > 0;
+    const totauxRows = `
+      <tr class="subtotal-row">
+        <td colspan="4" class="td-right td-light">Sous-total</td>
+        <td class="td-right">${this.formatPrice(sousTotal)}</td>
+      </tr>
+      ${hasRemise ? `<tr class="subtotal-row"><td colspan="4" class="td-right td-light">Remise</td>
+        <td class="td-right td-red">- ${this.formatPrice(vente.montantRemiseTotal)}</td></tr>` : ''}
+      <tr class="total-row">
+        <td colspan="4" class="td-right td-total-label">TOTAL À PAYER</td>
+        <td class="td-right td-total-val">${this.formatPrice(vente.montantApresRemise || vente.montantTotal)}</td>
+      </tr>
+      ${vente.estCredit && !vente.creditRegle ? `
+      <tr class="subtotal-row"><td colspan="4" class="td-right" style="color:#0e9f6e">Versé</td>
+        <td class="td-right" style="color:#0e9f6e;font-weight:700">${this.formatPrice(vente.montantVerse || 0)}</td></tr>
+      <tr class="subtotal-row"><td colspan="4" class="td-right" style="color:#d97706">Reste à payer</td>
+        <td class="td-right" style="color:#d97706;font-weight:800">${this.formatPrice(vente.montantRestant || 0)}</td></tr>
+      ` : ''}`;
 
-    return `<!doctype html><html><head><meta charset="utf-8">
-      <title>Facture ${vente.numeroVente}</title>
-      <style>
-        *{box-sizing:border-box}
-        body{font-family:Arial,sans-serif;margin:0;padding:24px;color:#1e293b;font-size:13px}
-        .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a56db;padding-bottom:16px;margin-bottom:20px}
-        .brand{text-align:left}
-        .brand h1{color:#1a56db;font-size:22px;margin:0 0 4px}
-        .brand p{margin:2px 0;color:#64748b;font-size:11px}
-        .facture-info{text-align:right}
-        .facture-info h2{color:#1a56db;margin:0 0 4px;font-size:18px}
-        .facture-info p{margin:2px 0;color:#64748b;font-size:11px}
-        .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-        .partie{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px}
-        .partie h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8}
-        .partie p{margin:3px 0;font-size:12px}
-        table{width:100%;border-collapse:collapse;margin-bottom:16px}
-        thead tr{background:#1a56db;color:white}
-        th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase}
-        td{padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px}
-        tbody tr:hover{background:#f8fafc}
-        .totaux{margin-left:auto;width:260px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px}
-        .totaux div{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
-        .totaux .grand-total{border-top:2px solid #1a56db;margin-top:6px;padding-top:8px;font-size:16px;font-weight:700;color:#1a56db}
-        .credit-info{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-top:16px}
-        .credit-info h3{color:#d97706;margin:0 0 6px;font-size:12px}
-        .footer{margin-top:24px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:11px;color:#94a3b8;text-align:center}
-        .btn-print{margin-top:16px;padding:10px 20px;background:#1a56db;color:white;border:0;border-radius:6px;cursor:pointer;font-size:13px}
-        .btn-close-print{margin-top:16px;margin-left:10px;padding:10px 20px;background:#ef4444;color:white;border:0;border-radius:6px;cursor:pointer;font-size:13px}
-        @media print{.btn-print{display:none}.btn-close-print{display:none}.header{-webkit-print-color-adjust:exact;print-color-adjust:exact}thead tr{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-      </style></head>
-      <body>
-        <div class="header">
-          <div class="brand">
-            ${logoHtml}
-            <h1>${b.nom || 'Boutique'}</h1>
-            ${adresseLigne ? `<p>${adresseLigne}</p>` : ''}
-            ${b.telephone ? `<p>Tél: ${b.telephone}</p>` : ''}
-            ${b.email ? `<p>${b.email}</p>` : ''}
-            ${b.numeroRc ? `<p>RC: ${b.numeroRc}</p>` : ''}
-            ${b.numeroIfu ? `<p>IFU: ${b.numeroIfu}</p>` : ''}
-          </div>
-          <div class="facture-info">
-            <h2>FACTURE</h2>
-            <p>N° <strong>${vente.numeroVente}</strong></p>
-            <p>Date: <strong>${this.formatDate(vente.dateVente)}</strong></p>
-            <p>Vendeur: <strong>${vente.vendeurNom || '-'}</strong></p>
-          </div>
+    const qrUrl = `${environment.apiUrl}/ventes/${vente.id}/qrcode`;
+    const qrBlock = `<div style="margin-top:10px;text-align:center">
+      <img src="${qrUrl}" width="72" height="72" style="border-radius:6px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'">
+      <p style="font-size:9px;margin-top:2px;opacity:.65">Scanner pour vérifier</p>
+    </div>`;
+
+    // ── Couleurs selon design ──
+    const p1 = design === 2 ? '#0f172a' : design === 3 ? '#18181b' : '#081648';
+    const p2 = design === 2 ? '#1e293b' : design === 3 ? '#3f3f46' : '#1a56db';
+    const acc = design === 2 ? '#f59e0b' : design === 3 ? '#18181b' : '#1a56db';
+    const accLight = design === 2 ? '#fef3c7' : design === 3 ? '#f4f4f5' : '#eff6ff';
+    const headerGrad = design === 2
+      ? `background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);`
+      : design === 3 ? `background:#ffffff;border-bottom:3px solid #18181b;`
+      : `background:linear-gradient(135deg,#081648 0%,#0d2b85 50%,#1a56db 100%);`;
+    const headerTextColor = design === 3 ? '#18181b' : '#ffffff';
+    const headerSubColor  = design === 3 ? '#52525b' : design === 2 ? '#94a3b8' : 'rgba(255,255,255,0.60)';
+    const logoFallbackBg  = design === 3 ? '#e4e4e7' : 'rgba(255,255,255,0.15)';
+    const logoFallbackColor = design === 3 ? '#18181b' : '#ffffff';
+    const numColor = design === 2 ? '#fbbf24' : design === 3 ? '#52525b' : '#93c5fd';
+    const footerGrad = design === 2
+      ? `background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);`
+      : design === 3 ? `background:#18181b;`
+      : `background:linear-gradient(135deg,#081648 0%,#0d2b85 100%);`;
+    const tblHead = design === 2 ? `background:linear-gradient(135deg,#0f172a,#1e293b);`
+      : design === 3 ? `background:#18181b;`
+      : `background:linear-gradient(135deg,#081648,#1a56db);`;
+    const btnPrint = design === 2 ? `background:linear-gradient(135deg,#0f172a,#f59e0b);`
+      : design === 3 ? `background:#18181b;`
+      : `background:linear-gradient(135deg,#081648,#1a56db);`;
+
+    const creditBadge = vente.estCredit ? `
+      <div style="margin-top:12px;padding:10px 16px;background:rgba(217,119,6,.12);border:1.5px solid rgba(217,119,6,.4);border-radius:8px;color:${headerTextColor}">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.6px;margin-bottom:4px;color:${numColor}">VENTE À CRÉDIT</div>
+        <div style="font-size:12px;opacity:.85">Mode : ${this.getModePaiementLabel(vente.modePaiement)}${vente.referencePaiement ? ' · Réf : ' + vente.referencePaiement : ''}</div>
+        ${vente.dateEcheance ? `<div style="font-size:12px;opacity:.85">Échéance : ${this.formatDate(vente.dateEcheance)}</div>` : ''}
+        <div style="font-size:12px;font-weight:700;margin-top:4px">${vente.creditRegle ? '✓ Réglé' : 'En cours de règlement'}</div>
+      </div>` : '';
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Facture ${vente.numeroVente} — ${nom}</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#f8fafc;padding:32px 24px;font-size:13px;line-height:1.5}
+    .invoice-sheet{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(8,22,72,.10);max-width:820px;margin:0 auto;overflow:hidden}
+    .inv-header{${headerGrad}padding:28px 32px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+    .inv-brand{display:flex;align-items:center;gap:14px}
+    .inv-logo{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .inv-logo-img{width:72px;height:72px;object-fit:contain;border-radius:12px;border:1.5px solid rgba(128,128,128,.3)}
+    .inv-logo-fallback{width:64px;height:64px;border-radius:16px;background:${logoFallbackBg};border:2px solid rgba(128,128,128,.25);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:${logoFallbackColor};flex-shrink:0}
+    .inv-brand-text{color:${headerTextColor}}
+    .inv-brand-name{font-size:22px;font-weight:900;letter-spacing:.5px;margin-bottom:3px}
+    .inv-brand-sub{font-size:12px;color:${headerSubColor};letter-spacing:.4px}
+    .inv-brand-contact{margin-top:8px;font-size:11.5px;color:${headerSubColor};line-height:1.7}
+    .inv-title-block{text-align:right;color:${headerTextColor}}
+    .inv-title{font-size:28px;font-weight:900;letter-spacing:-.5px;text-transform:uppercase;opacity:.9}
+    .inv-number{font-size:16px;font-weight:700;color:${numColor};margin-top:4px;letter-spacing:.5px}
+    .inv-date{font-size:12px;color:${headerSubColor};margin-top:6px}
+    .inv-info{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}
+    .inv-info-block{padding:20px 32px;border-right:1px solid #f1f5f9}
+    .inv-info-block:last-child{border-right:none}
+    .inv-info-label{font-size:10px;font-weight:800;color:${acc};text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+    .inv-info-name{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px}
+    .inv-info-detail{font-size:12.5px;color:#64748b;line-height:1.7}
+    .inv-table-wrap{overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{${tblHead}color:#fff}
+    thead th{padding:11px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+    .th-right{text-align:right}.th-center{text-align:center}
+    tbody tr.even{background:#f8fafc}
+    td{padding:10px 16px;font-size:13px;border-bottom:1px solid #f1f5f9}
+    .td-name{font-weight:600;color:#0f172a}.td-center{text-align:center;color:#475569}
+    .td-right{text-align:right;color:#475569}.td-bold{font-weight:700;color:#0f172a}
+    .td-remise{color:#dc2626;font-weight:600}.td-light{color:#64748b;font-size:12px}.td-red{color:#dc2626;font-weight:700}
+    .subtotal-row td{border-bottom:none;padding:6px 16px}
+    .total-row{background:${accLight}}
+    .total-row td{padding:14px 16px;border-top:2px solid ${acc}}
+    .td-total-label{font-size:13px;font-weight:700;color:${acc};text-transform:uppercase;letter-spacing:.5px}
+    .td-total-val{font-size:20px;font-weight:900;color:${acc}}
+    .inv-footer{${footerGrad}padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .inv-footer-brand{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:12px}
+    .inv-footer-shop-name{font-weight:800;font-size:14px;color:#fff}
+    .inv-footer-thank{font-size:12px;color:rgba(255,255,255,.60);font-style:italic}
+    @media print{
+      @page{size:A4;margin:10mm}
+      body{background:white;padding:0;margin:0}
+      .invoice-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}
+    }
+  </style>
+</head>
+<body>
+<div class="invoice-sheet">
+  <div class="inv-header">
+    <div class="inv-brand">
+      <div class="inv-logo">${logoBlock}</div>
+      <div class="inv-brand-text">
+        <p class="inv-brand-name">${nom}</p>
+        <p class="inv-brand-sub">${shop.description || ville || 'Gestion de boutique'}</p>
+        <div class="inv-brand-contact">
+          ${adr ? `📍 ${adr}${ville ? ', ' + ville : ''}<br>` : ''}
+          ${tel ? `📞 ${tel}<br>` : ''}
+          ${email ? `✉ ${email}<br>` : ''}
+          ${rc ? `RC: ${rc}` : ''}${rc && ifu ? ' · ' : ''}${ifu ? `IFU: ${ifu}` : ''}
         </div>
+      </div>
+    </div>
+    <div class="inv-title-block">
+      <p class="inv-title">Facture</p>
+      <p class="inv-number">${vente.numeroVente}</p>
+      <p class="inv-date">Émise le ${this.formatDate(vente.dateVente)}</p>
+      <p class="inv-date">Vendeur : ${vente.vendeurNom || '—'}</p>
+      ${qrBlock}
+      ${creditBadge}
+    </div>
+  </div>
 
-        <div class="parties" style="grid-template-columns:1fr">
-          <div class="partie">
-            <h3>Facturé à</h3>
-            <p><strong>${vente.clientNom || 'Client divers'} ${vente.clientPrenom || ''}</strong></p>
-            ${vente.clientTelephone ? `<p>Tél: ${vente.clientTelephone}</p>` : ''}
-            ${vente.estCredit && vente.dateEcheance ? `<p>Échéance: ${this.formatDate(vente.dateEcheance)}</p>` : ''}
-          </div>
-        </div>
+  <div class="inv-info">
+    <div class="inv-info-block">
+      <p class="inv-info-label">Facturé à</p>
+      <p class="inv-info-name">${vente.clientNom || 'Client divers'} ${vente.clientPrenom || ''}</p>
+      <div class="inv-info-detail">
+        ${vente.clientTelephone ? `📞 ${vente.clientTelephone}<br>` : ''}
+        ${vente.estCredit && vente.dateEcheance ? `⏰ Échéance : ${this.formatDate(vente.dateEcheance)}` : ''}
+        ${!vente.clientTelephone && !vente.dateEcheance ? 'Aucune coordonnée' : ''}
+      </div>
+    </div>
+    <div class="inv-info-block">
+      <p class="inv-info-label">Détails vente</p>
+      <div class="inv-info-detail">
+        <strong>N° :</strong> ${vente.numeroVente}<br>
+        <strong>Date :</strong> ${this.formatDate(vente.dateVente)}<br>
+        <strong>Mode :</strong> ${this.getModePaiementLabel(vente.modePaiement)}<br>
+        ${vente.referencePaiement ? `<strong>Réf :</strong> ${vente.referencePaiement}<br>` : ''}
+        <strong>Type :</strong> <span style="font-weight:700;color:${vente.estCredit ? '#d97706' : '#0e9f6e'}">${vente.estCredit ? 'Crédit' : 'Comptant'}</span>
+      </div>
+    </div>
+  </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Produit</th>
-              <th style="text-align:center">Qté</th>
-              <th style="text-align:right">Prix unit.</th>
-              <th style="text-align:center">Remise</th>
-              <th style="text-align:right">Total</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
+  <div class="inv-table-wrap">
+    <table>
+      <thead><tr>
+        <th>Désignation</th>
+        <th class="th-center">Qté</th>
+        <th class="th-right">Prix unitaire</th>
+        <th class="th-center">Remise</th>
+        <th class="th-right">Sous-total</th>
+      </tr></thead>
+      <tbody>${rows}${totauxRows}</tbody>
+    </table>
+  </div>
 
-        <div class="totaux">
-          ${sousTotal !== vente.montantTotal ? `<div><span>Sous-total</span><span>${this.formatPrice(sousTotal)}</span></div>` : ''}
-          ${vente.montantRemiseTotal > 0 ? `<div style="color:#dc2626"><span>Remise</span><span>-${this.formatPrice(vente.montantRemiseTotal)}</span></div>` : ''}
-          <div class="grand-total"><span>TOTAL</span><span>${this.formatPrice(vente.montantTotal)}</span></div>
-          ${vente.estCredit && !vente.creditRegle ? `
-            <div style="color:#0e9f6e"><span>Versé</span><span>${this.formatPrice(vente.montantVerse || 0)}</span></div>
-            <div style="color:#d97706;font-weight:700"><span>Reste à payer</span><span>${this.formatPrice(vente.montantRestant || 0)}</span></div>
-          ` : ''}
-        </div>
-
-        ${vente.estCredit ? `
-        <div class="credit-info">
-          <h3>VENTE À CRÉDIT</h3>
-          <p>Mode: ${this.getModePaiementLabel(vente.modePaiement)} ${vente.referencePaiement ? '· Réf: ' + vente.referencePaiement : ''}</p>
-          <p>Statut: <strong>${vente.creditRegle ? 'Réglé intégralement' : 'En cours de règlement'}</strong></p>
-        </div>` : ''}
-
-        <div class="footer">
-          <p>Merci pour votre confiance · ${b.nom || 'Boutique'}${b.adresse ? ' · ' + b.adresse : ''}</p>
-          <p>Document généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-        </div>
-
-        <button class="btn-print" onclick="window.print()">🖨 Imprimer / Enregistrer PDF</button>
-        <button class="btn-close-print" onclick="window.close()">✕ Fermer</button>
-        <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
-      </body></html>`;
+  <div class="inv-footer">
+    <div class="inv-footer-brand">
+      <span class="inv-footer-shop-name">${nom}</span>
+      ${adr || tel ? `<span style="color:rgba(255,255,255,.35);margin:0 6px">·</span><span>${adr}${ville ? ' ' + ville : ''}${tel ? ' — ' + tel : ''}</span>` : ''}
+    </div>
+    <p class="inv-footer-thank">Merci pour votre confiance !</p>
+  </div>
+</div>
+</body>
+</html>`;
   }
 
   private handleError(error: any, context: string): Observable<never> {

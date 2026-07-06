@@ -23,9 +23,11 @@
   <div class="rpt-hero">
     <div class="rpt-hero__deco"></div>
     <p class="rpt-hero__eyebrow">Vue d'ensemble</p>
-    <h1 class="rpt-hero__ca">{{ money(stats?.chiffreAffaire?.journalier || 0) }}</h1>
-    <p class="rpt-hero__label">Chiffre d'affaires aujourd'hui</p>
-    <div class="rpt-hero__benefice" *ngIf="daily">
+    <ng-container *ngIf="!isVendeur">
+      <h1 class="rpt-hero__ca">{{ money(stats?.chiffreAffaire?.journalier || 0) }}</h1>
+      <p class="rpt-hero__label">Chiffre d'affaires aujourd'hui</p>
+    </ng-container>
+    <div class="rpt-hero__benefice" *ngIf="daily && !isVendeur">
       <ion-icon name="trending-up-outline"></ion-icon>
       Bénéfice du jour :
       <strong [class.rpt-benef--pos]="(daily.beneficeTotal || 0) >= 0"
@@ -40,25 +42,27 @@
         <p class="rhk__val">{{ stats?.chiffreAffaire?.totalVentes || 0 }}</p>
         <p class="rhk__lbl">Ventes</p>
       </div>
-      <div class="rhk rhk--sep"></div>
-      <div class="rhk">
-        <p class="rhk__val">{{ money(stats?.chiffreAffaire?.panierMoyen || 0) }}</p>
-        <p class="rhk__lbl">Panier moy.</p>
-      </div>
-      <div class="rhk rhk--sep"></div>
-      <div class="rhk">
-        <p class="rhk__val rpt-warn">{{ stats?.credits?.creditsEnRetard || 0 }}</p>
-        <p class="rhk__lbl">Crédits retard</p>
-      </div>
-      <div class="rhk rhk--sep"></div>
-      <div class="rhk">
-        <p class="rhk__val">{{ money(stats?.inventaire?.valeurTotale || 0) }}</p>
-        <p class="rhk__lbl">Valeur stock</p>
-      </div>
+      <ng-container *ngIf="!isVendeur">
+        <div class="rhk rhk--sep"></div>
+        <div class="rhk">
+          <p class="rhk__val">{{ money(stats?.chiffreAffaire?.panierMoyen || 0) }}</p>
+          <p class="rhk__lbl">Panier moy.</p>
+        </div>
+        <div class="rhk rhk--sep"></div>
+        <div class="rhk">
+          <p class="rhk__val rpt-warn">{{ stats?.credits?.creditsEnRetard || 0 }}</p>
+          <p class="rhk__lbl">Crédits retard</p>
+        </div>
+        <div class="rhk rhk--sep"></div>
+        <div class="rhk">
+          <p class="rhk__val">{{ money(stats?.inventaire?.valeurTotale || 0) }}</p>
+          <p class="rhk__lbl">Valeur stock</p>
+        </div>
+      </ng-container>
     </div>
 
-    <!-- Bouton WhatsApp rapport -->
-    <div style="display:flex; justify-content:center; margin-top:14px; gap:8px; flex-wrap:wrap">
+    <!-- Bouton WhatsApp rapport - admin seulement (contient bénéfices) -->
+    <div *ngIf="!isVendeur" style="display:flex; justify-content:center; margin-top:14px; gap:8px; flex-wrap:wrap">
       <ion-button *ngIf="activeReport==='day'" color="success" size="small" (click)="envoyerWhatsAppJour()">
         <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
         Rapport du jour
@@ -226,7 +230,7 @@
     <!-- ══════════════════════════════════
          CRÉDITS CLIENTS
     ══════════════════════════════════ -->
-    <div class="credits-panel" *ngIf="situationCredits">
+    <div class="credits-panel" *ngIf="situationCredits && !isVendeur">
       <div class="credits-panel__head">
         <div class="credits-panel__icon">
           <ion-icon name="hand-right-outline"></ion-icon>
@@ -298,8 +302,8 @@
         </button>
       </div>
 
-      <!-- Grand CA -->
-      <div class="rs-main-ca">
+      <!-- Grand CA - admin seulement -->
+      <div class="rs-main-ca" *ngIf="!isVendeur">
         <p class="rs-ca-label">CA total</p>
         <p class="rs-ca-val">{{ money(ca) }}</p>
         <p class="rs-ca-sub">{{ ventes }} vente{{ ventes > 1 ? 's' : '' }}</p>
@@ -307,21 +311,21 @@
 
       <!-- 3 métriques -->
       <div class="rs-metrics">
-        <div class="rs-metric">
+        <div class="rs-metric" *ngIf="!isVendeur">
           <div class="rs-metric__icon rs-metric__icon--green">
             <ion-icon name="trending-up-outline"></ion-icon>
           </div>
           <p class="rs-metric__val">{{ money(ca) }}</p>
           <p class="rs-metric__lbl">Rentré</p>
         </div>
-        <div class="rs-metric" *ngIf="remises > 0">
+        <div class="rs-metric" *ngIf="remises > 0 && !isVendeur">
           <div class="rs-metric__icon rs-metric__icon--red">
             <ion-icon name="pricetag-outline"></ion-icon>
           </div>
           <p class="rs-metric__val rs-metric__val--red">-{{ money(remises) }}</p>
           <p class="rs-metric__lbl">Remises</p>
         </div>
-        <div class="rs-metric">
+        <div class="rs-metric" *ngIf="!isVendeur">
           <div class="rs-metric__icon rs-metric__icon--blue">
             <ion-icon name="trending-up-outline"></ion-icon>
           </div>
@@ -365,7 +369,7 @@
             </div>
             <p class="tp-qty">{{ p.quantite }} unité(s) vendue(s)</p>
           </div>
-          <p class="tp-ca">{{ money(p.chiffreAffaire) }}</p>
+          <p class="tp-ca" *ngIf="!isVendeur">{{ money(p.chiffreAffaire) }}</p>
         </div>
       </div>
     </div>
@@ -398,7 +402,7 @@
             </div>
           </div>
           <div class="pm-right">
-            <p class="pm-amount">{{ money(m.montant) }}</p>
+            <p class="pm-amount" *ngIf="!isVendeur">{{ money(m.montant) }}</p>
             <p class="pm-pct">{{ (m.pourcentage || 0).toFixed(1) }}%</p>
           </div>
         </div>

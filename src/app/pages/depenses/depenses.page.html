@@ -331,9 +331,9 @@
           <span *ngIf="editing">{{ 'EXPENSES.ADJUST_INFO' | translate }}</span>
         </div>
 
-        <ion-button expand="block" [color]="editing ? 'warning' : 'danger'" (click)="save()" style="margin-top: 8px">
+        <ion-button expand="block" [color]="editing ? 'warning' : 'primary'" (click)="save()" style="margin-top: 8px">
           <ion-icon name="save-outline" slot="start"></ion-icon>
-          {{ editing ? ('COMMON.SAVE' | translate) : ('EXPENSES.NEW' | translate) }}
+          {{ editing ? ('COMMON.EDIT' | translate) : ('COMMON.ADD' | translate) }}
         </ion-button>
 
       </div>

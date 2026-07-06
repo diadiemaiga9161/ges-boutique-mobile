@@ -262,3 +262,68 @@
   .d-avatar  { width: 56px; height: 56px; font-size: 1.5rem; }
   .montant-row { font-size: 1rem; }
 }
+
+// ── Recherche personne existante dans modal dépôt ──
+.client-search-wrap {
+  background: #f0f4ff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.client-search-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--ion-color-primary);
+  margin-bottom: 8px;
+}
+.client-selected-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1.5px solid var(--ion-color-success);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ion-color-success-shade);
+}
+.client-searchbar {
+  --background: #fff;
+  --border-radius: 10px;
+  padding: 0;
+  margin-bottom: 4px;
+}
+.client-suggestions {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 4px;
+  ion-item { --min-height: 52px; border-bottom: 1px solid #f1f5f9; }
+  ion-item:last-child { border-bottom: none; }
+}
+.client-avatar-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  span { color: #fff; font-weight: 700; font-size: 14px; }
+}
+.client-name { font-size: 14px; font-weight: 600; color: #0f172a; margin: 0; }
+.client-tel { font-size: 12px; color: #64748b; margin: 0; }
+.no-client-hint { font-size: 12px; color: #94a3b8; text-align: center; padding: 8px 0; }
+.client-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  span { font-size: 11px; color: #94a3b8; white-space: nowrap; background: #f0f4ff; padding: 0 6px; }
+  &::before, &::after { content: ''; flex: 1; border-top: 1px solid #cbd5e1; }
+}

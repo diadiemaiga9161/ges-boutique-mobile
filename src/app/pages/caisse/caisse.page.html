@@ -127,6 +127,12 @@
 
     <!-- Onglet Crédits -->
     <section class="stack" *ngIf="segment === 'credits'">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px" *ngIf="credits.length">
+        <ion-button fill="outline" size="small" color="warning" (click)="imprimerCreditsEnCours()">
+          <ion-icon name="print-outline" slot="start"></ion-icon>
+          Imprimer
+        </ion-button>
+      </div>
       <ion-spinner *ngIf="loadingCredits" style="display:block;margin:20px auto"></ion-spinner>
 
       <!-- Règlement crédit EN HAUT -->

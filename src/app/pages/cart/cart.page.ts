@@ -23,6 +23,7 @@ interface CartItem {
   niveauPrixAchat?: number;   // prix achat du niveau (conditionnement)
   niveauNom?: string;         // nom du niveau choisi
   niveauFacteurTotal?: number; // facteur total vers unité de base (ex: 200 pour 1 Carton = 200 Pièces)
+  niveauStockMax?: number;    // stock disponible du niveau sélectionné (pour affichage et validation)
 }
 
 @Component({
@@ -249,22 +250,22 @@ export class CartPage implements OnInit {
     }
   }
 
-  private calculerFacteurTotal(niveaux: ProduitNiveau[], ordreNiveau: number): number {
-    const sorted = [...niveaux].sort((a, b) => a.ordre - b.ordre);
-    const maxOrdre = Math.max(...sorted.map(n => n.ordre));
-    let total = 1;
-    for (const n of sorted) {
-      if (n.ordre >= ordreNiveau && n.ordre < maxOrdre) {
-        total *= n.facteur;
-      }
-    }
-    return total;
+  private calculerFacteurTotal(niveaux: ProduitNiveau[], niveau: ProduitNiveau): number {
+    // Remonte la chaîne parentId pour calculer combien d'unités de base = 1 unité de ce niveau
+    const facteurVersBase = (n: ProduitNiveau): number => {
+      const child = niveaux.find(c => c.parentId === n.id);
+      if (!child) return 1;
+      return child.facteur * facteurVersBase(child);
+    };
+    return facteurVersBase(niveau);
   }
 
   choisirNiveau(niveau: ProduitNiveau): void {
     const product = this.produitEnAttente;
     if (!product) return;
-    const facteurTotal = this.calculerFacteurTotal(this.niveauxDisponibles, niveau.ordre);
+    const facteurTotal = this.calculerFacteurTotal(this.niveauxDisponibles, niveau);
+    const indexNiveau = this.niveauxDisponibles.findIndex(n => n.id === niveau.id);
+    const niveauStockMax = this.disponibleNiveau(niveau, indexNiveau);
     this.showNiveauxVenteModal = false;
     this.produitEnAttente = null;
 
@@ -284,7 +285,8 @@ export class CartPage implements OnInit {
           niveauId: niveau.id,
           niveauPrixAchat: niveau.prixAchat,
           niveauNom: niveau.nom,
-          niveauFacteurTotal: facteurTotal
+          niveauFacteurTotal: facteurTotal,
+          niveauStockMax
         }];
         if (promo) {
           const label = promo.typeReduction === 'POURCENTAGE'
@@ -302,7 +304,8 @@ export class CartPage implements OnInit {
           niveauId: niveau.id,
           niveauPrixAchat: niveau.prixAchat,
           niveauNom: niveau.nom,
-          niveauFacteurTotal: facteurTotal
+          niveauFacteurTotal: facteurTotal,
+          niveauStockMax
         }];
       }
     });
@@ -320,7 +323,8 @@ export class CartPage implements OnInit {
   disponibleNiveau(niveau: ProduitNiveau, index: number | undefined): number {
     const idx = index ?? 0;
     if (idx === 0) {
-      return (niveau.stock ?? 0) + (this.produitEnAttente?.quantite ?? 0) * niveau.facteur;
+      // Stock propre du niveau supérieur uniquement — produit.quantite est séparé
+      return niveau.stock ?? 0;
     }
     const parent = this.niveauxDisponibles[idx - 1];
     return (niveau.stock ?? 0) + ((parent as ProduitNiveau | undefined)?.stock ?? 0) * niveau.facteur;
@@ -366,11 +370,20 @@ export class CartPage implements OnInit {
     this.items = this.items.filter(item => item.product.id !== productId);
   }
 
+  /** Retourne le stock disponible réel : celui du niveau si conditionnement, sinon produit.quantite */
+  getStockMax(item: CartItem): number {
+    if (item.niveauId !== undefined && item.niveauStockMax !== undefined) {
+      return item.niveauStockMax;
+    }
+    return item.product.quantite;
+  }
+
   clampQty(item: CartItem): void {
+    const max = this.getStockMax(item);
     if (item.quantity < 1) item.quantity = 1;
-    if (item.quantity > item.product.quantite) {
-      item.quantity = item.product.quantite;
-      this.presentToast(`Stock maximum : ${item.product.quantite} unité(s)`, 'danger');
+    if (item.quantity > max) {
+      item.quantity = max;
+      this.presentToast(`Stock maximum : ${max} unité(s)`, 'danger');
     }
   }
 
@@ -436,9 +449,10 @@ export class CartPage implements OnInit {
         this.presentToast(`Quantité invalide pour ${item.product.nom}`, 'danger');
         return false;
       }
-      // Si vente par niveau (cascade), le backend vérifie le stock disponible
-      if (!item.niveauId && item.quantity > item.product.quantite) {
-        this.presentToast(`Stock insuffisant pour ${item.product.nom}. Disponible : ${item.product.quantite}`, 'danger');
+      // Si vente par niveau (cascade), vérifier le stock du niveau ; sinon stock principal
+      const max = this.getStockMax(item);
+      if (item.quantity > max) {
+        this.presentToast(`Stock insuffisant pour ${item.product.nom}. Disponible : ${max}`, 'danger');
         return false;
       }
       if (item.customPrice < 0) {
@@ -565,7 +579,7 @@ export class CartPage implements OnInit {
     return icons[mode] ?? 'wallet-outline';
   }
 
-  private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
+  private async presentToast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2400, position: 'top' });
     await toast.present();
   }

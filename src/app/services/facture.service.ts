@@ -5,6 +5,8 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { BoutiqueService } from './boutique.service';
 import { FactureDesignService } from './facture-design.service';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 export type FactureStatut = 'BROUILLON' | 'VALIDE' | 'PAYEE' | 'ANNULEE';
 export type FactureRemiseType = 'POURCENTAGE' | 'MONTANT_FIXE';
@@ -179,22 +181,158 @@ export class FactureService {
   }
 
   ouvrirFacture(facture: Facture): void {
-    const win = window.open('', '_blank');
-    if (!win) throw new Error("Impossible d'ouvrir la fenêtre");
-    win.document.write(this.buildHtml(facture));
-    win.document.close();
+    this.openOverlay(this.buildHtml(facture), false, facture);
   }
 
   imprimerFacture(facture: Facture): void {
-    const win = window.open('', '_blank');
-    if (!win) throw new Error("Impossible d'ouvrir la fenêtre d'impression");
-    win.document.write(this.buildHtml(facture));
-    win.document.close();
-    win.onload = () => setTimeout(() => {
-      win.focus();
-      win.print();
-      win.addEventListener('afterprint', () => win.close());
-    }, 300);
+    this.openOverlay(this.buildHtml(facture), true, facture);
+  }
+
+  async partagerFacture(facture: Facture): Promise<void> {
+    const html = this.buildHtml(facture);
+    const nom = `Facture_${facture.numeroFacture.replace(/[^a-zA-Z0-9]/g, '_')}.html`;
+    try {
+      const b64 = btoa(unescape(encodeURIComponent(html)));
+      const result = await Filesystem.writeFile({
+        path: nom,
+        data: b64,
+        directory: Directory.Cache,
+      });
+      await Share.share({
+        title: `Facture ${facture.numeroFacture}`,
+        text: `Facture ${facture.numeroFacture} — ${this.boutique.getInfo().nom || 'Boutique'}`,
+        url: result.uri,
+        dialogTitle: 'Partager la facture',
+      });
+    } catch {
+      // Fallback : partage texte simple
+      const shop = this.boutique.getInfo();
+      const total = this.formatPrice(facture.montantApresRemise || facture.montantTotal);
+      const client = [facture.clientNom, facture.clientPrenom].filter(Boolean).join(' ') || 'Client divers';
+      const text = `🧾 *Facture ${facture.numeroFacture}*\n📅 ${this.formatDate(facture.dateCreation)}\n👤 ${client}\n💰 Total : ${total}\n🏪 ${shop.nom || 'Boutique'}`;
+      await Share.share({ title: `Facture ${facture.numeroFacture}`, text, dialogTitle: 'Partager' }).catch(() => {});
+    }
+  }
+
+  protected openOverlay(html: string, autoprint: boolean, facture?: Facture): void {
+    document.getElementById('inv-overlay-root')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-overlay-root';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+
+    // Bouton × flottant en haut à droite — toujours accessible même si barre d'état masque le haut
+    const btnFloat = document.createElement('button');
+    btnFloat.textContent = '✕';
+    btnFloat.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;font-weight:700;cursor:pointer;z-index:2;line-height:1';
+    btnFloat.addEventListener('click', () => overlay.remove());
+    overlay.appendChild(btnFloat);
+
+    const frame = document.createElement('iframe');
+    frame.id = 'inv-frame-root';
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+
+    // Barre EN BAS — évite la barre d'état Android/iOS qui masque le haut sur mobile
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-shrink:0;box-shadow:0 -2px 8px rgba(0,0,0,.3);flex-wrap:wrap';
+
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnClose.addEventListener('click', () => overlay.remove());
+
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer';
+    btnPrint.style.cssText = 'background:#fff;color:#1a56db;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+
+    if (facture) {
+      const btnShare = document.createElement('button');
+      btnShare.textContent = '📤 Partager';
+      btnShare.style.cssText = 'background:#25D366;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+      btnShare.addEventListener('click', () => this.partagerFacture(facture));
+      bar.appendChild(btnShare);
+    }
+
+    // iframe d'abord, barre de boutons en bas
+    overlay.appendChild(frame);
+    overlay.appendChild(bar);
+    document.body.appendChild(overlay);
+
+    if (autoprint) {
+      frame.addEventListener('load', () => setTimeout(() => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      }, 400));
+    }
+  }
+
+  genererHTMLDocument(config: {
+    titre: string;
+    sousTitre?: string;
+    colonnes: string[];
+    lignes: string[][];
+    totaux?: string[];
+    pied?: string;
+  }): string {
+    const design = this.designService.getDesign();
+    const couleur = design === 2 ? '#b8860b' : design === 3 ? '#1a1a1a' : '#1a56db';
+    const fond = design === 2 ? '#1a1a2e' : design === 3 ? '#f8f8f8' : '#1e3a5f';
+
+    const entetes = config.colonnes.map(c => `<th style="background:${couleur};color:#fff;padding:8px;text-align:left;border:1px solid #ddd">${c}</th>`).join('');
+    const lignes = config.lignes.map((row, i) =>
+      `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">${row.map(cell => `<td style="padding:7px 8px;border:1px solid #eee;font-size:12px">${cell}</td>`).join('')}</tr>`
+    ).join('');
+    const totaux = config.totaux?.map(t => `<div style="text-align:right;font-weight:600;font-size:13px;padding:4px 0">${t}</div>`).join('') || '';
+    const pied = config.pied ? `<p style="font-size:11px;color:#888;margin-top:16px;text-align:center">${config.pied}</p>` : '';
+
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${config.titre}</title>
+    <style>
+      body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f0f4f8}
+      .doc{background:#fff;border-radius:8px;padding:24px;max-width:900px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+      .header{background:${fond};color:#fff;padding:16px 24px;border-radius:6px;margin-bottom:20px}
+      .header h1{margin:0;font-size:20px;color:${couleur}}
+      .header p{margin:4px 0 0;font-size:12px;opacity:.85}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      .totaux{margin-top:14px;border-top:2px solid ${couleur};padding-top:10px}
+      .btn-bar{display:flex;gap:8px;margin-bottom:16px}
+      .btn-print{background:${couleur};color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+      .btn-close{background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+      @media print{.btn-bar{display:none}body{background:#fff;padding:0}.doc{box-shadow:none}}
+    </style></head><body>
+    <div class="doc">
+      <div class="btn-bar">
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+        <button class="btn-close" onclick="window.close()">✕ Fermer</button>
+      </div>
+      <div class="header">
+        <h1>${config.titre}</h1>
+        ${config.sousTitre ? `<p>${config.sousTitre}</p>` : ''}
+      </div>
+      <table>
+        <thead><tr>${entetes}</tr></thead>
+        <tbody>${lignes}</tbody>
+      </table>
+      <div class="totaux">${totaux}</div>
+      ${pied}
+      <p style="font-size:11px;color:#aaa;text-align:right;margin-top:12px">Généré le ${new Date().toLocaleDateString('fr-FR')} · Ges-Boutique</p>
+    </div>
+    <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
+    </body></html>`;
+  }
+
+  ouvrirDocumentPDF(config: {
+    titre: string;
+    sousTitre?: string;
+    colonnes: string[];
+    lignes: string[][];
+    totaux?: string[];
+    pied?: string;
+  }): void {
+    this.openOverlay(this.genererHTMLDocument(config), false);
   }
 
   formatPrice(value: number): string {
@@ -268,6 +406,125 @@ export class FactureService {
     return [];
   }
 
+  ouvrirRecuPaiementFournisseur(paiement: any, fournisseur: any): void {
+    const shop = this.boutique.getInfo();
+    const nomBoutique = shop.nom || 'Ges Boutique';
+    const datePai = paiement.datePaiement
+      ? new Date(paiement.datePaiement).toLocaleDateString('fr-FR')
+      : new Date().toLocaleDateString('fr-FR');
+    const qrData = encodeURIComponent(
+      `RECU PAIEMENT FOURNISSEUR\nFournisseur: ${fournisseur.nom}\nDate: ${datePai}\nMontant: ${this.formatPrice(paiement.montant)}\nMode: ${paiement.modePaiement || 'ESPECES'}\nRef: ${paiement.reference || '-'}\nBoutique: ${nomBoutique}`
+    );
+    const rows: [string, string][] = [
+      ['Mode de paiement', paiement.modePaiement || 'ESPECES'],
+      ...(paiement.reference ? [['Référence', paiement.reference] as [string, string]] : []),
+      ...(paiement.observation ? [['Observation', paiement.observation] as [string, string]] : []),
+    ];
+    const html = this.buildHtmlRecu({
+      type: 'PAIEMENT FOURNISSEUR', numero: paiement.id ? `PAI-${paiement.id}` : 'PAI-XXX',
+      date: datePai, entite: fournisseur.nom + (fournisseur.code ? ` (${fournisseur.code})` : ''),
+      entiteLabel: 'Fournisseur', telephone: fournisseur.telephone,
+      rows, montant: paiement.montant, montantLabel: 'MONTANT PAYÉ',
+      boutique: nomBoutique, tel: shop.telephone || '', adr: shop.adresse || '', qrData
+    });
+    this.openOverlay(html, false);
+  }
+
+  ouvrirRecuReglementCredit(reglement: any, client: any): void {
+    const shop = this.boutique.getInfo();
+    const nomBoutique = shop.nom || 'Ges Boutique';
+    const dateReg = reglement.datePaiement
+      ? new Date(reglement.datePaiement).toLocaleDateString('fr-FR')
+      : new Date().toLocaleDateString('fr-FR');
+    const clientNom = [client?.prenom, client?.nom].filter(Boolean).join(' ') || client?.nom || 'Client';
+    const qrData = encodeURIComponent(
+      `RECU REGLEMENT CREDIT\nClient: ${clientNom}\nDate: ${dateReg}\nMontant: ${this.formatPrice(reglement.montant)}\nMode: ${reglement.modePaiement || 'ESPECES'}\nBoutique: ${nomBoutique}`
+    );
+    const rows: [string, string][] = [
+      ['Mode de paiement', reglement.modePaiement || 'ESPECES'],
+      ...(reglement.montantRestant != null ? [['Reste dû', this.formatPrice(reglement.montantRestant)] as [string, string]] : []),
+    ];
+    const html = this.buildHtmlRecu({
+      type: 'RÈGLEMENT CRÉDIT', numero: reglement.id ? `REG-${reglement.id}` : 'REG-XXX',
+      date: dateReg, entite: clientNom, entiteLabel: 'Client',
+      telephone: client?.telephone, rows, montant: reglement.montant, montantLabel: 'MONTANT RÉGLÉ',
+      boutique: nomBoutique, tel: shop.telephone || '', adr: shop.adresse || '', qrData
+    });
+    this.openOverlay(html, false);
+  }
+
+  private buildHtmlRecu(c: {
+    type: string; numero: string; date: string; entite: string; entiteLabel: string;
+    telephone?: string; rows: [string, string][]; montant: number; montantLabel: string;
+    boutique: string; tel: string; adr: string; qrData: string;
+  }): string {
+    const design = this.designService.getDesign();
+    const acc = design === 2 ? '#f59e0b' : design === 3 ? '#18181b' : '#1a56db';
+    const hdrGrad = design === 2
+      ? 'linear-gradient(135deg,#0f172a,#1e293b)'
+      : design === 3 ? '#18181b'
+      : 'linear-gradient(135deg,#081648,#1a56db)';
+    const rowsHtml = c.rows.map(([l, v]) =>
+      `<div class="r"><span class="rl">${l}</span><span class="rv">${v}</span></div>`
+    ).join('');
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<title>${c.type} — ${c.numero}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px}
+.sheet{background:#fff;max-width:520px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(8,22,72,.12)}
+.hdr{background:${hdrGrad};color:#fff;padding:28px 24px;text-align:center}
+.hdr-type{font-size:11px;letter-spacing:3px;opacity:.7;text-transform:uppercase;margin-bottom:6px}
+.hdr-title{font-size:24px;font-weight:900;letter-spacing:1px}
+.hdr-num{font-size:12px;opacity:.65;margin-top:6px}
+.body{padding:24px}
+.section{margin-bottom:18px}
+.section-title{font-size:10px;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
+.entity{font-size:17px;font-weight:700;color:#1e293b}
+.entity-sub{font-size:12px;color:#64748b;margin-top:2px}
+.r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9}
+.rl{color:#64748b;font-size:12px}
+.rv{font-weight:600;color:#1e293b;font-size:12px}
+.total-box{background:#eff6ff;border:2px solid ${acc};border-radius:10px;padding:18px;text-align:center;margin:18px 0}
+.total-lbl{font-size:11px;letter-spacing:2px;color:${acc};text-transform:uppercase;margin-bottom:6px}
+.total-val{font-size:32px;font-weight:900;color:${acc}}
+.qr-block{text-align:center;padding:12px 0}
+.qr-block img{border-radius:8px;border:3px solid #e2e8f0}
+.qr-hint{font-size:10px;color:#94a3b8;margin-top:6px}
+.ftr{background:${hdrGrad};color:rgba(255,255,255,.6);text-align:center;padding:14px;font-size:11px}
+@media print{body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}
+</style></head><body>
+<div class="sheet">
+  <div class="hdr">
+    <div class="hdr-type">${c.boutique}</div>
+    <div class="hdr-title">REÇU</div>
+    <div class="hdr-num">${c.type} · ${c.numero} · ${c.date}</div>
+  </div>
+  <div class="body">
+    <div class="section">
+      <div class="section-title">${c.entiteLabel}</div>
+      <div class="entity">${c.entite}</div>
+      ${c.telephone ? `<div class="entity-sub">📞 ${c.telephone}</div>` : ''}
+    </div>
+    <div class="section">
+      <div class="section-title">Détails</div>
+      ${rowsHtml}
+    </div>
+    <div class="total-box">
+      <div class="total-lbl">${c.montantLabel}</div>
+      <div class="total-val">${this.formatPrice(c.montant)}</div>
+    </div>
+    <div class="qr-block">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${c.qrData}" width="110" height="110" alt="QR Code" onerror="this.style.display='none'">
+      <div class="qr-hint">Scanner pour vérifier ce reçu</div>
+    </div>
+    ${c.adr || c.tel ? `<div style="text-align:center;color:#94a3b8;font-size:11px">${[c.boutique, c.adr, c.tel].filter(Boolean).join(' · ')}</div>` : ''}
+  </div>
+  <div class="ftr">Document officiel — Ges Boutique · Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+</div>
+</body></html>`;
+  }
+
   private buildHtml(facture: Facture): string {
     const design = this.designService.getDesign(); // 1=Classique, 2=Moderne, 3=Minimaliste
     const shop  = this.boutique.getInfo();
@@ -285,10 +542,8 @@ export class FactureService {
     const sc = statutColor[facture.statut] || '#64748b';
 
     const rawLogo = shop.logoUrl || shop.logoPath || '';
-    let logoAbsUrl = '';
-    if (rawLogo) {
-      logoAbsUrl = rawLogo.startsWith('http') ? rawLogo : `${window.location.origin}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
-    }
+    // Sur Capacitor, seules les URLs absolues HTTP fonctionnent dans l'iframe
+    const logoAbsUrl = rawLogo.startsWith('http') ? rawLogo : '';
     const initial = (nom.charAt(0) || 'B').toUpperCase();
     const logoBlock = logoAbsUrl
       ? `<img src="${logoAbsUrl}" alt="${nom}" class="inv-logo-img" onerror="this.style.display='none';document.getElementById('inv-logo-fb').style.display='flex'">
@@ -321,9 +576,12 @@ export class FactureService {
         <td class="td-right td-total-val">${this.formatPrice(facture.montantApresRemise || facture.montantTotal)}</td>
       </tr>`;
 
+    const qrInfo = encodeURIComponent(
+      `FACTURE ${facture.numeroFacture}\nDate: ${this.formatDate(facture.dateCreation)}\nClient: ${facture.clientNom || 'Client divers'}\nTotal: ${this.formatPrice(facture.montantApresRemise || facture.montantTotal)}`
+    );
     const qrBlock = `<div style="margin-top:10px;text-align:center">
-      <img src="${environment.apiUrl}/caisse/factures/${facture.id}/qrcode"
-           width="72" height="72" style="border-radius:6px;background:#fff;padding:3px" alt="QR">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${qrInfo}"
+           width="72" height="72" style="border-radius:6px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'">
       <p style="font-size:9px;margin-top:2px;opacity:.65">Scanner pour vérifier</p>
     </div>`;
 
@@ -414,7 +672,12 @@ export class FactureService {
     .print-bar{text-align:center;padding:20px;background:#f8fafc}
     .btn-print{padding:12px 28px;${btnPrint}color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px}
     .btn-close-print{padding:12px 24px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-left:10px}
-    @media print{body{background:white;padding:0}.invoice-sheet{box-shadow:none;border-radius:0}.print-bar{display:none}}
+    @media print{
+      @page{size:A4;margin:10mm}
+      body{background:white;padding:0;margin:0}
+      .invoice-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}
+      .print-bar{display:none}
+    }
   </style>
 </head>
 <body>
@@ -492,7 +755,12 @@ export class FactureService {
   <button class="btn-print" onclick="window.print()">🖨 Imprimer / PDF</button>
   <button class="btn-close-print" onclick="window.close()">✕ Fermer</button>
 </div>
-<script>window.addEventListener('afterprint',function(){window.close()});</script>
+<script>
+(function(){
+  var vw=window.innerWidth||document.documentElement.clientWidth;
+  if(vw<820){var z=(vw/860);document.body.style.zoom=z;document.body.style.webkitTextSizeAdjust='none';}
+})();
+</script>
 </body>
 </html>`;
   }

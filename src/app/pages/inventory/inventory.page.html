@@ -45,13 +45,13 @@
     </section>
 
     <ion-segment [(ngModel)]="segment">
-      <ion-segment-button value="move">Mouvement</ion-segment-button>
+      <ion-segment-button value="move" *ngIf="!isVendeur">Mouvement</ion-segment-button>
       <ion-segment-button value="low">Alertes</ion-segment-button>
       <ion-segment-button value="history">Historique</ion-segment-button>
     </ion-segment>
 
-    <!-- Onglet Mouvement -->
-    <section class="form-panel stack" *ngIf="segment === 'move'">
+    <!-- Onglet Mouvement : admin seulement -->
+    <section class="form-panel stack" *ngIf="segment === 'move' && !isVendeur">
       <ion-segment [(ngModel)]="typeMouvement">
         <ion-segment-button value="ENTREE">Entrée</ion-segment-button>
         <ion-segment-button value="SORTIE">Sortie</ion-segment-button>

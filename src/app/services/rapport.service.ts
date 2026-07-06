@@ -4,6 +4,7 @@ import { catchError, map } from 'rxjs/operators';
 import { CaisseService } from './caisse.service';
 import { ProductService, Produit } from './product.service';
 import { VenteMap, VenteService } from './vente.service';
+import { FactureService } from './facture.service';
 
 export interface StatistiquesGenerales {
   chiffreAffaire: {
@@ -82,7 +83,8 @@ export class RapportService {
   constructor(
     private ventes: VenteService,
     private products: ProductService,
-    private caisse: CaisseService
+    private caisse: CaisseService,
+    private factureService: FactureService
   ) {}
 
   obtenirStatistiquesGenerales(): Observable<StatistiquesGenerales> {
@@ -228,37 +230,24 @@ export class RapportService {
 
     const ca = rapport.chiffreAffaireTotal || rapport.resume?.chiffreAffaireTotal || 0;
     const nbVentes = rapport.nombreVentes || rapport.resume?.nombreVentes || 0;
-    const topProduits = (rapport.topProduits || []).slice(0, 10);
+    const topProduits: any[] = (rapport.topProduits || []).slice(0, 10);
 
-    const produitRows = topProduits.map((p: any) => `
-      <tr><td>${p.nom}</td><td>${p.quantite}</td><td>${this.formaterPrixFCFA(p.chiffreAffaire)}</td></tr>
-    `).join('');
+    const lignes = topProduits.map((p: any) => [
+      p.nom || '',
+      String(p.quantite || 0),
+      this.formaterPrixFCFA(p.chiffreAffaire || 0)
+    ]);
 
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${titre}</title>
-      <style>body{font-family:Arial,sans-serif;margin:24px;color:#111}
-      h1{color:#0f766e}table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{border:1px solid #ccc;padding:8px;font-size:12px}th{background:#f3f4f6}
-      .metric{display:flex;gap:16px;margin:12px 0}
-      .card{padding:12px;border:1px solid #e5e7eb;border-radius:8px;min-width:120px}
-      .card .label{font-size:11px;color:#6b7280}.card .val{font-size:18px;font-weight:bold;color:#0f766e}
-      @media print{.no-print{display:none}}</style></head><body>
-      <h1>${titre}</h1>
-      <div class="metric">
-        <div class="card"><div class="label">Chiffre d'affaires</div><div class="val">${this.formaterPrixFCFA(ca)}</div></div>
-        <div class="card"><div class="label">Nombre de ventes</div><div class="val">${nbVentes}</div></div>
-      </div>
-      ${topProduits.length ? `<h2>Top produits</h2><table><thead><tr><th>Produit</th><th>Qté</th><th>CA</th></tr></thead><tbody>${produitRows}</tbody></table>` : ''}
-      <p style="margin-top:20px;font-size:11px;color:#9ca3af">Généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-      <button class="no-print" onclick="window.print()">Imprimer</button>
-      <button class="no-print" style="margin-left:10px;padding:8px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.close()">✕ Fermer</button>
-      <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
-      </body></html>`;
-
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.onload = () => setTimeout(() => { win.focus(); win.print(); win.addEventListener('afterprint', () => win.close()); }, 300);
+    this.factureService.ouvrirDocumentPDF({
+      titre,
+      sousTitre: `CA : ${this.formaterPrixFCFA(ca)} · Ventes : ${nbVentes}`,
+      colonnes: topProduits.length > 0 ? ['Produit', 'Quantité', 'CA'] : ['Données'],
+      lignes: topProduits.length > 0 ? lignes : [['Aucun produit dans ce rapport']],
+      totaux: [
+        `Chiffre d'affaires : ${this.formaterPrixFCFA(ca)}`,
+        `Nombre de ventes : ${nbVentes}`
+      ]
+    });
   }
 
   getModePaiementLabel(mode: string): string {

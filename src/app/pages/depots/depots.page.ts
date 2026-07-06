@@ -4,6 +4,7 @@ import {
   DepotGarde,
   DepotGardeService,
   DepotGardeRequest,
+  DepotClient,
   RetraitDepotRequest,
   StatsDepotGarde,
   ClientDepotGroupe,
@@ -32,6 +33,12 @@ export class DepotsPage {
   showDepotModal = false;
   depotForm: DepotGardeRequest & { id: number } = { id: 0, nom: '', prenom: '', numero: '', montant: 0, observation: '' };
 
+  // Sélection personne existante
+  depotClients: DepotClient[] = [];
+  depotClientSearch = '';
+  filteredDepotClients: DepotClient[] = [];
+  selectedDepotClient: DepotClient | null = null;
+
   // Détail
   showDetailModal = false;
   selectedDepot?: DepotGarde;
@@ -55,6 +62,7 @@ export class DepotsPage {
   ionViewWillEnter(): void {
     this.load();
     this.loadStats();
+    this.depotService.getTousClients().subscribe({ next: c => this.depotClients = c, error: () => {} });
   }
 
   load(event?: any): void {
@@ -105,7 +113,36 @@ export class DepotsPage {
 
   openNew(): void {
     this.depotForm = { id: 0, nom: '', prenom: '', numero: '', montant: 0, observation: '' };
+    this.selectedDepotClient = null;
+    this.depotClientSearch = '';
+    this.filteredDepotClients = [];
     this.showDepotModal = true;
+  }
+
+  searchDepotClients(): void {
+    const q = this.depotClientSearch.trim().toLowerCase();
+    this.filteredDepotClients = q
+      ? this.depotClients.filter(c => c.nomComplet.toLowerCase().includes(q) || c.numero.includes(q))
+      : [];
+  }
+
+  selectDepotClient(client: DepotClient): void {
+    this.selectedDepotClient = client;
+    this.depotForm.depotClientId = client.id;
+    this.depotForm.nom = client.nom;
+    this.depotForm.prenom = client.prenom || '';
+    this.depotForm.numero = client.numero;
+    this.depotClientSearch = client.nomComplet;
+    this.filteredDepotClients = [];
+  }
+
+  clearDepotClient(): void {
+    this.selectedDepotClient = null;
+    this.depotForm.depotClientId = undefined;
+    this.depotForm.nom = '';
+    this.depotForm.prenom = '';
+    this.depotForm.numero = '';
+    this.depotClientSearch = '';
   }
 
   editDepot(depot: DepotGarde): void {
