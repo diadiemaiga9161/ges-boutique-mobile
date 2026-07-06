@@ -8,11 +8,12 @@ export interface ProduitNiveau {
   id?: number;
   produitId?: number;
   nom: string;
-  ordre: number;
-  facteur: number;
+  ordre?: number;       // gardé pour compatibilité, optionnel
+  parentId?: number | null;    // null = niveau racine (le plus grand emballage)
+  facteur: number;      // combien de CE niveau dans 1 unité du parent
   prixAchat: number;
   prixVente: number;
-  stock?: number; // stock propre de ce niveau (ex: nombre de cartouches disponibles)
+  stock?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,13 +72,28 @@ export class ProduitNiveauService {
     );
   }
 
-  // Calcule le facteur total d'un niveau par rapport à l'unité de base
-  facteurTotal(niveaux: ProduitNiveau[], ordre: number): number {
-    const sorted = [...niveaux].sort((a, b) => a.ordre - b.ordre);
-    let total = 1;
-    for (const n of sorted) {
-      if (n.ordre < ordre) total *= n.facteur;
-    }
-    return total;
+  // Retourne la chaine depuis la racine jusqu'à un niveau donné
+  buildNiveauxChaine(niveaux: ProduitNiveau[]): ProduitNiveau[] {
+    const roots = niveaux.filter(n => !n.parentId);
+    const result: ProduitNiveau[] = [];
+    const addWithChildren = (n: ProduitNiveau) => {
+      result.push(n);
+      niveaux.filter(c => c.parentId === n.id).forEach(addWithChildren);
+    };
+    roots.forEach(addWithChildren);
+    return result;
+  }
+
+  // Nom du parent pour affichage "1 Sachet = 12 Pièces"
+  nomParent(niveau: ProduitNiveau, niveaux: ProduitNiveau[]): string {
+    if (!niveau.parentId) return '';
+    return niveaux.find(n => n.id === niveau.parentId)?.nom || '';
+  }
+
+  // Libellé dynamique du facteur
+  labelFacteur(niveau: ProduitNiveau, niveaux: ProduitNiveau[]): string {
+    const parentNom = this.nomParent(niveau, niveaux);
+    if (!parentNom) return 'Quantité par unité supérieure';
+    return `Combien de ${niveau.nom || '...'} dans 1 ${parentNom} ?`;
   }
 }
