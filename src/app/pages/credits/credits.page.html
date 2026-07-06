@@ -343,9 +343,59 @@
       <p style="color:#888;margin-top:8px">Aucun paiement groupé</p>
     </div>
 
-    <ion-accordion-group *ngIf="!paiementsGroupesLoading && paiementsGroupes.length > 0"
-                         [multiple]="true">
-      <ion-accordion *ngFor="let pg of paiementsGroupes" [value]="pg.referenceGroupe">
+    <!-- Filtres onglet paiements groupés -->
+    <div *ngIf="!paiementsGroupesLoading && paiementsGroupes.length > 0">
+
+      <!-- Barre de recherche -->
+      <ion-searchbar [(ngModel)]="rechercheGroupe" placeholder="Rechercher un client..." debounce="200"></ion-searchbar>
+
+      <!-- Filtres date + client -->
+      <ion-card color="light" style="margin:8px">
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label position="stacked">Du</ion-label>
+                  <ion-input type="date" [(ngModel)]="dateDebutGroupe"></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label position="stacked">Au</ion-label>
+                  <ion-input type="date" [(ngModel)]="dateFinGroupe"></ion-input>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col>
+                <ion-select [(ngModel)]="clientGroupeSelectionne" placeholder="Tous les clients" interface="popover">
+                  <ion-select-option value="">Tous les clients</ion-select-option>
+                  <ion-select-option *ngFor="let c of clientsGroupesUniques" [value]="c">{{ c }}</ion-select-option>
+                </ion-select>
+              </ion-col>
+              <ion-col size="auto">
+                <ion-button fill="clear" color="medium" size="small"
+                  (click)="rechercheGroupe=''; clientGroupeSelectionne=''; dateDebutGroupe=''; dateFinGroupe=''">
+                  <ion-icon name="close-circle-outline"></ion-icon> Effacer
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Compteur résultats -->
+      <p style="text-align:center;color:#666;font-size:0.85rem">{{ paiementsGroupesFiltres.length }} session(s)</p>
+
+      <!-- Message vide après filtrage -->
+      <div *ngIf="paiementsGroupesFiltres.length === 0" class="ion-text-center ion-padding-top">
+        <ion-icon name="search-outline" style="font-size:48px;color:#ccc"></ion-icon>
+        <p style="color:#888;margin-top:8px">Aucun résultat pour ces filtres</p>
+      </div>
+
+      <ion-accordion-group *ngIf="paiementsGroupesFiltres.length > 0" [multiple]="true">
+        <ion-accordion *ngFor="let pg of paiementsGroupesFiltres" [value]="pg.referenceGroupe">
 
         <ion-item slot="header" color="warning">
           <ion-label>
@@ -385,6 +435,8 @@
 
       </ion-accordion>
     </ion-accordion-group>
+
+    </div><!-- fin div filtres groupes -->
 
   </div><!-- fin activeTab === 'groupes' -->
 

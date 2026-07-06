@@ -39,14 +39,22 @@ export class DepenseService {
 
   getAll(): Observable<{ depenses: Depense[]; total: number }> {
     return this.http.get<any>(this.apiUrl).pipe(
-      map(r => ({ depenses: r.depenses || [], total: r.total || 0 })),
+      map(r => {
+        const depenses: Depense[] = r?.data?.depenses || r?.depenses || (Array.isArray(r) ? r : []);
+        const total: number = r?.data?.total ?? r?.total ?? depenses.reduce((s: number, d: any) => s + (d.montant || 0), 0);
+        return { depenses, total };
+      }),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur chargement dépenses')))
     );
   }
 
   getParPeriode(debut: string, fin: string): Observable<{ depenses: Depense[]; total: number }> {
     return this.http.get<any>(`${this.apiUrl}/periode`, { params: { debut, fin } }).pipe(
-      map(r => ({ depenses: r.depenses || [], total: r.total || 0 })),
+      map(r => {
+        const depenses: Depense[] = r?.data?.depenses || r?.depenses || (Array.isArray(r) ? r : []);
+        const total: number = r?.data?.total ?? r?.total ?? depenses.reduce((s: number, d: any) => s + (d.montant || 0), 0);
+        return { depenses, total };
+      }),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur filtre période')))
     );
   }

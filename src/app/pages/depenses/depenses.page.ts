@@ -35,6 +35,10 @@ export class DepensesPage {
   dateDebut = '';
   dateFin = '';
 
+  // Pagination
+  pageActuelle = 1;
+  itemsParPage = 10;
+
   form: DepenseRequest = this.emptyForm();
 
   constructor(
@@ -52,14 +56,18 @@ export class DepensesPage {
 
   load(event?: any): void {
     this.loading = true;
+    this.pageActuelle = 1;
     forkJoin({
       dep: this.depenseService.getAll(),
       sal: this.paiementEmployeService.getTous()
     }).subscribe({
       next: ({ dep, sal }) => {
-        this.depenses = dep.depenses;
-        this.paiementsEmploye = sal.filter(p => p.statut === 'PAYE');
-        this.totalDepenses = dep.total + this.paiementsEmploye.reduce((s, p) => s + p.montant, 0);
+        // Normalisation robuste de la réponse
+        const depenses = (dep as any)?.data?.depenses || (dep as any)?.depenses || (Array.isArray(dep) ? dep : []);
+        const total = (dep as any)?.data?.total || (dep as any)?.total || depenses.reduce((s: number, d: any) => s + (d.montant || 0), 0);
+        this.depenses = depenses;
+        this.paiementsEmploye = (Array.isArray(sal) ? sal : []).filter((p: PaiementEmploye) => p.statut === 'PAYE');
+        this.totalDepenses = total + this.paiementsEmploye.reduce((s, p) => s + p.montant, 0);
         this.loading = false;
         this.calculerTotauxParType();
         event?.target?.complete();
@@ -78,10 +86,14 @@ export class DepensesPage {
       return;
     }
     this.loading = true;
+    this.pageActuelle = 1;
     this.depenseService.getParPeriode(this.dateDebut, this.dateFin).subscribe({
-      next: ({ depenses, total }) => {
+      next: (response: any) => {
+        // Normalisation robuste de la réponse période
+        const depenses = response?.data?.depenses || response?.depenses || (Array.isArray(response) ? response : []);
+        const total = response?.data?.total || response?.total || depenses.reduce((s: number, d: any) => s + (d.montant || 0), 0);
         this.depenses = depenses;
-        this.totalDepenses = total;
+        this.totalDepenses = total + this.paiementsEmploye.reduce((s, p) => s + p.montant, 0);
         this.loading = false;
         this.calculerTotauxParType();
       },
@@ -94,6 +106,7 @@ export class DepensesPage {
     this.dateFin = '';
     this.typeDepenseFiltreSelectionne = '';
     this.moisFiltre = '';
+    this.pageActuelle = 1;
     this.load();
   }
 
@@ -121,12 +134,30 @@ export class DepensesPage {
   get depensesFiltrees(): any[] {
     let liste = this.toutesDepenses;
     if (this.typeDepenseFiltreSelectionne) {
-      liste = liste.filter(d => d.typeDepense === this.typeDepenseFiltreSelectionne);
+      liste = liste.filter(d => (d.typeDepense || '') === this.typeDepenseFiltreSelectionne);
     }
     if (this.moisFiltre) {
       liste = liste.filter(d => d.date && d.date.startsWith(this.moisFiltre));
     }
     return liste;
+  }
+
+  // Pagination
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.depensesFiltrees.length / this.itemsParPage));
+  }
+
+  get depensesPaginees(): any[] {
+    const debut = (this.pageActuelle - 1) * this.itemsParPage;
+    return this.depensesFiltrees.slice(debut, debut + this.itemsParPage);
+  }
+
+  pagePrecedente(): void {
+    if (this.pageActuelle > 1) this.pageActuelle--;
+  }
+
+  pageSuivante(): void {
+    if (this.pageActuelle < this.totalPages) this.pageActuelle++;
   }
 
   get totalFiltre(): number {
@@ -250,7 +281,7 @@ export class DepensesPage {
       next: () => {
         this.showForm = false;
         this.load();
-        this.toast(this.editing ? 'Depense modifiee' : 'Depense creee');
+        this.toast(this.editing ? 'Dépense modifiée' : 'Dépense créée');
       },
       error: e => this.toast(e.message, 'danger')
     });
@@ -258,7 +289,7 @@ export class DepensesPage {
 
   async supprimer(d: Depense): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: 'Supprimer cette depense ?',
+      header: 'Supprimer cette dépense ?',
       message: `${d.nom} — ${this.money(d.montant)}`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
@@ -266,7 +297,7 @@ export class DepensesPage {
           text: 'Supprimer', role: 'destructive',
           handler: () => {
             this.depenseService.supprimer(d.id!).subscribe({
-              next: () => { this.load(); this.toast('Depense supprimee'); },
+              next: () => { this.load(); this.toast('Dépense supprimée'); },
               error: e => this.toast(e.message, 'danger')
             });
           }
@@ -362,7 +393,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
       '<tr style="background:' + (d.sourceExterne ? '#fffbeb' : (i % 2 === 0 ? '#fff' : '#f8fafc')) + '">' +
       '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px">' + (d.date || '') + '</td>' +
       '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;font-weight:600">' + d.nom + (d.sourceExterne ? ' <span style="font-size:10px;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:3px">Salaire</span>' : '') + '</td>' +
-      '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;color:#64748b">' + (d.typeDepense || '') + '</td>' +
+      '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;color:#64748b">' + (d.typeDepense || 'Non défini') + '</td>' +
       '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;color:#64748b">' + (d.motif || '') + (d.periodeDebut ? ' (' + d.periodeDebut + (d.periodeFin ? '→' + d.periodeFin : '') + ')' : '') + '</td>' +
       '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;font-weight:700;color:#dc2626">' + this.money(d.montant) + '</td>' +
       '</tr>'
@@ -430,7 +461,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
     btnClose.addEventListener('click', () => overlay.remove());
 
     const btnPrint = document.createElement('button');
-    btnPrint.textContent = '🖨 Imprimer';
+    btnPrint.textContent = 'Imprimer';
     btnPrint.style.cssText = 'background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
     btnPrint.addEventListener('click', () => frame.contentWindow?.print());
 

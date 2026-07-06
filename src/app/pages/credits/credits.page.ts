@@ -84,6 +84,29 @@ export class CreditsPage {
   paiementsGroupesLoading = false;
   expandedGroupes = new Set<string>();
 
+  // ── Filtres onglet paiements groupés ─────────────────────
+  rechercheGroupe: string = '';
+  dateDebutGroupe: string = '';
+  dateFinGroupe: string = '';
+  clientGroupeSelectionne: string = '';
+
+  get clientsGroupesUniques(): string[] {
+    const noms = (this.paiementsGroupes || []).map((g: any) => g.clientNom || g.client || '').filter(Boolean);
+    return [...new Set<string>(noms)].sort((a: string, b: string) => a.localeCompare(b, 'fr'));
+  }
+
+  get paiementsGroupesFiltres(): any[] {
+    return (this.paiementsGroupes || []).filter((g: any) => {
+      const client = g.clientNom || g.client || '';
+      const date = g.date || g.dateOperation || '';
+      const matchRecherche = !this.rechercheGroupe || client.toLowerCase().includes(this.rechercheGroupe.toLowerCase());
+      const matchClient = !this.clientGroupeSelectionne || client === this.clientGroupeSelectionne;
+      const matchDebut = !this.dateDebutGroupe || date >= this.dateDebutGroupe;
+      const matchFin = !this.dateFinGroupe || date <= this.dateFinGroupe + 'T23:59:59';
+      return matchRecherche && matchClient && matchDebut && matchFin;
+    });
+  }
+
   constructor(
     private caisseService: CaisseService,
     private venteService: VenteService,

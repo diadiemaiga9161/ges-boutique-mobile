@@ -1,14 +1,32 @@
-.total-depense-card {
-  background: linear-gradient(135deg, #dc2626, #ef4444);
+// ── Carte stat totaux ────────────────────────────
+.stat-card {
+  margin: 0 0 8px;
   border-radius: 16px;
-  padding: 18px;
+  overflow: hidden;
+
+  ion-card-content { padding: 0; }
+}
+
+.stat-card--red {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  --color: #ffffff;
   color: #ffffff;
+}
+
+.stat-card--blue {
+  background: linear-gradient(135deg, #1e3a8a, #1a56db);
+  --color: #ffffff;
+  color: #ffffff;
+}
+
+.stat-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 18px 20px;
 }
 
-.td-label {
+.stat-label {
   font-size: 0.72rem;
   opacity: 0.8;
   text-transform: uppercase;
@@ -16,19 +34,30 @@
   margin: 0 0 4px;
 }
 
-.td-value {
+.stat-value {
   font-size: 1.5rem;
   font-weight: 800;
-  margin: 0;
+  margin: 0 0 2px;
   letter-spacing: -0.5px;
 }
 
-.filter-card {
-  background: #ffffff;
+.stat-sub {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.stat-icon {
+  font-size: 2.2rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+// ── Filtres ──────────────────────────────────────
+.filter-ion-card {
+  margin: 0 0 8px;
   border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .filter-dates {
@@ -63,7 +92,10 @@
   background: #f8fafc;
   outline: none;
   font-family: inherit;
-  &:focus { border-color: #dc2626; }
+
+  &:focus {
+    border-color: #dc2626;
+  }
 }
 
 .date-sep {
@@ -73,28 +105,71 @@
   padding-bottom: 6px;
 }
 
-// Carte dépense
-.depense-card {
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e8eef8;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  padding: 12px 14px;
+// ── Résumé par type ──────────────────────────────
+.type-summary-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+
+  .ts-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #1e293b;
+  }
+}
+
+.ts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+// ── Info filtre actif ────────────────────────────
+.filtre-info {
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+  padding: 4px 16px;
   display: flex;
   align-items: center;
+  gap: 4px;
+}
+
+// ── Carte dépense (ion-card) ─────────────────────
+.dep-card {
+  margin: 0 0 10px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8eef8;
+  overflow: hidden;
+}
+
+.dep-card--salary {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+// En-tête de carte
+.dep-card-header {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
+  padding: 12px 14px 8px;
   gap: 10px;
 }
 
-.dc-left {
+.dep-card-header-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex: 1;
   min-width: 0;
 }
 
-.dc-icon {
+.dep-icon-wrap {
   width: 40px;
   height: 40px;
   border-radius: 10px;
@@ -110,39 +185,140 @@
   }
 }
 
-.dc-info { flex: 1; min-width: 0; }
+.dep-icon-wrap--salary {
+  background: #fef3c7;
 
-.dc-nom {
+  ion-icon {
+    color: #d97706;
+  }
+}
+
+.dep-nom {
   font-size: 0.92rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 2px;
+  margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.dc-motif, .dc-date {
-  font-size: 0.73rem;
-  margin: 0;
+.dep-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.dc-right {
+.dep-type-badge {
+  display: inline-block;
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dep-salary-badge {
+  display: inline-block;
+  background: #f59e0b;
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dep-card-header-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
   flex-shrink: 0;
+  gap: 2px;
 }
 
-.dc-montant {
-  font-size: 0.95rem;
+.dep-date {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dep-montant {
+  font-size: 1rem;
   font-weight: 800;
   color: #dc2626;
   margin: 0;
 }
 
-// Info box modal
+// Corps de carte (motif/description)
+.dep-card-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 14px 10px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 2px;
+  padding-top: 8px;
+}
+
+.dep-body-icon {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dep-motif {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+// Footer de carte (badge mode + actions)
+.dep-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 6px 14px;
+  border-top: 1px solid #f1f5f9;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dep-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dep-mode-chip {
+  height: 26px;
+  margin: 0;
+}
+
+.dep-actions {
+  display: flex;
+  align-items: center;
+}
+
+// ── Pagination ───────────────────────────────────
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0 4px;
+}
+
+.pagination-info {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #475569;
+  min-width: 60px;
+  text-align: center;
+}
+
+// ── Info box modal ───────────────────────────────
 .info-box {
   display: flex;
   align-items: center;
@@ -154,7 +330,10 @@
   font-size: 0.82rem;
   color: #1e40af;
 
-  ion-icon { font-size: 1rem; flex-shrink: 0; }
+  ion-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
 
   &--warn {
     background: #fffbeb;
@@ -165,23 +344,23 @@
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  .total-depense-card { padding: 22px 28px; }
-  .td-value           { font-size: 1.9rem; }
+  .stat-inner    { padding: 22px 28px; }
+  .stat-value    { font-size: 1.9rem; }
+  .stat-icon     { font-size: 2.8rem; }
 
-  .filter-card  { padding: 16px; }
-  .filter-dates { flex-wrap: nowrap; gap: 12px; }
+  .filter-dates  { flex-wrap: nowrap; gap: 12px; }
 
-  .depense-card {
-    padding: 16px 18px;
-  }
+  .dep-card-header { padding: 14px 18px 10px; }
+  .dep-card-body   { padding: 8px 18px 12px; }
+  .dep-card-footer { padding: 8px 12px 8px 18px; }
 
-  .dc-icon  { width: 48px; height: 48px; ion-icon { font-size: 1.4rem; } }
-  .dc-nom   { font-size: 1rem; }
-  .dc-montant { font-size: 1.05rem; }
+  .dep-icon-wrap { width: 48px; height: 48px; ion-icon { font-size: 1.4rem; } }
+  .dep-nom       { font-size: 1rem; }
+  .dep-montant   { font-size: 1.1rem; }
 }
 
 // ── Grand écran (1024px+) ─────────────────────────
 @media (min-width: 1024px) {
-  .total-depense-card { padding: 26px 36px; }
-  .td-value           { font-size: 2.2rem; }
+  .stat-inner  { padding: 26px 36px; }
+  .stat-value  { font-size: 2.2rem; }
 }

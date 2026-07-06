@@ -22,24 +22,34 @@
 
   <div class="page-pad stack">
 
-    <!-- === Cartes résumé === -->
-    <div class="summary-row">
-      <div class="total-depense-card">
-        <div>
-          <p class="td-label">{{ 'EXPENSES.TOTAL' | translate }}</p>
-          <p class="td-value">{{ money(totalDepenses) }}</p>
+    <!-- === Carte total principal === -->
+    <ion-card class="stat-card stat-card--red">
+      <ion-card-content>
+        <div class="stat-inner">
+          <div>
+            <p class="stat-label">{{ 'EXPENSES.TOTAL' | translate }}</p>
+            <p class="stat-value">{{ money(totalDepenses) }}</p>
+            <p class="stat-sub">{{ toutesDepenses.length }} {{ 'EXPENSES.RESULTS' | translate }}</p>
+          </div>
+          <ion-icon name="trending-down-outline" class="stat-icon"></ion-icon>
         </div>
-        <ion-icon name="trending-down-outline" style="font-size:2rem; opacity:0.7"></ion-icon>
-      </div>
+      </ion-card-content>
+    </ion-card>
 
-      <div class="total-depense-card total-depense-card--filter" *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
-        <div>
-          <p class="td-label">{{ 'EXPENSES.PERIOD_TOTAL' | translate }}</p>
-          <p class="td-value">{{ money(totalFiltre) }}</p>
+    <!-- Carte total filtré (affiché seulement si filtre actif) -->
+    <ion-card class="stat-card stat-card--blue"
+              *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
+      <ion-card-content>
+        <div class="stat-inner">
+          <div>
+            <p class="stat-label">{{ 'EXPENSES.PERIOD_TOTAL' | translate }}</p>
+            <p class="stat-value">{{ money(totalFiltre) }}</p>
+            <p class="stat-sub">{{ depensesFiltrees.length }} {{ 'EXPENSES.RESULTS' | translate }}</p>
+          </div>
+          <ion-icon name="funnel-outline" class="stat-icon"></ion-icon>
         </div>
-        <ion-icon name="funnel-outline" style="font-size:2rem; opacity:0.7"></ion-icon>
-      </div>
-    </div>
+      </ion-card-content>
+    </ion-card>
 
     <!-- === Filtres === -->
     <ion-card class="filter-ion-card">
@@ -86,7 +96,7 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- === Résumé par type (de la liste filtrée) === -->
+    <!-- === Résumé par type === -->
     <div class="type-summary-card" *ngIf="totauxParType.length > 0">
       <p class="ts-title">
         <ion-icon name="pie-chart-outline" style="vertical-align:middle;margin-right:4px"></ion-icon>
@@ -99,9 +109,10 @@
       </div>
     </div>
 
-    <!-- === Liste === -->
+    <!-- === Spinner === -->
     <ion-spinner *ngIf="loading" style="display:block;margin:2rem auto"></ion-spinner>
 
+    <!-- === État vide === -->
     <div class="empty-state" *ngIf="!loading && depensesFiltrees.length === 0">
       <ion-icon name="trending-down-outline" style="font-size:3rem; color:#cbd5e1"></ion-icon>
       <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
@@ -111,6 +122,7 @@
       </ion-button>
     </div>
 
+    <!-- Info filtre actif -->
     <p class="filtre-info" *ngIf="!loading && (typeDepenseFiltreSelectionne || moisFiltre) && depensesFiltrees.length > 0">
       {{ depensesFiltrees.length }} {{ 'EXPENSES.RESULTS' | translate }}
       <ion-button fill="clear" size="small" color="medium" (click)="reinitialiser()">
@@ -119,35 +131,87 @@
       </ion-button>
     </p>
 
-    <article class="depense-card" *ngFor="let d of depensesFiltrees"
-             [style.background]="d.sourceExterne ? '#fffbeb' : ''">
-      <div class="dc-left">
-        <div class="dc-icon">
-          <ion-icon [name]="d.sourceExterne ? 'people-outline' : 'trending-down-outline'"></ion-icon>
+    <!-- === Liste — cartes ion-card === -->
+    <ion-card class="dep-card"
+              *ngFor="let d of depensesPaginees"
+              [class.dep-card--salary]="d.sourceExterne"
+              color="light">
+
+      <!-- En-tête de carte : type + date + montant -->
+      <div class="dep-card-header">
+        <div class="dep-card-header-left">
+          <div class="dep-icon-wrap" [class.dep-icon-wrap--salary]="d.sourceExterne">
+            <ion-icon [name]="d.sourceExterne ? 'people-outline' : 'trending-down-outline'"></ion-icon>
+          </div>
+          <div>
+            <p class="dep-nom">{{ d.nom }}</p>
+            <div class="dep-badges">
+              <span class="dep-type-badge">{{ (d.typeDepense || 'Non défini') }}</span>
+              <span class="dep-salary-badge" *ngIf="d.sourceExterne">Via Employés</span>
+            </div>
+          </div>
         </div>
-        <div class="dc-info">
-          <p class="dc-nom">{{ d.nom }}</p>
-          <span class="dc-type" *ngIf="d.typeDepense">{{ d.typeDepense }}</span>
-          <span *ngIf="d.sourceExterne" style="font-size:10px;background:#f59e0b;color:#fff;padding:1px 6px;border-radius:4px;margin-left:4px">Via Employés</span>
-          <p class="dc-motif muted">{{ d.motif || ('EXPENSES.NO_REASON' | translate) }}</p>
-          <p class="dc-date muted">{{ d.date }}<span *ngIf="d.periodeDebut"> · {{ d.periodeDebut }}<span *ngIf="d.periodeFin"> → {{ d.periodeFin }}</span></span></p>
+        <div class="dep-card-header-right">
+          <p class="dep-date">{{ d.date }}</p>
+          <p class="dep-montant">{{ money(d.montant) }}</p>
         </div>
       </div>
-      <div class="dc-right">
-        <p class="dc-montant">{{ money(d.montant) }}</p>
-        <ng-container *ngIf="!d.sourceExterne">
-          <ion-button fill="clear" size="small" color="warning" (click)="startEdit(d)">
-            <ion-icon name="create-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-          <ion-button fill="clear" size="small" color="danger" (click)="supprimer(d)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ng-container>
-        <ion-button *ngIf="d.sourceExterne" fill="clear" size="small" color="success" (click)="telechargerRecuSalaire(d)">
-          <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
-        </ion-button>
+
+      <!-- Corps : description/motif -->
+      <div class="dep-card-body" *ngIf="d.motif || d.periodeDebut">
+        <ion-icon name="chatbubble-ellipses-outline" class="dep-body-icon"></ion-icon>
+        <span class="dep-motif">
+          {{ d.motif || '' }}
+          <span *ngIf="d.periodeDebut">
+            {{ d.motif ? ' · ' : '' }}{{ d.periodeDebut }}<span *ngIf="d.periodeFin"> → {{ d.periodeFin }}</span>
+          </span>
+        </span>
       </div>
-    </article>
+
+      <!-- Footer : actions -->
+      <div class="dep-card-footer">
+        <div class="dep-footer-left">
+          <!-- badge mode paiement placeholder — quand disponible dans l'API -->
+          <ion-chip class="dep-mode-chip" outline="true" color="medium">
+            <ion-icon name="cash-outline" style="margin-right:3px;font-size:12px"></ion-icon>
+            <ion-label style="font-size:11px">{{ d.sourceExterne ? 'Paiement employé' : 'Dépense' }}</ion-label>
+          </ion-chip>
+        </div>
+        <ion-buttons class="dep-actions">
+          <ng-container *ngIf="!d.sourceExterne">
+            <ion-button fill="clear" size="small" color="warning" (click)="startEdit(d)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="supprimer(d)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ng-container>
+          <ion-button *ngIf="d.sourceExterne" fill="clear" size="small" color="success"
+                      (click)="telechargerRecuSalaire(d)">
+            <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </div>
+
+    </ion-card>
+
+    <!-- === Pagination === -->
+    <div class="pagination-bar" *ngIf="!loading && depensesFiltrees.length > itemsParPage">
+      <ion-button fill="outline" size="small" color="medium"
+                  [disabled]="pageActuelle <= 1"
+                  (click)="pagePrecedente()">
+        <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <span class="pagination-info">{{ pageActuelle }} / {{ totalPages }}</span>
+      <ion-button fill="outline" size="small" color="medium"
+                  [disabled]="pageActuelle >= totalPages"
+                  (click)="pageSuivante()">
+        <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+
+    <!-- Espace bas pour le FAB -->
+    <div style="height: 80px"></div>
 
   </div>
 </ion-content>
