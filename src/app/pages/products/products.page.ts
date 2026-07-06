@@ -47,7 +47,7 @@ export class ProductsPage implements OnInit {
   niveaux: ProduitNiveau[] = [];
   niveauxChaine: ProduitNiveau[] = [];
   loadingNiveaux = false;
-  newNiveau: Partial<ProduitNiveau> = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0 };
+  newNiveau: Partial<ProduitNiveau> & { parentId: number | null } = { nom: '', parentId: null, facteur: 1, prixAchat: 0, prixVente: 0, stock: 0 };
   editingNiveauId: number | null = null;
   editNiveau: Partial<ProduitNiveau> = {};
   showAjoutNiveauModal = false;
@@ -320,7 +320,16 @@ export class ProductsPage implements OnInit {
   }
 
   resetNewNiveau(): void {
-    this.newNiveau = { nom: '', parentId: undefined, facteur: 1, prixAchat: 0, prixVente: 0, stock: 0 };
+    this.newNiveau = { nom: '', parentId: null, facteur: 1, prixAchat: 0, prixVente: 0, stock: 0 };
+  }
+
+  get labelFacteur(): string {
+    if (this.newNiveau.parentId) {
+      const parent = this.niveaux.find(n => n.id === this.newNiveau.parentId);
+      return `Quantité dans 1 ${parent?.nom || 'unité parent'}`;
+    }
+    const nomProduit = this.produitNiveaux?.nom || 'produit';
+    return `Quantité dans 1 ${nomProduit}`;
   }
 
   onParentChange(): void {
@@ -347,8 +356,7 @@ export class ProductsPage implements OnInit {
       this.presentToast('Nom de l\'emballage obligatoire', 'danger');
       return;
     }
-    // Le facteur n'est requis que si un parent est sélectionné
-    if (this.newNiveau.parentId && (!this.newNiveau.facteur || this.newNiveau.facteur < 1)) {
+    if (!this.newNiveau.facteur || Number(this.newNiveau.facteur) < 1) {
       this.presentToast('La quantité doit être >= 1', 'danger');
       return;
     }
@@ -356,10 +364,11 @@ export class ProductsPage implements OnInit {
       this.presentToast('Prix de vente obligatoire', 'danger');
       return;
     }
+    const parentIdValue = this.newNiveau.parentId ? Number(this.newNiveau.parentId) : null;
     const payload: Partial<ProduitNiveau> = {
       nom: this.newNiveau.nom?.trim(),
-      parentId: this.newNiveau.parentId ? Number(this.newNiveau.parentId) : null as any,
-      facteur: this.newNiveau.parentId ? Math.max(1, Number(this.newNiveau.facteur) || 1) : 1,
+      parentId: parentIdValue as any,
+      facteur: Math.max(1, Number(this.newNiveau.facteur) || 1),
       prixAchat: Number(this.newNiveau.prixAchat) || 0,
       prixVente: Number(this.newNiveau.prixVente) || 0,
       stock: Number(this.newNiveau.stock) || 0,

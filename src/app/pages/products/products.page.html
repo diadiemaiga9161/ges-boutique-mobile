@@ -539,17 +539,16 @@
             [label]="'PRODUCTS.LEVEL_PARENT' | translate"
             labelPlacement="stacked"
             [(ngModel)]="newNiveau.parentId"
-            [placeholder]="'PRODUCTS.LEVEL_NO_PARENT' | translate"
             (ngModelChange)="onParentChange()">
-            <ion-select-option [value]="undefined">{{ 'PRODUCTS.LEVEL_NO_PARENT' | translate }}</ion-select-option>
+            <ion-select-option [value]="null">{{ produitNiveaux?.nom }} — produit principal</ion-select-option>
             <ion-select-option *ngFor="let p of niveaux" [value]="p.id">{{ p.nom }}</ion-select-option>
           </ion-select>
         </ion-item>
 
-        <!-- Facteur — visible uniquement si parent sélectionné -->
-        <ion-item *ngIf="newNiveau.parentId">
+        <!-- Facteur — toujours visible -->
+        <ion-item>
           <ion-input
-            [label]="'PRODUCTS.LEVEL_FACTOR_LABEL' | translate"
+            [label]="labelFacteur"
             labelPlacement="floating"
             type="number"
             [(ngModel)]="newNiveau.facteur"
