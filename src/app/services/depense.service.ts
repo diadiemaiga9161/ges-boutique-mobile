@@ -99,14 +99,14 @@ export class DepenseService {
 
   creerType(nom: string): Observable<TypeDepense> {
     return this.http.post<any>(this.typesUrl, { nom }).pipe(
-      map(r => r.type),
+      map(r => r?.type || r),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur création type')))
     );
   }
 
   modifierType(id: number, nom: string): Observable<TypeDepense> {
     return this.http.put<any>(`${this.typesUrl}/${id}`, { nom }).pipe(
-      map(r => r.type),
+      map(r => r?.type || r),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur modification type')))
     );
   }

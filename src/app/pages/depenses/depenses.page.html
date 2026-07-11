@@ -5,6 +5,10 @@
     </ion-buttons>
     <ion-title>{{ 'EXPENSES.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="ouvrirGestionTypes()" fill="solid" color="light" size="small" style="--border-radius:8px;margin-right:2px">
+        <ion-icon name="pricetag-outline" slot="start"></ion-icon>
+        Types
+      </ion-button>
       <ion-button (click)="ouvrirPdfDepenses()" title="{{ 'COMMON.DOWNLOAD' | translate }} PDF">
         <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -171,26 +175,28 @@
       <!-- Footer : actions -->
       <div class="dep-card-footer">
         <div class="dep-footer-left">
-          <!-- badge mode paiement placeholder — quand disponible dans l'API -->
-          <ion-chip class="dep-mode-chip" outline="true" color="medium">
-            <ion-icon name="cash-outline" style="margin-right:3px;font-size:12px"></ion-icon>
-            <ion-label style="font-size:11px">{{ d.sourceExterne ? 'Paiement employé' : 'Dépense' }}</ion-label>
+          <ion-chip class="dep-mode-chip" outline="true" [color]="d.sourceExterne ? 'warning' : 'danger'">
+            <ion-icon [name]="d.sourceExterne ? 'people-outline' : 'cash-outline'" style="margin-right:3px;font-size:12px"></ion-icon>
+            <ion-label style="font-size:11px">{{ d.sourceExterne ? 'Salaire' : (d.typeDepense || 'Dépense') }}</ion-label>
           </ion-chip>
         </div>
-        <ion-buttons class="dep-actions">
+        <div class="dep-actions">
           <ng-container *ngIf="!d.sourceExterne">
-            <ion-button fill="clear" size="small" color="warning" (click)="startEdit(d)">
-              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            <ion-button fill="outline" size="small" color="warning" (click)="startEdit(d)">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              Modifier
             </ion-button>
-            <ion-button fill="clear" size="small" color="danger" (click)="supprimer(d)">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            <ion-button fill="outline" size="small" color="danger" (click)="supprimer(d)">
+              <ion-icon name="trash-outline" slot="start"></ion-icon>
+              Supprimer
             </ion-button>
           </ng-container>
-          <ion-button *ngIf="d.sourceExterne" fill="clear" size="small" color="success"
+          <ion-button *ngIf="d.sourceExterne" fill="outline" size="small" color="success"
                       (click)="telechargerRecuSalaire(d)">
-            <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
+            <ion-icon name="document-text-outline" slot="start"></ion-icon>
+            Reçu
           </ion-button>
-        </ion-buttons>
+        </div>
       </div>
 
     </ion-card>
@@ -224,13 +230,16 @@
 </ion-fab>
 
 <!-- Modal Gestion Types -->
-<ion-modal [isOpen]="showTypesModal" (didDismiss)="fermerGestionTypes()">
+<ion-modal [isOpen]="showTypesModal" (didDismiss)="fermerGestionTypes()" [breakpoints]="[0, 0.85, 1]" [initialBreakpoint]="0.85">
   <ng-template>
     <ion-header>
-      <ion-toolbar>
-        <ion-title>Types de dépenses</ion-title>
+      <ion-toolbar color="danger">
+        <ion-title>
+          <ion-icon name="pricetag-outline" style="vertical-align:middle;margin-right:6px"></ion-icon>
+          Types de dépenses
+        </ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="fermerGestionTypes()">
+          <ion-button (click)="fermerGestionTypes()" fill="clear" color="light">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -239,40 +248,81 @@
     <ion-content class="ion-padding">
 
       <!-- Erreur -->
-      <ion-note color="danger" *ngIf="typesError" style="display:block; padding: 8px; margin-bottom: 12px;">
+      <div class="types-error-box" *ngIf="typesError">
+        <ion-icon name="alert-circle-outline"></ion-icon>
         {{ typesError }}
-      </ion-note>
+      </div>
+
+      <!-- Zone ajout nouveau type -->
+      <div class="types-add-box">
+        <p class="types-add-label">
+          <ion-icon name="add-circle-outline" style="vertical-align:middle;margin-right:4px"></ion-icon>
+          Ajouter un nouveau type
+        </p>
+        <div class="types-add-row">
+          <ion-input
+            [(ngModel)]="newTypeName"
+            placeholder="Ex: Loyer, Transport, Fournitures..."
+            fill="outline"
+            [clearInput]="true"
+            (keyup.enter)="ajouterType()"
+            class="types-add-input">
+          </ion-input>
+          <ion-button (click)="ajouterType()" [disabled]="!newTypeName.trim()" color="danger" expand="block" style="min-width:90px">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Ajouter
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- Compteur -->
+      <div class="types-count-bar" *ngIf="typesDepense.length > 0">
+        <ion-icon name="list-outline"></ion-icon>
+        {{ typesDepense.length }} type(s) enregistré(s)
+      </div>
 
       <!-- Liste des types -->
-      <ion-list>
-        <ion-item *ngFor="let t of typesDepense">
-          <ng-container *ngIf="editingTypeId === t.id">
-            <ion-input [(ngModel)]="editingTypeName" fill="outline" style="flex:1"></ion-input>
-            <ion-button slot="end" fill="clear" color="success" (click)="saveEditType()">
-              <ion-icon name="checkmark-outline" slot="icon-only"></ion-icon>
+      <div class="types-list">
+
+        <!-- État vide -->
+        <div class="types-empty" *ngIf="typesDepense.length === 0">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          <p>Aucun type créé</p>
+          <p class="types-empty-sub">Utilisez le champ ci-dessus pour créer votre premier type</p>
+        </div>
+
+        <!-- Item type -->
+        <div class="type-item" *ngFor="let t of typesDepense">
+
+          <!-- Mode lecture -->
+          <ng-container *ngIf="editingTypeId !== t.id">
+            <div class="type-item-icon">
+              <ion-icon name="pricetag-outline"></ion-icon>
+            </div>
+            <span class="type-item-name">{{ t.nom }}</span>
+            <ion-button fill="clear" size="small" color="primary" (click)="startEditType(t)">
+              <ion-icon name="pencil-outline" slot="start"></ion-icon>
+              Modifier
             </ion-button>
-            <ion-button slot="end" fill="clear" color="medium" (click)="cancelEditType()">
+            <ion-button fill="clear" size="small" color="danger" (click)="supprimerType(t)">
+              <ion-icon name="trash-outline" slot="start"></ion-icon>
+              Supprimer
+            </ion-button>
+          </ng-container>
+
+          <!-- Mode édition inline -->
+          <ng-container *ngIf="editingTypeId === t.id">
+            <ion-input [(ngModel)]="editingTypeName" fill="outline" style="flex:1" (keyup.enter)="saveEditType()"></ion-input>
+            <ion-button fill="solid" size="small" color="success" (click)="saveEditType()">
+              <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+              OK
+            </ion-button>
+            <ion-button fill="clear" size="small" color="medium" (click)="cancelEditType()">
               <ion-icon name="close-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </ng-container>
-          <ng-container *ngIf="editingTypeId !== t.id">
-            <ion-label>{{ t.nom }}</ion-label>
-            <ion-button slot="end" fill="clear" color="primary" (click)="startEditType(t)">
-              <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-            <ion-button slot="end" fill="clear" color="danger" (click)="supprimerType(t)">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-          </ng-container>
-        </ion-item>
-      </ion-list>
 
-      <!-- Ajouter -->
-      <div style="display:flex; gap:8px; margin-top:16px; padding: 0 4px;">
-        <ion-input [(ngModel)]="newTypeName" placeholder="Nouveau type..." fill="outline" style="flex:1" (keyup.enter)="ajouterType()"></ion-input>
-        <ion-button (click)="ajouterType()" [disabled]="!newTypeName.trim()">
-          <ion-icon name="add-outline" slot="icon-only"></ion-icon>
-        </ion-button>
+        </div>
       </div>
 
     </ion-content>

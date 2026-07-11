@@ -364,3 +364,126 @@
   .stat-inner  { padding: 26px 36px; }
   .stat-value  { font-size: 2.2rem; }
 }
+
+// ── Modal Gestion Types ──────────────────────────────
+.types-error-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+
+  ion-icon { font-size: 1.1rem; flex-shrink: 0; }
+}
+
+.types-add-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 14px 16px;
+  margin-bottom: 16px;
+}
+
+.types-add-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px;
+}
+
+.types-add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.types-add-input { flex: 1; }
+
+.types-count-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding: 0 2px;
+
+  ion-icon { font-size: 1rem; }
+}
+
+.types-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.type-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 8px 10px 12px;
+  min-height: 52px;
+}
+
+.type-item-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon { color: #dc2626; font-size: 1rem; }
+}
+
+.type-item-name {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1e293b;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.types-empty {
+  text-align: center;
+  padding: 36px 16px;
+  color: #94a3b8;
+
+  ion-icon {
+    font-size: 3rem;
+    display: block;
+    margin: 0 auto 12px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .types-empty-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 6px;
+  }
+}
