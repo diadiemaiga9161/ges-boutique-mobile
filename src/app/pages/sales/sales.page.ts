@@ -73,11 +73,11 @@ export class SalesPage implements OnDestroy {
 
   ionViewWillEnter(): void {
     this.design = this.designService.getDesign();
-    this.filterToday();
     this.productService.getProducts().subscribe({ next: p => this.produits = p, error: () => {} });
     this.wsSub = this.ws.subscribeTopic('/topic/ventes').subscribe(() => {
-      this.load();
+      this.reloadCurrent();
     });
+    this.reloadCurrent();
     this.scheduleAlerte22h();
   }
 
@@ -122,23 +122,58 @@ export class SalesPage implements OnDestroy {
 
   // ==================== CHARGEMENT ====================
 
+  /** Pull-to-refresh : recharge la période active */
   load(event?: any): void {
-    if (this.activePeriod === 'today') {
-      this.filterToday();
-    } else {
-      this.loadAll();
-    }
-    event?.target?.complete();
+    this.reloadCurrent(() => event?.target?.complete());
   }
 
-  private loadAll(): void {
+  /** Recharge selon la période active (today / week / month / all) */
+  private reloadCurrent(done?: () => void): void {
+    if (this.activePeriod === 'today') {
+      this.execLoadToday(done);
+    } else {
+      this.execLoadPeriode(done);
+    }
+  }
+
+  private execLoadToday(done?: () => void): void {
+    this.sales = [];
+    this.filtered = [];
+    this.loading = true;
+    this.venteService.getVentesDuJour().subscribe({
+      next: (r: VentesDuJourResponse) => {
+        this.sales = r.ventes || [];
+        this.applyFilter();
+        this.loading = false;
+        done?.();
+      },
+      error: async () => {
+        this.loading = false;
+        done?.();
+        await this.presentToast('Erreur chargement ventes du jour', 'danger');
+      }
+    });
+  }
+
+  private execLoadPeriode(done?: () => void): void {
+    this.sales = [];
+    this.filtered = [];
     this.loading = true;
     const obs$ = (this.dateDebut && this.dateFin)
       ? this.venteService.getVentesParPeriode(this.dateDebut, this.dateFin)
       : this.venteService.getAllVentes();
     obs$.subscribe({
-      next: (result: VenteMap[]) => { this.sales = result; this.applyFilter(); this.loading = false; },
-      error: () => { this.loading = false; }
+      next: (result: VenteMap[]) => {
+        this.sales = result || [];
+        this.applyFilter();
+        this.loading = false;
+        done?.();
+      },
+      error: async () => {
+        this.loading = false;
+        done?.();
+        await this.presentToast('Erreur chargement ventes', 'danger');
+      }
     });
   }
 
@@ -148,22 +183,20 @@ export class SalesPage implements OnDestroy {
     this.activePeriod = 'today';
     this.dateDebut = '';
     this.dateFin = '';
-    this.loading = true;
-    this.venteService.getVentesDuJour().subscribe({
-      next: (r: VentesDuJourResponse) => { this.sales = r.ventes || []; this.applyFilter(); this.loading = false; },
-      error: () => this.loading = false
-    });
+    this.execLoadToday();
   }
 
   filterWeek(): void {
     this.activePeriod = 'week';
     const now = new Date();
+    const dow = now.getDay(); // 0=Dim, 1=Lun, ... 6=Sam
+    const diffToMonday = dow === 0 ? 6 : dow - 1; // dimanche → reculer 6j, lundi → 0, etc.
     const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay() + 1);
+    start.setDate(now.getDate() - diffToMonday);
     start.setHours(0, 0, 0, 0);
     this.dateDebut = this.toLocalDateStr(start);
     this.dateFin = this.toLocalDateStr(now);
-    this.loadAll();
+    this.execLoadPeriode();
   }
 
   filterMonth(): void {
@@ -171,7 +204,14 @@ export class SalesPage implements OnDestroy {
     const now = new Date();
     this.dateDebut = this.toLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
     this.dateFin = this.toLocalDateStr(now);
-    this.loadAll();
+    this.execLoadPeriode();
+  }
+
+  filterAll(): void {
+    this.activePeriod = 'all';
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.execLoadPeriode();
   }
 
   private toLocalDateStr(d: Date): string {
@@ -179,13 +219,6 @@ export class SalesPage implements OnDestroy {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
-  }
-
-  filterAll(): void {
-    this.activePeriod = 'all';
-    this.dateDebut = '';
-    this.dateFin = '';
-    this.loadAll();
   }
 
   // ==================== FILTRES LOCAUX ====================
