@@ -5,6 +5,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { BoutiqueService } from '../../services/boutique.service';
 import { DesignFacture, FactureDesignService } from '../../services/facture-design.service';
 import { FactureService } from '../../services/facture.service';
 import { Produit, ProductService } from '../../services/product.service';
@@ -53,6 +54,13 @@ export class SalesPage implements OnDestroy {
 
   design: DesignFacture = 1;
 
+  // ── Onglet Annulées ──────────────────────────────────────────
+  activeTab: 'ventes' | 'annulees' = 'ventes';
+  ventesAnnulees: any[] = [];
+  ventesAnnuleesFiltrees: any[] = [];
+  queryAnnulees = '';
+  loadingAnnulees = false;
+
   get boutiqueName(): string {
     return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
   }
@@ -68,7 +76,8 @@ export class SalesPage implements OnDestroy {
     private http: HttpClient,
     private sanitizer: DomSanitizer,
     private designService: FactureDesignService,
-    private boutiqueConfig: BoutiqueConfigService
+    private boutiqueConfig: BoutiqueConfigService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ionViewWillEnter(): void {
@@ -78,6 +87,7 @@ export class SalesPage implements OnDestroy {
       this.reloadCurrent();
     });
     this.reloadCurrent();
+    this.loadVentesAnnulees();
     this.scheduleAlerte22h();
   }
 
@@ -672,6 +682,54 @@ export class SalesPage implements OnDestroy {
       ]
     });
     await alert.present();
+  }
+
+  // ── Onglet Annulées ──────────────────────────────────────────
+
+  switchTab(tab: 'ventes' | 'annulees'): void {
+    this.activeTab = tab;
+    if (tab === 'annulees' && !this.ventesAnnulees.length && !this.loadingAnnulees) {
+      this.loadVentesAnnulees();
+    }
+  }
+
+  loadVentesAnnulees(event?: any): void {
+    const boutiqueId = this.boutiqueService.getInfo().id || 0;
+    if (!boutiqueId) { event?.target?.complete(); return; }
+    this.loadingAnnulees = true;
+    this.venteService.getVentesAnnulees(boutiqueId).subscribe({
+      next: data => {
+        this.ventesAnnulees = data;
+        this.applyFilterAnnulees();
+        this.loadingAnnulees = false;
+        event?.target?.complete();
+      },
+      error: () => {
+        this.loadingAnnulees = false;
+        event?.target?.complete();
+      }
+    });
+  }
+
+  applyFilterAnnulees(): void {
+    const term = this.queryAnnulees.trim().toLowerCase();
+    if (!term) {
+      this.ventesAnnuleesFiltrees = [...this.ventesAnnulees];
+      return;
+    }
+    this.ventesAnnuleesFiltrees = this.ventesAnnulees.filter(v =>
+      [v.numeroVente, v.clientNom, v.vendeurNom, v.annuleurNom, v.motifAnnulation]
+        .filter(Boolean)
+        .some((f: string) => f.toLowerCase().includes(term))
+    );
+  }
+
+  formatDateAnnulee(d?: string): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' | 'medium' | 'primary' = 'success'): Promise<void> {

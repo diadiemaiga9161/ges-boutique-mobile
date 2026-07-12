@@ -500,6 +500,20 @@ export class VenteService {
     );
   }
 
+  getCreditsActifs(boutiqueId: number): Observable<VenteMap[]> {
+    return this.http.get<any>(`${this.apiUrl}/${boutiqueId}/credits-actifs`).pipe(
+      map(response => this.mapVenteList(response)),
+      catchError(error => this.handleError(error, 'récupérer les crédits actifs'))
+    );
+  }
+
+  getVentesAnnulees(boutiqueId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${boutiqueId}/annulees`).pipe(
+      map(response => Array.isArray(response) ? response : (response as any)?.content || []),
+      catchError(error => this.handleError(error, 'récupérer les ventes annulées'))
+    );
+  }
+
   imprimerFacture(vente: VenteMap): void {
     this.openOverlay(this.buildFactureHtml(vente), true);
   }

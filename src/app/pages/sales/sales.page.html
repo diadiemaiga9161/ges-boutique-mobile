@@ -16,13 +16,117 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+  <ion-refresher slot="fixed" (ionRefresh)="activeTab === 'annulees' ? loadVentesAnnulees($event) : load($event)">
     <ion-refresher-content pullingIcon="chevron-down-outline" refreshingSpinner="crescent"></ion-refresher-content>
   </ion-refresher>
 
   <!-- ═══════════════════════════════════════
+       ONGLETS VENTES / ANNULÉES
+  ════════════════════════════════════════ -->
+  <div class="tab-segment-wrap">
+    <ion-segment [value]="activeTab" (ionChange)="switchTab($any($event.detail.value))">
+      <ion-segment-button value="ventes">
+        <ion-label>{{ 'SALES.TAB_SALES' | translate }}</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="annulees">
+        <ion-label>
+          {{ 'SALES.TAB_ANNULEES' | translate }}
+          <ion-badge *ngIf="ventesAnnulees.length > 0" color="danger" style="margin-left:4px;font-size:10px">{{ ventesAnnulees.length }}</ion-badge>
+        </ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       ONGLET ANNULÉES
+  ════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'annulees'">
+    <div class="page-pad stack">
+
+      <ion-searchbar
+        [(ngModel)]="queryAnnulees"
+        placeholder="{{ 'SALES.TITLE' | translate }}, client, vendeur..."
+        (ionInput)="applyFilterAnnulees()"
+        class="filter-search">
+      </ion-searchbar>
+
+      <div class="results-bar">
+        <span class="results-count">{{ ventesAnnuleesFiltrees.length }} résultat{{ ventesAnnuleesFiltrees.length > 1 ? 's' : '' }}</span>
+        <ion-spinner *ngIf="loadingAnnulees" name="crescent" class="results-spinner"></ion-spinner>
+      </div>
+
+      <!-- Liste ventes annulées -->
+      <section class="sales-list" *ngIf="!loadingAnnulees && ventesAnnuleesFiltrees.length; else emptyAnnulees">
+        <article class="sale-card sale-card--annulee" *ngFor="let v of ventesAnnuleesFiltrees">
+          <div class="sale-accent accent-gray"></div>
+
+          <div class="sale-body">
+            <div class="sale-top-row">
+              <div class="sale-type-icon sti--off">
+                <ion-icon name="ban-outline"></ion-icon>
+              </div>
+              <div class="sale-info">
+                <p class="sale-num">{{ v.numeroVente || ('Vente #' + v.id) }}</p>
+                <p class="sale-meta">{{ formatDateAnnulee(v.dateVente) }}</p>
+              </div>
+              <div class="sale-amount-zone">
+                <p class="sale-amount">{{ money(v.montantTotal) }}</p>
+                <span class="sale-badge badge-gray">{{ 'SALES.CANCELLED' | translate }}</span>
+              </div>
+            </div>
+
+            <!-- Client -->
+            <div class="sale-client-row" *ngIf="v.clientNom">
+              <ion-icon name="person-outline"></ion-icon>
+              <span>{{ v.clientNom }}</span>
+            </div>
+
+            <!-- Vendeur (qui a fait la vente) -->
+            <div class="sale-vendeur-row" *ngIf="v.vendeurNom">
+              <ion-icon name="person-circle-outline"></ion-icon>
+              <span class="sale-vendeur-label">{{ 'SALES.VENDEUR' | translate }} :</span>
+              <span class="sale-vendeur-name">{{ v.vendeurNom }}</span>
+            </div>
+
+            <!-- Bloc infos annulation -->
+            <div class="annulation-info-block">
+              <div class="annul-row" *ngIf="v.annuleurNom">
+                <ion-icon name="person-remove-outline"></ion-icon>
+                <span class="annul-label">{{ 'SALES.ANNULEUR' | translate }} :</span>
+                <span class="annul-val">{{ v.annuleurNom }}</span>
+              </div>
+              <div class="annul-row" *ngIf="v.dateAnnulation">
+                <ion-icon name="calendar-clear-outline"></ion-icon>
+                <span class="annul-label">{{ 'SALES.DATE_ANNULATION' | translate }} :</span>
+                <span class="annul-val">{{ formatDateAnnulee(v.dateAnnulation) }}</span>
+              </div>
+              <div class="annul-row annul-row--motif" *ngIf="v.motifAnnulation">
+                <ion-icon name="chatbubble-outline"></ion-icon>
+                <span class="annul-label">{{ 'SALES.MOTIF_ANNULATION' | translate }} :</span>
+                <span class="annul-val annul-val--motif">{{ v.motifAnnulation }}</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <ng-template #emptyAnnulees>
+        <div class="empty-screen" *ngIf="!loadingAnnulees">
+          <div class="empty-icon-wrap">
+            <ion-icon name="ban-outline"></ion-icon>
+          </div>
+          <h3 class="empty-title">{{ 'SALES.NO_ANNULEES' | translate }}</h3>
+          <p class="empty-sub">Aucune vente annulée sur cette boutique</p>
+        </div>
+      </ng-template>
+
+    </div>
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════
        HERO BANNER
   ════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'ventes'">
   <div class="sales-hero">
     <div class="hero-bg-deco"></div>
     <div class="hero-content">
@@ -278,6 +382,9 @@
     </ng-template>
 
   </div>
+</ng-container>
+<!-- /onglet ventes -->
+
 </ion-content>
 
 <!-- FAB Nouvelle vente -->

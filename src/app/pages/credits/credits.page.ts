@@ -124,16 +124,16 @@ export class CreditsPage {
 
   load(event?: any): void {
     this.loading = true;
+    const boutiqueId = this.boutiqueService.getInfo().id || 0;
     forkJoin({
       nonRegles: this.caisseService.getCreditsNonRegles(),
       regles: this.caisseService.getCreditsRegles(),
-      toutesVentes: this.venteService.getAllVentes()
+      creditsActifs: this.venteService.getCreditsActifs(boutiqueId)
     }).subscribe({
-      next: ({ nonRegles, regles, toutesVentes }) => {
+      next: ({ nonRegles, regles, creditsActifs }) => {
         const caisseMap = new Map<number, CreditInfo>();
         [...nonRegles, ...regles].forEach(c => { if (c.venteId) caisseMap.set(c.venteId, c); });
-        this.allCredits = toutesVentes
-          .filter(v => v.estCredit && !v.annulee)
+        this.allCredits = creditsActifs
           .map(v => {
             const c = caisseMap.get(v.id);
             if (c) {

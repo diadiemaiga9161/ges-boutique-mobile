@@ -1087,6 +1087,83 @@
 }
 
 // ══════════════════════════════════════════════════
+//  ONGLET VENTES / ANNULÉES
+// ══════════════════════════════════════════════════
+.tab-segment-wrap {
+  padding: 10px 16px 0;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  ion-segment {
+    --background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  ion-segment-button {
+    --color: #64748b;
+    --color-checked: #1a56db;
+    --indicator-color: #ffffff;
+    --border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-height: 38px;
+    text-transform: none;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  BLOC INFOS ANNULATION (onglet Annulées)
+// ══════════════════════════════════════════════════
+.annulation-info-block {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.annul-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 0.82rem;
+
+  ion-icon {
+    font-size: 0.85rem;
+    color: #dc2626;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  &--motif { align-items: flex-start; }
+}
+
+.annul-label {
+  color: #64748b;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.annul-val {
+  color: #1e293b;
+  font-weight: 600;
+
+  &--motif {
+    color: #7f1d1d;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+}
+
+// ══════════════════════════════════════════════════
 //  STATS MODAL
 // ══════════════════════════════════════════════════
 .stats-top-products {

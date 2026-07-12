@@ -100,7 +100,10 @@
     "TOTAL": "Total", "AMOUNT_PAID": "Amount paid", "REMAINING": "Remaining",
     "DISCOUNT": "Discount", "PAYMENT_MODE": "Payment method",
     "CASH_PAYMENT": "Cash", "MOBILE_MONEY": "Mobile Money",
-    "CARD": "Card", "CHEQUE": "Cheque", "TRANSFER": "Bank transfer"
+    "CARD": "Card", "CHEQUE": "Cheque", "TRANSFER": "Bank transfer",
+    "TAB_SALES": "Sales", "TAB_ANNULEES": "Cancelled", "NO_ANNULEES": "No cancelled sales",
+    "DATE_ANNULATION": "Cancellation date", "MOTIF_ANNULATION": "Reason",
+    "ANNULEUR": "Cancelled by", "VENDEUR": "Seller"
   },
   "CLIENTS": {
     "TITLE": "Clients", "ADD": "New client", "NAME": "Last name",
