@@ -472,6 +472,28 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
     document.body.appendChild(overlay);
   }
 
+  getIconeType(nom: string): string {
+    const n = (nom || '').toLowerCase();
+    if (/loyer|maison|location|logement|appartement|bail/.test(n)) return 'home-outline';
+    if (/transport|carburant|essence|voiture|taxi|moto|bus|véhicule|vehicle|carburan/.test(n)) return 'car-outline';
+    if (/électricité|electricite|courant|énergie|energie|lumière|lumiere|kwh/.test(n)) return 'flash-outline';
+    if (/eau|eau courante|facture eau|robinet/.test(n)) return 'water-outline';
+    if (/nourriture|alimentation|repas|restaurant|manger|vivres|provisions|courses/.test(n)) return 'restaurant-outline';
+    if (/téléphone|telephone|mobile|forfait|appel|communication|teleph/.test(n)) return 'call-outline';
+    if (/internet|wifi|connexion|web|fibre|adsl/.test(n)) return 'wifi-outline';
+    if (/salaire|employé|employe|paie|paye|personnel|staff/.test(n)) return 'people-outline';
+    if (/fourniture|matériel|materiel|bureau|papeterie|consommable/.test(n)) return 'construct-outline';
+    if (/santé|sante|médecin|medecin|pharmacie|médicament|medicament|hôpital|hopital|clinique/.test(n)) return 'medkit-outline';
+    if (/publicité|publicite|marketing|pub|annonce|communication/.test(n)) return 'megaphone-outline';
+    if (/entretien|nettoyage|maintenance|réparation|reparation|ménage|menage/.test(n)) return 'build-outline';
+    if (/impôt|impot|taxe|fiscalité|fiscalite|douane|droit/.test(n)) return 'receipt-outline';
+    if (/assurance/.test(n)) return 'shield-checkmark-outline';
+    if (/formation|école|ecole|éducation|education|cours|stage/.test(n)) return 'school-outline';
+    if (/carburan|pétrole|petrole|fuel/.test(n)) return 'flame-outline';
+    if (/locat|rent/.test(n)) return 'business-outline';
+    return 'pricetag-outline';
+  }
+
   money(v: number): string {
     return this.depenseService.formatPrice(v);
   }

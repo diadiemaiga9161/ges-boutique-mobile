@@ -108,6 +108,7 @@
       </p>
       <div class="ts-chips">
         <ion-chip *ngFor="let t of totauxParType" color="danger" outline="true">
+          <ion-icon [name]="getIconeType(t.type)" style="font-size:14px;margin-right:4px"></ion-icon>
           <ion-label><strong>{{ t.type }}</strong> — {{ money(t.total) }}</ion-label>
         </ion-chip>
       </div>
@@ -145,7 +146,7 @@
       <div class="dep-card-header">
         <div class="dep-card-header-left">
           <div class="dep-icon-wrap" [class.dep-icon-wrap--salary]="d.sourceExterne">
-            <ion-icon [name]="d.sourceExterne ? 'people-outline' : 'trending-down-outline'"></ion-icon>
+            <ion-icon [name]="d.sourceExterne ? 'people-outline' : getIconeType(d.typeDepense || '')"></ion-icon>
           </div>
           <div>
             <p class="dep-nom">{{ d.nom }}</p>
@@ -297,7 +298,7 @@
           <!-- Mode lecture -->
           <ng-container *ngIf="editingTypeId !== t.id">
             <div class="type-item-icon">
-              <ion-icon name="pricetag-outline"></ion-icon>
+              <ion-icon [name]="getIconeType(t.nom)"></ion-icon>
             </div>
             <span class="type-item-name">{{ t.nom }}</span>
             <ion-button fill="clear" size="small" color="primary" (click)="startEditType(t)">
