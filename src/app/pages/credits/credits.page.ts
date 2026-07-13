@@ -107,6 +107,8 @@ export class CreditsPage {
     });
   }
 
+  trackById = (_: number, item: any) => item.id;
+
   constructor(
     private caisseService: CaisseService,
     private venteService: VenteService,

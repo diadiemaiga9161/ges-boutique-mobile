@@ -148,10 +148,22 @@
       </button>
     </div>
 
-    <!-- Chargement -->
-    <div class="rpt-loading" *ngIf="loading">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Calcul du rapport...</p>
+    <!-- Skeleton chargement -->
+    <div *ngIf="loading">
+      <div class="sk-hero-block">
+        <div class="sk-kpi"></div>
+        <div class="sk-kpi"></div>
+        <div class="sk-kpi"></div>
+      </div>
+      <div class="sk-list" style="margin-top:12px">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ══════════════════════════════════
@@ -259,9 +271,9 @@
       </div>
 
       <!-- Liste des 5 premiers crédits -->
-      <div class="credits-list" *ngIf="creditsEnCours.length">
+      <div class="credits-list animate-cards" *ngIf="creditsEnCours.length">
         <p class="cl-title">Détail ({{ creditsEnCours.length }} crédit(s))</p>
-        <div class="credit-item" *ngFor="let c of creditsEnCours.slice(0,5)">
+        <div class="credit-item" *ngFor="let c of creditsEnCours.slice(0,5); trackBy: trackById">
           <div class="credit-item__avatar">
             {{ (c.clientNom || '?')[0].toUpperCase() }}
           </div>
@@ -352,8 +364,8 @@
         <span class="section-block__badge">{{ produits.length }}</span>
       </div>
 
-      <div class="top-products">
-        <div class="tp-item" *ngFor="let p of produits; let i = index">
+      <div class="top-products animate-cards">
+        <div class="tp-item" *ngFor="let p of produits; let i = index; trackBy: trackById">
           <div class="tp-rank"
             [class.tp-rank--gold]="i===0"
             [class.tp-rank--silver]="i===1"
@@ -383,8 +395,8 @@
         <p class="section-block__title">Modes de paiement</p>
       </div>
 
-      <div class="payment-modes">
-        <div class="pm-item" *ngFor="let m of modes">
+      <div class="payment-modes animate-cards">
+        <div class="pm-item" *ngFor="let m of modes; trackBy: trackById">
           <div class="pm-icon">
             <ion-icon [name]="getPaymentIcon(m.mode)"></ion-icon>
           </div>

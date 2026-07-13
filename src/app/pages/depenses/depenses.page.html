@@ -56,49 +56,45 @@
     </ion-card>
 
     <!-- === Filtres === -->
-    <ion-card class="filter-ion-card">
-      <ion-card-content style="padding: 8px">
+    <div class="filter-zone">
+      <!-- Type de dépense -->
+      <div class="fz-select-wrap">
+        <ion-icon name="pricetag-outline"></ion-icon>
+        <ion-select
+          [(ngModel)]="typeDepenseFiltreSelectionne"
+          (ionChange)="filtrerPeriode()"
+          placeholder="{{ 'EXPENSES.FILTER_TYPE' | translate }}"
+          interface="action-sheet">
+          <ion-select-option value="">{{ 'COMMON.ALL' | translate }}</ion-select-option>
+          <ion-select-option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</ion-select-option>
+        </ion-select>
+      </div>
 
-        <!-- Filtre type -->
-        <ion-item lines="none" style="--padding-start:0;--inner-padding-end:0;margin-bottom:6px">
-          <ion-select
-            [(ngModel)]="typeDepenseFiltreSelectionne"
-            label="{{ 'EXPENSES.FILTER_TYPE' | translate }}"
-            labelPlacement="floating"
-            placeholder="{{ 'COMMON.ALL' | translate }}"
-            interface="action-sheet">
-            <ion-select-option value="">{{ 'COMMON.ALL' | translate }}</ion-select-option>
-            <ion-select-option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</ion-select-option>
-          </ion-select>
-        </ion-item>
+      <!-- Filtre mois -->
+      <div class="fz-date-wrap">
+        <label>{{ 'EXPENSES.FILTER_MONTH' | translate }}</label>
+        <input type="month" [(ngModel)]="moisFiltre" (change)="filtrerPeriode()" />
+      </div>
 
-        <!-- Filtre mois -->
-        <ion-item lines="none" style="--padding-start:0;--inner-padding-end:0;margin-bottom:6px">
-          <ion-label position="floating">{{ 'EXPENSES.FILTER_MONTH' | translate }}</ion-label>
-          <ion-input type="month" [(ngModel)]="moisFiltre"></ion-input>
-        </ion-item>
-
-        <!-- Filtres période -->
-        <div class="filter-dates">
-          <div class="date-field">
-            <label class="date-label">{{ 'EXPENSES.DATE_FROM' | translate }}</label>
-            <input type="date" class="date-input" [(ngModel)]="dateDebut" />
-          </div>
-          <div class="date-sep">→</div>
-          <div class="date-field">
-            <label class="date-label">{{ 'EXPENSES.DATE_TO' | translate }}</label>
-            <input type="date" class="date-input" [(ngModel)]="dateFin" />
-          </div>
-          <ion-button fill="outline" size="small" (click)="filtrerPeriode()">
-            <ion-icon name="funnel-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-          <ion-button fill="clear" size="small" color="medium" (click)="reinitialiser()">
-            <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
-          </ion-button>
+      <!-- Période du/au -->
+      <div class="fz-row">
+        <div class="fz-date-wrap">
+          <label>{{ 'EXPENSES.DATE_FROM' | translate }}</label>
+          <input type="date" [(ngModel)]="dateDebut" (change)="filtrerPeriode()" />
         </div>
+        <div class="fz-date-wrap">
+          <label>{{ 'EXPENSES.DATE_TO' | translate }}</label>
+          <input type="date" [(ngModel)]="dateFin" (change)="filtrerPeriode()" />
+        </div>
+        <button class="fz-chip" style="margin-top:auto" (click)="reinitialiser()">
+          <ion-icon name="refresh-outline"></ion-icon>
+        </button>
+      </div>
 
-      </ion-card-content>
-    </ion-card>
+      <p class="fz-count" *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
+        <strong>{{ depensesFiltrees.length }}</strong> {{ 'EXPENSES.RESULTS' | translate }}
+      </p>
+    </div>
 
     <!-- === Résumé par type === -->
     <div class="type-summary-card" *ngIf="totauxParType.length > 0">
@@ -114,13 +110,23 @@
       </div>
     </div>
 
-    <!-- === Spinner === -->
-    <ion-spinner *ngIf="loading" style="display:block;margin:2rem auto"></ion-spinner>
+    <!-- === Skeleton loader === -->
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
 
     <!-- === État vide === -->
-    <div class="empty-state" *ngIf="!loading && depensesFiltrees.length === 0">
-      <ion-icon name="trending-down-outline" style="font-size:3rem; color:#cbd5e1"></ion-icon>
-      <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
+    <div class="empty-v2" *ngIf="!loading && depensesFiltrees.length === 0">
+      <div class="empty-v2__icon"><ion-icon name="trending-down-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ 'EXPENSES.EMPTY' | translate }}</p>
+      <p class="empty-v2__text">{{ 'EXPENSES.NEW' | translate }}</p>
       <ion-button size="small" (click)="startCreate()">
         <ion-icon name="add-outline" slot="start"></ion-icon>
         {{ 'EXPENSES.NEW' | translate }}
@@ -137,8 +143,9 @@
     </p>
 
     <!-- === Liste — cartes ion-card === -->
+    <section class="stack animate-cards">
     <ion-card class="dep-card"
-              *ngFor="let d of depensesPaginees"
+              *ngFor="let d of depensesPaginees; trackBy: trackById"
               [class.dep-card--salary]="d.sourceExterne"
               color="light">
 
@@ -201,6 +208,7 @@
       </div>
 
     </ion-card>
+    </section>
 
     <!-- === Pagination === -->
     <div class="pagination-bar" *ngIf="!loading && depensesFiltrees.length > itemsParPage">

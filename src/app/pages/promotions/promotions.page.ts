@@ -28,6 +28,8 @@ export class PromotionsPage implements OnInit {
 
   today = new Date().toISOString().split('T')[0];
 
+  trackById = (_: number, item: any) => item.id;
+
   form: Partial<Promotion> = this.emptyForm();
 
   // Sélection produits pour promo par produits

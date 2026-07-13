@@ -43,6 +43,7 @@ export class InventoryPage {
   filteredProductsForForm: Produit[] = [];
 
   TypeMouvement = TypeMouvement;
+  trackById = (_: number, item: any) => item.id;
   private wsSub?: Subscription;
 
   constructor(

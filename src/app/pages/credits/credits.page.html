@@ -149,18 +149,26 @@
   </ion-card>
 
   <!-- ═══════════ LOADING ═══════════ -->
-  <div class="loading-state" *ngIf="loading">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Chargement...</p>
+  <div class="sk-list" *ngIf="loading">
+    <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+      <div class="skeleton sk-avatar"></div>
+      <div class="sk-card-body">
+        <div class="skeleton sk-line sk-line--w80"></div>
+        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      </div>
+      <div class="skeleton sk-line sk-line--w30"></div>
+    </div>
   </div>
 
   <!-- ═══════════ LISTE CLIENTS GROUPÉS ═══════════ -->
-  <div class="credits-list" *ngIf="!loading">
+  <div class="credits-list animate-cards" *ngIf="!loading">
 
-    <div class="empty-state" *ngIf="!filteredGroups.length">
-      <ion-icon [name]="statutFilter === 'REGLES' ? 'checkmark-circle-outline' : 'checkmark-circle-outline'"
-                [color]="statutFilter === 'REGLES' ? 'success' : 'medium'"></ion-icon>
-      <p>{{ statutFilter === 'REGLES' ? 'Aucun crédit réglé' : statutFilter === 'EN_COURS' ? 'Aucun crédit en attente' : 'Aucun crédit trouvé' }}</p>
+    <div class="empty-v2" *ngIf="!filteredGroups.length">
+      <div class="empty-v2__icon">
+        <ion-icon [name]="statutFilter === 'REGLES' ? 'checkmark-circle-outline' : 'receipt-outline'"></ion-icon>
+      </div>
+      <p class="empty-v2__title">{{ statutFilter === 'REGLES' ? 'Aucun crédit réglé' : statutFilter === 'EN_COURS' ? 'Aucun crédit en attente' : 'Aucun crédit trouvé' }}</p>
+      <p class="empty-v2__text">Ajustez vos filtres ou rechargez la liste</p>
     </div>
 
     <!-- Résumé pagination -->
@@ -170,7 +178,7 @@
       <span *ngIf="totalPages > 1">Page {{ pageActuelle }} / {{ totalPages }}</span>
     </div>
 
-    <div class="client-group" *ngFor="let group of groupesPagines"
+    <div class="client-group" *ngFor="let group of groupesPagines; trackBy: trackById"
          [class.group--retard]="group.enRetard && statutFilter !== 'REGLES'">
 
       <!-- En-tête groupe -->
@@ -215,7 +223,7 @@
 
       <!-- Crédits du client -->
       <div class="group-credits" *ngIf="group.expanded">
-        <div class="credit-item" *ngFor="let credit of group.credits"
+        <div class="credit-item" *ngFor="let credit of group.credits; trackBy: trackById"
              [class.credit-item--regle]="credit.estReglee">
 
           <div class="credit-top">
@@ -332,9 +340,15 @@
   <!-- ══ Section Paiements groupés ══ -->
   <div *ngIf="activeTab === 'groupes'" class="ion-padding-horizontal">
 
-    <div *ngIf="paiementsGroupesLoading" class="ion-text-center ion-padding">
-      <ion-spinner name="crescent" color="warning"></ion-spinner>
-      <p class="ion-margin-top">Chargement…</p>
+    <div class="sk-list" *ngIf="paiementsGroupesLoading">
+      <div class="sk-card" *ngFor="let i of [1,2,3]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
     </div>
 
     <div *ngIf="!paiementsGroupesLoading && paiementsGroupes.length === 0"
@@ -395,7 +409,7 @@
       </div>
 
       <ion-accordion-group *ngIf="paiementsGroupesFiltres.length > 0" [multiple]="true">
-        <ion-accordion *ngFor="let pg of paiementsGroupesFiltres" [value]="pg.referenceGroupe">
+        <ion-accordion *ngFor="let pg of paiementsGroupesFiltres; trackBy: trackById" [value]="pg.referenceGroupe">
 
         <ion-item slot="header" color="warning">
           <ion-label>

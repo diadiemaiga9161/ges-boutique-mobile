@@ -57,13 +57,13 @@
 
   <!-- ══ FILTRES ══════════════════════════════════════════════════════════ -->
   <div class="cmd-filters">
-    <ion-searchbar
-      [(ngModel)]="searchTerm"
-      (ionInput)="appliquerFiltres()"
-      placeholder="Rechercher commande, client..."
-      [debounce]="200"
-      mode="ios">
-    </ion-searchbar>
+    <div class="cmd-search-wrap">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="searchTerm" (input)="appliquerFiltres()" placeholder="Rechercher commande, client..." />
+      <button *ngIf="searchTerm" (click)="searchTerm=''; appliquerFiltres()">
+        <ion-icon name="close-circle-outline"></ion-icon>
+      </button>
+    </div>
 
     <div class="cmd-chips">
       <button class="cmd-chip" [class.cmd-chip--active]="statutFilter === ''"
@@ -80,25 +80,32 @@
   </div>
 
   <!-- ══ CHARGEMENT ══════════════════════════════════════════════════════ -->
-  <div class="cmd-loading" *ngIf="isLoading">
-    <ion-spinner name="crescent" color="primary"></ion-spinner>
-    <p>Chargement...</p>
+  <div class="sk-list" *ngIf="isLoading">
+    <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+      <div class="skeleton sk-avatar"></div>
+      <div class="sk-card-body">
+        <div class="skeleton sk-line sk-line--w80"></div>
+        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      </div>
+      <div class="skeleton sk-line sk-line--w30"></div>
+    </div>
   </div>
 
   <!-- ══ VIDE ════════════════════════════════════════════════════════════ -->
-  <div class="cmd-empty" *ngIf="!isLoading && commandesFiltrees.length === 0">
-    <ion-icon name="clipboard-outline"></ion-icon>
-    <p>Aucune commande</p>
-    <button class="cmd-empty-btn" (click)="ouvrirCreer()">
-      <ion-icon name="add-outline"></ion-icon> Créer une commande
-    </button>
+  <div class="empty-v2" *ngIf="!isLoading && commandesFiltrees.length === 0">
+    <div class="empty-v2__icon"><ion-icon name="clipboard-outline"></ion-icon></div>
+    <p class="empty-v2__title">Aucune commande</p>
+    <p class="empty-v2__text">Créez votre première commande fournisseur</p>
+    <ion-button size="small" (click)="ouvrirCreer()">
+      <ion-icon name="add-outline" slot="start"></ion-icon>Créer une commande
+    </ion-button>
   </div>
 
   <!-- ══ LISTE ════════════════════════════════════════════════════════════ -->
-  <div class="cmd-list" *ngIf="!isLoading && commandesFiltrees.length > 0">
+  <div class="cmd-list animate-cards" *ngIf="!isLoading && commandesFiltrees.length > 0">
 
     <article class="cmd-card"
-      *ngFor="let c of commandesFiltrees"
+      *ngFor="let c of commandesFiltrees; trackBy: trackById"
       [class.cmd-card--validee]="c.statut === StatutCommande.VALIDEE"
       [class.cmd-card--annulee]="c.statut === StatutCommande.ANNULEE"
       [class.cmd-card--credit]="c.estCredit && c.montantRestant > 0">

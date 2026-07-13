@@ -13,6 +13,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   notifications: Notification[] = [];
   isLoading = false;
+  trackById = (_: number, item: any) => item.id;
   private subs: Subscription[] = [];
 
   constructor(

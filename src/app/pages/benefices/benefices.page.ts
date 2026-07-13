@@ -122,6 +122,8 @@ export class BeneficesPage implements OnInit, OnDestroy {
     });
   }
 
+  trackById = (_: number, item: any) => item.id;
+
   fmt(v: number): string { return this.beneficeService.formaterPrix(v); }
 
   get evolution(): number { return this.data?.evolution ?? 0; }

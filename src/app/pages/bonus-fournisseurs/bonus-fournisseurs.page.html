@@ -50,42 +50,54 @@
       </div>
     </div>
 
-    <ion-spinner *ngIf="loading"></ion-spinner>
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
 
-    <div class="empty-state" *ngIf="!loading && bonus.length === 0">
-      <ion-icon name="gift-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
-      <p>{{ 'SUPPLIER_BONUS.EMPTY' | translate }}</p>
+    <div class="empty-v2" *ngIf="!loading && bonus.length === 0">
+      <div class="empty-v2__icon"><ion-icon name="gift-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ 'SUPPLIER_BONUS.EMPTY' | translate }}</p>
+      <p class="empty-v2__text">Ajoutez votre premier bonus fournisseur</p>
       <ion-button size="small" (click)="startCreate()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>
-        {{ 'SUPPLIER_BONUS.NEW' | translate }}
+        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'SUPPLIER_BONUS.NEW' | translate }}
       </ion-button>
     </div>
 
-    <div class="bonus-list" *ngIf="!loading && bonus.length > 0">
-      <div class="bonus-card" *ngFor="let b of bonus">
-        <div class="bonus-header">
-          <div>
-            <p class="bonus-fournisseur">{{ b.fournisseurNom }}</p>
-            <p class="bonus-date">{{ b.date }}</p>
-          </div>
-          <div style="text-align:right">
-            <ion-badge [color]="typeColor(b.type)" style="font-size:0.72rem;margin-bottom:4px;">
-              {{ b.typeLibelle || b.type }}
-            </ion-badge>
-            <p class="bonus-montant">+ {{ money(b.montant) }}</p>
-          </div>
-        </div>
-        <p class="bonus-desc" *ngIf="b.description">{{ b.description }}</p>
-        <div class="bonus-actions">
-          <ion-button fill="outline" size="small" color="primary" (click)="startEdit(b)">
-            <ion-icon name="create-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-          <ion-button fill="outline" size="small" color="danger" (click)="supprimer(b)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </div>
-      </div>
+    <div class="section-header" *ngIf="!loading && bonus.length > 0">
+      <p class="section-header__title">Bonus reçus</p>
+      <span class="section-header__count">{{ bonus.length }}</span>
     </div>
+    <section class="stack animate-cards" *ngIf="!loading && bonus.length > 0">
+      <article class="list-item-card" *ngFor="let b of bonus; trackBy: trackById">
+        <div class="lic-header">
+          <div class="lic-avatar lic-avatar--green">{{ (b.fournisseurNom || '?').charAt(0) }}</div>
+          <div class="lic-info">
+            <p class="lic-name">{{ b.fournisseurNom }}</p>
+            <p class="lic-sub"><ion-icon name="calendar-outline"></ion-icon> {{ b.date }}</p>
+          </div>
+          <div class="lic-right">
+            <span [class]="'status-badge status-badge--' + typeColorClass(b.type)">{{ b.typeLibelle || b.type }}</span>
+            <p class="lic-amount" style="color:#0e9f6e;font-weight:800">+ {{ money(b.montant) }}</p>
+          </div>
+        </div>
+        <p style="padding:0 16px 8px;font-size:0.82rem;color:#64748b" *ngIf="b.description">{{ b.description }}</p>
+        <div class="lic-footer">
+          <button class="lic-action lic-action--primary" (click)="startEdit(b)">
+            <ion-icon name="create-outline"></ion-icon> Modifier
+          </button>
+          <button class="lic-action lic-action--danger" (click)="supprimer(b)">
+            <ion-icon name="trash-outline"></ion-icon> Supprimer
+          </button>
+        </div>
+      </article>
+    </section>
   </div>
 
   <!-- ======== ONGLET RÉSULTAT NET ======== -->
@@ -142,7 +154,11 @@
       </div>
     </div>
 
-    <ion-spinner *ngIf="!resultat"></ion-spinner>
+    <div class="sk-list" *ngIf="!resultat">
+      <div class="sk-card" *ngFor="let i of [1,2,3]">
+        <div class="skeleton sk-line sk-line--full sk-line--xl"></div>
+      </div>
+    </div>
   </div>
 </ion-content>
 

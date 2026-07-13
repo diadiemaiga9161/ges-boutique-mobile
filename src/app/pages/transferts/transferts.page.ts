@@ -10,6 +10,7 @@ import { ProductService } from '../../services/product.service';
   standalone: false
 })
 export class TransfertsPage implements OnInit {
+  trackById = (_: number, item: any) => item.id;
 
   transferts: TransfertStock[] = [];
   partenaires: BoutiquePartenaire[] = [];

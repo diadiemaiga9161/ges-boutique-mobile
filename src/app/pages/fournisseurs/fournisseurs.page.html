@@ -35,44 +35,81 @@
 
   <!-- LISTE -->
   <ng-container *ngIf="segment === 'liste'">
-    <ion-searchbar
-      [(ngModel)]="searchTerm"
-      (ionChange)="onSearch()"
-      [placeholder]="'SUPPLIERS.SEARCH_PLACEHOLDER' | translate"
-      debounce="400">
-    </ion-searchbar>
+    <div class="filter-zone" style="margin-top:10px">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" [(ngModel)]="searchTerm" (input)="onSearch()" [placeholder]="'SUPPLIERS.SEARCH_PLACEHOLDER' | translate" />
+        <button class="fz-clear" *ngIf="searchTerm" (click)="searchTerm=''; onSearch()">
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
     <ion-refresher slot="fixed" (ionRefresh)="loadFournisseurs($event)">
       <ion-refresher-content></ion-refresher-content>
     </ion-refresher>
-    <div class="loading-container" *ngIf="loading">
-      <ion-spinner name="crescent"></ion-spinner>
+    <div class="hero-stat-row" *ngIf="!loading && filteredFournisseurs.length > 0">
+      <div class="hsr-item">
+        <p class="hsr-val">{{ fournisseurs.length }}</p>
+        <p class="hsr-lbl">{{ 'SUPPLIERS.TITLE' | translate }}</p>
+      </div>
+      <div class="hsr-item">
+        <p class="hsr-val">{{ filteredFournisseurs.length }}</p>
+        <p class="hsr-lbl">Résultats</p>
+      </div>
     </div>
-    <ion-list *ngIf="!loading">
-      <ion-item-sliding *ngFor="let f of filteredFournisseurs">
-        <ion-item (click)="selectFournisseur(f)" button detail>
-          <div class="f-avatar" slot="start">{{ getInitiale(f.nom) }}</div>
-          <ion-label>
-            <h2>{{ f.nom }}</h2>
-            <p>{{ f.code || '—' }} · {{ f.telephone || '—' }}</p>
-            <p *ngIf="f.email">{{ f.email }}</p>
-          </ion-label>
-          <ion-badge slot="end" [color]="f.actif !== false ? 'success' : 'medium'">
-            {{ f.actif !== false ? ('SUPPLIERS.ACTIVE' | translate) : ('SUPPLIERS.INACTIVE' | translate) }}
-          </ion-badge>
-        </ion-item>
-        <ion-item-options side="end">
-          <ion-item-option color="primary" (click)="editFournisseur(f)">
-            <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
-          </ion-item-option>
-          <ion-item-option color="danger" (click)="deleteFournisseur(f)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-          </ion-item-option>
-        </ion-item-options>
-      </ion-item-sliding>
-    </ion-list>
-    <div class="empty-state" *ngIf="!loading && filteredFournisseurs.length === 0">
-      <ion-icon name="business-outline"></ion-icon>
-      <p>{{ 'SUPPLIERS.EMPTY' | translate }}</p>
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+    <ng-container *ngIf="!loading">
+      <div class="section-header" style="padding:0 16px;margin:8px 0 4px">
+        <p class="section-header__title">{{ 'SUPPLIERS.TAB_LIST' | translate }}</p>
+        <span class="section-header__count">{{ filteredFournisseurs.length }}</span>
+      </div>
+      <section class="stack animate-cards" style="padding:0 16px 16px">
+        <article class="list-item-card" *ngFor="let f of filteredFournisseurs; trackBy: trackById">
+          <div class="lic-header">
+            <div class="lic-avatar">{{ getInitiale(f.nom) }}</div>
+            <div class="lic-info">
+              <p class="lic-name">{{ f.nom }}</p>
+              <p class="lic-sub">
+                <ion-icon name="call-outline"></ion-icon>
+                {{ f.code || '—' }}{{ f.telephone ? ' · ' + f.telephone : '' }}
+              </p>
+            </div>
+            <div class="lic-right">
+              <span class="status-badge" [ngClass]="f.actif !== false ? 'status-badge--success' : 'status-badge--gray'">
+                {{ f.actif !== false ? ('SUPPLIERS.ACTIVE' | translate) : ('SUPPLIERS.INACTIVE' | translate) }}
+              </span>
+            </div>
+          </div>
+          <div class="lic-footer">
+            <button class="lic-action lic-action--primary" (click)="selectFournisseur(f)">
+              <ion-icon name="eye-outline"></ion-icon> Voir
+            </button>
+            <button class="lic-action" (click)="editFournisseur(f)">
+              <ion-icon name="create-outline"></ion-icon> Modifier
+            </button>
+            <button class="lic-action lic-action--danger" (click)="deleteFournisseur(f)">
+              <ion-icon name="trash-outline"></ion-icon> Supprimer
+            </button>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+    <div class="empty-v2" *ngIf="!loading && filteredFournisseurs.length === 0">
+      <div class="empty-v2__icon"><ion-icon name="business-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY' | translate }}</p>
+      <p class="empty-v2__text">Ajoutez votre premier fournisseur</p>
+      <ion-button size="small" (click)="openNewFournisseur()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'SUPPLIERS.NEW' | translate }}
+      </ion-button>
     </div>
   </ng-container>
 
@@ -90,15 +127,22 @@
         <ion-icon name="bag-add-outline" slot="start"></ion-icon>
         {{ 'SUPPLIERS.NEW_PURCHASE' | translate }}
       </ion-button>
-      <div class="loading-container" *ngIf="loadingAchats">
-        <ion-spinner name="crescent"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingAchats">
+        <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
       </div>
       <ng-container *ngIf="!loadingAchats">
         <ion-list-header *ngIf="achatsActifs.length">
           <ion-label>{{ 'SUPPLIERS.ACTIVE_PURCHASES' | translate }} ({{ achatsActifs.length }})</ion-label>
         </ion-list-header>
         <ion-list *ngIf="achatsActifs.length">
-          <ng-container *ngFor="let a of achatsActifs">
+          <ng-container *ngFor="let a of achatsActifs; trackBy: trackById">
             <ion-item button (click)="toggleAchat(a.id)" detail="false">
               <ion-label>
                 <h2>{{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }} — {{ formatDate(a.dateAchat || a.dateCreation) }}</h2>
@@ -111,7 +155,7 @@
               <ion-icon slot="end" [name]="achatExpandiId === a.id ? 'chevron-up-outline' : 'chevron-down-outline'" color="medium" style="margin-left:6px"></ion-icon>
             </ion-item>
             <ng-container *ngIf="achatExpandiId === a.id">
-              <ion-item *ngFor="let l of (a.lignes || [])" class="ligne-produit-item">
+              <ion-item *ngFor="let l of (a.lignes || []); trackBy: trackById" class="ligne-produit-item">
                 <ion-icon name="cube-outline" slot="start" color="medium" style="font-size:1rem"></ion-icon>
                 <ion-label>
                   <p>{{ l.produitNom || l.produit?.nom || '—' }}</p>
@@ -136,7 +180,7 @@
             <ion-label color="danger">{{ 'SUPPLIERS.CANCELLED_PURCHASES' | translate }} ({{ achatsAnnules.length }})</ion-label>
           </ion-list-header>
           <ion-list>
-            <ion-item *ngFor="let a of achatsAnnules">
+            <ion-item *ngFor="let a of achatsAnnules; trackBy: trackById">
               <ion-label>
                 <h2 style="text-decoration:line-through;color:var(--ion-color-medium)">
                   {{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }} — {{ formatDate(a.dateAchat || a.dateCreation) }}
@@ -147,9 +191,9 @@
             </ion-item>
           </ion-list>
         </ng-container>
-        <div class="empty-state" *ngIf="achats.length === 0">
-          <ion-icon name="bag-outline"></ion-icon>
-          <p>{{ 'SUPPLIERS.EMPTY_PURCHASES' | translate }}</p>
+        <div class="empty-v2" *ngIf="achats.length === 0">
+          <div class="empty-v2__icon"><ion-icon name="bag-outline"></ion-icon></div>
+          <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_PURCHASES' | translate }}</p>
         </div>
       </ng-container>
     </ng-container>
@@ -175,15 +219,22 @@
           {{ 'SUPPLIERS.ADVANCE' | translate }}
         </ion-button>
       </div>
-      <div class="loading-container" *ngIf="loadingPaiements">
-        <ion-spinner name="crescent"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingPaiements">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
       </div>
       <ng-container *ngIf="!loadingPaiements">
         <ion-list-header>
           <ion-label>{{ 'SUPPLIERS.PAYMENTS' | translate }}</ion-label>
         </ion-list-header>
         <ion-list>
-          <ion-item *ngFor="let p of paiements">
+          <ion-item *ngFor="let p of paiements; trackBy: trackById">
             <ion-label>
               <h2>{{ money(p.montant) }}</h2>
               <p>{{ p.modePaiement }} · {{ formatDate(p.datePaiement) }}</p>
@@ -193,20 +244,28 @@
               <ion-icon name="receipt-outline" slot="start"></ion-icon> {{ 'SUPPLIERS.RECEIPT' | translate }}
             </ion-button>
           </ion-item>
-          <div class="empty-state" *ngIf="paiements.length === 0">
-            <p>{{ 'SUPPLIERS.EMPTY_PAYMENTS' | translate }}</p>
+          <div class="empty-v2" *ngIf="paiements.length === 0">
+            <div class="empty-v2__icon"><ion-icon name="cash-outline"></ion-icon></div>
+            <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_PAYMENTS' | translate }}</p>
           </div>
         </ion-list>
       </ng-container>
-      <div class="loading-container" *ngIf="loadingAvances">
-        <ion-spinner name="crescent"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingAvances">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
       </div>
       <ng-container *ngIf="!loadingAvances">
         <ion-list-header>
           <ion-label>{{ 'SUPPLIERS.ADVANCES' | translate }}</ion-label>
         </ion-list-header>
         <ion-list>
-          <ion-item *ngFor="let av of avances">
+          <ion-item *ngFor="let av of avances; trackBy: trackById">
             <ion-label>
               <h2>{{ money(av.montant) }}</h2>
               <p>{{ av.modePaiement }} · {{ formatDate(av.dateAvance) }}</p>
@@ -214,8 +273,9 @@
             </ion-label>
             <ion-icon name="time-outline" slot="end" color="warning"></ion-icon>
           </ion-item>
-          <div class="empty-state" *ngIf="avances.length === 0">
-            <p>{{ 'SUPPLIERS.EMPTY_ADVANCES' | translate }}</p>
+          <div class="empty-v2" *ngIf="avances.length === 0">
+            <div class="empty-v2__icon"><ion-icon name="wallet-outline"></ion-icon></div>
+            <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_ADVANCES' | translate }}</p>
           </div>
         </ion-list>
       </ng-container>
@@ -234,8 +294,15 @@
         <h2>{{ selectedFournisseur.nom }}</h2>
         <p *ngIf="selectedFournisseur.telephone">{{ selectedFournisseur.telephone }}</p>
       </div>
-      <div class="loading-container" *ngIf="loadingSituation">
-        <ion-spinner name="crescent"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingSituation">
+        <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
       </div>
       <ng-container *ngIf="!loadingSituation && situation">
         <ion-grid class="situation-grid">
@@ -287,7 +354,7 @@
           </div>
           <ion-card class="info-card">
             <ion-card-content>
-              <div class="info-row" *ngFor="let tp of topProduits; let i = index">
+              <div class="info-row" *ngFor="let tp of topProduits; let i = index; trackBy: trackById">
                 <span>
                   <ion-badge [color]="i === 0 ? 'warning' : 'light'" style="margin-right:6px">{{ i + 1 }}</ion-badge>
                   {{ tp.nom }}
@@ -301,7 +368,7 @@
           <ion-icon name="cart-outline"></ion-icon>
           {{ 'SUPPLIERS.PURCHASE_HISTORY' | translate }} ({{ achats.length }})
         </div>
-        <ion-card class="hist-card" *ngFor="let a of achats">
+        <ion-card class="hist-card" *ngFor="let a of achats; trackBy: trackById">
           <ion-card-content>
             <div class="hist-row">
               <span class="hist-date">{{ formatDate(a.dateAchat || a.dateCreation) }}</span>
@@ -318,7 +385,7 @@
               <span class="text-danger" *ngIf="(a.montantRestant || 0) > 0">{{ 'SUPPLIERS.REMAINING' | translate }} : {{ money(a.montantRestant) }}</span>
             </div>
             <div class="hist-produits" *ngIf="(a.lignes || []).length">
-              <span *ngFor="let l of (a.lignes || [])">{{ l.produitNom || l.produit?.nom }} x{{ l.quantite }}</span>
+              <span *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produitNom || l.produit?.nom }} x{{ l.quantite }}</span>
             </div>
           </ion-card-content>
         </ion-card>
@@ -326,7 +393,7 @@
           <ion-icon name="cash-outline"></ion-icon>
           {{ 'SUPPLIERS.PAYMENT_HISTORY' | translate }} ({{ paiements.length }})
         </div>
-        <ion-card class="hist-card" *ngFor="let p of paiements">
+        <ion-card class="hist-card" *ngFor="let p of paiements; trackBy: trackById">
           <ion-card-content>
             <div class="hist-row">
               <span class="hist-date">{{ formatDate(p.datePaiement) }}</span>
@@ -344,9 +411,9 @@
           </ion-card-content>
         </ion-card>
       </ng-container>
-      <div class="empty-state" *ngIf="!loadingSituation && !situation">
-        <ion-icon name="analytics-outline"></ion-icon>
-        <p>{{ 'SUPPLIERS.NO_SITUATION' | translate }}</p>
+      <div class="empty-v2" *ngIf="!loadingSituation && !situation">
+        <div class="empty-v2__icon"><ion-icon name="analytics-outline"></ion-icon></div>
+        <p class="empty-v2__title">{{ 'SUPPLIERS.NO_SITUATION' | translate }}</p>
       </div>
     </ng-container>
   </ng-container>

@@ -61,6 +61,8 @@ export class SalesPage implements OnDestroy {
   queryAnnulees = '';
   loadingAnnulees = false;
 
+  trackById = (_: number, item: any) => item.id;
+
   get boutiqueName(): string {
     return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
   }

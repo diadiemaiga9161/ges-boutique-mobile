@@ -31,6 +31,8 @@ interface ResumeMM {
   standalone: false
 })
 export class MobileMoneyPage implements OnInit {
+  trackById = (_: number, item: any) => item.id;
+
   type = 'TOUS';
   periode = 'JOUR';
   operations: OperationMM[] = [];

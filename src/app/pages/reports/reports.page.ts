@@ -28,6 +28,7 @@ export class ReportsPage {
   dateDebut = this.reports.formaterDate(new Date(Date.now() - 7 * 86400000));
   dateFin = this.reports.formaterDate(new Date());
   loading = false;
+  trackById = (i: number, item: any) => item?.id ?? i;
 
   creditsEnCours: CreditInfo[] = [];
   situationCredits?: SituationCredits;

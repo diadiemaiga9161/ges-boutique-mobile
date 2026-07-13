@@ -93,8 +93,8 @@
     </section>
 
     <!-- Onglet Alertes -->
-    <section class="stack" *ngIf="segment === 'low'">
-      <article class="mobile-card" *ngFor="let product of lowStock">
+    <section class="stack animate-cards" *ngIf="segment === 'low'">
+      <article class="mobile-card" *ngFor="let product of lowStock; trackBy: trackById">
         <div class="row-between">
           <div>
             <h2 class="card-title">{{ product.nom }}</h2>
@@ -106,11 +106,15 @@
         </div>
         <p class="muted">Seuil: {{ product.seuilAlerte }} · Prix: {{ money(product.prixVente) }}</p>
       </article>
-      <div class="empty-state" *ngIf="!lowStock.length">Aucune alerte stock</div>
+      <div class="empty-v2" *ngIf="!lowStock.length">
+        <div class="empty-v2__icon"><ion-icon name="checkmark-circle-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucune alerte stock</p>
+        <p class="empty-v2__text">Tous les stocks sont suffisants</p>
+      </div>
     </section>
 
     <!-- Onglet Historique -->
-    <section class="stack" *ngIf="segment === 'history'">
+    <section class="stack animate-cards" *ngIf="segment === 'history'">
       <!-- Filtres -->
       <div class="form-panel stack">
         <div class="action-wrap">
@@ -145,9 +149,20 @@
         <ion-searchbar [(ngModel)]="searchTerm" placeholder="Rechercher" (ionInput)="applyFilters()"></ion-searchbar>
       </div>
 
+      <div class="sk-list" *ngIf="loading">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
+
       <p class="muted ion-padding-start">{{ movementsFiltered.length }} mouvement(s)</p>
 
-      <article class="mobile-card" *ngFor="let m of movementsFiltered.slice(0, 100)">
+      <article class="mobile-card" *ngFor="let m of movementsFiltered.slice(0, 100); trackBy: trackById">
         <div class="row-between">
           <div>
             <h2 class="card-title">{{ m.produit?.nom || 'Produit' }}</h2>
@@ -168,7 +183,11 @@
         <p class="muted" *ngIf="m.motif">{{ m.motif }}</p>
         <p class="muted" *ngIf="m.utilisateur?.nomComplet">Par: {{ m.utilisateur?.nomComplet }}</p>
       </article>
-      <div class="empty-state" *ngIf="!movementsFiltered.length">Aucun mouvement</div>
+      <div class="empty-v2" *ngIf="!movementsFiltered.length">
+        <div class="empty-v2__icon"><ion-icon name="swap-vertical-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucun mouvement</p>
+        <p class="empty-v2__text">Aucun mouvement pour les filtres sélectionnés</p>
+      </div>
     </section>
 
   </div>

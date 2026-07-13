@@ -41,73 +41,77 @@
     </ion-segment>
 
     <!-- Totaux par opérateur -->
-    <ion-grid style="margin-bottom:12px">
-      <ion-row>
-        <ion-col size="4">
-          <ion-card color="warning" style="margin:4px;text-align:center">
-            <ion-card-content style="padding:8px">
-              <div style="font-size:10px;color:#333;font-weight:600">🟠 Orange</div>
-              <div style="font-weight:700;font-size:13px;color:#333">{{ formatMontant(totalOrange) }}</div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-        <ion-col size="4">
-          <ion-card color="primary" style="margin:4px;text-align:center">
-            <ion-card-content style="padding:8px">
-              <div style="font-size:10px;color:#fff;font-weight:600">🔵 Moov</div>
-              <div style="font-weight:700;font-size:13px;color:#fff">{{ formatMontant(totalMoov) }}</div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-        <ion-col size="4">
-          <ion-card color="tertiary" style="margin:4px;text-align:center">
-            <ion-card-content style="padding:8px">
-              <div style="font-size:10px;color:#fff;font-weight:600">🌊 Wave</div>
-              <div style="font-weight:700;font-size:13px;color:#fff">{{ formatMontant(totalWave) }}</div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col size="12">
-          <ion-card color="success" style="margin:4px;text-align:center">
-            <ion-card-content style="padding:8px">
-              <div style="font-size:11px;color:#fff">Total {{ periodeLabel() }} — {{ nombreOperations }} opération(s)</div>
-              <div style="font-weight:700;font-size:18px;color:#fff">{{ formatMontant(totalGlobal) }}</div>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    <div class="color-cards" style="padding:8px 12px 0">
+      <div class="color-card cc-orange">
+        <ion-icon name="phone-portrait-outline"></ion-icon>
+        <p class="cc-label">Orange</p>
+        <p class="cc-value">{{ formatMontant(totalOrange) }}</p>
+      </div>
+      <div class="color-card cc-blue">
+        <ion-icon name="phone-portrait-outline"></ion-icon>
+        <p class="cc-label">Moov</p>
+        <p class="cc-value">{{ formatMontant(totalMoov) }}</p>
+      </div>
+      <div class="color-card cc-purple">
+        <ion-icon name="phone-portrait-outline"></ion-icon>
+        <p class="cc-label">Wave</p>
+        <p class="cc-value">{{ formatMontant(totalWave) }}</p>
+      </div>
+      <div class="color-card cc-green">
+        <ion-icon name="cash-outline"></ion-icon>
+        <p class="cc-label">Total {{ periodeLabel() }}</p>
+        <p class="cc-value">{{ formatMontant(totalGlobal) }}</p>
+        <p class="cc-sub">{{ nombreOperations }} opération(s)</p>
+      </div>
+    </div>
 
     <!-- Loading -->
-    <div *ngIf="loading" style="text-align:center;padding:20px">
-      <ion-spinner name="crescent"></ion-spinner>
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
     </div>
 
     <!-- Liste opérations -->
-    <ion-list *ngIf="!loading">
-      <ion-item *ngFor="let op of operations" lines="full">
-        <ion-label>
-          <h3 style="font-weight:600">{{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}</h3>
-          <p>{{ op.dateVente | date:'dd/MM/yyyy HH:mm' }}</p>
-          <p *ngIf="op.clientNom">Client : {{ op.clientNom }}</p>
-          <p *ngIf="op.vendeurNom" style="font-size:11px;color:#888">Vendeur : {{ op.vendeurNom }}</p>
-          <p *ngIf="op.referencePaiement" style="color:#666;font-size:11px">Réf : {{ op.referencePaiement }}</p>
-        </ion-label>
-        <div slot="end" style="text-align:right">
-          <ion-badge [color]="modeColor(op.modePaiement)" style="font-size:10px;margin-bottom:4px;display:block">
-            {{ operateurLabel(op.modePaiement) }}
-          </ion-badge>
-          <div style="font-weight:700;font-size:15px">{{ formatMontant(op.montantTotal) }}</div>
+    <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!loading">
+      <article class="list-item-card" *ngFor="let op of operations; trackBy: trackById">
+        <div class="lic-header">
+          <div class="lic-avatar" [ngClass]="{
+            'lic-avatar--orange': op.modePaiement === 'ORANGE_MONEY',
+            'lic-avatar--purple': op.modePaiement === 'WAVE_MONEY'
+          }">
+            <ion-icon name="phone-portrait-outline" style="font-size:1rem;color:#fff"></ion-icon>
+          </div>
+          <div class="lic-info">
+            <p class="lic-name">{{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}</p>
+            <p class="lic-sub">
+              <ion-icon name="person-outline"></ion-icon>
+              {{ op.clientNom || 'Client' }}
+              <span *ngIf="op.vendeurNom"> · {{ op.vendeurNom }}</span>
+            </p>
+          </div>
+          <div class="lic-right">
+            <span class="status-badge" [ngClass]="{
+              'status-badge--warning': op.modePaiement === 'ORANGE_MONEY',
+              'status-badge--info': op.modePaiement === 'MOOV_MONEY',
+              'status-badge--purple': op.modePaiement === 'WAVE_MONEY'
+            }">{{ operateurLabel(op.modePaiement) }}</span>
+            <p class="lic-amount">{{ formatMontant(op.montantTotal) }}</p>
+            <p style="font-size:0.68rem;color:#94a3b8;margin:0">{{ op.dateVente | date:'dd/MM HH:mm' }}</p>
+          </div>
         </div>
-      </ion-item>
-      <ion-item *ngIf="operations.length === 0" lines="none">
-        <ion-label style="text-align:center;color:#999;padding:20px">
-          Aucune opération pour cette période
-        </ion-label>
-      </ion-item>
-    </ion-list>
+      </article>
+      <div class="empty-v2" *ngIf="operations.length === 0">
+        <div class="empty-v2__icon"><ion-icon name="phone-portrait-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucune opération</p>
+        <p class="empty-v2__text">Aucune opération pour cette période</p>
+      </div>
+    </section>
   </div>
 
   <!-- ===== ONGLET RÉSUMÉ ===== -->

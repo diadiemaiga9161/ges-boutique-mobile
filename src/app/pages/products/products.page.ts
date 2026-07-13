@@ -30,6 +30,7 @@ export class ProductsPage implements OnInit {
   segment: 'all' | 'low' | 'expired' | 'bio' = 'all';
   selectedCategorieId: number | null = null;
   loading = false;
+  trackById = (_: number, item: any) => item.id;
   showForm = false;
   showStatsModal = false;
   showCategoriesModal = false;

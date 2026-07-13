@@ -52,34 +52,58 @@
 
   <div class="page-pad stack">
 
-    <ion-searchbar
-      [(ngModel)]="query"
-      [placeholder]="'PRODUCTS.SEARCH_PLACEHOLDER' | translate"
-      debounce="300"
-      (ionInput)="applyFilter()"
-      (keyup.enter)="search()">
-    </ion-searchbar>
+    <div class="filter-zone">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" [(ngModel)]="query" (input)="applyFilter()" [placeholder]="'PRODUCTS.SEARCH_PLACEHOLDER' | translate" />
+        <button class="fz-clear" *ngIf="query" (click)="query=''; applyFilter()">
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </button>
+      </div>
 
-    <div class="two-cols">
-      <ion-item *ngIf="categories.length">
-        <ion-select [label]="'PRODUCTS.CATEGORY' | translate" labelPlacement="stacked" [(ngModel)]="selectedCategorieId" (ionChange)="applyFilter()">
-          <ion-select-option [value]="null">{{ 'PRODUCTS.ALL_CATEGORIES' | translate }}</ion-select-option>
-          <ion-select-option [value]="cat.id" *ngFor="let cat of categories">{{ cat.nom }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-segment [(ngModel)]="segment" (ionChange)="applyFilter()">
-        <ion-segment-button value="all">{{ 'PRODUCTS.ALL' | translate }}</ion-segment-button>
-        <ion-segment-button value="low">⚠ {{ 'PRODUCTS.FILTER_LOW' | translate }}</ion-segment-button>
-        <ion-segment-button value="expired">📅 {{ 'PRODUCTS.FILTER_EXP' | translate }}</ion-segment-button>
-        <ion-segment-button value="bio">🌿 Bio</ion-segment-button>
-      </ion-segment>
+      <div class="fz-chips" *ngIf="categories.length">
+        <button class="fz-chip" [class.fz-chip--active]="selectedCategorieId === null"
+          (click)="selectedCategorieId=null; applyFilter()">
+          {{ 'PRODUCTS.ALL_CATEGORIES' | translate }}
+        </button>
+        <button class="fz-chip" *ngFor="let cat of categories"
+          [class.fz-chip--active]="selectedCategorieId === cat.id"
+          (click)="selectedCategorieId=cat.id; applyFilter()">
+          {{ cat.nom }}
+        </button>
+      </div>
+
+      <div class="fz-chips">
+        <button class="fz-chip" [class.fz-chip--active]="segment==='all'" (click)="segment='all'; applyFilter()">
+          <ion-icon name="cube-outline"></ion-icon> {{ 'PRODUCTS.ALL' | translate }}
+        </button>
+        <button class="fz-chip fz-chip--warn" [class.fz-chip--active]="segment==='low'" (click)="segment='low'; applyFilter()">
+          <ion-icon name="warning-outline"></ion-icon> {{ 'PRODUCTS.FILTER_LOW' | translate }}
+        </button>
+        <button class="fz-chip fz-chip--orange" [class.fz-chip--active]="segment==='expired'" (click)="segment='expired'; applyFilter()">
+          <ion-icon name="calendar-outline"></ion-icon> {{ 'PRODUCTS.FILTER_EXP' | translate }}
+        </button>
+        <button class="fz-chip fz-chip--green" [class.fz-chip--active]="segment==='bio'" (click)="segment='bio'; applyFilter()">
+          <ion-icon name="leaf-outline"></ion-icon> Bio
+        </button>
+      </div>
     </div>
 
     <p class="section-label">{{ filtered.length }} {{ 'PRODUCTS.ITEMS' | translate }}</p>
-    <ion-spinner *ngIf="loading"></ion-spinner>
 
-    <section class="stack" *ngIf="!loading && filtered.length; else empty">
-      <article class="product-card" *ngFor="let product of filtered">
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <section class="stack animate-cards" *ngIf="!loading && filtered.length; else empty">
+      <article class="product-card" *ngFor="let product of filtered; trackBy: trackById">
         <div class="product-card-header">
           <div class="product-info">
             <div class="product-name">
@@ -142,9 +166,10 @@
     </section>
 
     <ng-template #empty>
-      <div class="empty-state" *ngIf="!loading">
-        <ion-icon name="cube-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
-        <p>{{ 'PRODUCTS.EMPTY' | translate }}</p>
+      <div class="empty-v2" *ngIf="!loading">
+        <div class="empty-v2__icon"><ion-icon name="cube-outline"></ion-icon></div>
+        <p class="empty-v2__title">{{ 'PRODUCTS.EMPTY' | translate }}</p>
+        <p class="empty-v2__text">{{ 'PRODUCTS.ADD' | translate }}</p>
         <ion-button size="small" (click)="startCreate()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
           {{ 'PRODUCTS.ADD' | translate }}

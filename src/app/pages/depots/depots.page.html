@@ -15,28 +15,23 @@
 <ion-content>
 
   <!-- Stats -->
-  <ion-grid class="stats-grid" *ngIf="stats">
-    <ion-row>
-      <ion-col size="4">
-        <div class="stat-pill stat-pill--blue">
-          <div class="stat-num">{{ stats.totalActifs }}</div>
-          <div class="stat-lbl">Actifs</div>
-        </div>
-      </ion-col>
-      <ion-col size="4">
-        <div class="stat-pill stat-pill--green">
-          <div class="stat-num">{{ money(stats.totalMontantGarde) }}</div>
-          <div class="stat-lbl">En garde</div>
-        </div>
-      </ion-col>
-      <ion-col size="4">
-        <div class="stat-pill stat-pill--grey">
-          <div class="stat-num">{{ stats.totalClotures }}</div>
-          <div class="stat-lbl">Clôturés</div>
-        </div>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+  <div class="color-cards" style="padding:12px 16px 0" *ngIf="stats">
+    <div class="color-card cc-blue">
+      <ion-icon name="people-outline"></ion-icon>
+      <p class="cc-label">Actifs</p>
+      <p class="cc-value">{{ stats.totalActifs }}</p>
+    </div>
+    <div class="color-card cc-green">
+      <ion-icon name="cash-outline"></ion-icon>
+      <p class="cc-label">En garde</p>
+      <p class="cc-value">{{ money(stats.totalMontantGarde) }}</p>
+    </div>
+    <div class="color-card cc-navy">
+      <ion-icon name="lock-closed-outline"></ion-icon>
+      <p class="cc-label">Clôturés</p>
+      <p class="cc-value">{{ stats.totalClotures }}</p>
+    </div>
+  </div>
 
   <!-- Toggle Vue -->
   <ion-segment [(ngModel)]="vueMode" (ionChange)="basculerVue(vueMode)" class="vue-segment">
@@ -79,18 +74,26 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="loading-container" *ngIf="loading || loadingGroupes">
-    <ion-spinner name="crescent"></ion-spinner>
+  <div class="sk-list" *ngIf="loading || loadingGroupes">
+    <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+      <div class="skeleton sk-avatar"></div>
+      <div class="sk-card-body">
+        <div class="skeleton sk-line sk-line--w80"></div>
+        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      </div>
+      <div class="skeleton sk-line sk-line--w30"></div>
+    </div>
   </div>
 
   <!-- ===== VUE PAR CLIENT ===== -->
   <div *ngIf="vueMode === 'groupes' && !loadingGroupes">
-    <div class="empty-state" *ngIf="groupesClient.length === 0">
-      <ion-icon name="people-outline"></ion-icon>
-      <p>Aucun client avec dépôt actif</p>
+    <div class="empty-v2" *ngIf="groupesClient.length === 0">
+      <div class="empty-v2__icon"><ion-icon name="people-outline"></ion-icon></div>
+      <p class="empty-v2__title">Aucun client</p>
+      <p class="empty-v2__text">Aucun client avec dépôt actif</p>
     </div>
 
-    <ion-card *ngFor="let client of groupesClient" class="client-card">
+    <ion-card *ngFor="let client of groupesClient; trackBy: trackById" class="client-card animate-cards">
       <ion-card-header class="client-card-header">
         <div class="client-avatar">{{ client.nomComplet[0].toUpperCase() }}</div>
         <div class="client-info">
@@ -116,7 +119,7 @@
 
         <!-- Dépôts individuels -->
         <div class="depots-detail">
-          <div class="depot-mini" *ngFor="let d of client.depots">
+          <div class="depot-mini" *ngFor="let d of client.depots; trackBy: trackById">
             <small class="text-muted">{{ formatDate(d.dateDepot) }}</small>
             <span class="depot-mini-amount">{{ money(d.montantRestant) }}</span>
             <ion-button size="small" fill="outline" color="warning" (click)="openRetrait(d)">
@@ -134,47 +137,47 @@
   </div>
 
   <!-- Liste dépôts (liste seulement) -->
-  <ion-list *ngIf="vueMode === 'liste' && !loading">
-    <ion-item-sliding *ngFor="let d of filteredDepots">
-      <ion-item (click)="openDetail(d)" button>
-        <div class="d-avatar" slot="start" [class.d-avatar--cloture]="d.statut === 'CLOTURE'">
+  <section class="stack animate-cards" style="padding:12px 16px" *ngIf="vueMode === 'liste' && !loading">
+    <article class="list-item-card" *ngFor="let d of filteredDepots; trackBy: trackById">
+      <div class="lic-header">
+        <div class="lic-avatar">
           {{ getInitiale(d.nom) }}
         </div>
-        <ion-label>
-          <h2>{{ d.nomComplet }}</h2>
-          <p>{{ d.numero }} · Déposé le {{ formatDate(d.dateDepot) }}</p>
-          <div class="depot-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width]="getPourcentage(d) + '%'"></div>
-            </div>
-            <span class="progress-txt">{{ getPourcentage(d) }}% retiré</span>
-          </div>
-          <p>
-            <strong>{{ money(d.montantRestant) }}</strong>
-            <span class="muted"> / {{ money(d.montantInitial) }}</span>
+        <div class="lic-info">
+          <p class="lic-name">{{ d.nomComplet }}</p>
+          <p class="lic-sub">
+            <ion-icon name="call-outline"></ion-icon>
+            {{ d.numero }} · {{ formatDate(d.dateDepot) }}
           </p>
-        </ion-label>
-        <ion-badge slot="end" [color]="d.statut === 'ACTIF' ? 'success' : 'medium'">
-          {{ d.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
-        </ion-badge>
-      </ion-item>
-      <ion-item-options side="end" *ngIf="d.statut === 'ACTIF'">
-        <ion-item-option color="warning" (click)="openRetrait(d)">
-          <ion-icon name="arrow-down-circle-outline" slot="icon-only"></ion-icon>
-        </ion-item-option>
-        <ion-item-option color="primary" (click)="editDepot(d)">
-          <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
-        </ion-item-option>
-        <ion-item-option color="danger" (click)="cloturerDepot(d)">
-          <ion-icon name="lock-closed-outline" slot="icon-only"></ion-icon>
-        </ion-item-option>
-      </ion-item-options>
-    </ion-item-sliding>
-  </ion-list>
+        </div>
+        <div class="lic-right">
+          <span class="status-badge" [ngClass]="d.statut === 'ACTIF' ? 'status-badge--success' : 'status-badge--gray'">
+            {{ d.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
+          </span>
+          <p class="lic-amount">{{ money(d.montantRestant) }}</p>
+        </div>
+      </div>
+      <div class="lic-footer">
+        <button class="lic-action lic-action--primary" (click)="openDetail(d)">
+          <ion-icon name="eye-outline"></ion-icon> Détails
+        </button>
+        <button class="lic-action lic-action--warning" (click)="openRetrait(d)" *ngIf="d.statut === 'ACTIF'">
+          <ion-icon name="arrow-down-circle-outline"></ion-icon> Retrait
+        </button>
+        <button class="lic-action" (click)="editDepot(d)" *ngIf="d.statut === 'ACTIF'">
+          <ion-icon name="pencil-outline"></ion-icon> Modifier
+        </button>
+      </div>
+    </article>
+  </section>
 
-  <div class="empty-state" *ngIf="vueMode === 'liste' && !loading && filteredDepots.length === 0">
-    <ion-icon name="lock-closed-outline"></ion-icon>
-    <p>{{ 'SAFE.EMPTY' | translate }}</p>
+  <div class="empty-v2" *ngIf="vueMode === 'liste' && !loading && filteredDepots.length === 0">
+    <div class="empty-v2__icon"><ion-icon name="lock-closed-outline"></ion-icon></div>
+    <p class="empty-v2__title">Aucun dépôt</p>
+    <p class="empty-v2__text">{{ 'SAFE.EMPTY' | translate }}</p>
+    <ion-button size="small" (click)="openNew()">
+      <ion-icon name="add-outline" slot="start"></ion-icon>Nouveau
+    </ion-button>
   </div>
 
 </ion-content>

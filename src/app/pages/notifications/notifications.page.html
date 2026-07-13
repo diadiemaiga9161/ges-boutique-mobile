@@ -11,23 +11,68 @@
 
 <ion-content>
 
-  <ion-list *ngIf="notifications.length > 0">
-    <ion-item *ngFor="let n of notifications" (click)="cliquer(n)" detail="true" button>
-      <ion-avatar slot="start" style="display:flex;align-items:center;justify-content:center;background:var(--ion-color-light);border-radius:50%">
-        <ion-icon [name]="icone(n.type)" [color]="couleur(n.type)" style="font-size:1.4rem"></ion-icon>
-      </ion-avatar>
-      <ion-label>
-        <h2>{{ n.titre }}</h2>
-        <p>{{ n.message }}</p>
-        <p style="font-size:0.72rem;color:var(--ion-color-medium)">{{ n.dateCreation | date:'dd/MM HH:mm' }}</p>
-      </ion-label>
-      <ion-badge [color]="couleur(n.type)" slot="end" style="min-width:8px;height:8px;border-radius:50%;padding:0"></ion-badge>
-    </ion-item>
-  </ion-list>
+  <!-- Skeleton pendant le chargement -->
+  <div class="sk-list" *ngIf="isLoading">
+    <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+      <div class="skeleton sk-avatar"></div>
+      <div class="sk-card-body">
+        <div class="skeleton sk-line sk-line--w80"></div>
+        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      </div>
+      <div class="skeleton sk-line sk-line--w30"></div>
+    </div>
+  </div>
 
-  <div *ngIf="notifications.length === 0" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:var(--ion-color-medium)">
-    <ion-icon name="notifications-off-outline" style="font-size:4rem;margin-bottom:12px"></ion-icon>
-    <p>Aucune notification non lue</p>
+  <!-- Hero stat (quand il y a des notifs) -->
+  <div class="hero-stat-row" *ngIf="!isLoading && notifications.length > 0">
+    <div class="hsr-item">
+      <p class="hsr-val">{{ notifications.length }}</p>
+      <p class="hsr-lbl">Non lues</p>
+    </div>
+  </div>
+
+  <!-- Liste des notifications -->
+  <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!isLoading && notifications.length > 0">
+    <article class="list-item-card"
+             *ngFor="let n of notifications; trackBy: trackById"
+             (click)="cliquer(n)"
+             style="cursor:pointer">
+      <div class="lic-header">
+        <div class="lic-avatar"
+             [ngClass]="{
+               'lic-avatar--orange': couleur(n.type) === 'warning',
+               'lic-avatar--red':    couleur(n.type) === 'danger',
+               'lic-avatar--green':  couleur(n.type) === 'success'
+             }">
+          <ion-icon [name]="icone(n.type)" style="font-size:1.1rem;color:#fff"></ion-icon>
+        </div>
+        <div class="lic-info">
+          <p class="lic-name">{{ n.titre }}</p>
+          <p class="lic-sub">{{ n.message }}</p>
+        </div>
+        <div class="lic-right">
+          <span class="status-badge"
+                [ngClass]="{
+                  'status-badge--warning': couleur(n.type) === 'warning',
+                  'status-badge--danger':  couleur(n.type) === 'danger',
+                  'status-badge--success': couleur(n.type) === 'success',
+                  'status-badge--info':    couleur(n.type) === 'primary'
+                }">
+            {{ n.type.replace('_', ' ') }}
+          </span>
+          <p style="font-size:0.68rem;color:#94a3b8;margin:4px 0 0;text-align:right">
+            {{ n.dateCreation | date:'dd/MM HH:mm' }}
+          </p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- État vide -->
+  <div class="empty-v2" *ngIf="!isLoading && notifications.length === 0">
+    <div class="empty-v2__icon"><ion-icon name="notifications-off-outline"></ion-icon></div>
+    <p class="empty-v2__title">Aucune notification</p>
+    <p class="empty-v2__text">Vous êtes à jour, aucune notification non lue</p>
   </div>
 
 </ion-content>

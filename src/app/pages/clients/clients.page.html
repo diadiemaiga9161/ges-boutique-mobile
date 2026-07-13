@@ -19,12 +19,32 @@
 
   <div class="page-pad stack">
 
-    <ion-searchbar [(ngModel)]="query" placeholder="Nom, téléphone..." (ionInput)="applyFilter()"></ion-searchbar>
+    <div class="filter-zone">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" [(ngModel)]="query" (input)="applyFilter()" placeholder="Nom, téléphone, email..." />
+        <button class="fz-clear" *ngIf="query" (click)="query=''; applyFilter()">
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </button>
+      </div>
+      <p class="fz-count">
+        <strong>{{ filtered.length }}</strong> client{{ filtered.length > 1 ? 's' : '' }} trouvé{{ filtered.length > 1 ? 's' : '' }}
+      </p>
+    </div>
 
-    <p class="section-label">{{ filtered.length }} client(s)</p>
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
 
-    <section class="stack" *ngIf="filtered.length; else empty">
-      <article class="client-card" *ngFor="let client of filtered">
+    <section class="stack animate-cards" *ngIf="filtered.length; else empty">
+      <article class="client-card" *ngFor="let client of filtered; trackBy: trackById">
 
         <!-- En-tête -->
         <div class="client-header">
@@ -84,10 +104,14 @@
     </section>
 
     <ng-template #empty>
-      <div class="empty-state">
-        <ion-icon name="people-outline" style="font-size:3rem;color:#cbd5e1"></ion-icon>
-        <p>Aucun client</p>
-        <ion-button size="small" (click)="startCreate()">{{ 'CLIENTS.ADD' | translate }}</ion-button>
+      <div class="empty-v2" *ngIf="!loading">
+        <div class="empty-v2__icon"><ion-icon name="people-outline"></ion-icon></div>
+        <p class="empty-v2__title">{{ 'CLIENTS.EMPTY' | translate }}</p>
+        <p class="empty-v2__text">{{ 'CLIENTS.ADD' | translate }}</p>
+        <ion-button size="small" (click)="startCreate()">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          {{ 'CLIENTS.ADD' | translate }}
+        </ion-button>
       </div>
     </ng-template>
   </div>

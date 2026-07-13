@@ -58,6 +58,8 @@ export class ResultatNetPage implements OnInit {
     });
   }
 
+  trackById = (_: number, item: any) => item.id;
+
   money(v: number): string { return this.bonusService.formatPrice(v); }
 
   get pctBonus(): number {

@@ -19,6 +19,8 @@ export class ClientsPage {
   clients: Client[] = [];
   filtered: Client[] = [];
   query = '';
+  loading = false;
+  trackById = (_: number, item: any) => item.id;
   showForm = false;
   editing?: Client;
   form: Client = this.emptyForm();
@@ -74,13 +76,16 @@ export class ClientsPage {
   }
 
   load(event?: any): void {
+    this.loading = true;
     this.clientService.getAll().subscribe({
       next: clients => {
         this.clients = clients;
         this.applyFilter();
+        this.loading = false;
         event?.target?.complete();
       },
       error: error => {
+        this.loading = false;
         event?.target?.complete();
         this.presentToast(error.message || 'Chargement impossible', 'danger');
       }

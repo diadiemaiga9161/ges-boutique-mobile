@@ -73,6 +73,8 @@ export class CaissePage implements OnDestroy {
 
   ModePaiementCaisse = ModePaiementCaisse;
 
+  trackById = (_: number, item: any) => item.id;
+
   constructor(
     public caisseService: CaisseService,
     private auth: AuthService,

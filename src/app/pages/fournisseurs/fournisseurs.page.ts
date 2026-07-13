@@ -17,6 +17,7 @@ import { BoutiqueService } from '../../services/boutique.service';
 })
 export class FournisseursPage {
   segment: 'liste' | 'achats' | 'paiements' | 'situation' = 'liste';
+  trackById = (_: number, item: any) => item.id;
 
   fournisseurs: Fournisseur[] = [];
   filteredFournisseurs: Fournisseur[] = [];

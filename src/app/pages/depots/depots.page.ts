@@ -18,6 +18,8 @@ import {
   standalone: false
 })
 export class DepotsPage {
+  trackById = (_: number, item: any) => item.id;
+
   depots: DepotGarde[] = [];
   filteredDepots: DepotGarde[] = [];
   stats?: StatsDepotGarde;

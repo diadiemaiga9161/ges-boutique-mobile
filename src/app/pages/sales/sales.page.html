@@ -52,12 +52,12 @@
 
       <div class="results-bar">
         <span class="results-count">{{ ventesAnnuleesFiltrees.length }} résultat{{ ventesAnnuleesFiltrees.length > 1 ? 's' : '' }}</span>
-        <ion-spinner *ngIf="loadingAnnulees" name="crescent" class="results-spinner"></ion-spinner>
+        <span *ngIf="loadingAnnulees" class="skeleton sk-line sk-line--w30" style="height:4px;display:inline-block;"></span>
       </div>
 
       <!-- Liste ventes annulées -->
-      <section class="sales-list" *ngIf="!loadingAnnulees && ventesAnnuleesFiltrees.length; else emptyAnnulees">
-        <article class="sale-card sale-card--annulee" *ngFor="let v of ventesAnnuleesFiltrees">
+      <section class="sales-list animate-cards" *ngIf="!loadingAnnulees && ventesAnnuleesFiltrees.length; else emptyAnnulees">
+        <article class="sale-card sale-card--annulee" *ngFor="let v of ventesAnnuleesFiltrees; trackBy: trackById">
           <div class="sale-accent accent-gray"></div>
 
           <div class="sale-body">
@@ -111,12 +111,10 @@
       </section>
 
       <ng-template #emptyAnnulees>
-        <div class="empty-screen" *ngIf="!loadingAnnulees">
-          <div class="empty-icon-wrap">
-            <ion-icon name="ban-outline"></ion-icon>
-          </div>
-          <h3 class="empty-title">{{ 'SALES.NO_ANNULEES' | translate }}</h3>
-          <p class="empty-sub">Aucune vente annulée sur cette boutique</p>
+        <div class="empty-v2" *ngIf="!loadingAnnulees">
+          <div class="empty-v2__icon"><ion-icon name="ban-outline"></ion-icon></div>
+          <p class="empty-v2__title">{{ 'SALES.NO_ANNULEES' | translate }}</p>
+          <p class="empty-v2__text">Aucune vente annulée sur cette boutique</p>
         </div>
       </ng-template>
 
@@ -230,10 +228,22 @@
     <!-- ═══════════════════════════════════════
          LISTE DES VENTES
     ════════════════════════════════════════ -->
-    <section class="sales-list" *ngIf="!loading && filtered.length; else empty">
+    <!-- Skeleton chargement -->
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <section class="sales-list animate-cards" *ngIf="!loading && filtered.length; else empty">
       <article
         class="sale-card"
-        *ngFor="let sale of filtered"
+        *ngFor="let sale of filtered; trackBy: trackById"
         [class.sale-card--annulee]="sale.annulee"
         [class.sale-card--retard]="sale.estCredit && !sale.creditRegle && isCreditEnRetard(sale)"
         [class.sale-card--credit]="sale.estCredit && !sale.creditRegle && !isCreditEnRetard(sale)">
@@ -368,16 +378,13 @@
 
     <!-- État vide -->
     <ng-template #empty>
-      <div class="empty-screen" *ngIf="!loading">
-        <div class="empty-icon-wrap">
-          <ion-icon name="receipt-outline"></ion-icon>
-        </div>
-        <h3 class="empty-title">Aucune vente trouvée</h3>
-        <p class="empty-sub">Modifiez les filtres ou créez une nouvelle vente</p>
-        <button class="empty-btn" routerLink="/cart">
-          <ion-icon name="add-outline"></ion-icon>
-          {{ 'SALES.NEW' | translate }}
-        </button>
+      <div class="empty-v2" *ngIf="!loading">
+        <div class="empty-v2__icon"><ion-icon name="receipt-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucune vente trouvée</p>
+        <p class="empty-v2__text">Modifiez les filtres ou créez une nouvelle vente</p>
+        <ion-button size="small" routerLink="/cart">
+          <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'SALES.NEW' | translate }}
+        </ion-button>
       </div>
     </ng-template>
 

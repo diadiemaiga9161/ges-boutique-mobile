@@ -126,14 +126,23 @@
     </section>
 
     <!-- Onglet Crédits -->
-    <section class="stack" *ngIf="segment === 'credits'">
+    <section class="stack animate-cards" *ngIf="segment === 'credits'">
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px" *ngIf="credits.length">
         <ion-button fill="outline" size="small" color="warning" (click)="imprimerCreditsEnCours()">
           <ion-icon name="print-outline" slot="start"></ion-icon>
           Imprimer
         </ion-button>
       </div>
-      <ion-spinner *ngIf="loadingCredits" style="display:block;margin:20px auto"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingCredits">
+        <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
 
       <!-- Règlement crédit EN HAUT -->
       <div class="form-panel stack" *ngIf="credits.length">
@@ -208,7 +217,7 @@
         <ion-badge color="danger">{{ creditsEnRetard.length }}</ion-badge>
       </div>
 
-      <article class="mobile-card" *ngFor="let credit of credits"
+      <article class="mobile-card" *ngFor="let credit of credits; trackBy: trackById"
         [class.credit-retard]="credit.enRetard"
         [class.credit-selected]="isCreditSelected(credit.venteId || credit.id)">
         <div class="row-between">
@@ -235,11 +244,15 @@
         </ion-badge>
       </article>
 
-      <div class="empty-state" *ngIf="!credits.length && !loadingCredits">Aucun crédit en cours</div>
+      <div class="empty-v2" *ngIf="!credits.length && !loadingCredits">
+        <div class="empty-v2__icon"><ion-icon name="cash-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucun crédit en cours</p>
+        <p class="empty-v2__text">Tous les crédits ont été réglés</p>
+      </div>
     </section>
 
     <!-- Onglet Opérations -->
-    <section class="stack" *ngIf="segment === 'operations'">
+    <section class="stack animate-cards" *ngIf="segment === 'operations'">
 
       <!-- Période rapide -->
       <div class="period-bar">
@@ -276,7 +289,16 @@
         </span>
       </div>
 
-      <ion-spinner *ngIf="loadingOperations" style="display:block;margin:20px auto"></ion-spinner>
+      <div class="sk-list" *ngIf="loadingOperations">
+        <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
 
       <ng-container *ngIf="!loadingOperations">
         <!-- Carte opération -->

@@ -41,6 +41,8 @@ export class DepensesPage {
 
   form: DepenseRequest = this.emptyForm();
 
+  trackById = (_: number, item: any) => item.id;
+
   constructor(
     private depenseService: DepenseService,
     private paiementEmployeService: PaiementEmployeService,

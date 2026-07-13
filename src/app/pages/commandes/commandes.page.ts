@@ -56,6 +56,7 @@ export class CommandesPage {
 
   isSubmitting = false;
   StatutCommande = StatutCommande;
+  trackById = (_: number, item: any) => item.id;
 
   // Modal règlement individuel
   showReglementModal = false;

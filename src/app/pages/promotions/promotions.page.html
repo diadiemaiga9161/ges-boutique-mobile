@@ -150,28 +150,38 @@
       <ion-refresher-content></ion-refresher-content>
     </ion-refresher>
 
-    <div *ngIf="loading" class="ion-text-center ion-padding">
-      <ion-spinner name="crescent" color="primary"></ion-spinner>
-      <p>{{ 'COMMON.LOADING' | translate }}</p>
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
     </div>
 
-    <div *ngIf="!loading && promotions.length === 0" class="empty-state ion-text-center ion-padding">
-      <ion-icon name="pricetag-outline" style="font-size: 4rem; color: var(--ion-color-medium)"></ion-icon>
-      <h3>{{ 'PROMO.EMPTY' | translate }}</h3>
-      <p>{{ 'PROMO.EMPTY_SUB' | translate }}</p>
-      <ion-button (click)="startCreate()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>
-        {{ 'PROMO.NEW' | translate }}
+    <div class="empty-v2" *ngIf="!loading && promotions.length === 0">
+      <div class="empty-v2__icon"><ion-icon name="pricetag-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ 'PROMO.EMPTY' | translate }}</p>
+      <p class="empty-v2__text">{{ 'PROMO.EMPTY_SUB' | translate }}</p>
+      <ion-button size="small" (click)="startCreate()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'PROMO.NEW' | translate }}
       </ion-button>
     </div>
 
-    <div class="promos-list ion-padding" *ngIf="!loading && promotions.length > 0">
-      <div class="promo-card" *ngFor="let promo of promotions"
+    <div class="promos-list ion-padding animate-cards" *ngIf="!loading && promotions.length > 0">
+      <div class="promo-card" *ngFor="let promo of promotions; trackBy: trackById"
         [class.promo-expired]="getStatut(promo).label === 'Expirée'">
 
         <div class="promo-header">
           <div class="promo-titre">{{ promo.titre }}</div>
-          <ion-badge [color]="getStatut(promo).color">{{ getStatut(promo).label }}</ion-badge>
+          <span class="status-badge" [ngClass]="{
+            'status-badge--success': getStatut(promo).color === 'success',
+            'status-badge--warning': getStatut(promo).color === 'warning',
+            'status-badge--danger':  getStatut(promo).color === 'danger',
+            'status-badge--gray':    getStatut(promo).color === 'medium'
+          }">{{ getStatut(promo).label }}</span>
         </div>
 
         <p class="promo-desc" *ngIf="promo.description">{{ promo.description }}</p>

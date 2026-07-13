@@ -54,7 +54,22 @@
     </div>
 
     <!-- Loader -->
-    <ion-spinner *ngIf="loading" class="center-spinner"></ion-spinner>
+    <div class="page-pad" *ngIf="loading">
+      <div class="sk-hero-block">
+        <div class="sk-kpi"></div>
+        <div class="sk-kpi"></div>
+        <div class="sk-kpi"></div>
+      </div>
+      <div class="sk-list" style="margin-top:12px">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Erreur -->
     <div class="error-card" *ngIf="erreur && !loading">

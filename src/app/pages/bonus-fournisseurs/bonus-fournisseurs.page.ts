@@ -31,6 +31,8 @@ export class BonusFournisseursPage implements OnInit {
 
   form: BonusFournisseurRequest = this.emptyForm();
 
+  trackById = (_: number, item: any) => item.id;
+
   readonly types: { value: TypeBonus; label: string; color: string }[] = [
     { value: 'RISTOURNE', label: 'Ristourne', color: 'success' },
     { value: 'BONUS_VOLUME', label: 'Bonus Volume', color: 'primary' },
@@ -151,6 +153,17 @@ export class BonusFournisseursPage implements OnInit {
 
   typeColor(type: TypeBonus): string {
     return this.types.find(t => t.value === type)?.color || 'medium';
+  }
+
+  typeColorClass(type: string): string {
+    const ionicColor = this.typeColor(type as TypeBonus);
+    switch (ionicColor) {
+      case 'success': return 'success';
+      case 'primary': return 'info';
+      case 'warning': return 'warning';
+      case 'danger':  return 'danger';
+      default:        return 'gray';
+    }
   }
 
   money(v: number): string { return this.bonusService.formatPrice(v); }
