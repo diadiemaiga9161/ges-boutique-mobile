@@ -1,0 +1,393 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="sparkles-outline" class="title-icon"></ion-icon>
+      {{ 'IA.TITLE' | translate }}
+    </ion-title>
+    <ion-buttons slot="end" *ngIf="!showWizard && !loading">
+      <ion-button (click)="relancer()" fill="clear">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Onglets segment -->
+  <ion-toolbar *ngIf="!showWizard && !loading && analyse">
+    <ion-segment [(ngModel)]="activeTab" class="ia-segment">
+      <ion-segment-button value="dashboard">
+        <ion-label>{{ 'IA.TAB_DASHBOARD' | translate }}</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="recommandations">
+        <ion-label>{{ 'IA.TAB_RECOMMENDATIONS' | translate }}</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="clients">
+        <ion-label>{{ 'IA.TAB_CLIENTS' | translate }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- CHARGEMENT                                      -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="ia-loading-state">
+    <div class="ia-loading-circle">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+    </div>
+    <p class="ia-loading-text">{{ 'IA.LOADING' | translate }}</p>
+    <p class="ia-loading-sub">{{ 'IA.ANALYZING' | translate }}</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ERREUR ANALYSE                                  -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div *ngIf="!loading && analyseErreur" class="empty-state">
+    <ion-icon name="cloud-offline-outline"></ion-icon>
+    <p>{{ 'IA.ANALYZE_ERROR' | translate }}</p>
+    <ion-button size="small" (click)="relancer()">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      {{ 'COMMON.REFRESH' | translate }}
+    </ion-button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- WIZARD CONFIGURATION IA                         -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div *ngIf="!loading && showWizard" class="wizard-container">
+
+    <!-- En-tête wizard -->
+    <div class="wizard-header">
+      <div class="wizard-icon-wrap">
+        <ion-icon name="sparkles-outline"></ion-icon>
+      </div>
+      <h2 class="wizard-title">{{ 'IA.SETUP_TITLE' | translate }}</h2>
+      <p class="wizard-subtitle">{{ 'IA.SETUP_SUBTITLE' | translate }}</p>
+
+      <!-- Barre de progression -->
+      <div class="wizard-progress-bar">
+        <div class="wizard-progress-fill" [style.width]="(wizardStep / 5 * 100) + '%'"></div>
+      </div>
+      <p class="wizard-step-label">
+        {{ 'IA.STEP' | translate }} {{ wizardStep }} {{ 'IA.OF' | translate }} 5
+      </p>
+    </div>
+
+    <!-- ─── Étape 1 : Type de boutique ─── -->
+    <div *ngIf="wizardStep === 1" class="wizard-step">
+      <h3 class="wizard-step-title">{{ 'IA.STEP1_TITLE' | translate }}</h3>
+      <div class="wizard-type-grid">
+        <div *ngFor="let type of typesBoutique"
+             class="wizard-type-card"
+             [class.selected]="profil.typeBoutique === type.value"
+             (click)="profil.typeBoutique = type.value">
+          <ion-icon [name]="type.icon"></ion-icon>
+          <span>{{ type.labelKey | translate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Étape 2 : Jours d'approvisionnement ─── -->
+    <div *ngIf="wizardStep === 2" class="wizard-step">
+      <h3 class="wizard-step-title">{{ 'IA.STEP2_TITLE' | translate }}</h3>
+      <div class="wizard-days-grid">
+        <div *ngFor="let jour of joursOptions"
+             class="wizard-day-chip"
+             [class.selected]="jourSelectionne(jour.value)"
+             (click)="toggleJour(jour.value)">
+          {{ jour.labelKey | translate }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Étape 3 : Objectif stock ─── -->
+    <div *ngIf="wizardStep === 3" class="wizard-step">
+      <h3 class="wizard-step-title">{{ 'IA.STEP3_TITLE' | translate }}</h3>
+      <div class="wizard-options-row">
+        <div *ngFor="let val of stockOptions"
+             class="wizard-option-pill"
+             [class.selected]="profil.objectifStockJours === val"
+             (click)="profil.objectifStockJours = val">
+          {{ val }}j
+        </div>
+      </div>
+      <p class="wizard-hint">{{ 'IA.STEP3_HINT' | translate }}</p>
+    </div>
+
+    <!-- ─── Étape 4 : Marge cible ─── -->
+    <div *ngIf="wizardStep === 4" class="wizard-step">
+      <h3 class="wizard-step-title">{{ 'IA.STEP4_TITLE' | translate }}</h3>
+      <div class="wizard-options-row">
+        <div *ngFor="let val of margeOptions"
+             class="wizard-option-pill"
+             [class.selected]="profil.margeCiblePourcent === val"
+             (click)="profil.margeCiblePourcent = val">
+          {{ val }}%
+        </div>
+      </div>
+      <p class="wizard-hint">{{ 'IA.STEP4_HINT' | translate }}</p>
+    </div>
+
+    <!-- ─── Étape 5 : Délai relance crédit ─── -->
+    <div *ngIf="wizardStep === 5" class="wizard-step">
+      <h3 class="wizard-step-title">{{ 'IA.STEP5_TITLE' | translate }}</h3>
+      <div class="wizard-options-row">
+        <div *ngFor="let val of delaiOptions"
+             class="wizard-option-pill"
+             [class.selected]="profil.delaiRelanceCreditJours === val"
+             (click)="profil.delaiRelanceCreditJours = val">
+          {{ val }}j
+        </div>
+      </div>
+      <p class="wizard-hint">{{ 'IA.STEP5_HINT' | translate }}</p>
+    </div>
+
+    <!-- Navigation wizard -->
+    <div class="wizard-nav">
+      <ion-button fill="outline" color="medium" [disabled]="wizardStep === 1" (click)="wizardPrev()">
+        <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+        {{ 'IA.PREV' | translate }}
+      </ion-button>
+      <ion-button color="primary" [disabled]="!wizardStepValide() || wizardLoading" (click)="wizardNext()">
+        <ion-spinner *ngIf="wizardLoading" name="crescent" style="width:16px;height:16px;margin-right:6px"></ion-spinner>
+        <span *ngIf="wizardStep < 5">{{ 'IA.NEXT' | translate }}</span>
+        <span *ngIf="wizardStep === 5">{{ 'IA.FINISH' | translate }}</span>
+        <ion-icon *ngIf="wizardStep < 5" name="arrow-forward-outline" slot="end"></ion-icon>
+        <ion-icon *ngIf="wizardStep === 5" name="checkmark-outline" slot="end"></ion-icon>
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- CONTENU PRINCIPAL (analyse disponible)          -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <ng-container *ngIf="!loading && !showWizard && analyse">
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- ONGLET 1 : Tableau de bord                  -->
+    <!-- ─────────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'dashboard'" class="page-pad stack">
+
+      <!-- Score santé -->
+      <div class="mobile-card ia-score-card">
+        <div class="ia-score-layout">
+          <div class="ia-score-circle-wrap">
+            <svg viewBox="0 0 120 120" class="ia-score-svg">
+              <circle cx="60" cy="60" r="52"
+                      fill="none" stroke="#e2e8f0" stroke-width="10"/>
+              <circle cx="60" cy="60" r="52"
+                      fill="none"
+                      [attr.stroke]="scoreColor()"
+                      stroke-width="10"
+                      stroke-linecap="round"
+                      [attr.stroke-dasharray]="scoreDash()"
+                      transform="rotate(-90 60 60)"/>
+              <text x="60" y="58" text-anchor="middle"
+                    font-size="26" font-weight="800"
+                    [attr.fill]="scoreColor()">{{ analyse.scoreGlobal }}</text>
+              <text x="60" y="74" text-anchor="middle"
+                    font-size="10" fill="#94a3b8">/100</text>
+            </svg>
+          </div>
+          <div class="ia-score-info">
+            <p class="ia-score-label">{{ 'IA.SCORE_HEALTH' | translate }}</p>
+            <p class="ia-score-precision">
+              <ion-icon name="analytics-outline"></ion-icon>
+              {{ 'IA.SCORE_PRECISION' | translate }} {{ analyse.precisionModele | number:'1.0-0' }}%
+            </p>
+            <!-- Tendance CA -->
+            <div class="ia-tendance-badge" [style.color]="tendanceColor()" [style.border-color]="tendanceColor()">
+              <ion-icon [name]="tendanceIcon()"></ion-icon>
+              {{ tendanceLabelKey() | translate }}
+              <span *ngIf="analyse.tauxCroissanceMensuel !== 0"
+                    class="ia-growth"
+                    [style.color]="tendanceColor()">
+                ({{ analyse.tauxCroissanceMensuel > 0 ? '+' : '' }}{{ analyse.tauxCroissanceMensuel | number:'1.1-1' }}%)
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CA rapide -->
+      <div class="metric-grid">
+        <div class="metric-card">
+          <p class="metric-label">{{ 'IA.CA_YESTERDAY' | translate }}</p>
+          <p class="metric-value price">{{ formatPrix(analyse.caHier) }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">{{ 'IA.CA_WEEK' | translate }}</p>
+          <p class="metric-value price">{{ formatPrix(analyse.caCetteSemaine) }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">{{ 'IA.FORECAST_7' | translate }}</p>
+          <p class="metric-value" style="color:#0e9f6e;font-weight:800">{{ formatPrix(analyse.previsionCA7Jours) }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">{{ 'IA.FORECAST_30' | translate }}</p>
+          <p class="metric-value" style="color:#1a56db;font-weight:800">{{ formatPrix(analyse.previsionCA30Jours) }}</p>
+        </div>
+      </div>
+
+      <!-- CA mois -->
+      <div class="mobile-card">
+        <div class="row-between">
+          <p class="card-title">{{ 'IA.CA_MONTH' | translate }}</p>
+          <span class="price" style="font-size:1.1rem;font-weight:800">{{ formatPrix(analyse.caCeMois) }}</span>
+        </div>
+      </div>
+
+      <!-- Alertes IA -->
+      <ng-container *ngIf="analyse.alertes && analyse.alertes.length > 0">
+        <p class="section-title">{{ 'IA.ALERTS' | translate }}</p>
+        <div *ngFor="let alerte of analyse.alertes" class="ia-alerte"
+             [class.ia-alerte--danger]="alerte.niveau === 'DANGER'"
+             [class.ia-alerte--warning]="alerte.niveau === 'AVERTISSEMENT'">
+          <ion-icon [name]="alerte.niveau === 'DANGER' ? 'alert-circle-outline' : 'warning-outline'"></ion-icon>
+          <div>
+            <p class="ia-alerte-titre" *ngIf="alerte.titre">{{ alerte.titre }}</p>
+            <p class="ia-alerte-msg">{{ alerte.message }}</p>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Prévisions 30 jours (graphique barres) -->
+      <ng-container *ngIf="analyse.previsionCA30JoursDetail && analyse.previsionCA30JoursDetail.length > 0">
+        <div class="mobile-card">
+          <p class="card-title">{{ 'IA.FORECAST_DETAIL' | translate }}</p>
+          <p class="card-subtitle" style="margin-bottom:12px">
+            {{ 'IA.SCORE_PRECISION' | translate }} {{ analyse.precisionModele | number:'1.0-0' }}%
+          </p>
+          <div class="ia-bar-chart">
+            <div *ngFor="let pt of analyse.previsionCA30JoursDetail"
+                 class="ia-bar-wrap"
+                 [title]="formatDate(pt.date) + ' : ' + formatPrix(pt.prevision)">
+              <div class="ia-bar" [style.height]="barHeight(pt.prevision)"></div>
+              <span class="ia-bar-date">{{ formatDate(pt.date) }}</span>
+            </div>
+          </div>
+          <div class="ia-bar-axis-label row-between" style="margin-top:4px">
+            <span class="muted">Min</span>
+            <span class="muted">{{ formatPrix(previsionMax()) }} (max)</span>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- ONGLET 2 : Recommandations                  -->
+    <!-- ─────────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'recommandations'" class="page-pad stack">
+
+      <!-- État vide : boutique en bonne santé -->
+      <div *ngIf="recommandations.length === 0" class="empty-state">
+        <ion-icon name="checkmark-circle-outline" style="color:#0e9f6e"></ion-icon>
+        <p style="color:#065f46;font-weight:700">{{ 'IA.RECO_EMPTY' | translate }}</p>
+        <p class="muted">{{ 'IA.RECO_EMPTY_SUB' | translate }}</p>
+      </div>
+
+      <!-- Liste recommandations -->
+      <div *ngFor="let reco of recommandations; trackBy: trackById"
+           class="ia-reco-card mobile-card"
+           [class.ia-reco-card--done]="reco.traitee">
+
+        <!-- En-tête reco -->
+        <div class="ia-reco-header">
+          <ion-badge [color]="prioriteBadgeColor(reco.priorite)" class="ia-reco-badge">
+            {{ prioriteLabelKey(reco.priorite) | translate }}
+          </ion-badge>
+          <span *ngIf="reco.traitee" class="ia-reco-done-badge"
+                [class.suivie]="reco.etatFeedback === 'SUIVIE'"
+                [class.ignoree]="reco.etatFeedback === 'IGNOREE'">
+            <ion-icon [name]="reco.etatFeedback === 'SUIVIE' ? 'checkmark-circle' : 'close-circle'"></ion-icon>
+            {{ reco.etatFeedback === 'SUIVIE' ? ('IA.FOLLOWED' | translate) : ('IA.IGNORED' | translate) }}
+          </span>
+        </div>
+
+        <!-- Contenu -->
+        <p class="card-title">{{ reco.titre }}</p>
+        <p class="card-subtitle" style="margin-bottom:10px;line-height:1.5">{{ reco.description }}</p>
+
+        <!-- Barre confiance -->
+        <div class="ia-confidence-row">
+          <span class="ia-confidence-label">{{ 'IA.CONFIDENCE' | translate }}</span>
+          <div class="ia-confidence-bar-bg">
+            <div class="ia-confidence-bar-fill"
+                 [style.width]="reco.scoreConfiance + '%'"
+                 [class.high]="reco.scoreConfiance >= 70"
+                 [class.medium]="reco.scoreConfiance >= 40 && reco.scoreConfiance < 70"
+                 [class.low]="reco.scoreConfiance < 40">
+            </div>
+          </div>
+          <span class="ia-confidence-pct">{{ reco.scoreConfiance | number:'1.0-0' }}%</span>
+        </div>
+
+        <!-- Boutons action -->
+        <div class="ia-reco-actions" *ngIf="!reco.traitee">
+          <ion-button size="small" fill="solid" color="success" (click)="suivreReco(reco)">
+            <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+            {{ 'IA.FOLLOWED' | translate }}
+          </ion-button>
+          <ion-button size="small" fill="outline" color="medium" (click)="ignorerReco(reco)">
+            <ion-icon name="close-outline" slot="start"></ion-icon>
+            {{ 'IA.IGNORED' | translate }}
+          </ion-button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- ONGLET 3 : Clients IA (segmentation RFM)   -->
+    <!-- ─────────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'clients'" class="page-pad stack">
+
+      <p class="section-title">{{ 'IA.TAB_CLIENTS' | translate }}</p>
+
+      <div class="ia-segment-grid">
+        <div *ngFor="let seg of segmentsMeta"
+             class="ia-segment-card"
+             [class]="'ia-segment-card ' + seg.cssClass">
+          <div class="ia-segment-icon">
+            <ion-icon [name]="seg.icon"></ion-icon>
+          </div>
+          <div class="ia-segment-count">{{ segmentCount(seg.key) }}</div>
+          <div class="ia-segment-label">{{ seg.labelKey | translate }}</div>
+          <div class="ia-segment-clients">{{ 'IA.CLIENTS' | translate }}</div>
+          <div class="ia-segment-desc">{{ seg.desc | translate }}</div>
+        </div>
+      </div>
+
+      <!-- Total clients -->
+      <div class="mobile-card">
+        <div class="row-between">
+          <p class="card-title">Total segmenté</p>
+          <strong class="price">
+            {{ getTotalClients() }}
+          </strong>
+        </div>
+        <div class="ia-segment-summary">
+          <div *ngFor="let seg of segmentsMeta" class="ia-segment-bar-row">
+            <span class="ia-segment-bar-name">{{ seg.labelKey | translate }}</span>
+            <div class="ia-segment-bar-bg">
+              <div class="ia-segment-bar-fill"
+                   [class]="seg.cssClass + '-fill'"
+                   [style.width]="getTotalClients() > 0 ? (segmentCount(seg.key) / getTotalClients() * 100) + '%' : '0%'">
+              </div>
+            </div>
+            <span class="ia-segment-bar-val">{{ segmentCount(seg.key) }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</ion-content>

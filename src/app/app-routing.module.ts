@@ -106,6 +106,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/assistant-ia/assistant-ia.module').then(m => m.AssistantIaPageModule)
   },
   {
+    path: 'ia',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/ia/ia.module').then(m => m.IaPageModule)
+  },
+  {
     path: 'facture-design',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/facture-design/facture-design.module').then(m => m.FactureDesignPageModule)
@@ -124,6 +129,18 @@ const routes: Routes = [
     path: 'commandes',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/commandes/commandes.module').then(m => m.CommandesPageModule)
+  },
+  {
+    path: 'sorties',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/sorties/sorties.module').then(m => m.SortiesPageModule)
+  },
+  {
+    path: 'annulation-paiements',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/annulation-paiements/annulation-paiements.module').then(m => m.AnnulationPaiementsPageModule)
   },
   {
     path: '',
