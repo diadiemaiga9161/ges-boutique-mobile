@@ -294,7 +294,7 @@ export class FournisseursPage {
     if (this.avanceForm.sourceFinancement === 'BANQUE' && !this.avanceForm.compteId) {
       this.toast('Choisissez un compte bancaire', 'warning'); return;
     }
-    this.productService.enregistrerAvanceFournisseur({ ...this.avanceForm, utilisateurId: this.auth.getUserId() }).subscribe({
+    this.productService.enregistrerAvanceFournisseur({ ...this.avanceForm, modePaiement: this.avanceForm.sourceFinancement, utilisateurId: this.auth.getUserId() }).subscribe({
       next: () => {
         this.toast('Avance enregistrée');
         this.showAvanceModal = false;
@@ -499,7 +499,7 @@ thead th{padding:9px 8px;font-size:11px;font-weight:700;text-transform:uppercase
     return new Date(d).toLocaleDateString('fr-FR');
   }
 
-  private async toast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
+  private async toast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await t.present();
   }
