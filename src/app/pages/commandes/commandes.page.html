@@ -13,7 +13,7 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-refresher slot="fixed" (ionRefresh)="charger()">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
@@ -309,19 +309,37 @@
 
       <div class="md-lignes" *ngIf="lignesForm.length > 0">
         <div class="md-ligne" *ngFor="let l of lignesForm; let i = index">
-          <div class="md-ligne-nom">{{ l.produitNom }}</div>
-          <div class="md-ligne-qty">
-            <button class="md-qty-btn" (click)="changerQuantite(l, -1)">−</button>
-            <span class="md-qty-val">{{ l.quantite }}</span>
-            <button class="md-qty-btn" (click)="changerQuantite(l, 1)">+</button>
+          <div class="md-ligne-head">
+            <div class="md-ligne-nom">{{ l.produitNom }}</div>
+            <button class="md-ligne-del" (click)="supprimerLigne(i)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
           </div>
-          <div class="md-ligne-prix">{{ formatMontant(l.prixUnitaire * l.quantite) }}</div>
-          <button class="md-ligne-del" (click)="supprimerLigne(i)">
-            <ion-icon name="trash-outline"></ion-icon>
-          </button>
+          <div class="md-ligne-controls">
+            <div class="md-ligne-qty">
+              <button class="md-qty-btn" (click)="changerQuantite(l, -1)">−</button>
+              <span class="md-qty-val">{{ l.quantite }}</span>
+              <button class="md-qty-btn" (click)="changerQuantite(l, 1)">+</button>
+            </div>
+            <div class="md-ligne-field">
+              <label>Prix unit. (F)</label>
+              <input type="number" [(ngModel)]="l.prixUnitaire" min="0" />
+            </div>
+            <div class="md-ligne-field">
+              <label>Remise (%)</label>
+              <input type="number" [(ngModel)]="l.remise" min="0" max="100" />
+            </div>
+          </div>
+          <div class="md-ligne-total">
+            <span class="md-ligne-total-label">
+              {{ l.quantite }} × {{ formatMontant(l.prixUnitaire) }}
+              <ng-container *ngIf="l.remise > 0"> − {{ l.remise }}%</ng-container>
+            </span>
+            <strong>{{ formatMontant(prixLigne(l)) }}</strong>
+          </div>
         </div>
         <div class="md-total-bar">
-          <span>Total</span>
+          <span>Total commande</span>
           <strong>{{ formatMontant(totalCommande) }}</strong>
         </div>
       </div>
@@ -336,16 +354,17 @@
           <label>Mode de paiement</label>
           <select [(ngModel)]="form.modePaiement">
             <option value="ESPECES">Espèces</option>
-            <option value="MOBILE_MONEY">Mobile Money</option>
             <option value="ORANGE_MONEY">Orange Money</option>
-            <option value="WAVE_MONEY">Wave Money</option>
-            <option value="CARTE">Carte bancaire</option>
+            <option value="MOOV_MONEY">Moov Money</option>
+            <option value="CARTE_BANCAIRE">Carte bancaire</option>
             <option value="VIREMENT">Virement</option>
+            <option value="CHEQUE">Chèque</option>
           </select>
         </div>
-        <div class="md-field">
-          <label>Référence paiement</label>
-          <input [(ngModel)]="form.referencePaiement" placeholder="Optionnel" />
+        <div class="md-field" *ngIf="form.modePaiement !== 'ESPECES'">
+          <label>Référence paiement *</label>
+          <input [(ngModel)]="form.referencePaiement" placeholder="N° transaction / référence" />
+          <small style="color:#e57373;font-size:11px" *ngIf="!form.referencePaiement">Obligatoire pour ce mode</small>
         </div>
       </div>
 

@@ -51,7 +51,7 @@ export interface CommandeRequest {
   clientNom?: string;
   clientPrenom?: string;
   clientTelephone?: string;
-  lignes: { produitId: number; quantite: number; prixUnitaire: number }[];
+  lignes: { produitId: number; quantite: number; prixUnitaire: number; remise?: number }[];
   modePaiement: string;
   referencePaiement?: string;
   estCredit?: boolean;

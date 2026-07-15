@@ -11,6 +11,7 @@ interface LigneForm {
   prixOriginal: number;
   prixUnitaire: number;
   quantite: number;
+  remise: number;
 }
 
 @Component({
@@ -88,15 +89,19 @@ export class CommandesPage {
     });
   }
 
-  charger(): void {
+  charger(event?: any): void {
     this.isLoading = true;
     this.commandeService.getAll().subscribe({
       next: data => {
         this.commandes = data;
         this.appliquerFiltres();
         this.isLoading = false;
+        event?.target?.complete();
       },
-      error: () => { this.isLoading = false; }
+      error: () => {
+        this.isLoading = false;
+        event?.target?.complete();
+      }
     });
   }
 
@@ -133,7 +138,7 @@ export class CommandesPage {
   selectionnerProduit(p: Produit): void {
     const existing = this.lignesForm.find(l => l.produitId === p.id);
     if (existing) { existing.quantite = existing.quantite + 1; }
-    else { this.lignesForm.push({ produitId: p.id, produitNom: p.nom, prixOriginal: p.prixVente, prixUnitaire: p.prixVente, quantite: 1 }); }
+    else { this.lignesForm.push({ produitId: p.id, produitNom: p.nom, prixOriginal: p.prixVente, prixUnitaire: p.prixVente, quantite: 1, remise: 0 }); }
     this.searchProduit = '';
     this.showProduitDropdown = false;
   }
@@ -176,8 +181,12 @@ export class CommandesPage {
 
   // ─── Calculs ───────────────────────────────────────────────────────────────
 
+  prixLigne(l: LigneForm): number {
+    return l.prixUnitaire * l.quantite * (1 - (l.remise || 0) / 100);
+  }
+
   get totalCommande(): number {
-    return this.lignesForm.reduce((s, l) => s + l.prixUnitaire * l.quantite, 0);
+    return this.lignesForm.reduce((s, l) => s + this.prixLigne(l), 0);
   }
 
   get resteAPayer(): number {
@@ -215,7 +224,8 @@ export class CommandesPage {
       produitNom: l.produit?.nom || l.produitNom || '',
       prixOriginal: l.produit?.prixVente || l.prixUnitaire,
       prixUnitaire: l.prixUnitaire,
-      quantite: l.quantite
+      quantite: l.quantite,
+      remise: (l as any).remise || 0
     }));
     this.showModal = true;
   }
@@ -231,6 +241,9 @@ export class CommandesPage {
     if (this.lignesForm.length === 0) {
       return this.toast('Ajoutez au moins un produit', 'warning');
     }
+    if (this.form.modePaiement !== 'ESPECES' && !this.form.referencePaiement?.trim()) {
+      return this.toast('La référence de paiement est obligatoire pour ce mode', 'warning');
+    }
 
     const request: CommandeRequest = {
       vendeurId: this.auth.getUserId(),
@@ -238,7 +251,7 @@ export class CommandesPage {
       clientNom: this.form.clientNom || undefined,
       clientPrenom: this.form.clientPrenom || undefined,
       clientTelephone: this.form.clientTelephone || undefined,
-      lignes: this.lignesForm.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prixUnitaire })),
+      lignes: this.lignesForm.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prixUnitaire, remise: l.remise || 0 })),
       modePaiement: this.form.modePaiement,
       referencePaiement: this.form.referencePaiement || undefined,
       estCredit: this.form.estCredit,
