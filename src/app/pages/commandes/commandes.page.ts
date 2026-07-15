@@ -251,7 +251,11 @@ export class CommandesPage {
       clientNom: this.form.clientNom || undefined,
       clientPrenom: this.form.clientPrenom || undefined,
       clientTelephone: this.form.clientTelephone || undefined,
-      lignes: this.lignesForm.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prixUnitaire, remise: l.remise || 0 })),
+      lignes: this.lignesForm.map(l => ({
+        produitId: l.produitId,
+        quantite: l.quantite,
+        prixUnitaire: l.remise ? Math.round(l.prixUnitaire * (1 - l.remise / 100)) : l.prixUnitaire
+      })),
       modePaiement: this.form.modePaiement,
       referencePaiement: this.form.referencePaiement || undefined,
       estCredit: this.form.estCredit,
@@ -432,6 +436,14 @@ export class CommandesPage {
   formatMontant(v: number): string { return this.commandeService.formatMontant(v); }
   formatDate(d: string): string { return this.commandeService.formatDate(d); }
   getClientNom(c: Commande): string { return this.commandeService.getClientNom(c); }
+
+  getModePaiementLabel(mode: string): string {
+    const labels: Record<string, string> = {
+      'ESPECES': 'Espèces', 'ORANGE_MONEY': 'Orange Money', 'MOOV_MONEY': 'Moov Money',
+      'WAVE_MONEY': 'Wave', 'CARTE_BANCAIRE': 'Carte Bancaire', 'VIREMENT': 'Virement', 'CHEQUE': 'Chèque'
+    };
+    return labels[mode] || mode;
+  }
 
   get nbBrouillons(): number { return this.commandes.filter(c => c.statut === StatutCommande.BROUILLON).length; }
   get nbValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).length; }

@@ -163,7 +163,7 @@
           <div class="cmd-montant-total">{{ formatMontant(c.montantTotal) }}</div>
           <div class="cmd-mode-pay">
             <ion-icon name="wallet-outline"></ion-icon>
-            {{ c.modePaiement }}
+            {{ getModePaiementLabel(c.modePaiement) }}
             <span *ngIf="c.venteId" class="cmd-vente-ref"> · Vente #{{ c.venteId }}</span>
           </div>
         </div>
@@ -356,7 +356,8 @@
             <option value="ESPECES">Espèces</option>
             <option value="ORANGE_MONEY">Orange Money</option>
             <option value="MOOV_MONEY">Moov Money</option>
-            <option value="CARTE_BANCAIRE">Carte bancaire</option>
+            <option value="WAVE_MONEY">Wave</option>
+            <option value="CARTE_BANCAIRE">Carte Bancaire</option>
             <option value="VIREMENT">Virement</option>
             <option value="CHEQUE">Chèque</option>
           </select>
