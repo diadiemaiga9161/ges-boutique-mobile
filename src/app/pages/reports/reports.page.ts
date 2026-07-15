@@ -33,6 +33,16 @@ export class ReportsPage {
   creditsEnCours: CreditInfo[] = [];
   situationCredits?: SituationCredits;
 
+  // Analytique
+  ca30Jours: Array<{date: string, ca: number}> = [];
+  topProduits: Array<{produitNom: string, quantiteVendue: number, ca: number}> = [];
+  ventesParHeure: Array<{heure: number, nbVentes: number}> = [];
+  previsionStock: any[] = [];
+  isLoadingAnalytics = false;
+  maxCA = 1;
+  maxQte = 1;
+  maxVentes = 1;
+
   constructor(
     public reports: RapportService,
     public caisseService: CaisseService,
@@ -46,6 +56,7 @@ export class ReportsPage {
   ionViewWillEnter(): void {
     this.load();
     this.loadCredits();
+    this.chargerAnalytics();
   }
 
   load(event?: any): void {
@@ -255,6 +266,30 @@ export class ReportsPage {
   envoyerWhatsAppMois(): void {
     if (!this.monthly) { this.presentToast('Rapport mensuel non chargé', 'danger'); return; }
     this.rapportWA.envoyerRapportMois(this.monthly);
+  }
+
+  chargerAnalytics(): void {
+    this.isLoadingAnalytics = true;
+    this.reports.getCA30Jours().subscribe({
+      next: d => { this.ca30Jours = d; this.maxCA = Math.max(...d.map((x: any) => x.ca), 1); },
+      error: () => {}
+    });
+    this.reports.getTopProduits().subscribe({
+      next: d => { this.topProduits = d; this.maxQte = Math.max(...d.map((x: any) => x.quantiteVendue), 1); },
+      error: () => {}
+    });
+    this.reports.getVentesParHeure().subscribe({
+      next: d => { this.ventesParHeure = d; this.maxVentes = Math.max(...d.map((x: any) => x.nbVentes), 1); this.isLoadingAnalytics = false; },
+      error: () => { this.isLoadingAnalytics = false; }
+    });
+    this.reports.getPrevisionStock().subscribe({
+      next: d => this.previsionStock = d,
+      error: () => {}
+    });
+  }
+
+  pct(val: number, max: number): number {
+    return max > 0 ? Math.round((val / max) * 100) : 0;
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {

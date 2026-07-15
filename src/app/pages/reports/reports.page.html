@@ -387,6 +387,73 @@
     </div>
   </ng-template>
 
+  <!-- ===== ANALYSES VISUELLES ===== -->
+  <ion-card style="margin:12px">
+    <ion-card-header>
+      <ion-card-title style="font-size:1rem">Analyses visuelles</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+
+      <!-- CA 30 jours -->
+      <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">CA 30 derniers jours</p>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:70px;overflow-x:auto;margin-bottom:16px">
+        <div *ngFor="let d of ca30Jours"
+          style="flex:1;min-width:8px;display:flex;flex-direction:column;align-items:center">
+          <div [style.height.%]="pct(d.ca, maxCA)"
+               [title]="d.date"
+               style="width:100%;background:#4f46e5;border-radius:1px 1px 0 0;min-height:2px"></div>
+        </div>
+      </div>
+
+      <!-- Top produits -->
+      <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">Top 10 produits</p>
+      <div *ngFor="let p of topProduits" style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px">
+          <span>{{ p.produitNom }}</span>
+          <span style="color:#6b7280">{{ p.quantiteVendue }}</span>
+        </div>
+        <div style="background:#e5e7eb;border-radius:4px;height:6px">
+          <div [style.width.%]="pct(p.quantiteVendue, maxQte)"
+               style="background:#10b981;height:100%;border-radius:4px"></div>
+        </div>
+      </div>
+
+      <!-- Ventes par heure -->
+      <p style="font-weight:600;margin:12px 0 8px;font-size:.85rem">Ventes par heure</p>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:50px">
+        <div *ngFor="let h of ventesParHeure"
+          style="flex:1;display:flex;flex-direction:column;align-items:center">
+          <div [style.height.%]="pct(h.nbVentes, maxVentes)"
+               [title]="h.heure + 'h'"
+               style="width:100%;background:#f59e0b;border-radius:1px 1px 0 0;min-height:2px"></div>
+          <span style="font-size:.5rem;color:#6b7280">{{ h.heure }}</span>
+        </div>
+      </div>
+
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Prévisions de stock -->
+  <ion-card style="margin:12px" *ngIf="previsionStock.length > 0">
+    <ion-card-header>
+      <ion-card-title style="font-size:1rem">Prévisions de stock</ion-card-title>
+    </ion-card-header>
+    <ion-card-content style="padding:0">
+      <ion-list>
+        <ion-item *ngFor="let p of previsionStock">
+          <ion-label>
+            <h3>{{ p.produitNom }}</h3>
+            <p>Stock : {{ p.stockActuel }} | Jours : {{ p.joursAvantRupture >= 999 ? '—' : p.joursAvantRupture }} | Recommandé : {{ p.quantiteRecommandee }}</p>
+          </ion-label>
+          <ion-badge slot="end"
+            [color]="p.urgence === 'CRITIQUE' ? 'danger' : p.urgence === 'ATTENTION' ? 'warning' : 'success'">
+            {{ p.urgence }}
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
   <!-- Modes de paiement -->
   <ng-template #modesPaiementSection let-modes>
     <div class="section-block" *ngIf="modes?.length">

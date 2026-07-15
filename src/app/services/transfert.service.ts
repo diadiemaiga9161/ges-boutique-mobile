@@ -12,7 +12,7 @@ export interface TransfertStock {
   id?: number; numeroTransfert?: string;
   boutiqueSourceNom: string; boutiqueDestNom: string;
   statut: string; typePaiement: string; notes?: string;
-  dateCreation?: string; creePar?: string;
+  dateCreation?: string; creePar?: string; motifRejet?: string;
   lignes: LigneTransfert[]; historique?: HistoriqueTransfert[];
 }
 export interface TransfertRequest {
@@ -34,4 +34,17 @@ export class TransfertService {
   modifier(id: number, req: TransfertRequest): Observable<TransfertStock> { return this.http.put<TransfertStock>(`${URL}/${id}`, req); }
   confirmer(id: number): Observable<TransfertStock> { return this.http.put<TransfertStock>(`${URL}/${id}/confirmer`, {}); }
   annuler(id: number, motif?: string): Observable<TransfertStock> { return this.http.put<TransfertStock>(`${URL}/${id}/annuler`, { motif }); }
+
+  getEnvoyes(): Observable<TransfertStock[]> {
+    return this.http.get<TransfertStock[]>(`${URL}/envoyes`);
+  }
+  getRecus(): Observable<TransfertStock[]> {
+    return this.http.get<TransfertStock[]>(`${URL}/recus`);
+  }
+  accepter(id: number): Observable<TransfertStock> {
+    return this.http.post<TransfertStock>(`${URL}/${id}/accepter`, {});
+  }
+  rejeter(id: number, motif?: string): Observable<TransfertStock> {
+    return this.http.post<TransfertStock>(`${URL}/${id}/rejeter`, { motif });
+  }
 }

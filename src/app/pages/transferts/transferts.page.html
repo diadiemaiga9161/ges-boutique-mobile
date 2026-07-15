@@ -11,6 +11,29 @@
 
 <ion-content>
 
+  <!-- Onglets Envoyés / Reçus / Tous -->
+  <div style="display:flex;gap:8px;padding:12px 16px 0">
+    <ion-button size="small"
+      [fill]="ongletActif === 'tous' ? 'solid' : 'outline'"
+      (click)="changerOnglet('tous')">
+      Tous
+    </ion-button>
+    <ion-button size="small"
+      [fill]="ongletActif === 'envoyes' ? 'solid' : 'outline'"
+      (click)="changerOnglet('envoyes')">
+      Envoyés
+    </ion-button>
+    <ion-button size="small"
+      [fill]="ongletActif === 'recus' ? 'solid' : 'outline'"
+      (click)="changerOnglet('recus')" style="position:relative">
+      Reçus
+      <ion-badge *ngIf="nbEnAttente > 0" color="warning"
+        style="position:absolute;top:-4px;right:-4px;font-size:.6rem">
+        {{ nbEnAttente }}
+      </ion-badge>
+    </ion-button>
+  </div>
+
   <!-- FORMULAIRE -->
   <ion-card *ngIf="afficherFormulaire" color="light">
     <ion-card-header>
@@ -104,8 +127,8 @@
     </div>
   </div>
 
-  <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!isLoading && transferts.length > 0">
-    <article class="list-item-card" *ngFor="let t of transferts; trackBy: trackById" (click)="voirDetail(t)" style="cursor:pointer">
+  <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!isLoading && transfertsAffiches.length > 0">
+    <article class="list-item-card" *ngFor="let t of transfertsAffiches; trackBy: trackById" (click)="voirDetail(t)" style="cursor:pointer">
       <div class="lic-header">
         <div class="lic-avatar">
           <ion-icon name="swap-horizontal-outline" style="font-size:1rem;color:#fff"></ion-icon>
@@ -127,21 +150,31 @@
           <p style="font-size:0.68rem;color:#94a3b8;margin:2px 0 0;text-align:right">{{ t.dateCreation | date:'dd/MM/yyyy' }}</p>
         </div>
       </div>
-      <div class="lic-footer" *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'">
-        <button class="lic-action lic-action--primary" (click)="$event.stopPropagation(); editerTransfert(t)">
-          <ion-icon name="create-outline"></ion-icon> Modifier
-        </button>
-        <button class="lic-action lic-action--success" (click)="$event.stopPropagation(); confirmer(t)">
-          <ion-icon name="checkmark-outline"></ion-icon> Confirmer
-        </button>
-        <button class="lic-action lic-action--danger" (click)="$event.stopPropagation(); annuler(t)">
-          <ion-icon name="close-outline"></ion-icon> Annuler
-        </button>
+      <div class="lic-footer" *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'">
+        <ng-container *ngIf="ongletActif !== 'recus'">
+          <button class="lic-action lic-action--primary" (click)="$event.stopPropagation(); editerTransfert(t)">
+            <ion-icon name="create-outline"></ion-icon> Modifier
+          </button>
+          <button class="lic-action lic-action--success" (click)="$event.stopPropagation(); confirmer(t)">
+            <ion-icon name="checkmark-outline"></ion-icon> Confirmer
+          </button>
+          <button class="lic-action lic-action--danger" (click)="$event.stopPropagation(); annuler(t)">
+            <ion-icon name="close-outline"></ion-icon> Annuler
+          </button>
+        </ng-container>
+        <ng-container *ngIf="ongletActif === 'recus' && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE')">
+          <ion-button size="small" color="success" fill="solid" (click)="$event.stopPropagation(); accepterTransfert(t)">
+            Accepter
+          </ion-button>
+          <ion-button size="small" color="danger" fill="outline" (click)="$event.stopPropagation(); rejeterTransfert(t)">
+            Rejeter
+          </ion-button>
+        </ng-container>
       </div>
     </article>
   </section>
 
-  <div class="empty-v2" *ngIf="!isLoading && transferts.length === 0">
+  <div class="empty-v2" *ngIf="!isLoading && transfertsAffiches.length === 0">
     <div class="empty-v2__icon"><ion-icon name="swap-horizontal-outline"></ion-icon></div>
     <p class="empty-v2__title">Aucun transfert</p>
     <p class="empty-v2__text">Aucun transfert de stock pour le moment</p>

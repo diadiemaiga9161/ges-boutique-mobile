@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CaisseService } from './caisse.service';
 import { ProductService, Produit } from './product.service';
 import { VenteMap, VenteService } from './vente.service';
 import { FactureService } from './facture.service';
+import { environment } from '../../environments/environment';
 
 export interface StatistiquesGenerales {
   chiffreAffaire: {
@@ -81,6 +83,7 @@ export interface RapportJournalier {
 })
 export class RapportService {
   constructor(
+    private http: HttpClient,
     private ventes: VenteService,
     private products: ProductService,
     private caisse: CaisseService,
@@ -320,5 +323,21 @@ export class RapportService {
 
   private valeurStock(produits: Produit[]): number {
     return produits.reduce((sum, product) => sum + Number(product.prixAchat || 0) * Number(product.quantite || 0), 0);
+  }
+
+  getCA30Jours(): Observable<Array<{date: string, ca: number}>> {
+    return this.http.get<Array<{date: string, ca: number}>>(`${environment.apiUrl}/rapports/ca-30-jours`);
+  }
+  getTopProduits(): Observable<Array<{produitNom: string, quantiteVendue: number, ca: number}>> {
+    return this.http.get<Array<{produitNom: string, quantiteVendue: number, ca: number}>>(`${environment.apiUrl}/rapports/top-produits`);
+  }
+  getVentesParHeure(): Observable<Array<{heure: number, nbVentes: number}>> {
+    return this.http.get<Array<{heure: number, nbVentes: number}>>(`${environment.apiUrl}/rapports/ventes-par-heure`);
+  }
+  getMarges(): Observable<Array<{produitNom: string, ca: number, coutAchat: number, marge: number, tauxMarge: number}>> {
+    return this.http.get<any[]>(`${environment.apiUrl}/rapports/marges`);
+  }
+  getPrevisionStock(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/previsions/stock`);
   }
 }

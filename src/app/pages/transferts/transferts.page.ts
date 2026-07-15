@@ -17,6 +17,11 @@ export class TransfertsPage implements OnInit {
   produits: any[] = [];
   isLoading = false;
 
+  ongletActif: 'tous' | 'envoyes' | 'recus' = 'tous';
+  transfertsEnvoyes: TransfertStock[] = [];
+  transfertsRecus: TransfertStock[] = [];
+  nbEnAttente = 0;
+
   afficherFormulaire = false;
   editingId: number | null = null;
   form: TransfertRequest = { boutiqueDestId: 0, typePaiement: 'SANS_PAIEMENT', notes: '', lignes: [] };
@@ -31,10 +36,12 @@ export class TransfertsPage implements OnInit {
     { v: 'CREDIT',        l: 'Crédit' }
   ];
   readonly STATUT_LABELS: Record<string, string> = {
-    CREE: 'Créé', EN_ATTENTE_CONFIRMATION: 'En attente', CONFIRME: 'Confirmé', ANNULE: 'Annulé'
+    CREE: 'Créé', EN_ATTENTE_CONFIRMATION: 'En attente', EN_ATTENTE: 'En attente',
+    CONFIRME: 'Confirmé', ACCEPTE: 'Accepté', REJETE: 'Rejeté', COMPLETE: 'Complété', ANNULE: 'Annulé'
   };
   readonly STATUT_COLORS: Record<string, string> = {
-    CREE: 'primary', EN_ATTENTE_CONFIRMATION: 'warning', CONFIRME: 'success', ANNULE: 'medium'
+    CREE: 'primary', EN_ATTENTE_CONFIRMATION: 'warning', EN_ATTENTE: 'warning',
+    CONFIRME: 'success', ACCEPTE: 'success', REJETE: 'danger', COMPLETE: 'tertiary', ANNULE: 'medium'
   };
 
   constructor(
@@ -46,7 +53,7 @@ export class TransfertsPage implements OnInit {
 
   ngOnInit(): void { this.charger(); }
 
-  ionViewWillEnter(): void { this.charger(); }
+  ionViewWillEnter(): void { this.charger(); this.chargerOnglets(); }
 
   charger(): void {
     this.isLoading = true;
@@ -218,6 +225,67 @@ export class TransfertsPage implements OnInit {
   estEditable(t: TransfertStock | null): boolean {
     if (!t) return false;
     return t.statut !== 'CONFIRME' && t.statut !== 'ANNULE';
+  }
+
+  chargerOnglets(): void {
+    this.transfertService.getEnvoyes().subscribe({
+      next: t => { this.transfertsEnvoyes = t; },
+      error: () => {}
+    });
+    this.transfertService.getRecus().subscribe({
+      next: t => {
+        this.transfertsRecus = t;
+        this.nbEnAttente = t.filter(tr =>
+          tr.statut === 'EN_ATTENTE_CONFIRMATION' || tr.statut === 'EN_ATTENTE'
+        ).length;
+      },
+      error: () => {}
+    });
+  }
+
+  changerOnglet(o: 'tous' | 'envoyes' | 'recus'): void {
+    this.ongletActif = o;
+    if (o !== 'tous') this.chargerOnglets();
+  }
+
+  get transfertsAffiches(): TransfertStock[] {
+    if (this.ongletActif === 'envoyes') return this.transfertsEnvoyes;
+    if (this.ongletActif === 'recus') return this.transfertsRecus;
+    return this.transferts;
+  }
+
+  async accepterTransfert(t: TransfertStock): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Accepter ce transfert ?',
+      message: 'Les produits seront ajoutés à votre stock.',
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        { text: 'Accepter', handler: () => {
+          this.transfertService.accepter(t.id!).subscribe({
+            next: () => { this.charger(); this.chargerOnglets(); this.toast('Transfert accepté !', 'success'); },
+            error: e => this.toast(e.error?.message ?? 'Erreur', 'danger')
+          });
+        }}
+      ]
+    });
+    await alert.present();
+  }
+
+  async rejeterTransfert(t: TransfertStock): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Rejeter ce transfert',
+      inputs: [{ name: 'motif', type: 'text', placeholder: 'Motif (optionnel)' }],
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        { text: 'Rejeter', handler: (d) => {
+          this.transfertService.rejeter(t.id!, d.motif).subscribe({
+            next: () => { this.charger(); this.chargerOnglets(); this.toast('Transfert rejeté', 'medium'); },
+            error: e => this.toast(e.error?.message ?? 'Erreur', 'danger')
+          });
+        }}
+      ]
+    });
+    await alert.present();
   }
 
   private async toast(msg: string, color: string): Promise<void> {
