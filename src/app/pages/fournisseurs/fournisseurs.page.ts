@@ -8,6 +8,7 @@ import {
 } from '../../services/product.service';
 import { FactureService } from '../../services/facture.service';
 import { BoutiqueService } from '../../services/boutique.service';
+import { CompteService, Compte } from '../../services/compte.service';
 
 @Component({
   selector: 'app-fournisseurs',
@@ -47,8 +48,11 @@ export class FournisseursPage {
   loadingAvances = false;
   showPaiementModal = false;
   showAvanceModal = false;
-  paiementForm = { fournisseurId: 0, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '' };
-  avanceForm = { fournisseurId: 0, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '' };
+  comptes: Compte[] = [];
+  paiementForm: { fournisseurId: number; montant: number; modePaiement: string; reference: string; observation: string; compteId?: number } =
+    { fournisseurId: 0, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined };
+  avanceForm: { fournisseurId: number; montant: number; sourceFinancement: string; reference: string; observation: string; compteId?: number } =
+    { fournisseurId: 0, montant: 0, sourceFinancement: 'CAISSE', reference: '', observation: '', compteId: undefined };
 
   // Situation
   situation: any = null;
@@ -61,12 +65,17 @@ export class FournisseursPage {
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private factureService: FactureService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private compteService: CompteService
   ) {}
 
   ionViewWillEnter(): void {
     this.loadFournisseurs();
     this.productService.getProducts().subscribe(p => this.produits = p);
+    this.compteService.getTousLesComptes().subscribe({
+      next: data => this.comptes = data,
+      error: () => this.comptes = []
+    });
   }
 
   segmentChanged(ev: any): void {
@@ -253,12 +262,15 @@ export class FournisseursPage {
 
   openPaiement(): void {
     if (!this.selectedFournisseur) { this.toast('Sélectionnez un fournisseur d\'abord', 'danger'); return; }
-    this.paiementForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '' };
+    this.paiementForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined };
     this.showPaiementModal = true;
   }
 
   savePaiement(): void {
     if (!this.paiementForm.montant || this.paiementForm.montant <= 0) { this.toast('Montant invalide', 'danger'); return; }
+    if (this.paiementForm.modePaiement === 'BANQUE' && !this.paiementForm.compteId) {
+      this.toast('Choisissez un compte bancaire', 'warning'); return;
+    }
     this.productService.payerFournisseur({ ...this.paiementForm, utilisateurId: this.auth.getUserId() }).subscribe({
       next: () => {
         this.toast('Paiement enregistré');
@@ -273,12 +285,15 @@ export class FournisseursPage {
 
   openAvance(): void {
     if (!this.selectedFournisseur) { this.toast('Sélectionnez un fournisseur d\'abord', 'danger'); return; }
-    this.avanceForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '' };
+    this.avanceForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, sourceFinancement: 'CAISSE', reference: '', observation: '', compteId: undefined };
     this.showAvanceModal = true;
   }
 
   saveAvance(): void {
     if (!this.avanceForm.montant || this.avanceForm.montant <= 0) { this.toast('Montant invalide', 'danger'); return; }
+    if (this.avanceForm.sourceFinancement === 'BANQUE' && !this.avanceForm.compteId) {
+      this.toast('Choisissez un compte bancaire', 'warning'); return;
+    }
     this.productService.enregistrerAvanceFournisseur({ ...this.avanceForm, utilisateurId: this.auth.getUserId() }).subscribe({
       next: () => {
         this.toast('Avance enregistrée');

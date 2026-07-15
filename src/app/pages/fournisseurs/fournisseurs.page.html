@@ -533,8 +533,16 @@
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.PAYMENT_MODE' | translate }}</ion-label>
         <ion-select [(ngModel)]="paiementForm.modePaiement" interface="action-sheet">
-          <ion-select-option value="ESPECES">Espèces</ion-select-option>
+          <ion-select-option value="ESPECES">Espèces (Caisse)</ion-select-option>
           <ion-select-option value="BANQUE">Banque</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item *ngIf="paiementForm.modePaiement === 'BANQUE'">
+        <ion-label position="stacked">Compte bancaire *</ion-label>
+        <ion-select [(ngModel)]="paiementForm.compteId" interface="action-sheet" placeholder="-- Choisir un compte --">
+          <ion-select-option *ngFor="let c of comptes" [value]="c.id">
+            {{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA
+          </ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
@@ -570,10 +578,18 @@
         <ion-input [(ngModel)]="avanceForm.montant" type="number" min="0"></ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.PAYMENT_MODE' | translate }}</ion-label>
-        <ion-select [(ngModel)]="avanceForm.modePaiement" interface="action-sheet">
-          <ion-select-option value="ESPECES">Espèces</ion-select-option>
+        <ion-label position="stacked">Source</ion-label>
+        <ion-select [(ngModel)]="avanceForm.sourceFinancement" interface="action-sheet">
+          <ion-select-option value="CAISSE">Caisse (Espèces)</ion-select-option>
           <ion-select-option value="BANQUE">Banque</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item *ngIf="avanceForm.sourceFinancement === 'BANQUE'">
+        <ion-label position="stacked">Compte bancaire *</ion-label>
+        <ion-select [(ngModel)]="avanceForm.compteId" interface="action-sheet" placeholder="-- Choisir un compte --">
+          <ion-select-option *ngFor="let c of comptes" [value]="c.id">
+            {{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA
+          </ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
