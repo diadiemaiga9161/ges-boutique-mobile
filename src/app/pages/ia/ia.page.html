@@ -124,8 +124,8 @@
       <div class="wizard-options-row">
         <div *ngFor="let val of margeOptions"
              class="wizard-option-pill"
-             [class.selected]="profil.margeCiblePourcent === val"
-             (click)="profil.margeCiblePourcent = val">
+             [class.selected]="profil.margeObjectif === val"
+             (click)="profil.margeObjectif = val">
           {{ val }}%
         </div>
       </div>
@@ -138,8 +138,8 @@
       <div class="wizard-options-row">
         <div *ngFor="let val of delaiOptions"
              class="wizard-option-pill"
-             [class.selected]="profil.delaiRelanceCreditJours === val"
-             (click)="profil.delaiRelanceCreditJours = val">
+             [class.selected]="profil.delaiReglementCredit === val"
+             (click)="profil.delaiReglementCredit = val">
           {{ val }}j
         </div>
       </div>

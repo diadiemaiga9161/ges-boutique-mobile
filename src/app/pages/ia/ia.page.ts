@@ -33,8 +33,8 @@ export class IaPage {
     typeBoutique: '',
     joursApprovisionnement: [],
     objectifStockJours: 14,
-    margeCiblePourcent: 20,
-    delaiRelanceCreditJours: 15
+    margeObjectif: 20,
+    delaiReglementCredit: 15
   };
   wizardLoading = false;
   profilVerifie = false;
@@ -105,18 +105,20 @@ export class IaPage {
   lancerAnalyse(): void {
     this.loading = true;
     this.analyseErreur = false;
-    this.iaService.analyser().pipe(
-      catchError(() => of(null))
-    ).subscribe(res => {
-      this.loading = false;
-      if (!res) {
+    this.iaService.analyser().subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.analyse = res;
+        this.recommandations = (res.recommandations || [])
+          .sort((a, b) => this.prioriteOrdre(a.priorite) - this.prioriteOrdre(b.priorite))
+          .map(r => ({ ...r, traitee: false }));
+      },
+      error: (e: any) => {
+        this.loading = false;
         this.analyseErreur = true;
-        return;
+        const msg = e?.error?.erreur || e?.error?.message || e?.message;
+        if (msg) { this.afficherToast(msg, 'danger'); }
       }
-      this.analyse = res;
-      this.recommandations = (res.recommandations || [])
-        .sort((a, b) => this.prioriteOrdre(a.priorite) - this.prioriteOrdre(b.priorite))
-        .map(r => ({ ...r, traitee: false }));
     });
   }
 
@@ -140,8 +142,8 @@ export class IaPage {
       case 1: return !!this.profil.typeBoutique;
       case 2: return this.profil.joursApprovisionnement.length > 0;
       case 3: return this.profil.objectifStockJours > 0;
-      case 4: return this.profil.margeCiblePourcent > 0;
-      case 5: return this.profil.delaiRelanceCreditJours > 0;
+      case 4: return this.profil.margeObjectif > 0;
+      case 5: return this.profil.delaiReglementCredit > 0;
       default: return true;
     }
   }
@@ -168,9 +170,12 @@ export class IaPage {
         this.afficherToast('IA.PROFIL_SAVED', 'success');
         this.lancerAnalyse();
       },
-      error: () => {
+      error: (e: any) => {
         this.wizardLoading = false;
-        this.afficherToast('IA.ANALYZE_ERROR', 'danger');
+        const msg = e?.error?.erreur || e?.error?.message || e?.message
+          || this.translate.instant('IA.ANALYZE_ERROR');
+        this.toastCtrl.create({ message: msg, duration: 3500, color: 'danger', position: 'bottom' })
+          .then(t => t.present());
       }
     });
   }

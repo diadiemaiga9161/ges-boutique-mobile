@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface RecommandationIA {
@@ -36,12 +37,22 @@ export interface AnalyseIAResult {
   precisionModele: number;
 }
 
+/** Interface utilisée en interne par l'UI (joursApprovisionnement = tableau). */
 export interface ProfilIA {
   typeBoutique: string;
-  joursApprovisionnement: string[];
+  joursApprovisionnement: string[];  // ex: ['LUNDI', 'MERCREDI']
   objectifStockJours: number;
-  margeCiblePourcent: number;
-  delaiRelanceCreditJours: number;
+  margeObjectif: number;             // attendu par le backend
+  delaiReglementCredit: number;      // attendu par le backend
+}
+
+/** Format exact attendu / retourné par le backend Spring Boot. */
+interface ProfilIABackend {
+  typeBoutique: string;
+  joursApprovisionnement: string;    // JSON-encodé: "[\"LUNDI\",\"MERCREDI\"]"
+  objectifStockJours: number;
+  margeObjectif: number;
+  delaiReglementCredit: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -51,11 +62,23 @@ export class IAService {
   constructor(private http: HttpClient) {}
 
   getProfil(): Observable<ProfilIA> {
-    return this.http.get<ProfilIA>(`${this.base}/profil`);
+    return this.http.get<ProfilIABackend>(`${this.base}/profil`).pipe(
+      map(backend => ({
+        ...backend,
+        joursApprovisionnement: this.parseJours(backend.joursApprovisionnement)
+      }))
+    );
   }
 
   sauvegarderProfil(profil: ProfilIA): Observable<any> {
-    return this.http.post<any>(`${this.base}/profil`, profil);
+    const payload: ProfilIABackend = {
+      typeBoutique: profil.typeBoutique,
+      joursApprovisionnement: JSON.stringify(profil.joursApprovisionnement),
+      objectifStockJours: profil.objectifStockJours,
+      margeObjectif: profil.margeObjectif,
+      delaiReglementCredit: profil.delaiReglementCredit
+    };
+    return this.http.post<any>(`${this.base}/profil`, payload);
   }
 
   analyser(): Observable<AnalyseIAResult> {
@@ -72,5 +95,12 @@ export class IAService {
 
   getScoreSante(): Observable<any> {
     return this.http.get<any>(`${this.base}/sante`);
+  }
+
+  /** Accepte un tableau ou une chaîne JSON et retourne toujours un tableau. */
+  private parseJours(val: string | string[]): string[] {
+    if (Array.isArray(val)) return val;
+    if (!val) return [];
+    try { return JSON.parse(val); } catch { return []; }
   }
 }
