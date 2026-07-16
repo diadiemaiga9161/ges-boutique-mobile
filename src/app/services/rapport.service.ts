@@ -122,7 +122,7 @@ export class RapportService {
             creditsEnRetard: creditsRetard.length,
             montantCreditsEnRetard: creditsRetard.reduce((sum, credit) => sum + Number(credit.montantRestant || 0), 0)
           },
-          produitsPlusVendus: this.getTopProduits(ventes).slice(0, 8)
+          produitsPlusVendus: this.calculerTopProduits(ventes).slice(0, 8)
         };
       })
     );
@@ -152,7 +152,7 @@ export class RapportService {
           montantRemisesTotal: ventes.reduce((sum, vente) => sum + Number(vente.montantRemiseTotal || 0), 0),
           produitsEnStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
           valeurStockTotale: this.valeurStock(produits),
-          topProduits: this.getTopProduits(ventes).slice(0, 8).map(item => ({
+          topProduits: this.calculerTopProduits(ventes).slice(0, 8).map(item => ({
             nom: item.nom,
             quantite: item.quantiteVendue,
             chiffreAffaire: item.chiffreAffaire
@@ -178,7 +178,7 @@ export class RapportService {
         chiffreAffaireTotal: this.totalVentes(ventesListe),
         nombreVentes: ventesListe.length,
         montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
-        topProduits: this.getTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
+        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
         modePaiementStats: this.calcModePaiementStats(ventesListe)
       }))
     );
@@ -198,7 +198,7 @@ export class RapportService {
         chiffreAffaireTotal: this.totalVentes(ventesListe),
         nombreVentes: ventesListe.length,
         montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
-        topProduits: this.getTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
+        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
         modePaiementStats: this.calcModePaiementStats(ventesListe)
       }))
     );
@@ -216,7 +216,7 @@ export class RapportService {
           montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
           beneficeTotal: 0
         },
-        topProduits: this.getTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
+        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
         modePaiementStats: this.calcModePaiementStats(ventesListe),
         gains: { totalRevenus: this.totalVentes(ventesListe), beneficeBrut: 0, margeBrute: 0 },
         pertes: { totalPertes: 0 },
@@ -299,7 +299,7 @@ export class RapportService {
     return `${year}-${month}-${day}`;
   }
 
-  private getTopProduits(ventes: VenteMap[]): Array<{ nom: string; quantiteVendue: number; chiffreAffaire: number }> {
+  private calculerTopProduits(ventes: VenteMap[]): Array<{ nom: string; quantiteVendue: number; chiffreAffaire: number }> {
     const map = new Map<string, { quantiteVendue: number; chiffreAffaire: number }>();
 
     for (const vente of ventes) {
