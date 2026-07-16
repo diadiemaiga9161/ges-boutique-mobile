@@ -143,6 +143,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/annulation-paiements/annulation-paiements.module').then(m => m.AnnulationPaiementsPageModule)
   },
   {
+    path: 'a-propos',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/ressources/ressources.module').then(m => m.RessourcesPageModule)
+  },
+  {
     path: '',
     redirectTo: 'tabs',
     pathMatch: 'full'

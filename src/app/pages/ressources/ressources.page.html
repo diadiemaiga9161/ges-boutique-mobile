@@ -1,0 +1,131 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'RESSOURCES.TITRE' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ressources-content">
+
+  <!-- ===== HERO CARD ===== -->
+  <div class="hero-wrapper">
+    <div class="hero-card">
+      <div class="hero-logo-ring">
+        <img src="assets/icon/favicon.png" alt="Ges Lafia" class="hero-logo" />
+      </div>
+      <h1 class="hero-app-name">Ges Lafia</h1>
+      <p class="hero-subtitle">{{ 'RESSOURCES.SOUS_TITRE' | translate }}</p>
+      <ion-badge class="hero-badge">{{ 'RESSOURCES.VERSION_BADGE' | translate }}</ion-badge>
+    </div>
+  </div>
+
+  <!-- ===== SECTION FONCTIONNALITES ===== -->
+  <div class="section-wrapper">
+    <h2 class="section-title">
+      <ion-icon name="grid-outline"></ion-icon>
+      {{ 'RESSOURCES.FONCTIONNALITES' | translate }}
+    </h2>
+
+    <ion-grid class="feat-grid">
+      <ion-row>
+        <ion-col size="6" *ngFor="let f of fonctionnalites">
+          <ion-card class="feat-card" button (click)="null">
+            <ion-card-content class="feat-card-content">
+              <div class="feat-icon-wrap" [style.background]="f.couleur + '1a'">
+                <ion-icon [name]="f.icon" [style.color]="f.couleur" class="feat-icon"></ion-icon>
+              </div>
+              <h3 class="feat-title">{{ f.titreKey | translate }}</h3>
+              <p class="feat-desc">{{ f.descKey | translate }}</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <!-- ===== SECTION CONTACT ===== -->
+  <div class="section-wrapper">
+    <h2 class="section-title">
+      <ion-icon name="call-outline"></ion-icon>
+      {{ 'RESSOURCES.CONTACT' | translate }}
+    </h2>
+
+    <ion-list class="contact-list" lines="none">
+      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://wa.me/22379999999')">
+        <div class="contact-icon-wrap contact-icon-wa" slot="start">
+          <ion-icon name="logo-whatsapp"></ion-icon>
+        </div>
+        <ion-label>
+          <p class="contact-label">{{ 'RESSOURCES.WHATSAPP' | translate }}</p>
+          <p class="contact-value">+223 79 99 99 99</p>
+        </ion-label>
+        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
+      </ion-item>
+
+      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('mailto:contact@mg-consulting.site')">
+        <div class="contact-icon-wrap contact-icon-mail" slot="start">
+          <ion-icon name="mail-outline"></ion-icon>
+        </div>
+        <ion-label>
+          <p class="contact-label">{{ 'RESSOURCES.EMAIL' | translate }}</p>
+          <p class="contact-value">contact@mg-consulting.site</p>
+        </ion-label>
+        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
+      </ion-item>
+
+      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://moh.mg-consulting.site')">
+        <div class="contact-icon-wrap contact-icon-web" slot="start">
+          <ion-icon name="globe-outline"></ion-icon>
+        </div>
+        <ion-label>
+          <p class="contact-label">{{ 'RESSOURCES.SITE_WEB' | translate }}</p>
+          <p class="contact-value">moh.mg-consulting.site</p>
+        </ion-label>
+        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <!-- ===== SECTION A PROPOS ===== -->
+  <div class="section-wrapper">
+    <h2 class="section-title">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      {{ 'RESSOURCES.A_PROPOS' | translate }}
+    </h2>
+
+    <ion-list class="about-list" lines="none">
+      <ion-item class="about-item">
+        <ion-icon name="code-slash-outline" slot="start" class="about-icon"></ion-icon>
+        <ion-label>
+          <p class="about-label">Version</p>
+          <p class="about-value">{{ version }}</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item class="about-item">
+        <ion-icon name="person-circle-outline" slot="start" class="about-icon"></ion-icon>
+        <ion-label>
+          <p class="about-label">{{ 'RESSOURCES.DEVELOPPEUR' | translate }}</p>
+          <p class="about-value">Maïga Consulting</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item class="about-item">
+        <ion-icon name="shield-checkmark-outline" slot="start" class="about-icon"></ion-icon>
+        <ion-label>
+          <p class="about-label">Copyright</p>
+          <p class="about-value">{{ 'RESSOURCES.COPYRIGHT' | translate }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <!-- Bas de page -->
+  <div class="page-footer">
+    <p>Ges Lafia · v{{ version }}</p>
+    <p class="footer-sub">Maïga Consulting · moh.mg-consulting.site</p>
+  </div>
+
+</ion-content>

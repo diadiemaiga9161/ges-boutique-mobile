@@ -1,0 +1,301 @@
+// ==========================================
+// Page Ressources / En savoir plus
+// Design : dégradé #081648 → #1a56db
+// ==========================================
+
+.ressources-content {
+  --background: #f1f5f9;
+}
+
+// ===== HERO =====
+.hero-wrapper {
+  background: linear-gradient(135deg, #081648 0%, #1a56db 100%);
+  padding: 32px 20px 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-logo-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.hero-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.hero-app-name {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  max-width: 220px;
+}
+
+.hero-badge {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+// ===== SECTIONS =====
+.section-wrapper {
+  margin: 20px 12px 0;
+  padding: 0 0 4px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #081648;
+  margin: 0 4px 12px;
+
+  ion-icon {
+    font-size: 1.15rem;
+    color: #1a56db;
+  }
+}
+
+// ===== FONCTIONNALITES GRID =====
+.feat-grid {
+  padding: 0;
+
+  ion-row {
+    gap: 0;
+  }
+
+  ion-col {
+    padding: 4px;
+  }
+}
+
+.feat-card {
+  margin: 0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(8, 22, 72, 0.08);
+  border: 1px solid #e2e8f0;
+  height: 100%;
+
+  &:hover, &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(8, 22, 72, 0.12);
+  }
+}
+
+.feat-card-content {
+  padding: 12px 10px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 110px;
+}
+
+.feat-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feat-icon {
+  font-size: 1.35rem;
+}
+
+.feat-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.feat-desc {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+// ===== CONTACT =====
+.contact-list {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(8, 22, 72, 0.07);
+  overflow: hidden;
+  padding: 0;
+}
+
+.contact-item {
+  --background: #ffffff;
+  --border-radius: 0;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --inner-padding-end: 16px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.contact-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #fff;
+  margin-right: 12px;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+}
+
+.contact-icon-wa {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+.contact-icon-mail {
+  background: linear-gradient(135deg, #1a56db, #081648);
+}
+
+.contact-icon-web {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+}
+
+.contact-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0 0 2px;
+  font-weight: 500;
+}
+
+.contact-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.contact-arrow {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+// ===== A PROPOS =====
+.about-list {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(8, 22, 72, 0.07);
+  overflow: hidden;
+  padding: 0;
+}
+
+.about-item {
+  --background: #ffffff;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --inner-padding-end: 16px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.about-icon {
+  font-size: 1.15rem;
+  color: #1a56db;
+}
+
+.about-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0 0 2px;
+  font-weight: 500;
+}
+
+.about-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+// ===== FOOTER =====
+.page-footer {
+  text-align: center;
+  padding: 24px 16px 32px;
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .footer-sub {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 4px !important;
+  }
+}
+
+// ===== RESPONSIVE ≤360px =====
+@media (max-width: 360px) {
+  .hero-app-name {
+    font-size: 1.5rem;
+  }
+
+  .feat-title {
+    font-size: 0.75rem;
+  }
+
+  .feat-desc {
+    font-size: 0.68rem;
+  }
+}
