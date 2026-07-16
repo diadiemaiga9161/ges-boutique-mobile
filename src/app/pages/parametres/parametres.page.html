@@ -1,0 +1,156 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ 'PARAMETRES.TITRE' | translate }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="chargerStatut()" [disabled]="loading">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="param-content">
+
+  <!-- Accès réservé admin -->
+  <div *ngIf="!isAdmin" class="param-access-denied">
+    <ion-icon name="lock-closed-outline"></ion-icon>
+    <p>{{ 'PARAMETRES.ACCES_REFUSE' | translate }}</p>
+  </div>
+
+  <ng-container *ngIf="isAdmin">
+
+    <!-- Skeleton pendant le chargement -->
+    <div *ngIf="loading" class="param-section">
+      <ion-list lines="none" class="param-card">
+        <ion-item *ngFor="let i of [1,2,3,4]">
+          <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+          <ion-skeleton-text animated slot="end" style="width: 25%"></ion-skeleton-text>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- Compteurs statut -->
+    <div *ngIf="!loading" class="param-section">
+      <p class="param-section-label">{{ 'PARAMETRES.STATUT' | translate }}</p>
+      <ion-list lines="none" class="param-card">
+
+        <ion-item>
+          <ion-icon name="cash-outline" slot="start" color="success"></ion-icon>
+          <ion-label>{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</ion-label>
+          <ion-note slot="end" class="param-stat">{{ formatMontant(statut.soldeCaisseActuel) }}</ion-note>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="list-outline" slot="start" color="primary"></ion-icon>
+          <ion-label>{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</ion-label>
+          <ion-badge slot="end" color="primary">{{ statut.nombreOperationsCaisse }}</ion-badge>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="checkmark-circle-outline" slot="start" color="tertiary"></ion-icon>
+          <ion-label>{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</ion-label>
+          <ion-badge slot="end" color="tertiary">{{ statut.nombreCreditsRegles }}</ion-badge>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="close-circle-outline" slot="start" color="danger"></ion-icon>
+          <ion-label>{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</ion-label>
+          <ion-badge slot="end" color="danger">{{ statut.nombreVentesAnnulees }}</ion-badge>
+        </ion-item>
+
+      </ion-list>
+    </div>
+
+    <!-- Sélection des éléments à traiter -->
+    <div class="param-section">
+      <p class="param-section-label">{{ 'PARAMETRES.SELECTION' | translate }}</p>
+      <ion-list lines="none" class="param-card">
+
+        <ion-item>
+          <ion-checkbox
+            slot="start"
+            [(ngModel)]="selection.soldeCaisse"
+            color="warning">
+          </ion-checkbox>
+          <ion-label>
+            <h3>{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</h3>
+            <p>{{ formatMontant(statut.soldeCaisseActuel) }}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item>
+          <ion-checkbox
+            slot="start"
+            [(ngModel)]="selection.historiqueOperationsCaisse"
+            color="warning">
+          </ion-checkbox>
+          <ion-label>
+            <h3>{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</h3>
+            <p>{{ statut.nombreOperationsCaisse }} {{ 'PARAMETRES.OPERATIONS' | translate }}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item>
+          <ion-checkbox
+            slot="start"
+            [(ngModel)]="selection.creditsRegles"
+            color="warning">
+          </ion-checkbox>
+          <ion-label>
+            <h3>{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</h3>
+            <p>{{ statut.nombreCreditsRegles }} {{ 'PARAMETRES.CREDITS' | translate }}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item>
+          <ion-checkbox
+            slot="start"
+            [(ngModel)]="selection.historiqueVentesAnnulees"
+            color="warning">
+          </ion-checkbox>
+          <ion-label>
+            <h3>{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</h3>
+            <p>{{ statut.nombreVentesAnnulees }} {{ 'PARAMETRES.VENTES' | translate }}</p>
+          </ion-label>
+        </ion-item>
+
+      </ion-list>
+    </div>
+
+    <!-- Zone d'avertissement -->
+    <div class="param-warning">
+      <ion-icon name="warning-outline"></ion-icon>
+      <p>{{ 'PARAMETRES.AVERTISSEMENT' | translate }}</p>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="param-actions">
+
+      <ion-button
+        expand="block"
+        color="warning"
+        [disabled]="aucuneSelection || enCours"
+        (click)="confirmerReinitialiser()">
+        <ion-icon name="refresh-circle-outline" slot="start"></ion-icon>
+        <ion-spinner *ngIf="enCours" name="crescent" slot="start"></ion-spinner>
+        {{ 'PARAMETRES.REINITIALISER' | translate }}
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        color="danger"
+        [disabled]="aucuneSelection || enCours"
+        (click)="confirmerSupprimer()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        <ion-spinner *ngIf="enCours" name="crescent" slot="start"></ion-spinner>
+        {{ 'PARAMETRES.SUPPRIMER' | translate }}
+      </ion-button>
+
+    </div>
+
+  </ng-container>
+
+</ion-content>

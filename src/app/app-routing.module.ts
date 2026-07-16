@@ -143,6 +143,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/annulation-paiements/annulation-paiements.module').then(m => m.AnnulationPaiementsPageModule)
   },
   {
+    path: 'parametres',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/parametres/parametres.module').then(m => m.ParametresPageModule)
+  },
+  {
     path: 'a-propos',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/ressources/ressources.module').then(m => m.RessourcesPageModule)

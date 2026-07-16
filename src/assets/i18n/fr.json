@@ -558,5 +558,28 @@
     "A_PROPOS": "À propos",
     "DEVELOPPEUR": "Développeur",
     "COPYRIGHT": "© 2024-2026 MG Consulting"
+  },
+  "PARAMETRES": {
+    "TITRE": "Paramètres",
+    "STATUT": "État actuel",
+    "SELECTION": "Sélection des données",
+    "REINITIALISER": "Réinitialiser",
+    "SUPPRIMER": "Supprimer définitivement",
+    "CONFIRMER": "Tapez CONFIRMER pour valider",
+    "SOLDE_CAISSE": "Solde caisse",
+    "HISTORIQUE_CAISSE": "Historique opérations caisse",
+    "CREDITS_REGLES": "Crédits réglés",
+    "VENTES_ANNULEES": "Ventes annulées",
+    "SUCCES": "Opération réussie",
+    "ERREUR": "Une erreur est survenue",
+    "AUCUNE_SELECTION": "Sélectionnez au moins un élément",
+    "MOT_INCORRECT": "Mot de confirmation incorrect",
+    "AVERTISSEMENT": "Attention : ces opérations sont irréversibles. Faites une sauvegarde avant de continuer.",
+    "CONFIRM_REINIT_MSG": "Les données sélectionnées seront remises à zéro. Confirmer ?",
+    "CONFIRM_DELETE_MSG": "Les données sélectionnées seront définitivement supprimées. Tapez CONFIRMER pour valider.",
+    "OPERATIONS": "opérations",
+    "CREDITS": "crédits",
+    "VENTES": "ventes",
+    "ACCES_REFUSE": "Accès réservé aux administrateurs"
   }
 }

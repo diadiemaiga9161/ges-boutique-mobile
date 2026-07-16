@@ -416,5 +416,28 @@
     "A_PROPOS": "About",
     "DEVELOPPEUR": "Developer",
     "COPYRIGHT": "© 2024-2026 MG Consulting"
+  },
+  "PARAMETRES": {
+    "TITRE": "Settings",
+    "STATUT": "Current status",
+    "SELECTION": "Data selection",
+    "REINITIALISER": "Reset",
+    "SUPPRIMER": "Delete permanently",
+    "CONFIRMER": "Type CONFIRMER to validate",
+    "SOLDE_CAISSE": "Cash balance",
+    "HISTORIQUE_CAISSE": "Cash operations history",
+    "CREDITS_REGLES": "Settled credits",
+    "VENTES_ANNULEES": "Cancelled sales",
+    "SUCCES": "Operation successful",
+    "ERREUR": "An error occurred",
+    "AUCUNE_SELECTION": "Select at least one item",
+    "MOT_INCORRECT": "Incorrect confirmation word",
+    "AVERTISSEMENT": "Warning: these operations are irreversible. Make a backup before continuing.",
+    "CONFIRM_REINIT_MSG": "The selected data will be reset to zero. Confirm?",
+    "CONFIRM_DELETE_MSG": "The selected data will be permanently deleted. Type CONFIRMER to validate.",
+    "OPERATIONS": "operations",
+    "CREDITS": "credits",
+    "VENTES": "sales",
+    "ACCES_REFUSE": "Access restricted to administrators"
   }
 }
