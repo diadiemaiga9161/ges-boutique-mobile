@@ -43,6 +43,8 @@ export class ReportsPage {
   maxQte = 1;
   maxVentes = 1;
 
+  currentUser: any = null;
+
   constructor(
     public reports: RapportService,
     public caisseService: CaisseService,
@@ -54,6 +56,7 @@ export class ReportsPage {
   get isVendeur(): boolean { return this.authService.isVendeur(); }
 
   ionViewWillEnter(): void {
+    this.currentUser = this.authService.getUser();
     this.load();
     this.loadCredits();
     this.chargerAnalytics();

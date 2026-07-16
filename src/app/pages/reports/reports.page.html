@@ -27,14 +27,16 @@
       <h1 class="rpt-hero__ca">{{ money(stats?.chiffreAffaire?.journalier || 0) }}</h1>
       <p class="rpt-hero__label">Chiffre d'affaires aujourd'hui</p>
     </ng-container>
+    <!-- Benefice du jour desactive : donnees peu fiables (cout achat non fiable)
     <div class="rpt-hero__benefice" *ngIf="daily && !isVendeur">
       <ion-icon name="trending-up-outline"></ion-icon>
-      Bénéfice du jour :
+      Benefice du jour :
       <strong [class.rpt-benef--pos]="(daily.beneficeTotal || 0) >= 0"
               [class.rpt-benef--neg]="(daily.beneficeTotal || 0) < 0">
         {{ money(daily.beneficeTotal || 0) }}
       </strong>
     </div>
+    -->
 
     <!-- 4 mini KPI -->
     <div class="rpt-hero__kpis">
@@ -337,13 +339,15 @@
           <p class="rs-metric__val rs-metric__val--red">-{{ money(remises) }}</p>
           <p class="rs-metric__lbl">Remises</p>
         </div>
+        <!-- Benefice desactive pour tous : donnees peu fiables (cout achat non garanti)
         <div class="rs-metric" *ngIf="!isVendeur">
           <div class="rs-metric__icon rs-metric__icon--blue">
             <ion-icon name="trending-up-outline"></ion-icon>
           </div>
           <p class="rs-metric__val rs-metric__val--blue">{{ money(benefice) }}</p>
-          <p class="rs-metric__lbl">Bénéfice</p>
+          <p class="rs-metric__lbl">Benefice</p>
         </div>
+        -->
         <div class="rs-metric">
           <div class="rs-metric__icon rs-metric__icon--purple">
             <ion-icon name="receipt-outline"></ion-icon>
