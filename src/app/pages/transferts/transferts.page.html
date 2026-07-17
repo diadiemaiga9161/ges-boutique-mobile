@@ -45,10 +45,41 @@
 
       <ion-item>
         <ion-label position="stacked">Boutique destination</ion-label>
-        <ion-select [(ngModel)]="form.boutiqueDestId" placeholder="Choisir…">
+        <ion-select [(ngModel)]="form.boutiqueDestId" (ionChange)="onBoutiqueDestChange()" placeholder="Choisir…">
           <ion-select-option *ngFor="let p of partenaires" [value]="p.id">{{ p.nom }}</ion-select-option>
         </ion-select>
       </ion-item>
+
+      <!-- Stock boutique destinataire -->
+      <ion-card *ngIf="form.boutiqueDestId && (produitsBoutiqueDestinee.length > 0 || chargementProduitsDest)"
+                class="ion-margin-top">
+        <ion-card-header class="ion-padding-bottom">
+          <ion-card-subtitle>Stock actuel boutique destinataire</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <div *ngIf="chargementProduitsDest" class="ion-text-center ion-padding">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+          <ion-list *ngIf="!chargementProduitsDest">
+            <ion-item *ngFor="let p of produitsBoutiqueDestinee.slice(0, 10)" lines="inset">
+              <ion-label>
+                <p>{{ p.nom }}</p>
+              </ion-label>
+              <ion-badge slot="end" color="medium">{{ p.quantite }}</ion-badge>
+            </ion-item>
+            <ion-item *ngIf="produitsBoutiqueDestinee.length === 0" lines="none">
+              <ion-label class="ion-text-center" color="medium">
+                <p>Boutique inaccessible ou vide</p>
+              </ion-label>
+            </ion-item>
+            <ion-item *ngIf="produitsBoutiqueDestinee.length > 10" lines="none">
+              <ion-label color="medium">
+                <p class="ion-text-center">+ {{ produitsBoutiqueDestinee.length - 10 }} autres produits</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
 
       <ion-item>
         <ion-label position="stacked">Paiement</ion-label>
@@ -319,6 +350,59 @@
             </ion-label>
           </ion-item>
         </ion-list>
+
+        <!-- Section paiements inter-boutiques -->
+        <div *ngIf="transfertDetail">
+          <ion-item-divider>
+            <ion-label>Paiements inter-boutiques</ion-label>
+          </ion-item-divider>
+
+          <div *ngIf="paiementsTransfert.length === 0 && !afficherSectionPaiements" class="ion-padding ion-text-center">
+            <ion-text color="medium"><p>Aucun paiement</p></ion-text>
+          </div>
+
+          <ion-item *ngFor="let p of paiementsTransfert">
+            <ion-label>
+              <h3>{{ p.montant | number }} FCFA</h3>
+              <p>{{ labelModePaiement(p.modePaiement) }} — {{ p.datePaiement | date:'dd/MM/yyyy' }}</p>
+              <p *ngIf="p.notes">{{ p.notes }}</p>
+            </ion-label>
+            <ion-badge slot="end" color="success">Paye</ion-badge>
+          </ion-item>
+
+          <!-- Formulaire paiement -->
+          <div *ngIf="afficherSectionPaiements" class="ion-padding">
+            <ion-item>
+              <ion-label position="stacked">Montant (FCFA)</ion-label>
+              <ion-input type="number" [(ngModel)]="formPaiement.montant"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Mode de paiement</ion-label>
+              <ion-select [(ngModel)]="formPaiement.modePaiement" interface="popover">
+                <ion-select-option *ngFor="let m of MODES_PAIEMENT" [value]="m.v">{{ m.l }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Notes</ion-label>
+              <ion-input [(ngModel)]="formPaiement.notes" placeholder="Optionnel"></ion-input>
+            </ion-item>
+            <div style="display:flex;gap:8px;padding-top:10px">
+              <ion-button (click)="enregistrerPaiement()" expand="block" color="success" size="small" style="flex:1">
+                Enregistrer
+              </ion-button>
+              <ion-button (click)="afficherSectionPaiements = false" color="medium" size="small">
+                Annuler
+              </ion-button>
+            </div>
+          </div>
+
+          <div *ngIf="!afficherSectionPaiements" class="ion-padding-horizontal ion-padding-bottom">
+            <ion-button (click)="afficherSectionPaiements = true" size="small" fill="outline" color="success">
+              <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+              Ajouter un paiement
+            </ion-button>
+          </div>
+        </div>
 
       </ion-content>
     </ng-template>

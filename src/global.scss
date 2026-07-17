@@ -1500,3 +1500,29 @@ ion-fab-button {
 .animate-cards article:nth-child(4), .animate-cards .list-item-card:nth-child(4) { animation-delay: 0.11s; }
 .animate-cards article:nth-child(5), .animate-cards .list-item-card:nth-child(5) { animation-delay: 0.14s; }
 .animate-cards article:nth-child(n+6), .animate-cards .list-item-card:nth-child(n+6) { animation-delay: 0.16s; }
+
+// ══════════════════════════════════════════════════
+//  MODALS CENTREES
+// ══════════════════════════════════════════════════
+ion-modal.modal-centered {
+  --height: auto;
+  --max-height: 90vh;
+  align-items: center;
+
+  .modal-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+}
+
+ion-modal.modal-centered::part(content) {
+  border-radius: 16px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+// Tous les alert controllers centres par defaut
+ion-alert {
+  --backdrop-opacity: 0.5;
+}
