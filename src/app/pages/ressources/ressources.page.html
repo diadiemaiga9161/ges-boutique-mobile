@@ -53,24 +53,24 @@
     </h2>
 
     <ion-list class="contact-list" lines="none">
-      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://wa.me/22379999999')">
+      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://wa.me/22353417919')">
         <div class="contact-icon-wrap contact-icon-wa" slot="start">
           <ion-icon name="logo-whatsapp"></ion-icon>
         </div>
         <ion-label>
           <p class="contact-label">{{ 'RESSOURCES.WHATSAPP' | translate }}</p>
-          <p class="contact-value">+223 79 99 99 99</p>
+          <p class="contact-value">+223 53 41 79 19</p>
         </ion-label>
         <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
       </ion-item>
 
-      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('mailto:contact@mg-consulting.site')">
+      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
         <div class="contact-icon-wrap contact-icon-mail" slot="start">
           <ion-icon name="mail-outline"></ion-icon>
         </div>
         <ion-label>
           <p class="contact-label">{{ 'RESSOURCES.EMAIL' | translate }}</p>
-          <p class="contact-value">contact@mg-consulting.site</p>
+          <p class="contact-value">doumaiga3@gmail.com</p>
         </ion-label>
         <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
       </ion-item>
@@ -137,20 +137,22 @@
       </ion-item>
 
 
-      <ion-item class="about-item">
+      <ion-item class="about-item" button detail="false" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
         <ion-icon name="mail-outline" slot="start" class="about-icon"></ion-icon>
         <ion-label>
           <p class="about-label">Contact</p>
-          <p class="about-value">contact@mg-consulting.site</p>
+          <p class="about-value">doumaiga3@gmail.com</p>
         </ion-label>
+        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
       </ion-item>
 
-      <ion-item class="about-item">
+      <ion-item class="about-item" button detail="false" (click)="ouvrirLien('https://diadiemaiga9161.github.io/Portfolio-Maiga-/')">
         <ion-icon name="globe-outline" slot="start" class="about-icon"></ion-icon>
         <ion-label class="ion-text-wrap">
-          <p class="about-label">Site</p>
+          <p class="about-label">Site — Amadou Maiga CEO</p>
           <p class="about-value">diadiemaiga9161.github.io/Portfolio-Maiga-/</p>
         </ion-label>
+        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
       </ion-item>
 
       <ion-item class="about-item">

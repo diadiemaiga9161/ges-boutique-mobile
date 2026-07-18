@@ -1526,3 +1526,72 @@ ion-modal.modal-centered::part(content) {
 ion-alert {
   --backdrop-opacity: 0.5;
 }
+
+// ══════════════════════════════════════════════════
+//  DARK MODE AUTOMATIQUE (selon préférence système)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-background-color: #111827;
+    --ion-background-color-rgb: 17,24,39;
+    --ion-text-color: #f9fafb;
+    --ion-text-color-rgb: 249,250,251;
+    --ion-color-step-50: #1f2937;
+    --ion-color-step-100: #1f2937;
+    --ion-color-step-150: #374151;
+    --ion-color-step-200: #374151;
+    --ion-color-step-250: #4b5563;
+    --ion-color-step-300: #6b7280;
+    --ion-color-step-350: #9ca3af;
+    --ion-color-step-400: #d1d5db;
+    --ion-card-background: #1f2937;
+    --ion-item-background: #1f2937;
+    --ion-toolbar-background: #1e3a8a;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  SKELETON LOADERS — classes complémentaires
+// ══════════════════════════════════════════════════
+.skeleton-item {
+  background: linear-gradient(90deg, var(--ion-color-step-100, #e2e8f0) 25%, var(--ion-color-step-150, #f1f5f9) 50%, var(--ion-color-step-100, #e2e8f0) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  border-radius: 8px;
+  display: block;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-line { height: 16px; margin-bottom: 8px; }
+.skeleton-line.w-75 { width: 75%; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-card {
+  background: var(--ion-card-background, #fff);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+// ══════════════════════════════════════════════════
+//  BADGES STOCK COLORÉS (global — toutes pages)
+// ══════════════════════════════════════════════════
+.stock-ok {
+  background: #d1fae5; color: #065f46;
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 11px; font-weight: 600;
+}
+.stock-bas {
+  background: #fef3c7; color: #92400e;
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 11px; font-weight: 600;
+}
+.stock-rupture {
+  background: #fee2e2; color: #991b1b;
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 11px; font-weight: 600;
+}

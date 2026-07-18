@@ -285,6 +285,44 @@
   }
 }
 
+// ===== CONTACT CARD (lien cliquable autonome) =====
+.contact-card {
+  background: var(--ion-card-background, #fff);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s;
+
+  &:hover, &:active { transform: scale(0.98); }
+
+  .contact-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+
+    &.whatsapp { background: #dcfce7; }
+    &.email    { background: #e0e7ff; }
+    &.web      { background: #fef3c7; }
+  }
+
+  .contact-info {
+    flex: 1;
+    h4 { margin: 0 0 2px; font-size: 0.95rem; font-weight: 600; }
+    p  { margin: 0; font-size: 0.8rem; color: var(--ion-color-medium); }
+  }
+}
+
 // ===== RESPONSIVE ≤360px =====
 @media (max-width: 360px) {
   .hero-app-name {
