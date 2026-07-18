@@ -1595,3 +1595,63 @@ ion-alert {
   border-radius: 20px; padding: 2px 10px;
   font-size: 11px; font-weight: 600;
 }
+
+// ══════════════════════════════════════════════════
+//  MODAL ACCUSÉ RÉCEPTION TRANSFERT
+// ══════════════════════════════════════════════════
+.transfert-recu-modal {
+  --border-radius: 20px;
+  --box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.transfert-recu-header {
+  background: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
+}
+.transfert-recu-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+.transfert-recu-titre {
+  font-size: 18px; font-weight: 700; margin: 0;
+}
+.transfert-recu-soustitre {
+  font-size: 12px; opacity: 0.85; margin: 4px 0 0;
+}
+.transfert-recu-body {
+  padding: 16px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+.transfert-recu-produit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #f0f4ff;
+  border-radius: 10px;
+  border-left: 4px solid #1a56db;
+}
+.transfert-recu-produit-nom { font-weight: 600; font-size: 13px; }
+.transfert-recu-produit-qte {
+  background: #1a56db; color: white;
+  border-radius: 20px; padding: 2px 10px; font-size: 12px;
+}
+.transfert-recu-actions {
+  padding: 12px 16px;
+  display: flex; gap: 10px;
+}
+.btn-accepter {
+  flex: 1; --background: #059669; --background-hover: #047857;
+  --color: white; --border-radius: 10px; font-weight: 700;
+}
+.btn-rejeter {
+  flex: 1; --background: #dc2626; --background-hover: #b91c1c;
+  --color: white; --border-radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  .transfert-recu-produit { background: #1e2d4f; }
+}

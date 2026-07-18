@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
-import { TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest } from '../../services/transfert.service';
+import { TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest, PaiementTransfert } from '../../services/transfert.service';
 import { ProductService } from '../../services/product.service';
 
 @Component({
@@ -30,6 +30,27 @@ export class TransfertsPage implements OnInit {
   modalEditMode = false;
   modalLignes: { produitId: number; produitNom: string; quantite: number; prixUnitaire?: number }[] = [];
 
+  produitsBoutiqueDestinee: any[] = [];
+  chargementProduitsDest = false;
+  paiementsTransfert: PaiementTransfert[] = [];
+  afficherSectionPaiements = false;
+  formPaiement = { montant: 0, modePaiement: 'ESPECES', notes: '' };
+
+  transfertsEnAttente: TransfertStock[] = [];
+  transfertEnCours: TransfertStock | null = null;
+  showAccuseModal = false;
+  showMotifRejet = false;
+  motifRejet = '';
+  actionEnCours = false;
+
+  readonly MODES_PAIEMENT = [
+    { v: 'ESPECES',      l: 'Especes' },
+    { v: 'ORANGE_MONEY', l: 'Orange Money' },
+    { v: 'MOOV_MONEY',   l: 'Moov Money' },
+    { v: 'WAVE_MONEY',   l: 'Wave Money' },
+    { v: 'VIREMENT',     l: 'Virement' }
+  ];
+
   readonly TYPES_PAIEMENT = [
     { v: 'SANS_PAIEMENT', l: 'Sans paiement' },
     { v: 'IMMEDIAT',      l: 'Paiement immédiat' },
@@ -53,7 +74,7 @@ export class TransfertsPage implements OnInit {
 
   ngOnInit(): void { this.charger(); }
 
-  ionViewWillEnter(): void { this.charger(); this.chargerOnglets(); }
+  ionViewWillEnter(): void { this.charger(); this.chargerOnglets(); this.verifierTransfertsEnAttente(); }
 
   charger(): void {
     this.isLoading = true;
@@ -175,6 +196,8 @@ export class TransfertsPage implements OnInit {
     this.transfertDetail = null;
     this.modalEditMode = false;
     this.modalLignes = [];
+    this.paiementsTransfert = [];
+    this.afficherSectionPaiements = false;
   }
 
   // ==================== CONFIRMER / ANNULER ====================
@@ -215,7 +238,44 @@ export class TransfertsPage implements OnInit {
 
   voirDetail(t: TransfertStock): void {
     this.modalEditMode = false;
-    this.transfertService.getById(t.id!).subscribe(d => this.transfertDetail = d);
+    this.afficherSectionPaiements = false;
+    this.paiementsTransfert = [];
+    this.transfertService.getById(t.id!).subscribe(d => {
+      this.transfertDetail = d;
+      this.chargerPaiements(d.id!);
+    });
+  }
+
+  onBoutiqueDestChange(): void {
+    if (!this.form.boutiqueDestId) { this.produitsBoutiqueDestinee = []; return; }
+    this.chargementProduitsDest = true;
+    this.transfertService.getProduitsBoutique(this.form.boutiqueDestId).subscribe({
+      next: p => { this.produitsBoutiqueDestinee = p; this.chargementProduitsDest = false; },
+      error: () => { this.produitsBoutiqueDestinee = []; this.chargementProduitsDest = false; }
+    });
+  }
+
+  chargerPaiements(transfertId: number): void {
+    this.transfertService.getPaiementsTransfert(transfertId).subscribe(p => this.paiementsTransfert = p);
+  }
+
+  async enregistrerPaiement(): Promise<void> {
+    if (!this.transfertDetail || !this.formPaiement.montant) {
+      await this.toast('Montant requis', 'warning');
+      return;
+    }
+    this.transfertService.ajouterPaiement(this.transfertDetail.id!, this.formPaiement).subscribe({
+      next: () => {
+        this.afficherSectionPaiements = false;
+        this.chargerPaiements(this.transfertDetail!.id!);
+        this.toast('Paiement enregistre', 'success');
+      },
+      error: e => this.toast(e.error?.message ?? 'Erreur', 'danger')
+    });
+  }
+
+  labelModePaiement(v: string): string {
+    return this.MODES_PAIEMENT.find(m => m.v === v)?.l ?? v;
   }
 
   labelPaiement(v: string): string {
@@ -286,6 +346,56 @@ export class TransfertsPage implements OnInit {
       ]
     });
     await alert.present();
+  }
+
+  // ==================== MODAL ACCUSÉ RÉCEPTION ====================
+
+  verifierTransfertsEnAttente(): void {
+    this.transfertService.getRecus().subscribe({
+      next: (recus) => {
+        this.transfertsEnAttente = recus.filter(t =>
+          t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'CREE'
+        );
+        if (this.transfertsEnAttente.length > 0 && !this.showAccuseModal) {
+          this.transfertEnCours = this.transfertsEnAttente[0];
+          this.showAccuseModal = true;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  accepterDepuisModal(id: number): void {
+    this.actionEnCours = true;
+    this.transfertService.accepter(id).subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.showAccuseModal = false;
+        this.toast('Transfert accepté — stock mis à jour', 'success');
+        this.charger();
+        this.chargerOnglets();
+      },
+      error: (err: any) => { this.actionEnCours = false; this.toast(err?.error?.message ?? 'Erreur', 'danger'); }
+    });
+  }
+
+  toggleMotifRejet(): void { this.showMotifRejet = true; }
+
+  confirmerRejetModal(): void {
+    if (!this.transfertEnCours) return;
+    this.actionEnCours = true;
+    this.transfertService.rejeter(this.transfertEnCours.id!, this.motifRejet).subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.showAccuseModal = false;
+        this.showMotifRejet = false;
+        this.motifRejet = '';
+        this.toast('Transfert rejeté', 'medium');
+        this.charger();
+        this.chargerOnglets();
+      },
+      error: (err: any) => { this.actionEnCours = false; this.toast(err?.error?.message ?? 'Erreur', 'danger'); }
+    });
   }
 
   private async toast(msg: string, color: string): Promise<void> {

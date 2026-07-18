@@ -214,6 +214,66 @@
     </ion-button>
   </div>
 
+  <!-- Modal accusé de réception transfert entrant -->
+  <ion-modal [isOpen]="showAccuseModal" [cssClass]="'transfert-recu-modal'" (ionModalDidDismiss)="showAccuseModal = false">
+    <ng-template>
+      <div *ngIf="transfertEnCours">
+        <!-- Header -->
+        <div class="transfert-recu-header">
+          <div class="transfert-recu-icon">📦</div>
+          <p class="transfert-recu-titre">Transfert reçu !</p>
+          <p class="transfert-recu-soustitre">
+            De {{ transfertEnCours.boutiqueSourceNom || 'Boutique partenaire' }}
+          </p>
+        </div>
+
+        <!-- Body -->
+        <div class="transfert-recu-body">
+          <ion-item lines="none" class="info-card" style="margin-bottom:12px">
+            <ion-label>
+              <p class="item-label">Date</p>
+              <p class="item-value">{{ transfertEnCours.dateCreation | date:'dd/MM/yyyy HH:mm' }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="info-card" style="margin-bottom:12px" *ngIf="transfertEnCours.notes">
+            <ion-label>
+              <p class="item-label">Notes</p>
+              <p class="item-value">{{ transfertEnCours.notes }}</p>
+            </ion-label>
+          </ion-item>
+
+          <p style="font-weight:700;font-size:13px;margin:0 0 8px">Produits envoyés :</p>
+          <div class="transfert-recu-produit" *ngFor="let ligne of transfertEnCours.lignes">
+            <span class="transfert-recu-produit-nom">{{ ligne.produitNom }}</span>
+            <span class="transfert-recu-produit-qte">× {{ ligne.quantite }}</span>
+          </div>
+
+          <ion-item lines="none" class="info-card" style="margin-top:12px" *ngIf="showMotifRejet">
+            <ion-label position="floating">Motif du rejet (optionnel)</ion-label>
+            <ion-textarea [(ngModel)]="motifRejet" rows="2" [autoGrow]="true"></ion-textarea>
+          </ion-item>
+        </div>
+
+        <!-- Actions -->
+        <div class="transfert-recu-actions">
+          <ion-button *ngIf="!showMotifRejet" class="btn-accepter"
+            (click)="accepterDepuisModal(transfertEnCours.id!)" [disabled]="actionEnCours">
+            <ion-spinner *ngIf="actionEnCours" name="dots"></ion-spinner>
+            <span *ngIf="!actionEnCours">✓ Accepter</span>
+          </ion-button>
+          <ion-button class="btn-rejeter"
+            (click)="showMotifRejet ? confirmerRejetModal() : toggleMotifRejet()" [disabled]="actionEnCours">
+            {{ showMotifRejet ? 'Confirmer rejet' : '✗ Rejeter' }}
+          </ion-button>
+        </div>
+        <div style="padding:0 16px 16px;text-align:center" *ngIf="showMotifRejet">
+          <ion-button fill="clear" size="small" (click)="showMotifRejet = false">Annuler</ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+
   <!-- MODAL DÉTAIL -->
   <ion-modal [isOpen]="!!transfertDetail" (didDismiss)="fermerModal()">
     <ng-template>
