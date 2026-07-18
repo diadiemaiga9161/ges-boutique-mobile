@@ -71,6 +71,42 @@
       </div>
     </div>
 
+    <!-- ══════════════════════ TRANSFERTS EN ATTENTE ══════════════════════ -->
+    <div style="position:relative" *ngIf="nbTransfertsEnAttente > 0">
+      <ion-card button (click)="go('/transferts')" style="margin:0 0 4px;border-left:4px solid var(--ion-color-danger)">
+        <ion-card-content style="display:flex;align-items:center;gap:10px;padding:12px 16px">
+          <ion-icon name="swap-horizontal-outline" color="danger" style="font-size:22px;flex-shrink:0"></ion-icon>
+          <span style="flex:1;font-size:14px;font-weight:600">
+            {{ nbTransfertsEnAttente }} transfert(s) en attente de confirmation
+          </span>
+          <ion-badge color="danger" style="position:relative;top:0;right:0;z-index:10">
+            {{ nbTransfertsEnAttente }}
+          </ion-badge>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- ══════════════════════ ALERTES STOCK IA ══════════════════════ -->
+    <div class="alertes-section" *ngIf="alertesStock.length > 0">
+      <ion-card class="alerte-card" *ngFor="let a of alertesStock.slice(0, 3)">
+        <ion-card-header>
+          <ion-badge [color]="a.ruptureImminente ? 'danger' : 'warning'" style="margin-right:8px">
+            {{ a.ruptureImminente ? 'Rupture imminente' : 'Stock bas' }}
+          </ion-badge>
+          <ion-card-title style="font-size:14px">{{ a.produitNom }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p *ngIf="a.joursAvantRupture >= 0" style="margin:0;font-size:12px;color:var(--ion-color-medium)">
+            {{ a.joursAvantRupture === 0 ? 'En rupture actuellement' : 'Rupture dans ' + a.joursAvantRupture + ' jour(s)' }}
+          </p>
+          <p style="margin:4px 0 0;font-size:12px">
+            Stock : <strong>{{ a.stockActuel }}</strong>
+            <span *ngIf="a.quantiteReappro > 0"> — Commander {{ a.quantiteReappro }} unités</span>
+          </p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
     <!-- ══════════════════════ ACCÈS RAPIDE ══════════════════════ -->
     <p class="section-label">Accès rapide</p>
 

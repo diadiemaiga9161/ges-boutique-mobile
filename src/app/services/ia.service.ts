@@ -97,6 +97,10 @@ export class IAService {
     return this.http.get<any>(`${this.base}/sante`);
   }
 
+  getPrevisions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/previsions`);
+  }
+
   /** Accepte un tableau ou une chaîne JSON et retourne toujours un tableau. */
   private parseJours(val: string | string[]): string[] {
     if (Array.isArray(val)) return val;

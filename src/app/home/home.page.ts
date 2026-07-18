@@ -1,10 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { BoutiqueService } from '../services/boutique.service';
 import { RapportService, StatistiquesGenerales } from '../services/rapport.service';
 import { WebSocketService } from '../services/websocket.service';
+import { IAService } from '../services/ia.service';
+import { TransfertService } from '../services/transfert.service';
 
 @Component({
   selector: 'app-home',
@@ -14,7 +16,10 @@ import { WebSocketService } from '../services/websocket.service';
 })
 export class HomePage implements OnDestroy {
   stats?: StatistiquesGenerales;
+  alertesStock: any[] = [];
+  nbTransfertsEnAttente: number = 0;
   private wsSub?: Subscription;
+  private wsTranSub?: Subscription;
   loading = false;
   boutiqueName = 'Boutique';
   today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -38,7 +43,9 @@ export class HomePage implements OnDestroy {
     private boutique: BoutiqueService,
     private reports: RapportService,
     private router: Router,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private iaService: IAService,
+    private transfertService: TransfertService
   ) {}
 
   ionViewWillEnter(): void {
@@ -49,15 +56,51 @@ export class HomePage implements OnDestroy {
     this.wsSub = this.ws.subscribeTopic('/topic/dashboard').subscribe(() => {
       this.load();
     });
+    // Alertes rupture IA
+    this.chargerAlertesIA();
+    // Transferts en attente (HTTP initial)
+    this.chargerTransfertsEnAttente();
+    // Temps réel transferts via WebSocket
+    const boutiqueId = this.boutique.getInfo().id;
+    if (boutiqueId) {
+      this.wsTranSub = this.ws.subscribeTopic(`/topic/transferts/${boutiqueId}`)
+        .subscribe(() => this.chargerTransfertsEnAttente());
+    }
   }
 
   ionViewWillLeave(): void {
     this.wsSub?.unsubscribe();
     this.ws.unsubscribeTopic('/topic/dashboard');
+    this.wsTranSub?.unsubscribe();
+    const boutiqueId = this.boutique.getInfo().id;
+    if (boutiqueId) {
+      this.ws.unsubscribeTopic(`/topic/transferts/${boutiqueId}`);
+    }
   }
 
   ngOnDestroy(): void {
     this.wsSub?.unsubscribe();
+    this.wsTranSub?.unsubscribe();
+  }
+
+  private chargerAlertesIA(): void {
+    this.iaService.getPrevisions().pipe(
+      catchError(() => of([]))
+    ).subscribe((previsions: any[]) => {
+      this.alertesStock = previsions.filter(
+        (p: any) => p.alerteRupture === true || p.ruptureImminente === true
+      );
+    });
+  }
+
+  private chargerTransfertsEnAttente(): void {
+    this.transfertService.getRecus().pipe(
+      catchError(() => of([]))
+    ).subscribe(transferts => {
+      this.nbTransfertsEnAttente = transferts.filter(
+        t => t.statut === 'EN_ATTENTE_CONFIRMATION'
+      ).length;
+    });
   }
 
   load(event?: any): void {
