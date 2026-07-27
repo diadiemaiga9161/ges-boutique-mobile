@@ -33,6 +33,24 @@
 
 <ion-content>
 
+  <!-- Filtre par période (réutilisé dans Achats / Paiements / Situation) -->
+  <ng-template #periodeFilterTpl>
+    <div class="periode-filter" *ngIf="selectedFournisseur">
+      <div class="period-chips-static">
+        <button class="pchip2" [class.pchip2--active]="periodePreset === 'jour'" (click)="appliquerPreset('jour')">{{ 'SUPPLIERS.PERIOD_TODAY' | translate }}</button>
+        <button class="pchip2" [class.pchip2--active]="periodePreset === 'semaine'" (click)="appliquerPreset('semaine')">{{ 'SUPPLIERS.PERIOD_WEEK' | translate }}</button>
+        <button class="pchip2" [class.pchip2--active]="periodePreset === 'mois'" (click)="appliquerPreset('mois')">{{ 'SUPPLIERS.PERIOD_MONTH' | translate }}</button>
+        <button class="pchip2" [class.pchip2--active]="periodePreset === 'personnalise'" (click)="appliquerPreset('personnalise')">{{ 'SUPPLIERS.PERIOD_CUSTOM' | translate }}</button>
+        <button class="pchip2" [class.pchip2--active]="periodePreset === 'tout'" (click)="appliquerPreset('tout')">{{ 'SUPPLIERS.PERIOD_ALL' | translate }}</button>
+      </div>
+      <div class="periode-custom-row" *ngIf="periodePreset === 'personnalise'">
+        <input type="date" class="periode-date-input" [(ngModel)]="filtreDateDebut" [attr.aria-label]="'SUPPLIERS.FROM_DATE' | translate" />
+        <input type="date" class="periode-date-input" [(ngModel)]="filtreDateFin" [attr.aria-label]="'SUPPLIERS.TO_DATE' | translate" />
+        <ion-button size="small" (click)="appliquerPeriodePersonnalisee()">{{ 'SUPPLIERS.APPLY' | translate }}</ion-button>
+      </div>
+    </div>
+  </ng-template>
+
   <!-- LISTE -->
   <ng-container *ngIf="segment === 'liste'">
     <div class="filter-zone" style="margin-top:10px">
@@ -123,6 +141,7 @@
       <p>{{ 'SUPPLIERS.SELECT_HINT' | translate }}</p>
     </div>
     <ng-container *ngIf="selectedFournisseur">
+      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
       <ion-button expand="block" color="success" class="action-btn" (click)="openAchat()">
         <ion-icon name="bag-add-outline" slot="start"></ion-icon>
         {{ 'SUPPLIERS.NEW_PURCHASE' | translate }}
@@ -209,6 +228,7 @@
       <p>{{ 'SUPPLIERS.SELECT_HINT' | translate }}</p>
     </div>
     <ng-container *ngIf="selectedFournisseur">
+      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
       <div class="action-row">
         <ion-button expand="block" color="success" (click)="openPaiement()">
           <ion-icon name="cash-outline" slot="start"></ion-icon>
@@ -294,6 +314,7 @@
         <h2>{{ selectedFournisseur.nom }}</h2>
         <p *ngIf="selectedFournisseur.telephone">{{ selectedFournisseur.telephone }}</p>
       </div>
+      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
       <div class="sk-list" *ngIf="loadingSituation">
         <div class="sk-card" *ngFor="let i of [1,2,3,4]">
           <div class="skeleton sk-avatar"></div>
@@ -347,6 +368,51 @@
             </div>
           </ion-card-content>
         </ion-card>
+
+        <!-- Achats non payés (statut EN_COURS, non filtré par période) -->
+        <div class="sk-list" *ngIf="loadingAchatsNonPayes">
+          <div class="sk-card" *ngFor="let i of [1,2]">
+            <div class="skeleton sk-avatar"></div>
+            <div class="sk-card-body">
+              <div class="skeleton sk-line sk-line--w80"></div>
+              <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+            </div>
+            <div class="skeleton sk-line sk-line--w30"></div>
+          </div>
+        </div>
+        <ng-container *ngIf="!loadingAchatsNonPayes">
+          <div class="section-title" *ngIf="achatsNonPayes.length">
+            <ion-icon name="alert-circle-outline" color="warning"></ion-icon>
+            {{ 'SUPPLIERS.UNPAID_PURCHASES' | translate }} ({{ achatsNonPayes.length }})
+          </div>
+          <ion-card class="hist-card unpaid-card" *ngFor="let a of achatsNonPayes; trackBy: trackById">
+            <ion-card-content>
+              <div class="hist-row">
+                <span class="hist-date">{{ formatDate(a.dateAchat) }}</span>
+                <span class="hist-badge badge--partial">{{ 'SUPPLIERS.ONGOING' | translate }}</span>
+              </div>
+              <div class="hist-amounts">
+                <span>{{ 'COMMON.TOTAL' | translate }} : <strong>{{ money(a.montantTotal) }}</strong></span>
+                <span class="text-success">{{ 'SUPPLIERS.PAID' | translate }} : {{ money(a.montantPaye) }}</span>
+                <span class="text-danger">{{ 'SUPPLIERS.REMAINING' | translate }} : {{ money(a.montantRestant) }}</span>
+              </div>
+              <div class="hist-produits" *ngIf="(a.lignes || []).length">
+                <span *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produit?.nom || l.produitNom }} x{{ l.quantite }}</span>
+              </div>
+              <div style="margin-top:8px">
+                <ion-button fill="solid" color="warning" size="small" (click)="openPaiementPourAchat(a)">
+                  <ion-icon name="cash-outline" slot="start"></ion-icon>
+                  {{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }}
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+          <div class="empty-v2" *ngIf="achatsNonPayes.length === 0">
+            <div class="empty-v2__icon"><ion-icon name="checkmark-circle-outline" color="success"></ion-icon></div>
+            <p class="empty-v2__title">{{ 'SUPPLIERS.NO_UNPAID_PURCHASES' | translate }}</p>
+          </div>
+        </ng-container>
+
         <ng-container *ngIf="topProduits.length">
           <div class="section-title">
             <ion-icon name="trophy-outline"></ion-icon>
@@ -526,6 +592,10 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
+      <div class="paiement-cible-note" *ngIf="paiementForm.achatCibleId">
+        <ion-icon name="pricetag-outline" color="warning"></ion-icon>
+        <span>{{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }} #{{ paiementForm.achatCibleId }}</span>
+      </div>
       <ion-item>
         <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
         <ion-input [(ngModel)]="paiementForm.montant" type="number" min="0"></ion-input>

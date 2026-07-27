@@ -399,7 +399,8 @@ export class ResourcesPage {
   amount(item: any): string {
     const value =
       item.montantTotal ?? item.soldeActuel ?? item.montantRestant ?? item.salaireMensuel ?? item.prixVente ?? item.montant ?? item.solde ?? 0;
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(value || 0));
+    const n = Math.round(Number(value) || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   date(value?: string): string {

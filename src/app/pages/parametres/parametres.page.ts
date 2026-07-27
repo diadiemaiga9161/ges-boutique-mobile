@@ -176,6 +176,7 @@ export class ParametresPage {
   }
 
   formatMontant(valeur: number): string {
-    return new Intl.NumberFormat('fr-FR').format(valeur || 0) + ' F CFA';
+    const n = Math.round(valeur || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} F CFA`;
   }
 }

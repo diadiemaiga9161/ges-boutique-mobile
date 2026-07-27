@@ -94,6 +94,8 @@ export interface LigneAchatRequest {
   quantite: number;
   prixAchatUnitaire: number;
   prixVente?: number;
+  /** CUMP (coût moyen pondéré) recalculé et confirmé par l'utilisateur pour un produit existant dont le prix d'achat de l'entrée diffère du prix d'achat actuel. */
+  nouveauPrixVente?: number;
   description?: string;
   codeBarre?: string;
   seuilAlerte?: number;
@@ -391,25 +393,41 @@ export class ProductService {
     );
   }
 
-  getSituationFournisseur(fournisseurId: number): Observable<any> {
-    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/situation/${fournisseurId}`).pipe(
+  getSituationFournisseur(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<any> {
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/situation/${fournisseurId}`, { params: this.buildPeriodeParams(dateDebut, dateFin) }).pipe(
       map(response => response?.data || response),
       catchError(error => this.handleError(error, 'récupérer la situation fournisseur'))
     );
   }
 
-  getHistoriqueAchats(fournisseurId: number): Observable<any[]> {
-    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/achats/${fournisseurId}`).pipe(
+  getHistoriqueAchats(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<any[]> {
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/achats/${fournisseurId}`, { params: this.buildPeriodeParams(dateDebut, dateFin) }).pipe(
       map(response => this.extractList(response, 'achats')),
       catchError(error => this.handleError(error, 'récupérer les achats fournisseur'))
     );
   }
 
-  getHistoriquePaiements(fournisseurId: number): Observable<any[]> {
-    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/paiements/${fournisseurId}`).pipe(
+  getHistoriquePaiements(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<any[]> {
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/paiements/${fournisseurId}`, { params: this.buildPeriodeParams(dateDebut, dateFin) }).pipe(
       map(response => this.extractList(response, 'paiements')),
       catchError(error => this.handleError(error, 'récupérer les paiements fournisseur'))
     );
+  }
+
+  /** Achats fournisseur au statut EN_COURS (non soldés), du plus ancien au plus récent — pas de filtre de période */
+  getAchatsNonPayes(fournisseurId: number): Observable<any[]> {
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/achats-non-payes/${fournisseurId}`).pipe(
+      map(response => this.extractList(response, 'achats')),
+      catchError(error => this.handleError(error, 'récupérer les achats non payés'))
+    );
+  }
+
+  private buildPeriodeParams(dateDebut?: string, dateFin?: string): HttpParams {
+    let params = new HttpParams();
+    if (dateDebut && dateFin) {
+      params = params.set('dateDebut', dateDebut).set('dateFin', dateFin);
+    }
+    return params;
   }
 
   getResteAPayer(fournisseurId: number): Observable<number> {
@@ -470,6 +488,23 @@ export class ProductService {
     const params = utilisateurId ? new HttpParams().set('utilisateurId', String(utilisateurId)) : undefined;
     return this.http.delete<any>(`${this.fournisseurAchatApiUrl}/achat/${achatId}`, { params }).pipe(
       catchError(error => this.handleError(error, "annuler l'achat fournisseur"))
+    );
+  }
+
+  getPaiementsParPeriode(dateDebut?: string, dateFin?: string): Observable<any[]> {
+    let params = new HttpParams();
+    if (dateDebut) params = params.set('dateDebut', dateDebut);
+    if (dateFin) params = params.set('dateFin', dateFin);
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/paiements`, { params }).pipe(
+      map(response => this.extractList(response, 'paiements')),
+      catchError(error => this.handleError(error, 'récupérer les paiements fournisseur'))
+    );
+  }
+
+  annulerPaiementFournisseur(paiementId: number, utilisateurId: number): Observable<any> {
+    const params = new HttpParams().set('utilisateurId', String(utilisateurId));
+    return this.http.post<any>(`${this.fournisseurAchatApiUrl}/paiement/${paiementId}/annuler`, null, { params }).pipe(
+      catchError(error => this.handleError(error, 'annuler le paiement fournisseur'))
     );
   }
 
@@ -584,12 +619,8 @@ export class ProductService {
   }
 
   formatPrice(price: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price || 0);
+    const n = Math.round(price || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(date?: string): string {

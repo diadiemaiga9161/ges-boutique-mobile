@@ -49,8 +49,8 @@ export class FournisseursPage {
   showPaiementModal = false;
   showAvanceModal = false;
   comptes: Compte[] = [];
-  paiementForm: { fournisseurId: number; montant: number; modePaiement: string; reference: string; observation: string; compteId?: number } =
-    { fournisseurId: 0, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined };
+  paiementForm: { fournisseurId: number; montant: number; modePaiement: string; reference: string; observation: string; compteId?: number; achatCibleId?: number } =
+    { fournisseurId: 0, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined, achatCibleId: undefined };
   avanceForm: { fournisseurId: number; montant: number; sourceFinancement: string; reference: string; observation: string; compteId?: number } =
     { fournisseurId: 0, montant: 0, sourceFinancement: 'CAISSE', reference: '', observation: '', compteId: undefined };
 
@@ -58,6 +58,15 @@ export class FournisseursPage {
   situation: any = null;
   soldeAvance = 0;
   loadingSituation = false;
+
+  // Achats non payés (statut EN_COURS, plus ancien au plus récent)
+  achatsNonPayes: any[] = [];
+  loadingAchatsNonPayes = false;
+
+  // Filtre par période (Achats / Paiements / Situation)
+  periodePreset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout' = 'tout';
+  filtreDateDebut = '';
+  filtreDateFin = '';
 
   constructor(
     private productService: ProductService,
@@ -114,6 +123,9 @@ export class FournisseursPage {
     this.achatForm.fournisseurId = f.id;
     this.paiementForm.fournisseurId = f.id;
     this.avanceForm.fournisseurId = f.id;
+    this.periodePreset = 'tout';
+    this.filtreDateDebut = '';
+    this.filtreDateFin = '';
     this.loadDetails(f.id);
     this.segment = 'achats';
   }
@@ -123,13 +135,18 @@ export class FournisseursPage {
     this.loadingPaiements = true;
     this.loadingAvances = true;
     this.loadingSituation = true;
+    this.loadingAchatsNonPayes = true;
 
-    this.productService.getHistoriqueAchats(id).subscribe({
+    const filtreActif = this.periodePreset !== 'tout' && !!this.filtreDateDebut && !!this.filtreDateFin;
+    const dd = filtreActif ? this.filtreDateDebut : undefined;
+    const df = filtreActif ? this.filtreDateFin : undefined;
+
+    this.productService.getHistoriqueAchats(id, dd, df).subscribe({
       next: a => { this.achats = a; this.loadingAchats = false; },
       error: () => { this.loadingAchats = false; }
     });
     // Fix : paiements et avances ont chacun leur propre flag de loading
-    this.productService.getHistoriquePaiements(id).subscribe({
+    this.productService.getHistoriquePaiements(id, dd, df).subscribe({
       next: p => { this.paiements = p; this.loadingPaiements = false; },
       error: () => { this.loadingPaiements = false; }
     });
@@ -137,7 +154,7 @@ export class FournisseursPage {
       next: a => { this.avances = a; this.loadingAvances = false; },
       error: () => { this.loadingAvances = false; }
     });
-    this.productService.getSituationFournisseur(id).subscribe({
+    this.productService.getSituationFournisseur(id, dd, df).subscribe({
       next: s => { this.situation = s; this.loadingSituation = false; },
       error: () => { this.loadingSituation = false; }
     });
@@ -145,6 +162,56 @@ export class FournisseursPage {
       next: s => { this.soldeAvance = s; },
       error: () => {}
     });
+    // Pas de filtre de période pour les achats non payés (toujours l'historique complet EN_COURS)
+    this.productService.getAchatsNonPayes(id).subscribe({
+      next: a => { this.achatsNonPayes = a; this.loadingAchatsNonPayes = false; },
+      error: () => { this.loadingAchatsNonPayes = false; }
+    });
+  }
+
+  // ======= Filtre par période =======
+
+  /** Applique un préréglage de période (jour/semaine/mois/tout) et recharge les données du fournisseur sélectionné. */
+  appliquerPreset(preset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout'): void {
+    this.periodePreset = preset;
+    const toIso = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+
+    if (preset === 'jour') {
+      this.filtreDateDebut = toIso(today);
+      this.filtreDateFin = toIso(today);
+    } else if (preset === 'semaine') {
+      const debut = new Date(today);
+      debut.setDate(debut.getDate() - 6);
+      this.filtreDateDebut = toIso(debut);
+      this.filtreDateFin = toIso(today);
+    } else if (preset === 'mois') {
+      const debut = new Date(today.getFullYear(), today.getMonth(), 1);
+      this.filtreDateDebut = toIso(debut);
+      this.filtreDateFin = toIso(today);
+    } else if (preset === 'tout') {
+      this.filtreDateDebut = '';
+      this.filtreDateFin = '';
+    }
+    // 'personnalise' : les dates sont saisies manuellement, rien à calculer ici
+
+    if (this.selectedFournisseur && preset !== 'personnalise') {
+      this.loadDetails(this.selectedFournisseur.id);
+    }
+  }
+
+  /** Valide et applique les dates saisies manuellement en mode personnalisé. */
+  appliquerPeriodePersonnalisee(): void {
+    if (!this.filtreDateDebut || !this.filtreDateFin) {
+      this.toast('Sélectionnez une date de début et de fin', 'warning');
+      return;
+    }
+    if (this.filtreDateDebut > this.filtreDateFin) {
+      this.toast('La date de début doit précéder la date de fin', 'warning');
+      return;
+    }
+    this.periodePreset = 'personnalise';
+    if (this.selectedFournisseur) this.loadDetails(this.selectedFournisseur.id);
   }
 
   // ======= Toggle lignes achat =======
@@ -206,14 +273,37 @@ export class FournisseursPage {
     this.showAchatModal = true;
   }
 
-  saveAchat(): void {
+  async saveAchat(): Promise<void> {
     if (!this.achatForm.produitId) { this.toast('Sélectionnez un produit', 'danger'); return; }
     if (!this.achatForm.quantite || this.achatForm.quantite <= 0) { this.toast('Quantité invalide', 'danger'); return; }
     if (!this.achatForm.prixAchatUnitaire || this.achatForm.prixAchatUnitaire <= 0) { this.toast('Prix achat invalide', 'danger'); return; }
 
+    // Produit existant (sélectionné dans le catalogue, pas de création à la volée dans ce formulaire)
+    const produit = this.produits.find(p => p.id === this.achatForm.produitId);
+    let nouveauPrixVente: number | undefined;
+
+    if (produit && Number(produit.prixAchat) !== Number(this.achatForm.prixAchatUnitaire)) {
+      const stockActuel = Number(produit.quantite) || 0;
+      const quantiteEntree = Number(this.achatForm.quantite);
+      const prixEntree = Number(this.achatForm.prixAchatUnitaire);
+      const cump = stockActuel > 0
+        ? (stockActuel * Number(produit.prixAchat) + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree)
+        : prixEntree;
+
+      const confirme = await this.confirmerCump(produit, stockActuel, quantiteEntree, prixEntree, cump);
+      if (confirme) {
+        nouveauPrixVente = Math.round(cump);
+      }
+    }
+
+    const ligne: any = { produitId: this.achatForm.produitId, quantite: this.achatForm.quantite, prixAchatUnitaire: this.achatForm.prixAchatUnitaire, prixVente: this.achatForm.prixVente };
+    if (nouveauPrixVente !== undefined) {
+      ligne.nouveauPrixVente = nouveauPrixVente;
+    }
+
     this.productService.creerAchat({
       fournisseurId: this.achatForm.fournisseurId,
-      lignes: [{ produitId: this.achatForm.produitId, quantite: this.achatForm.quantite, prixAchatUnitaire: this.achatForm.prixAchatUnitaire, prixVente: this.achatForm.prixVente }],
+      lignes: [ligne],
       montantPaye: this.achatForm.montantPaye,
       utilisateurId: this.auth.getUserId()
     }).subscribe({
@@ -223,6 +313,35 @@ export class FournisseursPage {
         this.loadDetails(this.achatForm.fournisseurId);
       },
       error: err => this.toast(err?.error?.message || 'Achat impossible', 'danger')
+    });
+  }
+
+  /**
+   * Affiche un popup de confirmation pour le recalcul du prix de vente via le CUMP (coût moyen pondéré)
+   * quand le prix d'achat saisi pour un produit existant diffère du prix d'achat actuel du produit.
+   * Retourne true si l'utilisateur confirme l'application du nouveau prix, false sinon (l'achat continue quand même).
+   */
+  private confirmerCump(produit: Produit, stockActuel: number, quantiteEntree: number, prixEntree: number, cump: number): Promise<boolean> {
+    const ancienPrix = Number(produit.prixAchat) || 0;
+    const message =
+      `<strong>${produit.nom}</strong><br>` +
+      `Le prix d'achat saisi (${this.money(prixEntree)}) diffère du prix d'achat actuel (${this.money(ancienPrix)}).<br><br>` +
+      `Stock actuel : ${stockActuel} × ${this.money(ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
+      `Entrée : ${quantiteEntree} × ${this.money(prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
+      `CUMP = (Stock × Ancien prix + Qté entrée × Prix entrée) / (Stock + Qté entrée)<br><br>` +
+      `Nouveau prix de vente proposé : <strong>${this.money(cump)}</strong><br><br>` +
+      `Appliquer ce nouveau prix de vente au produit ?`;
+
+    return new Promise<boolean>(resolve => {
+      this.alertCtrl.create({
+        header: 'Recalcul du prix de vente (CUMP)',
+        message,
+        backdropDismiss: false,
+        buttons: [
+          { text: 'Non, garder le prix actuel', role: 'cancel', handler: () => resolve(false) },
+          { text: 'Oui, appliquer', cssClass: 'alert-btn-primary', handler: () => resolve(true) }
+        ]
+      }).then(alert => alert.present());
     });
   }
 
@@ -262,7 +381,22 @@ export class FournisseursPage {
 
   openPaiement(): void {
     if (!this.selectedFournisseur) { this.toast('Sélectionnez un fournisseur d\'abord', 'danger'); return; }
-    this.paiementForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined };
+    this.paiementForm = { fournisseurId: this.selectedFournisseur.id, montant: 0, modePaiement: 'ESPECES', reference: '', observation: '', compteId: undefined, achatCibleId: undefined };
+    this.showPaiementModal = true;
+  }
+
+  /** Ouvre le modal de paiement pré-rempli pour solder un achat non payé précis. */
+  openPaiementPourAchat(achat: any): void {
+    if (!this.selectedFournisseur) { this.toast('Sélectionnez un fournisseur d\'abord', 'danger'); return; }
+    this.paiementForm = {
+      fournisseurId: this.selectedFournisseur.id,
+      montant: achat.montantRestant || 0,
+      modePaiement: 'ESPECES',
+      reference: '',
+      observation: `Paiement achat #${achat.id}`,
+      compteId: undefined,
+      achatCibleId: achat.id
+    };
     this.showPaiementModal = true;
   }
 
@@ -491,7 +625,8 @@ thead th{padding:9px 8px;font-size:11px;font-weight:700;text-transform:uppercase
   }
 
   money(v: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(v || 0));
+    const n = Math.round(Number(v) || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(d?: string): string {

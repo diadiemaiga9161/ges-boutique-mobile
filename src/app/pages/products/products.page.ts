@@ -9,8 +9,8 @@ import { BarcodeService } from '../../services/barcode.service';
 import { StockAlertService } from '../../services/stock-alert.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
-import { OfflineDbService } from '../../services/offline-db.service';
-import { SyncService } from '../../services/sync.service';
+import { OfflineSyncService } from '../../services/offline-sync.service';
+import { NetworkStatusService } from '../../services/network-status.service';
 
 @Component({
   selector: 'app-products',
@@ -63,8 +63,8 @@ export class ProductsPage implements OnInit {
     private stockAlert: StockAlertService,
     private fonctionnalite: FonctionnaliteService,
     private niveauService: ProduitNiveauService,
-    private offlineDb: OfflineDbService,
-    private syncService: SyncService,
+    private offlineSync: OfflineSyncService,
+    private networkStatus: NetworkStatusService,
     private boutiqueService: BoutiqueService
   ) {}
 
@@ -194,17 +194,17 @@ export class ProductsPage implements OnInit {
       return;
     }
 
-    const connected = await this.syncService.isConnected();
+    const endpoint = this.editing ? `/api/produits/${this.editing.id}` : '/api/produits';
 
-    if (!connected) {
+    if (!this.networkStatus.isOnline()) {
       // Mode hors ligne
-      if (this.editing) {
-        await this.offlineDb.saveProduitUpdatePending(this.editing.id, this.form);
-        this.presentToast('📡 Modification enregistrée hors ligne — sera synchronisée');
-      } else {
-        await this.offlineDb.saveProduitPending(this.form);
-        this.presentToast('📡 Produit créé hors ligne — sera synchronisé');
-      }
+      await this.offlineSync.addOfflineAction(
+        this.editing ? 'PRODUIT_UPDATE' : 'PRODUIT_CREATE',
+        endpoint,
+        this.editing ? 'PUT' : 'POST',
+        this.form
+      );
+      this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne — sera synchronisée' : '📡 Produit créé hors ligne — sera synchronisé');
       this.showForm = false;
       return;
     }
@@ -220,15 +220,21 @@ export class ProductsPage implements OnInit {
         this.load();
       },
       error: async error => {
-        // Fallback hors ligne si erreur réseau
-        if (this.editing) {
-          await this.offlineDb.saveProduitUpdatePending(this.editing.id, this.form);
-          this.presentToast('📡 Modification enregistrée hors ligne');
-        } else {
-          await this.offlineDb.saveProduitPending(this.form);
-          this.presentToast('📡 Produit créé hors ligne');
+        if (error.status === 0) {
+          // Vraie perte de connexion — mettre en file d'attente
+          await this.offlineSync.addOfflineAction(
+            this.editing ? 'PRODUIT_UPDATE' : 'PRODUIT_CREATE',
+            endpoint,
+            this.editing ? 'PUT' : 'POST',
+            this.form
+          );
+          this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne' : '📡 Produit créé hors ligne');
+          this.showForm = false;
+          return;
         }
-        this.showForm = false;
+        // Vraie erreur serveur (validation, doublon...) — ne pas la faire passer pour du hors ligne
+        const message = error?.error?.message || (this.editing ? 'Erreur lors de la modification du produit' : 'Erreur lors de la création du produit');
+        this.presentToast(message, 'danger');
       }
     });
   }
@@ -413,6 +419,16 @@ export class ProductsPage implements OnInit {
     return this.niveaux.find(n => n.parentId === parentId) || null;
   }
 
+  // Badge coloré de stock par niveau (ok/bas/rupture).
+  // NB: ProduitNiveau n'a pas de seuil d'alerte propre côté backend ;
+  // on applique un seuil visuel conservateur (3 unités) uniquement pour l'affichage.
+  niveauStockClass(niveau: ProduitNiveau): 'ok' | 'bas' | 'rupture' {
+    const stock = niveau.stock ?? 0;
+    if (stock <= 0) return 'rupture';
+    if (stock <= 3) return 'bas';
+    return 'ok';
+  }
+
   ajusterStockNiveau(niveau: ProduitNiveau, stock: number): void {
     if (stock == null || stock < 0) return;
     this.niveauService.ajusterStock(niveau.id!, stock).subscribe({
@@ -530,7 +546,7 @@ export class ProductsPage implements OnInit {
     const date = new Date().toLocaleDateString('fr-FR');
     const liste = this.filtered.length ? this.filtered : this.allProducts;
     const totalArticles = liste.reduce((s, p) => s + (p.quantite || 0), 0);
-    const valeurTotale = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixVente || 0), 0);
+    const valeurTotale = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixAchat || 0), 0);
 
     const qrData = encodeURIComponent('Stock ' + (shop.nom || '') + ' ' + date + ' ' + liste.length + ' produits');
     const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=' + qrData;
@@ -546,7 +562,7 @@ export class ProductsPage implements OnInit {
         '</td>' +
         '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right">' + this.money(p.prixAchat || 0) + '</td>' +
         '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;font-weight:700">' + this.money(p.prixVente || 0) + '</td>' +
-        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;color:#1d4ed8">' + this.money((p.quantite || 0) * (p.prixVente || 0)) + '</td>' +
+        '<td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;color:#1d4ed8">' + this.money((p.quantite || 0) * (p.prixAchat || 0)) + '</td>' +
         '</tr>';
     }).join('');
 

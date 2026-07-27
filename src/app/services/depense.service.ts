@@ -119,6 +119,7 @@ export class DepenseService {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
+    const n = Math.round(value || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 }

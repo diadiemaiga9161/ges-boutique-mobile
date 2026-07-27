@@ -89,7 +89,8 @@ export class ObjectifFournisseurService {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m || 0) + ' FCFA';
+    const n = Math.round(m || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   getMoisLabel(mois: number): string {

@@ -91,7 +91,8 @@ export class CompteService {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value || 0);
+    const n = Math.round(value || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   private handleError(error: any, context: string): Observable<never> {

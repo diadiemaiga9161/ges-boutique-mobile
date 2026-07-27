@@ -7,7 +7,7 @@ import { ResourcesPage } from './resources.page';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, ResourcesPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, ResourcesPageRoutingModule, TranslateModule],
   declarations: [ResourcesPage]
 })
 export class ResourcesPageModule {}

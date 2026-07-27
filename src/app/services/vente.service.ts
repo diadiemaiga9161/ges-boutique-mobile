@@ -140,6 +140,11 @@ export interface VenteMap {
   regleParNom?: string;
   regleParId?: number;
   annulee?: boolean;
+  estRetourne?: boolean;
+  retourPartiel?: boolean;
+  montantRetourne?: number;
+  /** Vente enregistrée localement (hors ligne), pas encore synchronisée avec le serveur */
+  enAttenteSync?: boolean;
 }
 
 export interface VentesDuJourResponse {
@@ -549,12 +554,10 @@ export class VenteService {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value || 0);
+    const n = Math.round(value || 0);
+    const sign = n < 0 ? '-' : '';
+    const digits = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${sign}${digits} FCFA`;
   }
 
   formatDate(value?: string): string {

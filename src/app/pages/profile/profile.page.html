@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
+      <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ 'PROFILE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
@@ -102,6 +102,24 @@
         <ion-icon *ngIf="!loading" name="save-outline" slot="start"></ion-icon>
         {{ 'PROFILE.SAVE' | translate }}
       </ion-button>
+    </section>
+
+    <section class="form-panel stack">
+      <h2 class="card-title">{{ 'PROFILE.APPEARANCE' | translate }}</h2>
+      <ion-segment [value]="themeMode" (ionChange)="setTheme($any($event).detail.value)">
+        <ion-segment-button value="light">
+          <ion-icon name="sunny-outline"></ion-icon>
+          <ion-label>{{ 'PROFILE.THEME_LIGHT' | translate }}</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="dark">
+          <ion-icon name="moon-outline"></ion-icon>
+          <ion-label>{{ 'PROFILE.THEME_DARK' | translate }}</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="auto">
+          <ion-icon name="contrast-outline"></ion-icon>
+          <ion-label>{{ 'PROFILE.THEME_AUTO' | translate }}</ion-label>
+        </ion-segment-button>
+      </ion-segment>
     </section>
 
     <section class="form-panel" *ngIf="user">

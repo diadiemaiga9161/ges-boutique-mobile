@@ -61,7 +61,8 @@ export class BeneficeService {
   }
 
   formaterPrix(v: number): string {
-    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v) + ' FCFA';
+    const n = Math.round(v || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   exporterPDF(data: BeneficeData): void {

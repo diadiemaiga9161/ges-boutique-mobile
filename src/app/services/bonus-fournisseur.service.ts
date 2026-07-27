@@ -128,6 +128,7 @@ export class BonusFournisseurService {
   }
 
   formatPrice(v: number): string {
-    return new Intl.NumberFormat('fr-FR').format(v) + ' FCFA';
+    const n = Math.round(v || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 }

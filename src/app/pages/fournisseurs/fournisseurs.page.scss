@@ -294,6 +294,82 @@
   opacity: 0.65;
 }
 
+// ── Filtre par période (Achats / Paiements / Situation) ──
+.periode-filter {
+  padding: 10px 16px 6px;
+  background: #ffffff;
+}
+
+.period-chips-static {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.pchip2 {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #dbeafe;
+  background: #eff6ff;
+  color: var(--ion-color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+
+  &--active {
+    background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
+    color: #ffffff;
+  }
+}
+
+.periode-custom-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+
+  ion-button { flex-shrink: 0; }
+}
+
+.periode-date-input {
+  flex: 1;
+  min-width: 130px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+// ── Achats non payés (situation) ──────────────────
+.unpaid-card {
+  border-left: 3px solid var(--ion-color-warning);
+}
+
+.paiement-cible-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  ion-icon { font-size: 1.1rem; flex-shrink: 0; }
+}
+
 .rank-badge {
   width: 28px;
   height: 28px;

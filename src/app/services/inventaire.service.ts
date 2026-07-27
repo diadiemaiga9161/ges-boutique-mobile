@@ -13,6 +13,14 @@ export enum TypeMouvement {
   BONUS_FOURNISSEUR = 'BONUS_FOURNISSEUR'
 }
 
+export enum TypeSortie {
+  DETAIL = 'DETAIL',
+  CONSOMMATION = 'CONSOMMATION',
+  UTILISATION = 'UTILISATION',
+  PERTE = 'PERTE',
+  AUTRE = 'AUTRE'
+}
+
 export interface ProduitStock {
   id: number;
   nom: string;
@@ -40,6 +48,10 @@ export interface MouvementStock {
     id: number;
     nomComplet: string;
   };
+  typeSortie?: string;
+  // Niveaux de conditionnement (décomposition d'un emballage — ex: "Sac" → "Sachet")
+  niveauId?: number;
+  niveauNom?: string;
 }
 
 export interface MouvementRequest {
@@ -48,6 +60,15 @@ export interface MouvementRequest {
   motif: string;
   utilisateurId?: number;
   dateMouvement?: string;
+  typeSortie?: string;
+}
+
+export interface SortiesFilter {
+  typeSortie?: string;
+  utilisateurId?: number;
+  produitId?: number;
+  dateDebut?: string;
+  dateFin?: string;
 }
 
 export interface AjustementRequest {
@@ -88,6 +109,30 @@ export class InventaireService {
     return this.http.post<void>(`${this.apiUrl}/sortie`, this.withUser(mouvement)).pipe(
       catchError(error => this.handleError(error, 'enregistrer la sortie de stock'))
     );
+  }
+
+  getSorties(filters: SortiesFilter = {}): Observable<MouvementStock[]> {
+    let params = new HttpParams();
+    if (filters.typeSortie) params = params.set('typeSortie', filters.typeSortie);
+    if (filters.utilisateurId) params = params.set('utilisateurId', filters.utilisateurId.toString());
+    if (filters.produitId) params = params.set('produitId', filters.produitId.toString());
+    if (filters.dateDebut) params = params.set('dateDebut', filters.dateDebut);
+    if (filters.dateFin) params = params.set('dateFin', filters.dateFin);
+    return this.http.get<any>(`${this.apiUrl}/sorties`, { params }).pipe(
+      map(response => this.extractList<MouvementStock>(response)),
+      catchError(error => this.handleError(error, 'récupérer les sorties'))
+    );
+  }
+
+  getTypeSortieLabel(type: string): string {
+    const labels: Record<string, string> = {
+      DETAIL: 'Détail/Vente',
+      CONSOMMATION: 'Consommation',
+      UTILISATION: 'Utilisation',
+      PERTE: 'Perte',
+      AUTRE: 'Autre'
+    };
+    return labels[type] || type;
   }
 
   ajusterStock(ajustement: AjustementRequest): Observable<void> {
@@ -133,12 +178,8 @@ export class InventaireService {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value || 0);
+    const n = Math.round(value || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDateTimeForDisplay(value?: string): string {

@@ -103,7 +103,8 @@ export class CommandeService {
   }
 
   formatMontant(v: number): string {
-    return new Intl.NumberFormat('fr-FR').format(v || 0) + ' FCFA';
+    const n = Math.round(v || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(d: string): string {

@@ -18,7 +18,7 @@ interface RecoAvecEtat extends RecommandationIA {
 export class IaPage {
 
   // ── Onglet actif ───────────────────────────────
-  activeTab: 'dashboard' | 'recommandations' | 'clients' = 'dashboard';
+  activeTab: 'dashboard' | 'recommandations' | 'clients' | 'chat' = 'dashboard';
 
   // ── Données analyse ────────────────────────────
   analyse: AnalyseIAResult | null = null;
@@ -291,12 +291,8 @@ export class IaPage {
   }
 
   formatPrix(val: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(val || 0);
+    const n = Math.round(val || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(dateStr: string): string {

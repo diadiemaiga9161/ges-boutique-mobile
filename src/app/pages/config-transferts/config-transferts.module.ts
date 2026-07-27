@@ -8,6 +8,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [ConfigTransfertsPage],
-  imports: [CommonModule, FormsModule, IonicModule, ConfigTransfertsRoutingModule]
+  imports: [CommonModule, FormsModule, IonicModule, ConfigTransfertsRoutingModule, TranslateModule]
 })
 export class ConfigTransfertsPageModule {}

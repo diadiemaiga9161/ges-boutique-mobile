@@ -8,6 +8,18 @@ import { VenteMap, VenteService } from './vente.service';
 import { FactureService } from './facture.service';
 import { environment } from '../../environments/environment';
 
+export interface VenteParVendeurJour {
+  vendeurId: number;
+  vendeurNom: string;
+  date: string;
+  nbVentesComptant: number;
+  nbVentesCredit: number;
+  caComptant: number;
+  caCredit: number;
+  caTotal: number;
+  nbVentesTotal: number;
+}
+
 export interface StatistiquesGenerales {
   chiffreAffaire: {
     journalier: number;
@@ -284,12 +296,8 @@ export class RapportService {
   }
 
   formaterPrixFCFA(value: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value || 0);
+    const n = Math.round(value || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formaterDate(date: Date): string {
@@ -339,5 +347,10 @@ export class RapportService {
   }
   getPrevisionStock(): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}/previsions/stock`);
+  }
+
+  getVentesParVendeur(dateDebut?: string, dateFin?: string): Observable<VenteParVendeurJour[]> {
+    const params = (dateDebut && dateFin) ? `?dateDebut=${dateDebut}&dateFin=${dateFin}` : '';
+    return this.http.get<VenteParVendeurJour[]>(`${environment.apiUrl}/rapports/ventes-par-vendeur${params}`);
   }
 }

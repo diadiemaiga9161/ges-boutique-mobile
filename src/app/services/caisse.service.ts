@@ -320,6 +320,23 @@ export class CaisseService {
     );
   }
 
+  getReglementsParPeriode(dateDebut?: string, dateFin?: string): Observable<any[]> {
+    let params = new HttpParams();
+    if (dateDebut) params = params.set('dateDebut', dateDebut);
+    if (dateFin) params = params.set('dateFin', dateFin);
+    return this.http.get<any>(`${this.apiUrl}/credits/reglements`, { params }).pipe(
+      map(response => this.extractList<any>(response, 'reglements')),
+      catchError(error => this.handleError(error, 'récupérer les règlements de crédit'))
+    );
+  }
+
+  annulerReglementCredit(operationId: number, utilisateurId: number): Observable<any> {
+    const params = new HttpParams().set('utilisateurId', String(utilisateurId));
+    return this.http.post<any>(`${this.apiUrl}/credits/reglement/${operationId}/annuler`, null, { params }).pipe(
+      catchError(error => this.handleError(error, 'annuler le règlement de crédit'))
+    );
+  }
+
   getOperationsDeLaSemaine(): Observable<OperationCaisse[]> {
     const params = new HttpParams().set('dateDebut', this.getDateDebutSemaine()).set('dateFin', this.getDateFinSemaine());
     return this.http.get<any>(`${this.apiUrl}/operations/periode`, { params }).pipe(
@@ -389,12 +406,8 @@ export class CaisseService {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value || 0);
+    const n = Math.round(value || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(value?: string): string {

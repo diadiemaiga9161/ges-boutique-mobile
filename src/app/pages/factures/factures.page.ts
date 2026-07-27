@@ -278,7 +278,8 @@ export class FacturesPage {
 
   // ── Utilitaires ─────────────────────────────────────────
   money(v: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(v || 0);
+    const n = Math.round(v || 0);
+    return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
   }
 
   formatDate(d: string): string {
