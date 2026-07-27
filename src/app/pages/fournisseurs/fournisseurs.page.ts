@@ -323,8 +323,9 @@ export class FournisseursPage {
    */
   private confirmerCump(produit: Produit, stockActuel: number, quantiteEntree: number, prixEntree: number, cump: number): Promise<boolean> {
     const ancienPrix = Number(produit.prixAchat) || 0;
+    const escapeHtml = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const message =
-      `<strong>${produit.nom}</strong><br>` +
+      `<strong>${escapeHtml(produit.nom)}</strong><br>` +
       `Le prix d'achat saisi (${this.money(prixEntree)}) diffère du prix d'achat actuel (${this.money(ancienPrix)}).<br><br>` +
       `Stock actuel : ${stockActuel} × ${this.money(ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
       `Entrée : ${quantiteEntree} × ${this.money(prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
