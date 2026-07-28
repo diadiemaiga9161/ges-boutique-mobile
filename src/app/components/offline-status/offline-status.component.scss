@@ -6,6 +6,11 @@
   ion-card-content {
     padding: 12px;
   }
+
+  &.offline-card--failed {
+    background: #fef2f2;
+    border-left-color: #dc2626;
+  }
 }
 
 .status-header {
@@ -25,9 +30,17 @@
     font-weight: 600;
     font-size: 14px;
     color: #d97706;
+
+    &--danger {
+      color: #dc2626;
+    }
   }
 
-  ion-icon {
+  .failed-badge {
+    margin-left: 4px;
+  }
+
+  ion-icon:last-of-type {
     margin-left: auto;
   }
 }

@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface OfflineAction {
   id: string;
-  type: 'VENTE' | 'VENTE_CREDIT' | 'REGLEMENT_CREDIT' | 'MODIFICATION_VENTE';
+  type: 'VENTE' | 'VENTE_CREDIT' | 'REGLEMENT_CREDIT' | 'MODIFICATION_VENTE' | 'PRODUIT_CREATE' | 'PRODUIT_UPDATE';
   endpoint: string;
   method: 'POST' | 'PUT' | 'DELETE';
   data: any;
@@ -67,6 +67,24 @@ export class OfflineQueueService {
 
   getPendingActions(): OfflineAction[] {
     return this.queue$.value.filter(a => a.status === 'EN_ATTENTE');
+  }
+
+  /**
+   * Retourne les actions à rejouer lors d'une synchronisation :
+   * - les actions EN_ATTENTE (jamais tentées)
+   * - les actions ECHEC dont le nombre de tentatives n'a pas atteint maxAttempts
+   * (offline-first : une opération en échec n'est jamais une impasse silencieuse,
+   * elle est retentée automatiquement tant que la limite n'est pas atteinte)
+   */
+  getSyncableActions(maxAttempts: number): OfflineAction[] {
+    return this.queue$.value.filter(a =>
+      a.status === 'EN_ATTENTE' ||
+      (a.status === 'ECHEC' && a.attemptCount < maxAttempts)
+    );
+  }
+
+  getFailedActions(): OfflineAction[] {
+    return this.queue$.value.filter(a => a.status === 'ECHEC');
   }
 
   getActionsByType(type: OfflineAction['type']): OfflineAction[] {

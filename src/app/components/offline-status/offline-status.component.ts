@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { NetworkStatusService, NetworkStatus } from '../../services/network-status.service';
-import { OfflineSyncService, SyncStatus } from '../../services/offline-sync.service';
+import { OfflineSyncService, SyncStatus, MAX_SYNC_ATTEMPTS } from '../../services/offline-sync.service';
 import { OfflineQueueService, OfflineAction } from '../../services/offline-queue.service';
 
 @Component({
@@ -18,6 +18,7 @@ export class OfflineStatusComponent implements OnInit {
   syncStatus$: Observable<SyncStatus>;
   offlineQueue$: Observable<OfflineAction[]>;
   showDetails = false;
+  readonly maxSyncAttempts = MAX_SYNC_ATTEMPTS;
 
   constructor(
     private networkService: NetworkStatusService,
@@ -49,6 +50,20 @@ export class OfflineStatusComponent implements OnInit {
   hasPending(queue: OfflineAction[] | null): boolean {
     if (!queue) return false;
     return queue.some(a => a.status === 'EN_ATTENTE');
+  }
+
+  countFailed(queue: OfflineAction[] | null): number {
+    if (!queue) return 0;
+    return queue.filter(a => a.status === 'ECHEC').length;
+  }
+
+  hasFailed(queue: OfflineAction[] | null): boolean {
+    return this.countFailed(queue) > 0;
+  }
+
+  /** Action bloquée : a atteint le nombre max de tentatives automatiques, nécessite une action manuelle (forceSync). */
+  isAbandoned(action: OfflineAction): boolean {
+    return action.status === 'ECHEC' && action.attemptCount >= this.maxSyncAttempts;
   }
 
   async forceSync(): Promise<void> {
