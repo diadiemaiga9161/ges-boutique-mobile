@@ -324,6 +324,237 @@
   }
 }
 
+// ── Relevé client (situation client) ──────────────
+.releve-header {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  padding: 16px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.releve-client-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.releve-client-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #475569;
+  margin: 2px 0;
+  ion-icon { font-size: 13px; color: #1a56db; }
+}
+
+.releve-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.releve-stat {
+  flex: 1;
+  background: rgba(255,255,255,0.75);
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+
+  &--balance { background: #fff; border: 1.5px solid #1a56db; }
+}
+
+.releve-stat-label {
+  display: block;
+  font-size: 0.62rem;
+  color: #475569;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.releve-stat-value {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+  &--green { color: #16a34a; }
+  &--red { color: #dc2626; }
+}
+
+// Filtre période (réutilisé du pattern fournisseurs)
+.periode-filter {
+  padding: 10px 16px 6px;
+  background: #ffffff;
+}
+
+.period-chips-static {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.pchip2 {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #dbeafe;
+  background: #eff6ff;
+  color: var(--ion-color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+
+  &--active {
+    background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
+    color: #ffffff;
+  }
+}
+
+.periode-custom-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  padding: 0 16px;
+
+  ion-button { flex-shrink: 0; }
+}
+
+.periode-date-input {
+  flex: 1;
+  min-width: 130px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+// Carte ligne de relevé
+.releve-ligne-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.rlc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rlc-date {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.rlc-heure {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.rlc-ref {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 6px 0 0;
+  ion-icon { font-size: 11px; }
+}
+
+.rlc-produit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.8rem;
+}
+
+.rlc-prod-qty {
+  background: #eff6ff;
+  color: #1a56db;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.rlc-prod-name { flex: 1; color: #374151; }
+.rlc-prod-pu { font-size: 0.75rem; color: #94a3b8; }
+
+.rlc-montants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.rlc-montant {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rlc-montant-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.rlc-montant-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  &--green { color: #16a34a; }
+  &--red { color: #dc2626; }
+}
+
+.rlc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.7rem;
+  color: #94a3b8;
+
+  ion-icon { font-size: 11px; }
+}
+
+.releve-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px;
+}
+
+.releve-page-info {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
   .client-avatar  { width: 52px; height: 52px; font-size: 1.4rem; }

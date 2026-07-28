@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { AvanceClientRequest, Client, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
+import { AvanceClientRequest, Client, ClientReleveLigne, ClientReleveResponse, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
 import { VenteMap, VenteService } from '../../services/vente.service';
 import { AuthService } from '../../services/auth.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
@@ -50,6 +50,18 @@ export class ClientsPage {
   historiqueAvances?: HistoriqueAvanceResponse;
   loadingAvance = false;
   avanceForm: AvanceClientRequest = this.emptyAvanceForm();
+
+  // Relevé client (situation client) — paginé côté serveur
+  showReleveModal = false;
+  selectedClientForReleve?: Client;
+  releveData?: ClientReleveResponse;
+  loadingReleve = false;
+  relevePeriodePreset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
+  releveDateDebut = '';
+  releveDateFin = '';
+  releveTypeFilter: '' | 'VENTE' | 'VERSEMENT' = '';
+  relevePage = 0;
+  releveSize = 20;
 
   design: DesignFacture = 1;
 
@@ -216,6 +228,129 @@ export class ClientsPage {
     if (v.creditRegle) return 'Réglé';
     if (this.isCreditEnRetard(v)) return 'En retard';
     return 'Crédit';
+  }
+
+  // ==================== RELEVÉ CLIENT (situation client, JSON paginé) ====================
+
+  openReleveModal(client: Client): void {
+    if (!client.id) return;
+    this.selectedClientForReleve = client;
+    this.releveData = undefined;
+    this.relevePeriodePreset = 'tout';
+    this.releveDateDebut = '';
+    this.releveDateFin = '';
+    this.releveTypeFilter = '';
+    this.relevePage = 0;
+    this.showReleveModal = true;
+    this.loadReleve();
+  }
+
+  loadReleve(): void {
+    if (!this.selectedClientForReleve?.id) return;
+    this.loadingReleve = true;
+    const dd = this.relevePeriodePreset !== 'tout' ? this.releveDateDebut : undefined;
+    const df = this.relevePeriodePreset !== 'tout' ? this.releveDateFin : undefined;
+    this.clientService.getReleve(
+      this.selectedClientForReleve.id, this.relevePage, this.releveSize,
+      dd || undefined, df || undefined, this.releveTypeFilter || undefined
+    ).subscribe({
+      next: data => { this.releveData = data; this.loadingReleve = false; },
+      error: error => { this.loadingReleve = false; this.presentToast(error.message || 'Chargement du relevé impossible', 'danger'); }
+    });
+  }
+
+  appliquerRelevePreset(preset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout'): void {
+    this.relevePeriodePreset = preset;
+    const toIso = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+
+    if (preset === 'jour') {
+      this.releveDateDebut = toIso(today);
+      this.releveDateFin = toIso(today);
+    } else if (preset === 'hier') {
+      const hier = new Date(today);
+      hier.setDate(hier.getDate() - 1);
+      this.releveDateDebut = toIso(hier);
+      this.releveDateFin = toIso(hier);
+    } else if (preset === 'semaine') {
+      const jour = today.getDay() === 0 ? 7 : today.getDay();
+      const debut = new Date(today);
+      debut.setDate(debut.getDate() - (jour - 1));
+      this.releveDateDebut = toIso(debut);
+      this.releveDateFin = toIso(today);
+    } else if (preset === 'mois') {
+      const debut = new Date(today.getFullYear(), today.getMonth(), 1);
+      this.releveDateDebut = toIso(debut);
+      this.releveDateFin = toIso(today);
+    } else if (preset === 'annee') {
+      const debut = new Date(today.getFullYear(), 0, 1);
+      this.releveDateDebut = toIso(debut);
+      this.releveDateFin = toIso(today);
+    } else if (preset === 'tout') {
+      this.releveDateDebut = '';
+      this.releveDateFin = '';
+    }
+    // 'personnalise' : dates saisies manuellement, rien à calculer ici
+
+    if (preset !== 'personnalise') {
+      this.relevePage = 0;
+      this.loadReleve();
+    }
+  }
+
+  appliquerRelevePeriodePersonnalisee(): void {
+    if (!this.releveDateDebut || !this.releveDateFin) {
+      this.presentToast('Sélectionnez une date de début et de fin', 'danger');
+      return;
+    }
+    if (this.releveDateDebut > this.releveDateFin) {
+      this.presentToast('La date de début doit précéder la date de fin', 'danger');
+      return;
+    }
+    this.relevePeriodePreset = 'personnalise';
+    this.relevePage = 0;
+    this.loadReleve();
+  }
+
+  changerReleveType(type: '' | 'VENTE' | 'VERSEMENT'): void {
+    this.releveTypeFilter = type;
+    this.relevePage = 0;
+    this.loadReleve();
+  }
+
+  relevePagePrecedente(): void {
+    if (this.relevePage <= 0) return;
+    this.relevePage--;
+    this.loadReleve();
+  }
+
+  relevePageSuivante(): void {
+    if (!this.releveData || this.relevePage >= this.releveData.totalPages - 1) return;
+    this.relevePage++;
+    this.loadReleve();
+  }
+
+  closeReleveModal(): void {
+    this.showReleveModal = false;
+    this.selectedClientForReleve = undefined;
+    this.releveData = undefined;
+  }
+
+  releveLigneBadgeColor(ligne: ClientReleveLigne): string {
+    if (ligne.type === 'VENTE') return 'primary';
+    if (ligne.type === 'RETOUR') return 'warning';
+    return 'success';
+  }
+
+  releveLigneBadgeLabel(ligne: ClientReleveLigne): string {
+    if (ligne.type === 'VENTE') return 'Vente';
+    if (ligne.type === 'RETOUR') return 'Retour';
+    return 'Versement';
+  }
+
+  formatHeure(value: string): string {
+    if (!value) return '—';
+    return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
   // ==================== DÉTAIL VENTE ====================

@@ -88,8 +88,12 @@
           </button>
         </div>
 
-        <!-- Actions PDF / QR -->
+        <!-- Actions PDF / QR / Relevé -->
         <div class="client-doc-actions">
+          <button class="doc-btn" (click)="openReleveModal(client)" *ngIf="client.id">
+            <ion-icon name="reader-outline"></ion-icon>
+            <span>{{ 'RELEVE.BUTTON' | translate }}</span>
+          </button>
           <button class="doc-btn" (click)="telechargerReleve(client.id)">
             <ion-icon name="document-text-outline"></ion-icon>
             <span>PDF Relevé</span>
@@ -331,6 +335,142 @@
         </ion-button>
       </div>
     </ion-footer>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL RELEVÉ CLIENT (situation client, JSON paginé) ==================== -->
+<ion-modal [isOpen]="showReleveModal" (didDismiss)="closeReleveModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ 'RELEVE.TITLE' | translate }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeReleveModal()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+
+      <!-- En-tête client -->
+      <div class="releve-header" *ngIf="selectedClientForReleve">
+        <h2 class="releve-client-name">{{ clientService.getFullName(selectedClientForReleve) }}</h2>
+        <p class="releve-client-meta" *ngIf="releveData?.client?.telephone">
+          <ion-icon name="call-outline"></ion-icon> {{ releveData?.client?.telephone }}
+        </p>
+        <p class="releve-client-meta" *ngIf="releveData?.client?.adresse">
+          <ion-icon name="location-outline"></ion-icon> {{ releveData?.client?.adresse }}
+        </p>
+
+        <div class="releve-stats" *ngIf="releveData">
+          <div class="releve-stat">
+            <span class="releve-stat-label">{{ 'RELEVE.TOTAL_SALES' | translate }}</span>
+            <span class="releve-stat-value">{{ money(releveData.totalVentes) }}</span>
+          </div>
+          <div class="releve-stat">
+            <span class="releve-stat-label">{{ 'RELEVE.TOTAL_PAYMENTS' | translate }}</span>
+            <span class="releve-stat-value releve-stat-value--green">{{ money(releveData.totalVersements) }}</span>
+          </div>
+          <div class="releve-stat releve-stat--balance">
+            <span class="releve-stat-label">{{ 'RELEVE.BALANCE' | translate }}</span>
+            <span class="releve-stat-value" [class.releve-stat-value--red]="releveData.soldeActuel > 0">{{ money(releveData.soldeActuel) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtre période -->
+      <div class="periode-filter">
+        <div class="period-chips-static">
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'jour'" (click)="appliquerRelevePreset('jour')">{{ 'RELEVE.PERIOD_TODAY' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'hier'" (click)="appliquerRelevePreset('hier')">{{ 'RELEVE.PERIOD_YESTERDAY' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'semaine'" (click)="appliquerRelevePreset('semaine')">{{ 'RELEVE.PERIOD_WEEK' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'mois'" (click)="appliquerRelevePreset('mois')">{{ 'RELEVE.PERIOD_MONTH' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'annee'" (click)="appliquerRelevePreset('annee')">{{ 'RELEVE.PERIOD_YEAR' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'personnalise'" (click)="appliquerRelevePreset('personnalise')">{{ 'RELEVE.PERIOD_CUSTOM' | translate }}</button>
+          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'tout'" (click)="appliquerRelevePreset('tout')">{{ 'RELEVE.PERIOD_ALL' | translate }}</button>
+        </div>
+        <div class="periode-custom-row" *ngIf="relevePeriodePreset === 'personnalise'">
+          <input type="date" class="periode-date-input" [(ngModel)]="releveDateDebut" [attr.aria-label]="'RELEVE.FROM_DATE' | translate" />
+          <input type="date" class="periode-date-input" [(ngModel)]="releveDateFin" [attr.aria-label]="'RELEVE.TO_DATE' | translate" />
+          <ion-button size="small" (click)="appliquerRelevePeriodePersonnalisee()">{{ 'RELEVE.APPLY' | translate }}</ion-button>
+        </div>
+      </div>
+
+      <!-- Filtre type -->
+      <div style="padding:0 12px 12px">
+        <ion-segment [value]="releveTypeFilter" (ionChange)="changerReleveType($any($event.detail.value))">
+          <ion-segment-button value="">{{ 'RELEVE.TYPE_ALL' | translate }}</ion-segment-button>
+          <ion-segment-button value="VENTE">{{ 'RELEVE.TYPE_SALES' | translate }}</ion-segment-button>
+          <ion-segment-button value="VERSEMENT">{{ 'RELEVE.TYPE_PAYMENTS' | translate }}</ion-segment-button>
+        </ion-segment>
+      </div>
+
+      <ion-spinner *ngIf="loadingReleve" style="display:block;margin:20px auto"></ion-spinner>
+
+      <div class="page-pad stack" *ngIf="!loadingReleve && releveData">
+        <div *ngIf="releveData.lignes.length === 0" class="empty-state">{{ 'RELEVE.EMPTY' | translate }}</div>
+
+        <article class="releve-ligne-card" *ngFor="let ligne of releveData.lignes">
+          <div class="rlc-header">
+            <div class="rlc-date">
+              <span>{{ formatDate(ligne.date) }}</span>
+              <span class="rlc-heure">{{ formatHeure(ligne.date) }}</span>
+            </div>
+            <ion-badge [color]="releveLigneBadgeColor(ligne)">{{ releveLigneBadgeLabel(ligne) }}</ion-badge>
+          </div>
+
+          <p class="rlc-ref" *ngIf="ligne.referenceVente || ligne.referenceReglement">
+            <ion-icon name="pricetag-outline"></ion-icon>
+            {{ ligne.referenceReglement || ligne.referenceVente }}
+          </p>
+
+          <!-- Ligne VENTE : produit -->
+          <div class="rlc-produit" *ngIf="ligne.type === 'VENTE'">
+            <span class="rlc-prod-qty">×{{ ligne.quantite }}</span>
+            <span class="rlc-prod-name">{{ ligne.produitNom }}</span>
+            <span class="rlc-prod-pu" *ngIf="ligne.prixUnitaire != null">{{ money(ligne.prixUnitaire) }}</span>
+          </div>
+
+          <div class="rlc-montants">
+            <div class="rlc-montant" *ngIf="ligne.montantVente != null">
+              <span class="rlc-montant-label">{{ 'RELEVE.SALE_AMOUNT' | translate }}</span>
+              <span class="rlc-montant-value">{{ money(ligne.montantVente) }}</span>
+            </div>
+            <div class="rlc-montant" *ngIf="ligne.montantVersement != null">
+              <span class="rlc-montant-label">{{ 'RELEVE.PAYMENT_AMOUNT' | translate }}</span>
+              <span class="rlc-montant-value rlc-montant-value--green">{{ money(ligne.montantVersement) }}</span>
+            </div>
+            <div class="rlc-montant" *ngIf="ligne.resteAPayerApres != null">
+              <span class="rlc-montant-label">{{ 'RELEVE.BALANCE_AFTER' | translate }}</span>
+              <span class="rlc-montant-value" [class.rlc-montant-value--red]="ligne.resteAPayerApres > 0">{{ money(ligne.resteAPayerApres) }}</span>
+            </div>
+          </div>
+
+          <p class="rlc-footer" *ngIf="ligne.modePaiement || ligne.utilisateurNom">
+            <span *ngIf="ligne.modePaiement">{{ ligne.modePaiement }}</span>
+            <span *ngIf="ligne.utilisateurNom">
+              <ion-icon name="person-outline"></ion-icon> {{ ligne.utilisateurNom }}
+            </span>
+          </p>
+        </article>
+
+        <!-- Pagination serveur -->
+        <div class="releve-pagination" *ngIf="releveData.lignes.length">
+          <ion-button size="small" fill="outline" [disabled]="relevePage <= 0" (click)="relevePagePrecedente()">
+            <ion-icon name="chevron-back-outline" slot="start"></ion-icon>
+            {{ 'RELEVE.PREVIOUS' | translate }}
+          </ion-button>
+          <span class="releve-page-info">
+            {{ 'RELEVE.PAGE' | translate }} {{ relevePage + 1 }} {{ 'RELEVE.OF' | translate }} {{ releveData.totalPages || 1 }}
+          </span>
+          <ion-button size="small" fill="outline" [disabled]="relevePage >= releveData.totalPages - 1" (click)="relevePageSuivante()">
+            {{ 'RELEVE.NEXT' | translate }}
+            <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </ion-content>
   </ng-template>
 </ion-modal>
 

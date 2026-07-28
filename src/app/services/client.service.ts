@@ -53,6 +53,35 @@ export interface TopClient {
   montantTotal: number;
 }
 
+export interface ClientReleveLigne {
+  date: string;
+  type: 'VENTE' | 'VERSEMENT' | 'RETOUR';
+  referenceVente?: string;
+  referenceReglement?: string;
+  venteId?: number;
+  produitNom?: string;
+  quantite?: number;
+  prixUnitaire?: number;
+  montantVente?: number;
+  montantVersement?: number;
+  resteAPayerApres?: number;
+  modePaiement?: string;
+  utilisateurNom?: string;
+}
+
+export interface ClientReleveResponse {
+  success: boolean;
+  client: { id: number; nom: string; prenom?: string; telephone?: string; adresse?: string };
+  soldeActuel: number;
+  totalVentes: number;
+  totalVersements: number;
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  lignes: ClientReleveLigne[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -156,6 +185,20 @@ export class ClientService {
         } as HistoriqueAvanceResponse;
       }),
       catchError(error => this.handleError(error, 'récupérer l\'historique des avances'))
+    );
+  }
+
+  /**
+   * Relevé client / situation client — JSON paginé (ventes éclatées par produit + versements
+   * + retours, reliquat cumulé calculé côté serveur). Voir GET /api/clients/{id}/releve.
+   */
+  getReleve(clientId: number, page: number, size: number, dateDebut?: string, dateFin?: string, type?: string): Observable<ClientReleveResponse> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (dateDebut) params = params.set('dateDebut', dateDebut);
+    if (dateFin) params = params.set('dateFin', dateFin);
+    if (type) params = params.set('type', type);
+    return this.http.get<ClientReleveResponse>(`${this.apiUrl}/${clientId}/releve`, { params }).pipe(
+      catchError(error => this.handleError(error, 'récupérer le relevé du client'))
     );
   }
 
