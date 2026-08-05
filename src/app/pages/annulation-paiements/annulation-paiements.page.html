@@ -1,0 +1,211 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Annulation paiements</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="charger()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+
+    <!-- Hero stats -->
+    <div class="hero-stat-row">
+      <div class="hsr-item">
+        <span class="hsr-val">{{ (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length }}</span>
+        <span class="hsr-lbl">Operations</span>
+      </div>
+      <div class="hsr-item">
+        <span class="hsr-val">{{ countAnnules() }}</span>
+        <span class="hsr-lbl">Annules</span>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="filter-zone">
+      <ion-chip
+        [color]="onglet === 'fournisseur' ? 'primary' : 'medium'"
+        [outline]="onglet !== 'fournisseur'"
+        (click)="onglet = 'fournisseur'; charger()">
+        Paiements fournisseur
+      </ion-chip>
+      <ion-chip
+        [color]="onglet === 'credit' ? 'primary' : 'medium'"
+        [outline]="onglet !== 'credit'"
+        (click)="onglet = 'credit'; charger()">
+        Reglements credit
+      </ion-chip>
+    </div>
+
+    <!-- Filtres periode -->
+    <div class="filter-zone">
+      <ion-chip
+        (click)="filterByPeriod('today')"
+        [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'today'">
+        Aujourd'hui
+      </ion-chip>
+      <ion-chip
+        (click)="filterByPeriod('week')"
+        [color]="selectedPeriod === 'week' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'week'">
+        Semaine
+      </ion-chip>
+      <ion-chip
+        (click)="filterByPeriod('month')"
+        [color]="selectedPeriod === 'month' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'month'">
+        Mois
+      </ion-chip>
+      <ion-chip
+        (click)="filterByPeriod('year')"
+        [color]="selectedPeriod === 'year' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'year'">
+        Annee
+      </ion-chip>
+      <ion-chip
+        (click)="filterByPeriod('all')"
+        color="medium"
+        [outline]="selectedPeriod !== 'all'">
+        Tout
+      </ion-chip>
+    </div>
+
+    <!-- Recherche -->
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      placeholder="Rechercher..."
+      (ionInput)="appliquerFiltres()">
+    </ion-searchbar>
+
+    <!-- Skeleton loader -->
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <!-- Section header -->
+    <div class="section-header" *ngIf="!loading">
+      <span class="section-header__title">Resultats</span>
+      <span class="section-header__count">
+        {{ (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length }}
+      </span>
+    </div>
+
+    <!-- Paiements fournisseur -->
+    <section class="stack animate-cards" *ngIf="!loading && onglet === 'fournisseur'">
+
+      <article
+        class="list-item-card"
+        *ngFor="let p of paiementsFiltres; trackBy: trackById"
+        [style.opacity]="p.annule ? '0.6' : '1'">
+
+        <div class="lic-header">
+          <div class="lic-avatar" [class.--orange]="!p.annule" [class.--red]="p.annule">
+            <ion-icon [name]="p.annule ? 'close-circle-outline' : 'cash-outline'"></ion-icon>
+          </div>
+          <div class="lic-info">
+            <div class="lic-name">{{ p.fournisseur?.nom || 'Fournisseur' }}</div>
+            <div class="lic-sub">{{ formatDate(p.datePaiement) }}</div>
+          </div>
+          <div class="lic-right">
+            <span class="status-badge" [class.--success]="!p.annule" [class.--danger]="p.annule">
+              {{ formatMontant(p.montant) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="lic-footer">
+          <ion-badge
+            [color]="p.modePaiement === 'ESPECES' ? 'primary' : 'tertiary'"
+            style="font-size:0.7rem">
+            {{ p.modePaiement === 'ESPECES' ? 'Especes' : 'Banque' }}
+          </ion-badge>
+          <span class="muted" *ngIf="p.reference" style="font-size:0.75rem">{{ p.reference }}</span>
+          <ion-badge color="danger" *ngIf="p.annule" style="font-size:0.65rem">Annule</ion-badge>
+        </div>
+
+        <div style="padding: 8px 16px 12px; display:flex; justify-content:flex-end" *ngIf="!p.annule">
+          <ion-button size="small" color="danger" fill="outline" (click)="confirmerAnnulation(p, 'fournisseur')">
+            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+            Annuler ce paiement
+          </ion-button>
+        </div>
+
+        <div style="padding: 4px 16px 10px" *ngIf="p.annule && p.dateAnnulation">
+          <p class="muted" style="font-size:0.75rem">Annule le {{ formatDate(p.dateAnnulation) }}</p>
+        </div>
+
+      </article>
+
+      <div class="empty-v2" *ngIf="!paiementsFiltres.length">
+        <div class="empty-v2__icon"><ion-icon name="cash-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucun paiement</p>
+        <p class="empty-v2__text">Aucun paiement pour la periode selectionnee</p>
+      </div>
+
+    </section>
+
+    <!-- Reglements credit -->
+    <section class="stack animate-cards" *ngIf="!loading && onglet === 'credit'">
+
+      <article
+        class="list-item-card"
+        *ngFor="let r of reglementsFiltres; trackBy: trackById"
+        [style.opacity]="r.annule ? '0.6' : '1'">
+
+        <div class="lic-header">
+          <div class="lic-avatar" [class.--green]="!r.annule" [class.--red]="r.annule">
+            <ion-icon [name]="r.annule ? 'close-circle-outline' : 'card-outline'"></ion-icon>
+          </div>
+          <div class="lic-info">
+            <div class="lic-name">{{ r.clientNom || 'Client' }}</div>
+            <div class="lic-sub">{{ formatDate(r.dateOperation) }}</div>
+          </div>
+          <div class="lic-right">
+            <span class="status-badge" [class.--success]="!r.annule" [class.--danger]="r.annule">
+              {{ formatMontant(r.montant) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="lic-footer">
+          <span class="muted" *ngIf="r.clientTelephone" style="font-size:0.75rem">{{ r.clientTelephone }}</span>
+          <span class="muted" *ngIf="r.motif" style="font-size:0.75rem">{{ r.motif }}</span>
+          <ion-badge color="danger" *ngIf="r.annule" style="font-size:0.65rem">Annule</ion-badge>
+        </div>
+
+        <div style="padding: 8px 16px 12px; display:flex; justify-content:flex-end" *ngIf="!r.annule">
+          <ion-button size="small" color="danger" fill="outline" (click)="confirmerAnnulation(r, 'credit')">
+            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+            Annuler ce reglement
+          </ion-button>
+        </div>
+
+        <div style="padding: 4px 16px 10px" *ngIf="r.annule && r.dateAnnulationReglement">
+          <p class="muted" style="font-size:0.75rem">Annule le {{ formatDate(r.dateAnnulationReglement) }}</p>
+        </div>
+
+      </article>
+
+      <div class="empty-v2" *ngIf="!reglementsFiltres.length">
+        <div class="empty-v2__icon"><ion-icon name="card-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucun reglement</p>
+        <p class="empty-v2__text">Aucun reglement pour la periode selectionnee</p>
+      </div>
+
+    </section>
+
+  </div>
+</ion-content>

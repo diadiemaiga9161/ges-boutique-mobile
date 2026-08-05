@@ -1,0 +1,15 @@
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #fff3cd;
+  color: #856404;
+}
+.stat-chip.danger { background: #fde8e8; color: #c0392b; }
+.stat-chip.info { background: #dbeafe; color: #1e40af; }
+.stat-chip.success { background: #d1fae5; color: #065f46; }
+.stat-chip.purple { background: #ede9fe; color: #5b21b6; }

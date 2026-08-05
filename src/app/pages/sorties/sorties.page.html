@@ -1,0 +1,130 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Sorties Stock</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack">
+
+    <!-- Hero stats -->
+    <div class="hero-stat-row">
+      <div class="hsr-item">
+        <span class="hsr-val">{{ sortiesFiltrees.length }}</span>
+        <span class="hsr-lbl">Sorties</span>
+      </div>
+      <div class="hsr-item">
+        <span class="hsr-val">{{ totalQuantite() }}</span>
+        <span class="hsr-lbl">Unités sorties</span>
+      </div>
+    </div>
+
+    <!-- Filtres rapides période -->
+    <div class="filter-zone">
+      <ion-chip (click)="filterByPeriod('today')"
+        [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'today'">Aujourd'hui</ion-chip>
+      <ion-chip (click)="filterByPeriod('week')"
+        [color]="selectedPeriod === 'week' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'week'">Semaine</ion-chip>
+      <ion-chip (click)="filterByPeriod('month')"
+        [color]="selectedPeriod === 'month' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'month'">Mois</ion-chip>
+      <ion-chip (click)="filterByPeriod('year')"
+        [color]="selectedPeriod === 'year' ? 'primary' : 'medium'"
+        [outline]="selectedPeriod !== 'year'">Année</ion-chip>
+      <ion-chip (click)="filterByPeriod('all')"
+        color="medium"
+        [outline]="selectedPeriod !== 'all'">Tout</ion-chip>
+    </div>
+
+    <!-- Filtre par type de sortie -->
+    <div class="section-header">
+      <span class="section-header__title">Type de sortie</span>
+    </div>
+    <div class="filter-zone">
+      <ion-chip [color]="typeSortieFilter === '' ? 'primary' : 'medium'"
+                (click)="typeSortieFilter = ''; appliquerFiltres()">
+        Tous ({{ sorties.length }})
+      </ion-chip>
+      <ion-chip *ngFor="let t of typesSortie"
+                [color]="typeSortieFilter === t.value ? t.color : 'medium'"
+                (click)="typeSortieFilter = t.value; appliquerFiltres()">
+        {{ t.label }} ({{ countByType(t.value) }})
+      </ion-chip>
+    </div>
+
+    <!-- Filtre dates -->
+    <div class="two-cols">
+      <ion-item>
+        <ion-input label="Du" labelPlacement="floating" type="date"
+          [(ngModel)]="dateDebut" (ionChange)="selectedPeriod = 'all'; charger()"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input label="Au" labelPlacement="floating" type="date"
+          [(ngModel)]="dateFin" (ionChange)="selectedPeriod = 'all'; charger()"></ion-input>
+      </ion-item>
+    </div>
+
+    <!-- Recherche -->
+    <ion-searchbar [(ngModel)]="searchTerm" placeholder="Produit, motif, utilisateur..."
+      (ionInput)="appliquerFiltres()"></ion-searchbar>
+
+    <!-- Skeleton loader -->
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-avatar --orange"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="section-header" *ngIf="!loading">
+      <span class="section-header__title">Résultats</span>
+      <span class="section-header__count">{{ sortiesFiltrees.length }}</span>
+    </div>
+
+    <section class="stack animate-cards" *ngIf="!loading">
+      <article class="list-item-card" *ngFor="let s of sortiesFiltrees; trackBy: trackById">
+        <div class="lic-header">
+          <div class="lic-avatar --orange">
+            <ion-icon name="arrow-down-outline"></ion-icon>
+          </div>
+          <div class="lic-info">
+            <div class="lic-name">{{ s.produit?.nom || 'Produit' }}</div>
+            <div class="lic-sub">{{ formatDate(s.dateMouvement) }}</div>
+          </div>
+          <div class="lic-right">
+            <span class="status-badge --danger">-{{ s.quantite }}</span>
+          </div>
+        </div>
+        <div class="lic-footer">
+          <ion-badge [color]="getTypeSortieColor(s.typeSortie || '')" style="font-size:0.7rem">
+            {{ inventaireService.getTypeSortieLabel(s.typeSortie || 'AUTRE') }}
+          </ion-badge>
+          <span class="muted" style="font-size:0.75rem">{{ s.quantiteAvant }} → {{ s.quantiteApres }}</span>
+          <span class="muted" style="font-size:0.75rem" *ngIf="s.utilisateur?.nomComplet">{{ s.utilisateur?.nomComplet }}</span>
+        </div>
+        <p class="muted" *ngIf="s.motif" style="font-size:0.8rem;margin:4px 0 0 52px">{{ s.motif }}</p>
+      </article>
+
+      <div class="empty-v2" *ngIf="!sortiesFiltrees.length">
+        <div class="empty-v2__icon"><ion-icon name="arrow-down-circle-outline"></ion-icon></div>
+        <p class="empty-v2__title">Aucune sortie</p>
+        <p class="empty-v2__text">Aucune sortie pour les filtres sélectionnés</p>
+      </div>
+    </section>
+
+  </div>
+</ion-content>
