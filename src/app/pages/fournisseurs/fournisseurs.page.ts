@@ -429,7 +429,15 @@ export class FournisseursPage {
     if (this.avanceForm.sourceFinancement === 'BANQUE' && !this.avanceForm.compteId) {
       this.toast('Choisissez un compte bancaire', 'warning'); return;
     }
-    this.productService.enregistrerAvanceFournisseur({ ...this.avanceForm, modePaiement: this.avanceForm.sourceFinancement, utilisateurId: this.auth.getUserId() }).subscribe({
+    const motif = [this.avanceForm.reference, this.avanceForm.observation].filter(v => v && v.trim()).join(' - ') || undefined;
+    this.productService.enregistrerAvanceFournisseur({
+      fournisseurId: this.avanceForm.fournisseurId,
+      montant: this.avanceForm.montant,
+      sourceFinancement: this.avanceForm.sourceFinancement,
+      compteId: this.avanceForm.compteId,
+      motif,
+      utilisateurId: this.auth.getUserId()
+    }).subscribe({
       next: () => {
         this.toast('Avance enregistrée');
         this.showAvanceModal = false;

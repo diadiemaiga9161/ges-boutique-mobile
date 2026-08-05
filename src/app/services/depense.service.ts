@@ -62,14 +62,14 @@ export class DepenseService {
   creer(request: DepenseRequest): Observable<Depense> {
     return this.http.post<any>(this.apiUrl, request).pipe(
       map(r => r.depense || r),
-      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur création dépense')))
+      catchError(e => throwError(() => Object.assign(new Error(e?.error?.message || 'Erreur création dépense'), { status: e.status })))
     );
   }
 
   modifier(id: number, request: DepenseRequest): Observable<Depense> {
     return this.http.put<any>(`${this.apiUrl}/${id}`, request).pipe(
       map(r => r.depense || r),
-      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur modification dépense')))
+      catchError(e => throwError(() => Object.assign(new Error(e?.error?.message || 'Erreur modification dépense'), { status: e.status })))
     );
   }
 

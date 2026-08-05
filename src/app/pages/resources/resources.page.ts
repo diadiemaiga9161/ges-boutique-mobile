@@ -292,7 +292,14 @@ export class ResourcesPage {
   }
 
   saveAvanceFournisseur(): void {
-    this.productService.enregistrerAvanceFournisseur({ ...this.avanceFournisseur, utilisateurId: this.auth.getUserId() }).subscribe({
+    const motif = [this.avanceFournisseur.reference, this.avanceFournisseur.observation].filter(v => v && v.trim()).join(' - ') || undefined;
+    this.productService.enregistrerAvanceFournisseur({
+      fournisseurId: this.avanceFournisseur.fournisseurId,
+      montant: this.avanceFournisseur.montant,
+      sourceFinancement: 'CAISSE',
+      motif,
+      utilisateurId: this.auth.getUserId()
+    }).subscribe({
       next: () => {
         this.afterAction('Avance fournisseur enregistrée');
         this.loadFournisseurDetails(this.avanceFournisseur.fournisseurId);
@@ -322,11 +329,12 @@ export class ResourcesPage {
     this.productService.effectuerRetourAchat({
       achatId: this.retourAchatForm.achatId,
       motif: this.retourAchatForm.motif,
+      modeRemboursement: 'CAISSE',
       utilisateurId: this.auth.getUserId(),
       lignes: [{
         produitId: this.retourAchatForm.produitId,
         quantiteRetournee: this.retourAchatForm.quantiteRetournee,
-        prixAchatUnitaire: this.retourAchatForm.prixAchatUnitaire
+        prixUnitaire: this.retourAchatForm.prixAchatUnitaire
       }]
     }).subscribe({
       next: () => this.afterAction('Retour achat enregistré'),

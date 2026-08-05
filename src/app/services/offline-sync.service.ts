@@ -136,17 +136,32 @@ export class OfflineSyncService {
 
   private executeAction(action: OfflineAction): Observable<any> {
     const headers = { 'X-Client-Request-ID': action.clientRequestId };
+    const data = this.sanitizeActionData(action);
 
     switch (action.method) {
       case 'POST':
-        return this.http.post(action.endpoint, action.data, { headers });
+        return this.http.post(action.endpoint, data, { headers });
       case 'PUT':
-        return this.http.put(action.endpoint, action.data, { headers });
+        return this.http.put(action.endpoint, data, { headers });
       case 'DELETE':
         return this.http.delete(action.endpoint, { headers });
       default:
         throw new Error(`Méthode HTTP non supportée: ${action.method}`);
     }
+  }
+
+  // Le backend rejette toute requête contenant un champ inconnu (Jackson strict).
+  // produitNom est utile côté front (affichage) mais n'existe pas dans
+  // LigneVenteRequest côté serveur — on le retire avant envoi, y compris pour des
+  // actions déjà en file avant ce correctif.
+  private sanitizeActionData(action: OfflineAction): any {
+    if ((action.type !== 'VENTE' && action.type !== 'VENTE_CREDIT') || !Array.isArray(action.data?.lignes)) {
+      return action.data;
+    }
+    return {
+      ...action.data,
+      lignes: action.data.lignes.map(({ produitNom, ...rest }: any) => rest)
+    };
   }
 
   async addOfflineAction(

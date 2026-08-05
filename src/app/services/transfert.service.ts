@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 const URL = `${environment.apiUrl}/transferts`;
@@ -18,6 +19,9 @@ export interface TransfertStock {
 export interface TransfertRequest {
   boutiqueDestId: number; typePaiement: string; notes?: string;
   lignes: { produitId: number; produitNom: string; quantite: number; prixUnitaire?: number }[];
+}
+export interface PaiementTransfert {
+  id?: number; montant: number; modePaiement: string; datePaiement?: string; notes?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -46,5 +50,23 @@ export class TransfertService {
   }
   rejeter(id: number, motif?: string): Observable<TransfertStock> {
     return this.http.post<TransfertStock>(`${URL}/${id}/rejeter`, { motif });
+  }
+
+  getProduitsBoutique(boutiqueId: number): Observable<any[]> {
+    return this.http.get<any>(`${URL}/partenaires/${boutiqueId}/produits`).pipe(
+      map(response => Array.isArray(response) ? response : (response?.data || response?.produits || [])),
+      catchError(() => of([]))
+    );
+  }
+
+  getPaiementsTransfert(transfertId: number): Observable<PaiementTransfert[]> {
+    return this.http.get<any>(`${URL}/${transfertId}/paiements`).pipe(
+      map(response => Array.isArray(response) ? response : (response?.data || [])),
+      catchError(() => of([]))
+    );
+  }
+
+  ajouterPaiement(transfertId: number, paiement: { montant: number; modePaiement: string; notes?: string }): Observable<PaiementTransfert> {
+    return this.http.post<PaiementTransfert>(`${URL}/${transfertId}/paiements`, paiement);
   }
 }

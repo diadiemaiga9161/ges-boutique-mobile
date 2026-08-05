@@ -96,6 +96,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/resultat-net/resultat-net.module').then(m => m.ResultatNetPageModule)
   },
   {
+    path: 'historique-vendeur',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/historique-vendeur/historique-vendeur.module').then(m => m.HistoriqueVendeurPageModule)
+  },
+  {
     path: 'mobile-money',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/mobile-money/mobile-money.module').then(m => m.MobileMoneyPageModule)

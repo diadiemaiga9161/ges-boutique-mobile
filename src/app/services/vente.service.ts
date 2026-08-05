@@ -215,31 +215,24 @@ export class VenteService {
   }
 
   getVentesParType(): Observable<VentesParTypeResponse> {
-    return this.http.get<any>(`${this.apiUrl}/par-type`).pipe(
-      map(response => ({
-        toutes: this.mapVenteList(response?.toutes || response),
-        comptant: this.mapVenteList(response?.comptant || []),
-        credit: this.mapVenteList(response?.credit || [])
-      })),
-      catchError(() => this.getAllVentes().pipe(
-        map(ventes => ({
-          toutes: ventes,
-          comptant: ventes.filter(v => !v.estCredit),
-          credit: ventes.filter(v => v.estCredit)
-        }))
-      ))
+    return this.getAllVentes().pipe(
+      map(ventes => ({
+        toutes: ventes,
+        comptant: ventes.filter(v => !v.estCredit),
+        credit: ventes.filter(v => v.estCredit)
+      }))
     );
   }
 
   getStatistiquesChiffreAffaire(): Observable<Statistiques> {
-    return this.http.get<any>(`${this.apiUrl}/statistiques`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/statistiques/chiffre-affaire`).pipe(
       map(response => response?.data || response),
       catchError(error => this.handleError(error, 'récupérer les statistiques'))
     );
   }
 
   getStatistiquesCredits(): Observable<StatistiquesCredits> {
-    return this.http.get<any>(`${this.apiUrl}/credits/statistiques`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/statistiques/credits`).pipe(
       map(response => response?.data || response),
       catchError(error => this.handleError(error, 'récupérer les statistiques crédits'))
     );
@@ -273,7 +266,7 @@ export class VenteService {
   getSoldeAvance(clientNom: string, clientTelephone?: string): Observable<{ soldeDisponible: number }> {
     let params = new HttpParams().set('clientNom', clientNom);
     if (clientTelephone) params = params.set('clientTelephone', clientTelephone);
-    return this.http.get<any>(`${environment.apiUrl}/clients/avances/solde`, { params }).pipe(
+    return this.http.get<any>(`${environment.apiUrl}/avances/solde`, { params }).pipe(
       map(response => ({ soldeDisponible: Number(response?.soldeDisponible ?? response?.montantDisponible ?? 0) })),
       catchError(() => [{ soldeDisponible: 0 }])
     );
@@ -341,14 +334,13 @@ export class VenteService {
   }
 
   getVentesComptant(): Observable<VenteMap[]> {
-    return this.http.get<any>(`${this.apiUrl}/comptant`).pipe(
-      map(response => this.mapVenteList(response)),
-      catchError(error => this.handleError(error, 'récupérer les ventes comptant'))
+    return this.getAllVentes().pipe(
+      map(ventes => ventes.filter(v => !v.estCredit))
     );
   }
 
   getVentesCredit(): Observable<VenteMap[]> {
-    return this.http.get<any>(`${this.apiUrl}/credit`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/credits`).pipe(
       map(response => this.mapVenteList(response, 'credits')),
       catchError(error => this.handleError(error, 'récupérer les ventes à crédit'))
     );
@@ -436,14 +428,7 @@ export class VenteService {
   }
 
   enregistrerReglementCredit(request: ReglementCreditRequest): Observable<VenteMap> {
-    if (request.venteId) {
-      return this.http.post<any>(`${this.apiUrl}/credits/${request.venteId}/reglement`, request).pipe(
-        map(response => this.mapVente(response)),
-        catchError(error => this.handleError(error, 'enregistrer le règlement'))
-      );
-    }
-
-    return this.http.post<any>(`${this.apiUrl}/credits/reglement`, request).pipe(
+    return this.http.post<any>(`${this.apiUrl}/credits/${request.venteId ?? request.venteCreditId}/reglement`, request).pipe(
       map(response => this.mapVente(response)),
       catchError(error => this.handleError(error, 'enregistrer le règlement'))
     );
@@ -471,7 +456,8 @@ export class VenteService {
   }
 
   annulerVente(venteId: number, motif?: string): Observable<VenteMap> {
-    return this.http.post<any>(`${this.apiUrl}/${venteId}/annuler`, { motif: motif || 'Annulation mobile' }).pipe(
+    const params = new HttpParams().set('motif', motif || 'Annulation mobile');
+    return this.http.post<any>(`${this.apiUrl}/${venteId}/annuler`, null, { params }).pipe(
       map(response => this.mapVente(response)),
       catchError(error => this.handleError(error, 'annuler la vente'))
     );
@@ -911,6 +897,6 @@ export class VenteService {
     if (error.status === 409) message = error.error?.message || 'Stock insuffisant';
     if (error.error?.message) message = error.error.message;
     if (typeof error.error === 'string') message = error.error;
-    return throwError(() => new Error(message));
+    return throwError(() => Object.assign(new Error(message), { status: error.status }));
   }
 }

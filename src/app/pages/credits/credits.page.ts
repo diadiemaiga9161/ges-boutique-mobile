@@ -7,6 +7,8 @@ import { CaisseService, CreditInfo, ModePaiementCaisse, ReglementCreditRequest, 
 import { VenteService, VenteMap } from '../../services/vente.service';
 import { FactureService } from '../../services/facture.service';
 import { BoutiqueService } from '../../services/boutique.service';
+import { NetworkStatusService } from '../../services/network-status.service';
+import { OfflineSyncService } from '../../services/offline-sync.service';
 
 interface ClientGroup {
   clientNom: string;
@@ -116,7 +118,9 @@ export class CreditsPage {
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private factureService: FactureService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private networkStatus: NetworkStatusService,
+    private offlineSync: OfflineSyncService
   ) {}
 
   ionViewWillEnter(): void {
@@ -430,33 +434,49 @@ export class CreditsPage {
     const creditPourRecu = this.selectedCredit;
     const montantRegle = this.reglementSimple.montant;
     const modePaiement = this.reglementSimple.modePaiement;
+    const endpoint = '/api/caisse/credits/reglement';
 
-    this.caisseService.reglementCredit(req).subscribe({
-      next: () => {
+    if (this.networkStatus.isOnline()) {
+      this.caisseService.reglementCredit(req).subscribe({
+        next: () => {
+          this.savingSimple = false;
+          this.showSimpleModal = false;
+          this.toast('Règlement enregistré ✓');
+          this.load();
+          if (creditPourRecu) {
+            const reglementData = {
+              montant: montantRegle,
+              modePaiement,
+              datePaiement: new Date().toISOString(),
+              montantRestant: Math.max(0, creditPourRecu.montantRestant - montantRegle)
+            };
+            const client = {
+              nom: creditPourRecu.clientNom,
+              prenom: creditPourRecu.clientPrenom,
+              telephone: creditPourRecu.clientTelephone
+            };
+            this.factureService.ouvrirRecuReglementCredit(reglementData, client);
+          }
+        },
+        error: async err => {
+          if (!err.status) {
+            await this.offlineSync.addOfflineAction('REGLEMENT_CREDIT', endpoint, 'POST', req);
+            this.savingSimple = false;
+            this.showSimpleModal = false;
+            this.toast('📡 Règlement enregistré hors ligne — sera synchronisé');
+            return;
+          }
+          this.savingSimple = false;
+          this.toast(err.message || 'Règlement impossible', 'danger');
+        }
+      });
+    } else {
+      this.offlineSync.addOfflineAction('REGLEMENT_CREDIT', endpoint, 'POST', req).then(() => {
         this.savingSimple = false;
         this.showSimpleModal = false;
-        this.toast('Règlement enregistré ✓');
-        this.load();
-        if (creditPourRecu) {
-          const reglementData = {
-            montant: montantRegle,
-            modePaiement,
-            datePaiement: new Date().toISOString(),
-            montantRestant: Math.max(0, creditPourRecu.montantRestant - montantRegle)
-          };
-          const client = {
-            nom: creditPourRecu.clientNom,
-            prenom: creditPourRecu.clientPrenom,
-            telephone: creditPourRecu.clientTelephone
-          };
-          this.factureService.ouvrirRecuReglementCredit(reglementData, client);
-        }
-      },
-      error: err => {
-        this.savingSimple = false;
-        this.toast(err.message || 'Règlement impossible', 'danger');
-      }
-    });
+        this.toast('📡 Règlement enregistré hors ligne — sera synchronisé au retour');
+      });
+    }
   }
 
   // ══════════════ RÈGLEMENT GROUPÉ ══════════════

@@ -300,7 +300,7 @@ export class CaisseService {
   }
 
   transfererVersBanque(request: TransfertCaisseBanqueRequest): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/transfert-banque`, this.withUser(request)).pipe(
+    return this.http.post<any>(`${this.apiUrl}/transferer-vers-banque`, this.withUser(request)).pipe(
       map(response => response?.data || response),
       catchError(error => this.handleError(error, 'transférer vers la banque'))
     );
@@ -575,6 +575,6 @@ export class CaisseService {
     if (error.status === 0) message = 'Impossible de se connecter au serveur';
     if (error.error?.message) message = error.error.message;
     if (typeof error.error === 'string') message = error.error;
-    return throwError(() => new Error(message));
+    return throwError(() => Object.assign(new Error(message), { status: error.status }));
   }
 }

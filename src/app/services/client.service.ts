@@ -239,6 +239,6 @@ export class ClientService {
     if (error.status === 0) message = 'Impossible de se connecter au serveur';
     if (error.error?.message) message = error.error.message;
     if (typeof error.error === 'string') message = error.error;
-    return throwError(() => new Error(message));
+    return throwError(() => Object.assign(new Error(message), { status: error.status }));
   }
 }

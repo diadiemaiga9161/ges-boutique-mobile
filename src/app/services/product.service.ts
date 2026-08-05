@@ -126,22 +126,23 @@ export interface PaiementFournisseurRequest {
 export interface AvanceFournisseurRequest {
   fournisseurId: number;
   montant: number;
-  modePaiement: string;
-  reference?: string;
-  observation?: string;
-  utilisateurId?: number;
+  motif?: string;
+  sourceFinancement: string;
   compteId?: number;
+  utilisateurId?: number;
 }
 
 export interface RetourAchatRequest {
   achatId: number;
   motif?: string;
+  modeRemboursement: string;
+  compteId?: number;
   utilisateurId?: number;
   lignes: Array<{
     ligneAchatId?: number;
     produitId: number;
     quantiteRetournee: number;
-    prixAchatUnitaire: number;
+    prixUnitaire: number;
   }>;
 }
 
@@ -261,7 +262,7 @@ export class ProductService {
 
   getNearExpiryProducts(days = 7): Observable<Produit[]> {
     const params = new HttpParams().set('jours', String(days));
-    return this.http.get<any>(`${this.apiUrl}/proches-peremption`, { params }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/proche-peremption`, { params }).pipe(
       map(response => this.extractList<Produit>(response).map(product => this.enrichProduct(product))),
       catchError(error => this.handleError(error, 'récupérer les produits proches péremption'))
     );
@@ -310,8 +311,7 @@ export class ProductService {
   }
 
   checkCategoryExists(name: string): Observable<boolean> {
-    const params = new HttpParams().set('nom', name);
-    return this.http.get<any>(`${this.apiUrl}/categories/existe`, { params }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/categories/existe/${encodeURIComponent(name)}`).pipe(
       map(response => !!(response?.exists ?? response?.data ?? response)),
       catchError(() => [false])
     );
@@ -438,20 +438,20 @@ export class ProductService {
   }
 
   enregistrerAvanceFournisseur(request: AvanceFournisseurRequest): Observable<any> {
-    return this.http.post<any>(`${this.fournisseurAchatApiUrl}/avance`, request).pipe(
+    return this.http.post<any>(`${environment.apiUrl}/avances-fournisseurs`, request).pipe(
       catchError(error => this.handleError(error, "enregistrer l'avance fournisseur"))
     );
   }
 
   getSoldeAvanceFournisseur(fournisseurId: number): Observable<number> {
-    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/avance/solde/${fournisseurId}`).pipe(
+    return this.http.get<any>(`${environment.apiUrl}/avances-fournisseurs/solde/${fournisseurId}`).pipe(
       map(response => Number(response?.soldeDisponible ?? response?.data ?? response ?? 0)),
       catchError(() => [0])
     );
   }
 
   getHistoriqueAvancesFournisseur(fournisseurId: number): Observable<any[]> {
-    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/avance/historique/${fournisseurId}`).pipe(
+    return this.http.get<any>(`${environment.apiUrl}/avances-fournisseurs/historique/${fournisseurId}`).pipe(
       map(response => this.extractList(response, 'historique')),
       catchError(() => [[]])
     );
@@ -676,6 +676,6 @@ export class ProductService {
     if (error.status === 0) message = 'Impossible de se connecter au serveur';
     if (error.error?.message) message = error.error.message;
     if (typeof error.error === 'string') message = error.error;
-    return throwError(() => new Error(message));
+    return throwError(() => Object.assign(new Error(message), { status: error.status }));
   }
 }

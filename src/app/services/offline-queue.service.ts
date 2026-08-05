@@ -4,7 +4,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface OfflineAction {
   id: string;
-  type: 'VENTE' | 'VENTE_CREDIT' | 'REGLEMENT_CREDIT' | 'MODIFICATION_VENTE' | 'PRODUIT_CREATE' | 'PRODUIT_UPDATE';
+  type: 'VENTE' | 'VENTE_CREDIT' | 'REGLEMENT_CREDIT' | 'MODIFICATION_VENTE' | 'PRODUIT_CREATE' | 'PRODUIT_UPDATE'
+    | 'CLIENT_CREATE' | 'CLIENT_UPDATE' | 'DEPENSE_CREATE' | 'DEPENSE_UPDATE';
   endpoint: string;
   method: 'POST' | 'PUT' | 'DELETE';
   data: any;

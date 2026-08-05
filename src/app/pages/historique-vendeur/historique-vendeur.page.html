@@ -1,0 +1,91 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Historique vendeur</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="charger()" fill="clear">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-pad stack">
+
+    <div class="filter-card">
+      <div class="filter-row">
+        <label>
+          Du
+          <input type="date" [(ngModel)]="dateDebut" (change)="charger()" />
+        </label>
+        <label>
+          Au
+          <input type="date" [(ngModel)]="dateFin" (change)="charger()" />
+        </label>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" style="text-align:center;padding:24px">
+      <ion-spinner></ion-spinner>
+    </div>
+
+    <div *ngIf="errorMessage && !isLoading" style="text-align:center;padding:24px;color:var(--ion-color-danger)">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && !vendeurs.length" style="text-align:center;padding:24px;color:var(--ion-color-medium)">
+      Aucune vente trouvée sur cette période.
+    </div>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && vendeurs.length">
+
+      <!-- Sélecteur de vendeur -->
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+        <ion-chip *ngFor="let v of vendeurs"
+                  [color]="vendeurSelectionne?.vendeurId === v.vendeurId ? 'primary' : 'medium'"
+                  [outline]="vendeurSelectionne?.vendeurId !== v.vendeurId"
+                  (click)="selectionnerVendeur(v)">
+          {{ v.vendeurNom }}
+        </ion-chip>
+      </div>
+
+      <ng-container *ngIf="vendeurSelectionne as v">
+        <!-- Résumé -->
+        <div class="mobile-card">
+          <div class="row-between">
+            <p class="card-title">Ventes comptant</p>
+            <strong>{{ v.nbVentesComptant }}</strong>
+          </div>
+          <p style="margin:2px 0 10px;font-size:13px;color:var(--ion-color-medium)">{{ formatPrice(v.caComptant) }}</p>
+
+          <div class="row-between">
+            <p class="card-title">Ventes crédit</p>
+            <strong>{{ v.nbVentesCredit }}</strong>
+          </div>
+          <p style="margin:2px 0 10px;font-size:13px;color:var(--ion-color-medium)">{{ formatPrice(v.caCredit) }}</p>
+
+          <div class="row-between" style="border-top:1px solid var(--ion-color-light-shade);padding-top:8px">
+            <p class="card-title">Total période</p>
+            <strong>{{ formatPrice(v.caTotal) }}</strong>
+          </div>
+        </div>
+
+        <!-- Historique par jour -->
+        <div class="mobile-card" *ngFor="let j of v.jours">
+          <div class="row-between">
+            <p class="card-title">{{ formatDate(j.date) }}</p>
+            <strong class="price">{{ formatPrice(j.caTotal) }}</strong>
+          </div>
+          <p style="margin:4px 0 0;font-size:12px;color:var(--ion-color-medium)">
+            Comptant : {{ j.nbVentesComptant }} ({{ formatPrice(j.caComptant) }})
+            — Crédit : {{ j.nbVentesCredit }} ({{ formatPrice(j.caCredit) }})
+          </p>
+        </div>
+      </ng-container>
+    </ng-container>
+
+  </div>
+</ion-content>

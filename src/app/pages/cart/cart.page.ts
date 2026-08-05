@@ -9,7 +9,8 @@ import { Promotion, PromotionService } from '../../services/promotion.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
 import { OfflineDbService } from '../../services/offline-db.service';
-import { SyncService } from '../../services/sync.service';
+import { NetworkStatusService } from '../../services/network-status.service';
+import { OfflineSyncService } from '../../services/offline-sync.service';
 
 interface CartItem {
   product: Produit;
@@ -80,7 +81,8 @@ export class CartPage implements OnInit {
     private fonctionnalite: FonctionnaliteService,
     private niveauService: ProduitNiveauService,
     private offlineDb: OfflineDbService,
-    private syncService: SyncService,
+    private networkStatus: NetworkStatusService,
+    private offlineSync: OfflineSyncService,
   ) {}
 
   async scanPourVente(): Promise<void> {
@@ -121,26 +123,24 @@ export class CartPage implements OnInit {
   }
 
   loadClients(): void {
-    this.syncService.isConnected().then(connected => {
-      if (connected) {
-        this.clientService.getAll().subscribe({
-          next: async clients => {
-            this.clients = clients;
-            this.clientsFiltres = clients.slice(0, 8);
-            await this.offlineDb.cacheClients(clients);
-          },
-          error: async () => {
-            this.clients = await this.offlineDb.getClientsCache();
-            this.clientsFiltres = this.clients.slice(0, 8);
-          }
-        });
-      } else {
-        this.offlineDb.getClientsCache().then(cached => {
-          this.clients = cached;
-          this.clientsFiltres = cached.slice(0, 8);
-        });
-      }
-    });
+    if (this.networkStatus.isOnline()) {
+      this.clientService.getAll().subscribe({
+        next: async clients => {
+          this.clients = clients;
+          this.clientsFiltres = clients.slice(0, 8);
+          await this.offlineDb.cacheClients(clients);
+        },
+        error: async () => {
+          this.clients = await this.offlineDb.getClientsCache();
+          this.clientsFiltres = this.clients.slice(0, 8);
+        }
+      });
+    } else {
+      this.offlineDb.getClientsCache().then(cached => {
+        this.clients = cached;
+        this.clientsFiltres = cached.slice(0, 8);
+      });
+    }
   }
 
   filterClients(): void {
@@ -176,29 +176,27 @@ export class CartPage implements OnInit {
   }
 
   loadProducts(): void {
-    this.syncService.isConnected().then(connected => {
-      if (connected) {
-        this.productService.getProducts().subscribe({
-          next: async products => {
-            this.products = products.filter(p => p.quantite > 0);
-            await this.offlineDb.cacheProduits(products);
-            this.applySearch();
-          },
-          error: async () => {
-            const cached = await this.offlineDb.getProduitsCache();
-            this.products = cached.filter((p: any) => p.quantite > 0);
-            this.applySearch();
-            this.presentToast('Hors connexion — produits depuis le cache', 'warning');
-          }
-        });
-      } else {
-        this.offlineDb.getProduitsCache().then(cached => {
+    if (this.networkStatus.isOnline()) {
+      this.productService.getProducts().subscribe({
+        next: async products => {
+          this.products = products.filter(p => p.quantite > 0);
+          await this.offlineDb.cacheProduits(products);
+          this.applySearch();
+        },
+        error: async () => {
+          const cached = await this.offlineDb.getProduitsCache();
           this.products = cached.filter((p: any) => p.quantite > 0);
           this.applySearch();
           this.presentToast('Hors connexion — produits depuis le cache', 'warning');
-        });
-      }
-    });
+        }
+      });
+    } else {
+      this.offlineDb.getProduitsCache().then(cached => {
+        this.products = cached.filter((p: any) => p.quantite > 0);
+        this.applySearch();
+        this.presentToast('Hors connexion — produits depuis le cache', 'warning');
+      });
+    }
   }
 
   applySearch(): void {
@@ -392,6 +390,28 @@ export class CartPage implements OnInit {
     return price * item.quantity;
   }
 
+  getPrixAchatEffectif(item: CartItem): number {
+    return item.niveauId ? (item.niveauPrixAchat || 0) : (item.product.prixAchat || 0);
+  }
+
+  getBeneficeLigne(item: CartItem): number {
+    return (this.venteService.calculerPrixApresRemise(item.customPrice, item.remisePourcentage || 0, null) - this.getPrixAchatEffectif(item)) * item.quantity;
+  }
+
+  getBeneficeLigneAbs(item: CartItem): number {
+    return Math.abs(this.getBeneficeLigne(item));
+  }
+
+  getBeneficeLigneColor(item: CartItem): string {
+    const b = this.getBeneficeLigne(item);
+    return b > 0 ? 'ci-benefice--gain' : b < 0 ? 'ci-benefice--perte' : 'ci-benefice--neutre';
+  }
+
+  getBeneficeLigneLabel(item: CartItem): string {
+    const b = this.getBeneficeLigne(item);
+    return b > 0 ? 'Bénéfice' : b < 0 ? 'Perte' : 'Équilibre';
+  }
+
   toggleEditPrice(item: CartItem): void {
     item.editingPrice = !item.editingPrice;
     if (!item.editingPrice) {
@@ -464,6 +484,7 @@ export class CartPage implements OnInit {
   }
 
   async submit(): Promise<void> {
+    if (this.submitting) return;
     if (!this.items.length) {
       this.presentToast('Ajoutez au moins un produit', 'danger');
       return;
@@ -501,12 +522,14 @@ export class CartPage implements OnInit {
       montantAvanceUtilise: this.utiliserAvance ? Math.min(this.montantAvanceAUtiliser, this.soldeAvanceClient) : 0,
       creerClient: this.creerClient,
       clientDivers: !this.clientId && !this.clientNom.trim(),
+      estCredit: this.estCredit,
     };
 
+    const endpoint = this.estCredit ? '/api/ventes/credit' : '/api/ventes';
+
     // Mode hors ligne
-    const connected = await this.syncService.isConnected();
-    if (!connected) {
-      await this.offlineDb.saveVentePending(base);
+    if (!this.networkStatus.isOnline()) {
+      await this.offlineSync.addOfflineAction(this.estCredit ? 'VENTE_CREDIT' : 'VENTE', endpoint, 'POST', base);
       this.mettreAJourStockLocal();
       this.submitting = false;
       this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
@@ -526,12 +549,23 @@ export class CartPage implements OnInit {
         this.reset();
       },
       error: async error => {
-        // Fallback offline si erreur réseau
-        await this.offlineDb.saveVentePending(base);
-        this.mettreAJourStockLocal();
+        // Pas de statut HTTP exploitable (0, undefined, null) = le serveur n'a jamais
+        // répondu (coupure, timeout, mauvais signal...) : à ne jamais confondre avec
+        // une vraie erreur métier, sous peine de perdre la vente au lieu de la mettre
+        // en file. Un vrai statut (400, 401, 409, 500...) veut dire que le serveur a
+        // bien reçu et traité la requête, donc que ce n'est pas un souci réseau.
+        if (!error.status) {
+          await this.offlineSync.addOfflineAction(this.estCredit ? 'VENTE_CREDIT' : 'VENTE', endpoint, 'POST', base);
+          this.mettreAJourStockLocal();
+          this.submitting = false;
+          this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée');
+          this.reset();
+          return;
+        }
+        // Vraie erreur serveur (stock, session, validation...) — ne pas la faire passer pour du hors ligne
         this.submitting = false;
-        this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée');
-        this.reset();
+        const message = error?.error?.message || 'Erreur lors de l\'enregistrement de la vente';
+        this.presentToast(message, 'danger');
       }
     });
   }

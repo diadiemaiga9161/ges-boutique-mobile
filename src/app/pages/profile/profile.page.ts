@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { AuthService, User } from '../../services/auth.service';
 import { Language, LanguageService, LANGUAGES } from '../../services/language.service';
+import { ThemeService, ThemeMode } from '../../services/theme.service';
 
 export const COUNTRY_CODES = [
   { code: '+223', flag: '🇲🇱', name: 'Mali' },
@@ -60,8 +61,17 @@ export class ProfilePage implements OnInit {
   constructor(
     public auth: AuthService,
     public langService: LanguageService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private themeService: ThemeService
   ) {}
+
+  get themeMode(): ThemeMode {
+    return this.themeService.getCurrent();
+  }
+
+  setTheme(mode: ThemeMode): void {
+    this.themeService.setTheme(mode);
+  }
 
   ngOnInit() {
     this.load();

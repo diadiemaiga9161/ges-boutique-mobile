@@ -8,6 +8,8 @@ import { AuthService } from '../../services/auth.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
 import { DesignFacture, FactureDesignService } from '../../services/facture-design.service';
 import { FactureService } from '../../services/facture.service';
+import { NetworkStatusService } from '../../services/network-status.service';
+import { OfflineSyncService } from '../../services/offline-sync.service';
 
 @Component({
   selector: 'app-clients',
@@ -79,7 +81,9 @@ export class ClientsPage {
     private http: HttpClient,
     private sanitizer: DomSanitizer,
     private designService: FactureDesignService,
-    private boutiqueConfig: BoutiqueConfigService
+    private boutiqueConfig: BoutiqueConfigService,
+    private networkStatus: NetworkStatusService,
+    private offlineSync: OfflineSyncService
   ) {}
 
   ionViewWillEnter(): void {
@@ -117,13 +121,39 @@ export class ClientsPage {
 
   save(): void {
     if (!this.form.nom?.trim()) { this.presentToast('Le nom est obligatoire', 'danger'); return; }
-    const request = this.editing?.id
-      ? this.clientService.update(this.editing.id, this.form)
-      : this.clientService.create(this.form);
-    request.subscribe({
-      next: () => { this.presentToast(this.editing ? 'Client modifié' : 'Client créé'); this.showForm = false; this.load(); },
-      error: error => this.presentToast(error.message || 'Enregistrement impossible', 'danger')
-    });
+    const payload = {
+      nom: this.form.nom.trim(),
+      prenom: this.form.prenom || '',
+      numeroTelephone: this.form.numeroTelephone || this.form.telephone || '',
+      adresse: this.form.adresse || '',
+      email: this.form.email || ''
+    };
+    const endpoint = this.editing?.id ? `/api/clients/${this.editing.id}` : '/api/clients';
+    const method: 'POST' | 'PUT' = this.editing?.id ? 'PUT' : 'POST';
+    const actionType = this.editing?.id ? 'CLIENT_UPDATE' : 'CLIENT_CREATE';
+
+    if (this.networkStatus.isOnline()) {
+      const request = this.editing?.id
+        ? this.clientService.update(this.editing.id, this.form)
+        : this.clientService.create(this.form);
+      request.subscribe({
+        next: () => { this.presentToast(this.editing ? 'Client modifié' : 'Client créé'); this.showForm = false; this.load(); },
+        error: async error => {
+          if (!error.status) {
+            await this.offlineSync.addOfflineAction(actionType, endpoint, method, payload);
+            this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne' : '📡 Client créé hors ligne');
+            this.showForm = false;
+            return;
+          }
+          this.presentToast(error.message || 'Enregistrement impossible', 'danger');
+        }
+      });
+    } else {
+      this.offlineSync.addOfflineAction(actionType, endpoint, method, payload).then(() => {
+        this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne — sera synchronisée' : '📡 Client créé hors ligne — sera synchronisé');
+        this.showForm = false;
+      });
+    }
   }
 
   async confirmDelete(client: Client): Promise<void> {

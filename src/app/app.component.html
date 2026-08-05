@@ -207,6 +207,11 @@
             <ion-label>{{ 'NAV.NET_RESULT' | translate }}</ion-label>
           </ion-item>
 
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/historique-vendeur')">
+            <ion-icon name="bar-chart-outline" slot="start"></ion-icon>
+            <ion-label>Historique vendeur</ion-label>
+          </ion-item>
+
           <ion-item class="menu-item" button detail="false" (click)="navigate('/annulation-paiements')">
             <ion-icon name="close-circle-outline" slot="start" color="danger"></ion-icon>
             <ion-label>Annulation paiements</ion-label>

@@ -4,6 +4,8 @@ import { forkJoin } from 'rxjs';
 import { Depense, DepenseRequest, DepenseService, TypeDepense } from '../../services/depense.service';
 import { PaiementEmploye, PaiementEmployeService } from '../../services/paiement-employe.service';
 import { BoutiqueService } from '../../services/boutique.service';
+import { NetworkStatusService } from '../../services/network-status.service';
+import { OfflineSyncService } from '../../services/offline-sync.service';
 
 @Component({
   selector: 'app-depenses',
@@ -48,7 +50,9 @@ export class DepensesPage {
     private paiementEmployeService: PaiementEmployeService,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private networkStatus: NetworkStatusService,
+    private offlineSync: OfflineSyncService
   ) {}
 
   ionViewWillEnter(): void {
@@ -275,18 +279,37 @@ export class DepensesPage {
     if (!this.form.montant || this.form.montant <= 0) { this.toast('Le montant doit être supérieur à 0', 'danger'); return; }
     if (!this.form.date) { this.toast('La date est obligatoire', 'danger'); return; }
 
-    const action = this.editing
-      ? this.depenseService.modifier(this.editing.id!, this.form)
-      : this.depenseService.creer(this.form);
+    const endpoint = this.editing ? `/api/depenses/${this.editing.id}` : '/api/depenses';
+    const method: 'POST' | 'PUT' = this.editing ? 'PUT' : 'POST';
+    const actionType = this.editing ? 'DEPENSE_UPDATE' : 'DEPENSE_CREATE';
 
-    action.subscribe({
-      next: () => {
+    if (this.networkStatus.isOnline()) {
+      const action = this.editing
+        ? this.depenseService.modifier(this.editing.id!, this.form)
+        : this.depenseService.creer(this.form);
+
+      action.subscribe({
+        next: () => {
+          this.showForm = false;
+          this.load();
+          this.toast(this.editing ? 'Dépense modifiée' : 'Dépense créée');
+        },
+        error: async e => {
+          if (!e.status) {
+            await this.offlineSync.addOfflineAction(actionType, endpoint, method, this.form);
+            this.showForm = false;
+            this.toast(this.editing ? '📡 Modification enregistrée hors ligne' : '📡 Dépense créée hors ligne');
+            return;
+          }
+          this.toast(e.message, 'danger');
+        }
+      });
+    } else {
+      this.offlineSync.addOfflineAction(actionType, endpoint, method, this.form).then(() => {
         this.showForm = false;
-        this.load();
-        this.toast(this.editing ? 'Dépense modifiée' : 'Dépense créée');
-      },
-      error: e => this.toast(e.message, 'danger')
-    });
+        this.toast(this.editing ? '📡 Modification enregistrée hors ligne — sera synchronisée' : '📡 Dépense créée hors ligne — sera synchronisée');
+      });
+    }
   }
 
   async supprimer(d: Depense): Promise<void> {
