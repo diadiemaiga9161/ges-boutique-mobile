@@ -69,6 +69,7 @@ export class CartPage implements OnInit {
   produitEnAttente: Produit | null = null;
   niveauxDisponibles: ProduitNiveau[] = [];
   loadingNiveauxVente = false;
+  quantitePrincipale = 0; // stock du produit principal pas encore décomposé (cartons fermés)
 
   constructor(
     private productService: ProductService,
@@ -227,9 +228,11 @@ export class CartPage implements OnInit {
       this.loadingNiveauxVente = true;
       this.showNiveauxVenteModal = true;
       this.niveauxDisponibles = [];
-      this.niveauService.getNiveaux(product.id!).subscribe({
-        next: niveaux => {
+      this.quantitePrincipale = 0;
+      this.niveauService.getNiveauxEtPrincipal(product.id!).subscribe({
+        next: ({ niveaux, quantitePrincipale }) => {
           this.niveauxDisponibles = niveaux;
+          this.quantitePrincipale = quantitePrincipale;
           this.loadingNiveauxVente = false;
           // Si aucun niveau défini, ajouter directement comme avant
           if (niveaux.length === 0) {
@@ -314,6 +317,7 @@ export class CartPage implements OnInit {
     this.showNiveauxVenteModal = false;
     this.produitEnAttente = null;
     this.niveauxDisponibles = [];
+    this.quantitePrincipale = 0;
     this.addWithPromo(product);
   }
 
@@ -329,10 +333,14 @@ export class CartPage implements OnInit {
     );
     const calc = (n: ProduitNiveau): number => {
       const direct = n.stock ?? 0;
-      if (n.parentId === undefined || n.parentId === null) return direct;
+      const facteur = n.facteur > 0 ? n.facteur : 1;
+      if (n.parentId === undefined || n.parentId === null) {
+        // Niveau racine : son parent implicite est le produit principal
+        // (quantitePrincipale = stock pas encore décomposé, ex: cartons fermés).
+        return direct + this.quantitePrincipale * facteur;
+      }
       const parent = map.get(n.parentId);
       if (!parent) return direct;
-      const facteur = n.facteur > 0 ? n.facteur : 1;
       return direct + calc(parent) * facteur;
     };
     return calc(niveau);
@@ -342,6 +350,7 @@ export class CartPage implements OnInit {
     this.showNiveauxVenteModal = false;
     this.produitEnAttente = null;
     this.niveauxDisponibles = [];
+    this.quantitePrincipale = 0;
   }
 
   private addWithPromo(product: Produit): void {

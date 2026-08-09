@@ -30,6 +30,16 @@ export class ProduitNiveauService {
     );
   }
 
+  // Niveaux + stock du produit "principal" pas encore décomposé (ex: cartons
+  // fermés) — parent implicite du niveau racine (parentId = null), nécessaire
+  // pour que disponibleNiveau() calcule la vraie disponibilité en cascade.
+  getNiveauxEtPrincipal(produitId: number): Observable<{ niveaux: ProduitNiveau[]; quantitePrincipale: number }> {
+    return this.http.get<any>(`${this.apiUrl}/${produitId}/niveaux`).pipe(
+      map(r => ({ niveaux: r.niveaux || [], quantitePrincipale: r.quantitePrincipale ?? 0 })),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur chargement niveaux')))
+    );
+  }
+
   creer(produitId: number, niveau: Partial<ProduitNiveau>): Observable<ProduitNiveau> {
     return this.http.post<any>(`${this.apiUrl}/${produitId}/niveaux`, niveau).pipe(
       map(r => r.niveau),
