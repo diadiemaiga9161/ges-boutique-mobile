@@ -125,10 +125,10 @@
         </div>
         <div class="two-cols">
           <ion-item>
-            <ion-input label="Du" labelPlacement="floating" type="date" [(ngModel)]="dateDebut" (ionChange)="applyFilters()"></ion-input>
+            <ion-input label="Du" labelPlacement="floating" type="date" [(ngModel)]="dateDebut" (ionChange)="loadMovements()"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input label="Au" labelPlacement="floating" type="date" [(ngModel)]="dateFin" (ionChange)="applyFilters()"></ion-input>
+            <ion-input label="Au" labelPlacement="floating" type="date" [(ngModel)]="dateFin" (ionChange)="loadMovements()"></ion-input>
           </ion-item>
         </div>
         <ion-item>

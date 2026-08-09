@@ -59,6 +59,14 @@ export class InventoryPage {
 
   ionViewWillEnter(): void {
     if (this.isVendeur) this.segment = 'low';
+    // Par défaut, ne charger que les mouvements du jour pour ne pas ralentir
+    // l'ouverture de la page — l'utilisateur peut élargir via les boutons
+    // Semaine/Mois ou une période personnalisée (filterByPeriod / dateDebut/dateFin).
+    if (!this.dateDebut && !this.dateFin) {
+      const today = new Date().toISOString().split('T')[0];
+      this.dateDebut = today;
+      this.dateFin = today;
+    }
     this.ws.connect();
     this.wsSub = this.ws.subscribeTopic('/topic/stock').subscribe(event => {
       if (event?.data?.produitId != null && event?.data?.quantite != null) {
@@ -90,7 +98,7 @@ export class InventoryPage {
     this.loadMovements(event);
   }
 
-  private loadMovements(event?: any): void {
+  loadMovements(event?: any): void {
     if (this.dateDebut && this.dateFin) {
       this.inventory.obtenirMouvementsParDate(
         this.dateDebut + 'T00:00:00',
@@ -147,10 +155,10 @@ export class InventoryPage {
   resetFilters(): void {
     this.typeMouvFilter = '';
     this.categorieFilter = '';
-    this.dateDebut = '';
-    this.dateFin = '';
     this.searchTerm = '';
-    this.applyFilters();
+    // Revenir au comportement par défaut (jour) plutôt que de re-filtrer
+    // l'ensemble déjà chargé, qui ne contient que la période courante.
+    this.filterByPeriod('today');
   }
 
   filterByPeriod(period: 'today' | 'week' | 'month'): void {
