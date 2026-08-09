@@ -262,8 +262,7 @@ export class CartPage implements OnInit {
     const product = this.produitEnAttente;
     if (!product) return;
     const facteurTotal = this.calculerFacteurTotal(this.niveauxDisponibles, niveau);
-    const indexNiveau = this.niveauxDisponibles.findIndex(n => n.id === niveau.id);
-    const niveauStockMax = this.disponibleNiveau(niveau, indexNiveau);
+    const niveauStockMax = this.disponibleNiveau(niveau);
     this.showNiveauxVenteModal = false;
     this.produitEnAttente = null;
 
@@ -318,14 +317,25 @@ export class CartPage implements OnInit {
     this.addWithPromo(product);
   }
 
-  disponibleNiveau(niveau: ProduitNiveau, index: number | undefined): number {
-    const idx = index ?? 0;
-    if (idx === 0) {
-      // Stock propre du niveau supérieur uniquement — produit.quantite est séparé
-      return niveau.stock ?? 0;
-    }
-    const parent = this.niveauxDisponibles[idx - 1];
-    return (niveau.stock ?? 0) + ((parent as ProduitNiveau | undefined)?.stock ?? 0) * niveau.facteur;
+  /**
+   * Stock réellement disponible pour un niveau, en cascadant récursivement
+   * depuis ses parents jusqu'à la racine (produit principal) — miroir exact
+   * de calculerDisponibleNiveau() côté backend. Le paramètre index n'est
+   * plus utilisé (gardé pour compatibilité avec les appels du template).
+   */
+  disponibleNiveau(niveau: ProduitNiveau, index?: number): number {
+    const map = new Map<number, ProduitNiveau>(
+      this.niveauxDisponibles.filter(n => n.id !== undefined).map(n => [n.id!, n])
+    );
+    const calc = (n: ProduitNiveau): number => {
+      const direct = n.stock ?? 0;
+      if (n.parentId === undefined || n.parentId === null) return direct;
+      const parent = map.get(n.parentId);
+      if (!parent) return direct;
+      const facteur = n.facteur > 0 ? n.facteur : 1;
+      return direct + calc(parent) * facteur;
+    };
+    return calc(niveau);
   }
 
   annulerChoixNiveau(): void {
@@ -386,8 +396,11 @@ export class CartPage implements OnInit {
   }
 
   totalLine(item: CartItem): number {
-    const price = this.venteService.calculerPrixApresRemise(item.customPrice, item.remisePourcentage || 0, null);
-    return price * item.quantity;
+    return this.getPrixVenteEffectif(item) * item.quantity;
+  }
+
+  getPrixVenteEffectif(item: CartItem): number {
+    return this.venteService.calculerPrixApresRemise(item.customPrice, item.remisePourcentage || 0, null);
   }
 
   getPrixAchatEffectif(item: CartItem): number {
@@ -395,7 +408,7 @@ export class CartPage implements OnInit {
   }
 
   getBeneficeLigne(item: CartItem): number {
-    return (this.venteService.calculerPrixApresRemise(item.customPrice, item.remisePourcentage || 0, null) - this.getPrixAchatEffectif(item)) * item.quantity;
+    return (this.getPrixVenteEffectif(item) - this.getPrixAchatEffectif(item)) * item.quantity;
   }
 
   getBeneficeLigneAbs(item: CartItem): number {
@@ -410,6 +423,10 @@ export class CartPage implements OnInit {
   getBeneficeLigneLabel(item: CartItem): string {
     const b = this.getBeneficeLigne(item);
     return b > 0 ? 'Bénéfice' : b < 0 ? 'Perte' : 'Équilibre';
+  }
+
+  isVenteSousPrixAchat(item: CartItem): boolean {
+    return this.getPrixVenteEffectif(item) < this.getPrixAchatEffectif(item);
   }
 
   toggleEditPrice(item: CartItem): void {
@@ -434,6 +451,29 @@ export class CartPage implements OnInit {
       return Math.max(0, subTotal - (subTotal * this.remiseGlobale / 100));
     }
     return Math.max(0, subTotal - this.remiseGlobale);
+  }
+
+  getRemiseGlobaleMontant(): number {
+    return Math.max(0, this.subTotal() - this.total());
+  }
+
+  getBeneficeTotal(): number {
+    const beneficeLignes = this.items.reduce((sum, item) => sum + this.getBeneficeLigne(item), 0);
+    return beneficeLignes - this.getRemiseGlobaleMontant();
+  }
+
+  getBeneficeTotalAbs(): number {
+    return Math.abs(this.getBeneficeTotal());
+  }
+
+  getBeneficeTotalLabel(): string {
+    const b = this.getBeneficeTotal();
+    return b > 0 ? 'Bénéfice' : b < 0 ? 'Perte' : 'Équilibre';
+  }
+
+  getBeneficeTotalColor(): string {
+    const b = this.getBeneficeTotal();
+    return b > 0 ? 'totaux-benefice--gain' : b < 0 ? 'totaux-benefice--perte' : 'totaux-benefice--neutre';
   }
 
   selectClient(): void {
