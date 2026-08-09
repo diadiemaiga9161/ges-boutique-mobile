@@ -304,6 +304,17 @@ export class CaissePage implements OnDestroy {
 
   // ==================== OPÉRATIONS ====================
 
+  getOperationUtilisateurLabel(op: any): string {
+    return op?.utilisateurNom
+      || op?.utilisateur?.nomComplet
+      || op?.utilisateur?.username
+      || op?.nomUtilisateur
+      || op?.utilisateurName
+      || op?.effectuePar
+      || op?.utilisateurId
+      || 'Système';
+  }
+
   loadOperationsForPeriod(): void {
     this.loadingOperations = true;
     const req = this.opPeriode === 'today' ? this.caisseService.getOperationsDuJour()

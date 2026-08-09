@@ -85,7 +85,8 @@ export class AnnulationPaiementsPage {
       this.paiementsFiltres = this.paiementsFournisseur.filter(p =>
         !term ||
         (p.fournisseur?.nom || '').toLowerCase().includes(term) ||
-        (p.reference || '').toLowerCase().includes(term)
+        (p.reference || '').toLowerCase().includes(term) ||
+        (this.getPayerLabel(p) || '').toLowerCase().includes(term)
       );
     } else {
       this.reglementsFiltres = this.reglements.filter(r =>
@@ -171,6 +172,18 @@ export class AnnulationPaiementsPage {
   countAnnules(): number {
     const list = this.onglet === 'fournisseur' ? this.paiementsFiltres : this.reglementsFiltres;
     return list.filter(x => x.annule).length;
+  }
+
+  getPayerLabel(item: any): string {
+    return item?.utilisateurNom
+      || item?.utilisateur?.nomComplet
+      || item?.utilisateur?.username
+      || item?.nomUtilisateur
+      || item?.utilisateurName
+      || item?.effectuePar
+      || item?.utilisateurId
+      || this.auth.getDisplayName()
+      || 'Utilisateur';
   }
 
   formatMontant(v: number): string {

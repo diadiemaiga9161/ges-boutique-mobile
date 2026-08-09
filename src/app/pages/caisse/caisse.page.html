@@ -350,7 +350,7 @@
             <div class="op-meta-row">
               <span class="muted">{{ caisseService.formatDateShort(op.dateOperation) }} {{ caisseService.formatTime(op.dateOperation) }}</span>
               <span class="muted" *ngIf="op.modePaiement">· {{ caisseService.getModePaiementLabel(op.modePaiement) }}</span>
-              <span class="muted">· {{ op.utilisateurNom || 'Système' }}</span>
+              <span class="muted">· {{ getOperationUtilisateurLabel(op) }}</span>
             </div>
           </div>
 
@@ -420,7 +420,7 @@
             </div>
             <div class="detail-row">
               <span>Utilisateur</span>
-              <strong>{{ selectedOp.utilisateurNom || 'Système' }}</strong>
+              <strong>{{ getOperationUtilisateurLabel(selectedOp) }}</strong>
             </div>
             <div class="detail-row" *ngIf="selectedOp.venteAnnulee">
               <span>Statut</span>

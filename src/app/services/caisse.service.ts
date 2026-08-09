@@ -62,6 +62,10 @@ export interface OperationCaisse {
   soldeApres?: number;
   motif: string;
   utilisateurNom?: string;
+  utilisateur?: {
+    nomComplet?: string;
+    username?: string;
+  };
   modePaiement?: string;
   referencePaiement?: string;
   clientNom?: string;

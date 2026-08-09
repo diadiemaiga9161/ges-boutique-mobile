@@ -374,8 +374,21 @@ export class FournisseursPage {
     return this.achats.filter(a => a.statut !== 'ANNULE');
   }
 
+  get utilisateurActuelNom(): string {
+    return this.auth?.getDisplayName() || 'Utilisateur';
+  }
+
   get achatsAnnules(): any[] {
     return this.achats.filter(a => a.statut === 'ANNULE');
+  }
+
+  getPaiementAuteur(p: any): string {
+    return p?.utilisateurNom
+      || p?.utilisateur?.nomComplet
+      || p?.utilisateur?.username
+      || p?.nomUtilisateur
+      || p?.utilisateurName
+      || this.utilisateurActuelNom;
   }
 
   // ======= Paiement =======
@@ -401,6 +414,14 @@ export class FournisseursPage {
     this.showPaiementModal = true;
   }
 
+  getPayerLabel(payment: any): string {
+    return payment?.utilisateurNom
+      || payment?.utilisateur?.nomComplet
+      || payment?.utilisateur?.username
+      || payment?.effectuePar
+      || this.auth.getDisplayName();
+  }
+
   savePaiement(): void {
     if (!this.paiementForm.montant || this.paiementForm.montant <= 0) { this.toast('Montant invalide', 'danger'); return; }
     if (this.paiementForm.modePaiement === 'BANQUE' && !this.paiementForm.compteId) {
@@ -408,9 +429,18 @@ export class FournisseursPage {
     }
     this.productService.payerFournisseur({ ...this.paiementForm, utilisateurId: this.auth.getUserId() }).subscribe({
       next: () => {
+        const payerLabel = this.auth.getDisplayName();
+        this.paiements = [{
+          id: Date.now(),
+          montant: this.paiementForm.montant,
+          modePaiement: this.paiementForm.modePaiement,
+          reference: this.paiementForm.reference,
+          observation: this.paiementForm.observation,
+          datePaiement: new Date().toISOString(),
+          utilisateurNom: payerLabel
+        }, ...this.paiements];
         this.toast('Paiement enregistré');
         this.showPaiementModal = false;
-        this.loadDetails(this.paiementForm.fournisseurId);
       },
       error: err => this.toast(err?.error?.message || 'Paiement impossible', 'danger')
     });

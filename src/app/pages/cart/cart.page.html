@@ -131,6 +131,19 @@
                 </ion-input>
                 <span class="ci-price-currency">FCFA</span>
               </div>
+              <div class="ci-benefice" [ngClass]="getBeneficeLigneColor(item)">
+                <div class="ci-benefice-main">
+                  <span>{{ getBeneficeLigneLabel(item) }}</span>
+                  <strong>{{ money(getBeneficeLigneAbs(item)) }}</strong>
+                </div>
+                <div class="ci-benefice-meta">
+
+                  <span>Achat {{ money(getPrixAchatEffectif(item)) }}</span>
+                </div>
+                <p class="ci-benefice-alert" *ngIf="isVenteSousPrixAchat(item)">
+                  Prix de vente inférieur au prix d'achat
+                </p>
+              </div>
               <!-- Remise ligne -->
               <div class="ci-discount-wrap">
                 <ion-icon name="pricetag-outline"></ion-icon>
@@ -194,6 +207,11 @@
         <div class="totaux-row">
           <span>Sous-total</span>
           <strong>{{ money(subTotal()) }}</strong>
+        </div>
+
+        <div class="totaux-row totaux-benefice" [ngClass]="getBeneficeTotalColor()">
+          <span>{{ getBeneficeTotalLabel() }} estimé</span>
+          <strong>{{ money(getBeneficeTotalAbs()) }}</strong>
         </div>
 
         <div class="remise-row">

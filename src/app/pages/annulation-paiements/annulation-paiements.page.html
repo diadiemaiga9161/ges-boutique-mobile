@@ -118,6 +118,7 @@
           <div class="lic-info">
             <div class="lic-name">{{ p.fournisseur?.nom || 'Fournisseur' }}</div>
             <div class="lic-sub">{{ formatDate(p.datePaiement) }}</div>
+            <div class="lic-sub" *ngIf="getPayerLabel(p)">Par {{ getPayerLabel(p) }}</div>
           </div>
           <div class="lic-right">
             <span class="status-badge" [class.--success]="!p.annule" [class.--danger]="p.annule">

@@ -259,6 +259,7 @@
               <h2>{{ money(p.montant) }}</h2>
               <p>{{ p.modePaiement }} · {{ formatDate(p.datePaiement) }}</p>
               <p *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</p>
+              <p *ngIf="getPaiementAuteur(p)" style="font-size:0.8rem;color:var(--ion-color-medium)">Par : {{ getPaiementAuteur(p) }}</p>
             </ion-label>
             <ion-button fill="outline" size="small" color="primary" slot="end" (click)="imprimerRecuPaiement(p)">
               <ion-icon name="receipt-outline" slot="start"></ion-icon> {{ 'SUPPLIERS.RECEIPT' | translate }}
@@ -290,6 +291,7 @@
               <h2>{{ money(av.montant) }}</h2>
               <p>{{ av.modePaiement }} · {{ formatDate(av.dateAvance) }}</p>
               <p *ngIf="av.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ av.reference }}</p>
+              <p *ngIf="getPayerLabel(av)" class="ion-text-wrap"><strong>Par :</strong> {{ getPayerLabel(av) }}</p>
             </ion-label>
             <ion-icon name="time-outline" slot="end" color="warning"></ion-icon>
           </ion-item>
@@ -469,6 +471,7 @@
               <span class="text-success"><strong>{{ money(p.montant) }}</strong></span>
               <span class="hist-ref" *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</span>
             </div>
+            <div class="hist-ref" *ngIf="getPaiementAuteur(p)">Par : {{ getPaiementAuteur(p) }}</div>
             <div style="margin-top:8px">
               <ion-button fill="outline" size="small" color="primary" (click)="imprimerRecuPaiement(p)">
                 <ion-icon name="receipt-outline" slot="start"></ion-icon> {{ 'SUPPLIERS.RECEIPT' | translate }}
@@ -595,6 +598,10 @@
       <div class="paiement-cible-note" *ngIf="paiementForm.achatCibleId">
         <ion-icon name="pricetag-outline" color="warning"></ion-icon>
         <span>{{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }} #{{ paiementForm.achatCibleId }}</span>
+      </div>
+      <div class="paiement-cible-note" *ngIf="getPayerLabel(paiementForm)">
+        <ion-icon name="person-outline" color="primary"></ion-icon>
+        <span>Effectué par : {{ getPayerLabel(paiementForm) }}</span>
       </div>
       <ion-item>
         <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
