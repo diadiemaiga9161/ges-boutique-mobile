@@ -1,111 +1,24 @@
-.offline-card {
-  margin: 8px;
-  background: #fff7ed;
-  border-left: 4px solid #f97316;
+// Petit point fixe, coin haut-droit, au-dessus de tout (y compris le
+// ion-header de la page courante) — visible sur chaque écran sans jamais
+// pousser le contenu ni afficher de texte/carte.
+.net-dot {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  z-index: 99999;
+  pointer-events: none;
+  transition: background-color 0.2s ease;
 
-  ion-card-content {
-    padding: 12px;
+  &--online {
+    background: #22c55e;
   }
 
-  &.offline-card--failed {
-    background: #fef2f2;
-    border-left-color: #dc2626;
-  }
-}
-
-.status-header {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 8px 0;
-
-  .status-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin-left: 8px;
-  }
-
-  .status-label {
-    font-weight: 600;
-    font-size: 14px;
-    color: #d97706;
-
-    &--danger {
-      color: #dc2626;
-    }
-  }
-
-  .failed-badge {
-    margin-left: 4px;
-  }
-
-  ion-icon:last-of-type {
-    margin-left: auto;
-  }
-}
-
-.sync-progress {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #fed7aa;
-  font-size: 12px;
-  color: #7c2d12;
-
-  small {
-    display: block;
-    margin: 4px 0;
-  }
-}
-
-.details {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #fed7aa;
-}
-
-.queue-summary {
-  background: rgba(255, 255, 255, 0.5);
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  margin-bottom: 12px;
-
-  p {
-    margin: 4px 0;
-    color: #7c2d12;
-  }
-
-  strong {
-    color: #d97706;
-  }
-}
-
-.actions-list {
-  max-height: 300px;
-  overflow-y: auto;
-
-  ion-item {
-    background: rgba(255, 255, 255, 0.7);
-    margin-bottom: 4px;
-  }
-
-  .error-text {
-    color: #dc2626 !important;
-    font-size: 12px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .offline-card {
-    background: rgba(217, 119, 6, 0.1);
-  }
-
-  .queue-summary {
-    background: rgba(0, 0, 0, 0.1);
-  }
-
-  .actions-list ion-item {
-    background: rgba(0, 0, 0, 0.2);
+  &--offline {
+    background: #f97316;
   }
 }

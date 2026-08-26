@@ -2,6 +2,18 @@
   text-align: center;
 }
 
+// -------- Champs "Modifier mes informations" : boîtes + icônes --------
+.form-panel ion-input[fill="outline"],
+.form-panel ion-item.phone-item {
+  margin-bottom: 10px;
+
+  ion-icon[slot="start"] {
+    color: #1a56db;
+    margin-inline-end: 8px;
+    font-size: 1.05rem;
+  }
+}
+
 .avatar {
   align-items: center;
   background: #e0f2f1;

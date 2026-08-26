@@ -323,15 +323,8 @@
         <p class="rs-ca-sub">{{ ventes }} vente{{ ventes > 1 ? 's' : '' }}</p>
       </div>
 
-      <!-- 3 métriques -->
+      <!-- Métriques (le CA n'est pas répété ici : déjà affiché juste au-dessus en grand) -->
       <div class="rs-metrics">
-        <div class="rs-metric" *ngIf="!isVendeur">
-          <div class="rs-metric__icon rs-metric__icon--green">
-            <ion-icon name="trending-up-outline"></ion-icon>
-          </div>
-          <p class="rs-metric__val">{{ money(ca) }}</p>
-          <p class="rs-metric__lbl">Rentré</p>
-        </div>
         <div class="rs-metric" *ngIf="remises > 0 && !isVendeur">
           <div class="rs-metric__icon rs-metric__icon--red">
             <ion-icon name="pricetag-outline"></ion-icon>
@@ -391,72 +384,81 @@
     </div>
   </ng-template>
 
-  <!-- ===== ANALYSES VISUELLES ===== -->
-  <ion-card style="margin:12px">
-    <ion-card-header>
-      <ion-card-title style="font-size:1rem">Analyses visuelles</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
+  <!-- ===== ANALYSES VISUELLES ET PRÉVISIONS — repliées par défaut ===== -->
+  <!-- Ces analyses (30 derniers jours, toutes périodes confondues) sont différentes du
+       rapport de la période choisie ci-dessus (jour/semaine/mois) : on les garde donc,
+       mais repliées par défaut pour ne pas surcharger l'écran — l'essentiel (rapport de
+       la période + crédits) reste visible tout de suite, le détail est à un tap. -->
+  <ion-accordion-group style="margin:12px 0">
+    <ion-accordion value="analyses">
+      <ion-item slot="header" color="light">
+        <ion-icon name="stats-chart-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>Analyses visuelles (30 derniers jours)</ion-label>
+      </ion-item>
+      <div class="ion-padding" slot="content">
 
-      <!-- CA 30 jours -->
-      <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">CA 30 derniers jours</p>
-      <div style="display:flex;align-items:flex-end;gap:1px;height:70px;overflow-x:auto;margin-bottom:16px">
-        <div *ngFor="let d of ca30Jours"
-          style="flex:1;min-width:8px;display:flex;flex-direction:column;align-items:center">
-          <div [style.height.%]="pct(d.ca, maxCA)"
-               [title]="d.date"
-               style="width:100%;background:#4f46e5;border-radius:1px 1px 0 0;min-height:2px"></div>
+        <!-- CA 30 jours -->
+        <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">CA 30 derniers jours</p>
+        <div style="display:flex;align-items:flex-end;gap:1px;height:70px;overflow-x:auto;margin-bottom:16px">
+          <div *ngFor="let d of ca30Jours"
+            style="flex:1;min-width:8px;display:flex;flex-direction:column;align-items:center">
+            <div [style.height.%]="pct(d.ca, maxCA)"
+                 [title]="d.date"
+                 style="width:100%;background:#4f46e5;border-radius:1px 1px 0 0;min-height:2px"></div>
+          </div>
         </div>
+
+        <!-- Top produits -->
+        <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">Top 10 produits</p>
+        <div *ngFor="let p of topProduits" style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px">
+            <span>{{ p.produitNom }}</span>
+            <span style="color:#6b7280">{{ p.quantiteVendue }}</span>
+          </div>
+          <div style="background:#e5e7eb;border-radius:4px;height:6px">
+            <div [style.width.%]="pct(p.quantiteVendue, maxQte)"
+                 style="background:#10b981;height:100%;border-radius:4px"></div>
+          </div>
+        </div>
+
+        <!-- Ventes par heure -->
+        <p style="font-weight:600;margin:12px 0 8px;font-size:.85rem">Ventes par heure</p>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:50px">
+          <div *ngFor="let h of ventesParHeure"
+            style="flex:1;display:flex;flex-direction:column;align-items:center">
+            <div [style.height.%]="pct(h.nbVentes, maxVentes)"
+                 [title]="h.heure + 'h'"
+                 style="width:100%;background:#f59e0b;border-radius:1px 1px 0 0;min-height:2px"></div>
+            <span style="font-size:.5rem;color:#6b7280">{{ h.heure }}</span>
+          </div>
+        </div>
+
       </div>
+    </ion-accordion>
 
-      <!-- Top produits -->
-      <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">Top 10 produits</p>
-      <div *ngFor="let p of topProduits" style="margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px">
-          <span>{{ p.produitNom }}</span>
-          <span style="color:#6b7280">{{ p.quantiteVendue }}</span>
-        </div>
-        <div style="background:#e5e7eb;border-radius:4px;height:6px">
-          <div [style.width.%]="pct(p.quantiteVendue, maxQte)"
-               style="background:#10b981;height:100%;border-radius:4px"></div>
-        </div>
+    <!-- Prévisions de stock -->
+    <ion-accordion value="previsions" *ngIf="previsionStock.length > 0">
+      <ion-item slot="header" color="light">
+        <ion-icon name="cube-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>Prévisions de stock</ion-label>
+        <ion-badge slot="end" color="medium">{{ previsionStock.length }}</ion-badge>
+      </ion-item>
+      <div slot="content">
+        <ion-list>
+          <ion-item *ngFor="let p of previsionStock">
+            <ion-label>
+              <h3>{{ p.produitNom }}</h3>
+              <p>Stock : {{ p.stockActuel }} | Jours : {{ p.joursAvantRupture >= 999 ? '—' : p.joursAvantRupture }} | Recommandé : {{ p.quantiteRecommandee }}</p>
+            </ion-label>
+            <ion-badge slot="end"
+              [color]="p.urgence === 'CRITIQUE' ? 'danger' : p.urgence === 'ATTENTION' ? 'warning' : 'success'">
+              {{ p.urgence }}
+            </ion-badge>
+          </ion-item>
+        </ion-list>
       </div>
-
-      <!-- Ventes par heure -->
-      <p style="font-weight:600;margin:12px 0 8px;font-size:.85rem">Ventes par heure</p>
-      <div style="display:flex;align-items:flex-end;gap:2px;height:50px">
-        <div *ngFor="let h of ventesParHeure"
-          style="flex:1;display:flex;flex-direction:column;align-items:center">
-          <div [style.height.%]="pct(h.nbVentes, maxVentes)"
-               [title]="h.heure + 'h'"
-               style="width:100%;background:#f59e0b;border-radius:1px 1px 0 0;min-height:2px"></div>
-          <span style="font-size:.5rem;color:#6b7280">{{ h.heure }}</span>
-        </div>
-      </div>
-
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Prévisions de stock -->
-  <ion-card style="margin:12px" *ngIf="previsionStock.length > 0">
-    <ion-card-header>
-      <ion-card-title style="font-size:1rem">Prévisions de stock</ion-card-title>
-    </ion-card-header>
-    <ion-card-content style="padding:0">
-      <ion-list>
-        <ion-item *ngFor="let p of previsionStock">
-          <ion-label>
-            <h3>{{ p.produitNom }}</h3>
-            <p>Stock : {{ p.stockActuel }} | Jours : {{ p.joursAvantRupture >= 999 ? '—' : p.joursAvantRupture }} | Recommandé : {{ p.quantiteRecommandee }}</p>
-          </ion-label>
-          <ion-badge slot="end"
-            [color]="p.urgence === 'CRITIQUE' ? 'danger' : p.urgence === 'ATTENTION' ? 'warning' : 'success'">
-            {{ p.urgence }}
-          </ion-badge>
-        </ion-item>
-      </ion-list>
-    </ion-card-content>
-  </ion-card>
+    </ion-accordion>
+  </ion-accordion-group>
 
   <!-- Modes de paiement -->
   <ng-template #modesPaiementSection let-modes>

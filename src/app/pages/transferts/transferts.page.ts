@@ -314,6 +314,22 @@ export class TransfertsPage implements OnInit {
     return this.transferts;
   }
 
+  /**
+   * Montant total (2026-08-16) — pour parité avec React Native
+   * (TransfertsScreen.tsx montantTotal). Basé sur `transferts` (liste
+   * complète "tous"), comme le compteur `transferts.length` déjà affiché
+   * juste au-dessus dans le hero, et comme le fait RN. TransfertStock n'a
+   * pas de champ montant propre côté backend, on somme donc
+   * quantite×prixUnitaire sur toutes les lignes, comme déjà fait ligne par
+   * ligne plus bas dans ce template (l.quantite * l.prixUnitaire).
+   */
+  get montantTotalAffiche(): number {
+    return this.transferts.reduce(
+      (sum, t) => sum + (t.lignes || []).reduce((s, l) => s + (l.quantite || 0) * (l.prixUnitaire || 0), 0),
+      0
+    );
+  }
+
   async accepterTransfert(t: TransfertStock): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Accepter ce transfert ?',

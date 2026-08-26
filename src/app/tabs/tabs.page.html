@@ -10,20 +10,30 @@
       <ion-label>{{ 'NAV.CAISSE' | translate }}</ion-label>
     </ion-tab-button>
 
-    <!-- Ventes — tous -->
-    <ion-tab-button tab="sales" class="tab-btn">
-      <div class="tab-icon-wrap">
-        <ion-icon name="receipt-outline"></ion-icon>
-      </div>
-      <ion-label>{{ 'NAV.SALES' | translate }}</ion-label>
-    </ion-tab-button>
-
-    <!-- Produits — tous -->
+    <!-- Produits — tous (échangé avec Ventes) -->
     <ion-tab-button tab="products" class="tab-btn">
       <div class="tab-icon-wrap">
         <ion-icon name="cube-outline"></ion-icon>
       </div>
       <ion-label>{{ 'NAV.PRODUCTS' | translate }}</ion-label>
+    </ion-tab-button>
+
+    <!-- Bouton central flottant "Vente" — style déjà prêt dans le SCSS
+         (.tab-btn--fab) mais jamais branché. Pas un vrai onglet (pas de
+         routage tab-bar), juste une navigation directe vers /cart. -->
+    <ion-tab-button class="tab-btn tab-btn--fab" (click)="newSale()">
+      <div class="tab-fab-btn">
+        <ion-icon name="add"></ion-icon>
+      </div>
+      <ion-label>Vente</ion-label>
+    </ion-tab-button>
+
+    <!-- Historique vente — tous -->
+    <ion-tab-button tab="sales" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="receipt-outline"></ion-icon>
+      </div>
+      <ion-label>{{ 'NAV.SALES' | translate }}</ion-label>
     </ion-tab-button>
 
     <!-- Inventaire — tous -->
@@ -32,14 +42,6 @@
         <ion-icon name="clipboard-outline"></ion-icon>
       </div>
       <ion-label>{{ 'NAV.INVENTORY' | translate }}</ion-label>
-    </ion-tab-button>
-
-    <!-- Rapports — ADMIN seulement -->
-    <ion-tab-button tab="reports" *ngIf="auth.isAdmin()" class="tab-btn">
-      <div class="tab-icon-wrap">
-        <ion-icon name="bar-chart-outline"></ion-icon>
-      </div>
-      <ion-label>{{ 'NAV.REPORTS' | translate }}</ion-label>
     </ion-tab-button>
 
   </ion-tab-bar>

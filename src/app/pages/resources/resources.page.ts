@@ -13,8 +13,20 @@ import { AppUser, UserService } from '../../services/user.service';
 import { MobileResourceService, ResourceConfig } from '../../services/mobile-resource.service';
 import { DepotClient, DepotClientRequest, DepotGarde, DepotGardeService, RetraitDepotRequest } from '../../services/depot-garde.service';
 import { ObjectifFournisseur, ObjectifFournisseurService, ObjectifFournisseurRequest, MOIS_LABELS } from '../../services/objectif-fournisseur.service';
+import { ObjectifVendeur, ObjectifVendeurService, ObjectifVendeurRequest } from '../../services/objectif-vendeur.service';
 
-type ResourceType = 'factures' | 'comptes' | 'dettes' | 'employes' | 'paiement-employe' | 'fournisseurs' | 'vendeurs' | 'depots-garde' | 'objectifs-fournisseur';
+type ResourceType = 'factures' | 'comptes' | 'dettes' | 'employes' | 'paiement-employe' | 'fournisseurs' | 'vendeurs' | 'depots-garde' | 'objectifs-fournisseur' | 'objectifs-vendeur';
+
+/** Calcule la semaine ISO-8601 et l'année ISO correspondante pour la date du jour. */
+function getCurrentIsoWeekYear(): { semaine: number; annee: number } {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const semaine = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return { semaine, annee: d.getUTCFullYear() };
+}
 
 @Component({
   selector: 'app-resources',
@@ -93,6 +105,17 @@ export class ResourcesPage {
   };
   moisLabels = MOIS_LABELS;
 
+  // Primes vendeurs (objectifs-vendeur)
+  objectifVendeurForm: ObjectifVendeurRequest & { id?: number } = {
+    vendeurId: 0,
+    semaine: getCurrentIsoWeekYear().semaine,
+    annee: getCurrentIsoWeekYear().annee,
+    objectifNombreVentes: 0,
+    bonusMontant: 0,
+    observation: ''
+  };
+  sellerUsers: AppUser[] = [];
+
   // Dépôts garde
   depotForm = { id: 0, depotClientId: undefined as number | undefined, nom: '', prenom: '', numero: '', montant: 0, observation: '' };
   retraitDepotForm: RetraitDepotRequest = { montant: 0, observation: '' };
@@ -124,6 +147,7 @@ export class ResourcesPage {
     private userService: UserService,
     private depotGardeService: DepotGardeService,
     public objectifFournisseurService: ObjectifFournisseurService,
+    public objectifVendeurService: ObjectifVendeurService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController
   ) {}
@@ -182,6 +206,10 @@ export class ResourcesPage {
         this.objectifFournisseurService.getTous()
           .subscribe({ next: items => { this.items = items; done(); }, error: fail });
         break;
+      case 'objectifs-vendeur':
+        this.objectifVendeurService.getTous()
+          .subscribe({ next: items => { this.items = items; done(); }, error: fail });
+        break;
     }
   }
 
@@ -206,6 +234,10 @@ export class ResourcesPage {
     if (this.type === 'vendeurs') this.userForm = { id: item.id, username: item.username || '', password: '', nomComplet: item.nomComplet || '', email: item.email || '', telephone: item.telephone || '', role: item.role || 'VENDEUR' };
     if (this.type === 'depots-garde') this.depotForm = { id: item.id, depotClientId: item.depotClientId || undefined, nom: item.nom || '', prenom: item.prenom || '', numero: item.numero || '', montant: item.montantInitial || 0, observation: item.observation || '' };
     if (this.type === 'objectifs-fournisseur') this.objectifForm = { id: item.id, fournisseurId: item.fournisseurId || 0, produitId: item.produitId || undefined, mois: item.mois || new Date().getMonth() + 1, annee: item.annee || new Date().getFullYear(), objectifQuantite: item.objectifQuantite || 0, bonusParUnite: item.bonusParUnite || 0, quantiteAtteinte: item.quantiteAtteinte || 0, quantiteBonusRecue: item.quantiteBonusRecue || 0, observation: item.observation || '' };
+    if (this.type === 'objectifs-vendeur') {
+      const { semaine, annee } = getCurrentIsoWeekYear();
+      this.objectifVendeurForm = { id: item.id, vendeurId: item.vendeurId || 0, semaine: item.semaine || semaine, annee: item.annee || annee, objectifNombreVentes: item.objectifNombreVentes || 0, bonusMontant: item.bonusMontant || 0, observation: item.observation || '' };
+    }
   }
 
   save(): void {
@@ -218,6 +250,7 @@ export class ResourcesPage {
       case 'vendeurs': this.saveUser(); break;
       case 'depots-garde': this.saveDepot(); break;
       case 'objectifs-fournisseur': this.saveObjectif(); break;
+      case 'objectifs-vendeur': this.saveObjectifVendeur(); break;
       default: this.presentToast('Utilisez les actions de cette page', 'danger');
     }
   }
@@ -376,6 +409,25 @@ export class ResourcesPage {
         next: () => this.afterAction('Objectif supprimé'),
         error: error => this.presentToast(error?.error?.message || error.message || 'Suppression impossible', 'danger')
       }));
+    if (kind === 'objectif-vendeur-valider') this.confirmerValiderObjectifVendeur(item as ObjectifVendeur);
+    if (kind === 'objectif-vendeur-delete') this.confirmDelete(() =>
+      this.objectifVendeurService.supprimer(item.id).subscribe({
+        next: () => this.afterAction('Prime supprimée'),
+        error: error => this.presentToast(error?.error?.message || error.message || 'Suppression impossible', 'danger')
+      }));
+  }
+
+  /** Icône + couleur de la puce de la liste générique (Factures, Comptes, Dettes,
+   *  Paiement employé) — pour ne plus avoir des lignes de texte brut sans repère visuel,
+   *  comme sur le reste de l'appli (mêmes classes .lic-avatar déjà utilisées ailleurs). */
+  iconMeta(): { icon: string; color: string } {
+    switch (this.type) {
+      case 'factures': return { icon: 'document-text-outline', color: '' };
+      case 'comptes': return { icon: 'card-outline', color: 'lic-avatar--green' };
+      case 'dettes': return { icon: 'alert-circle-outline', color: 'lic-avatar--red' };
+      case 'paiement-employe': return { icon: 'wallet-outline', color: 'lic-avatar--purple' };
+      default: return { icon: 'document-outline', color: '' };
+    }
   }
 
   title(item: any): string {
@@ -388,6 +440,7 @@ export class ResourcesPage {
     if (this.type === 'vendeurs') return item.nomComplet || item.username;
     if (this.type === 'depots-garde') return item.nomComplet || `${item.prenom || ''} ${item.nom || ''}`.trim();
     if (this.type === 'objectifs-fournisseur') return `${item.fournisseurNom} — ${this.moisLabels[item.mois] || ''} ${item.annee}`;
+    if (this.type === 'objectifs-vendeur') return `${item.vendeurNom} — Semaine ${item.semaine}/${item.annee}`;
     return item.nom || item.numero || `#${item.id}`;
   }
 
@@ -401,6 +454,7 @@ export class ResourcesPage {
     if (this.type === 'vendeurs') return `${item.username} · ${item.role}`;
     if (this.type === 'depots-garde') return `${item.numero} · Restant: ${this.depotGardeService.formatMontant(item.montantRestant)} · ${item.statut}`;
     if (this.type === 'objectifs-fournisseur') return `Bonus: ${this.objectifFournisseurService.formatMontant(item.bonusCalcule)} · ${item.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint'}`;
+    if (this.type === 'objectifs-vendeur') return `Bonus: ${this.objectifVendeurService.formatMontant(item.bonusMontant)} · ${item.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint'}`;
     return '';
   }
 
@@ -423,6 +477,7 @@ export class ResourcesPage {
     this.compteService.getTousLesComptes().subscribe(comptes => this.comptes = comptes);
     this.productService.getAllFournisseurs().subscribe(fournisseurs => this.fournisseurs = fournisseurs);
     this.depotGardeService.getTousClients().subscribe(clients => this.depotClients = clients);
+    this.userService.getAllUsers().subscribe(users => this.sellerUsers = users.filter(u => u.role === 'VENDEUR'));
   }
 
   private async saveFacture(): Promise<void> {
@@ -678,6 +733,51 @@ export class ResourcesPage {
     await alert.present();
   }
 
+  private saveObjectifVendeur(): void {
+    if (!this.objectifVendeurForm.vendeurId) {
+      this.presentToast('Sélectionnez un vendeur', 'danger'); return;
+    }
+    if (!this.objectifVendeurForm.semaine || this.objectifVendeurForm.semaine < 1 || this.objectifVendeurForm.semaine > 53) {
+      this.presentToast('La semaine doit être comprise entre 1 et 53', 'danger'); return;
+    }
+    if (!this.objectifVendeurForm.objectifNombreVentes || this.objectifVendeurForm.objectifNombreVentes <= 0) {
+      this.presentToast("L'objectif de ventes doit être supérieur à 0", 'danger'); return;
+    }
+    if (!this.objectifVendeurForm.bonusMontant || this.objectifVendeurForm.bonusMontant <= 0) {
+      this.presentToast('Le bonus doit être supérieur à 0', 'danger'); return;
+    }
+    const { id, ...payload } = this.objectifVendeurForm as any;
+    const request = id
+      ? this.objectifVendeurService.modifier(id, payload)
+      : this.objectifVendeurService.creer(payload);
+    request.subscribe({
+      next: () => this.afterAction(id ? 'Prime modifiée' : 'Prime enregistrée'),
+      error: error => this.presentToast(error?.error?.message || error.message || 'Enregistrement impossible', 'danger')
+    });
+  }
+
+  async confirmerValiderObjectifVendeur(objectif: ObjectifVendeur): Promise<void> {
+    if (objectif.statut !== 'ATTEINT') {
+      this.presentToast("Seules les primes atteintes peuvent être validées", 'danger'); return;
+    }
+    const alert = await this.alertCtrl.create({
+      header: 'Valider la prime ?',
+      message: `${objectif.vendeurNom} — Semaine ${objectif.semaine}/${objectif.annee}\nBonus : ${this.objectifVendeurService.formatMontant(objectif.bonusMontant)}`,
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Valider',
+          cssClass: 'alert-btn-primary',
+          handler: () => this.objectifVendeurService.valider(objectif.id).subscribe({
+            next: () => this.afterAction('Prime validée'),
+            error: error => this.presentToast(error?.error?.message || error.message || 'Validation impossible', 'danger')
+          })
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   searchDepotClients(): void {
     const q = this.depotClientSearch.trim().toLowerCase();
     if (!q) { this.filteredDepotClients = []; return; }
@@ -819,6 +919,8 @@ export class ResourcesPage {
     this.showNewDepotClientForm = false;
     this.depotClientForm = { nom: '', prenom: '', numero: '' };
     this.objectifForm = { fournisseurId: 0, mois: new Date().getMonth() + 1, annee: new Date().getFullYear(), objectifQuantite: 0, bonusParUnite: 0, quantiteAtteinte: 0, quantiteBonusRecue: 0 };
+    const { semaine, annee } = getCurrentIsoWeekYear();
+    this.objectifVendeurForm = { vendeurId: 0, semaine, annee, objectifNombreVentes: 0, bonusMontant: 0, observation: '' };
   }
 
   private afterAction(message: string): void {

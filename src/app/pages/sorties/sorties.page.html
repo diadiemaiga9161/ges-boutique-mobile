@@ -27,7 +27,7 @@
     </div>
 
     <!-- Filtres rapides période -->
-    <div class="filter-zone">
+    <div class="filter-zone filter-zone--chips">
       <ion-chip (click)="filterByPeriod('today')"
         [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"
         [outline]="selectedPeriod !== 'today'">Aujourd'hui</ion-chip>
@@ -49,7 +49,7 @@
     <div class="section-header">
       <span class="section-header__title">Type de sortie</span>
     </div>
-    <div class="filter-zone">
+    <div class="filter-zone filter-zone--chips">
       <ion-chip [color]="typeSortieFilter === '' ? 'primary' : 'medium'"
                 (click)="typeSortieFilter = ''; appliquerFiltres()">
         Tous ({{ sorties.length }})

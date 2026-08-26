@@ -280,7 +280,12 @@ export class FournisseursPage {
 
     // Produit existant (sélectionné dans le catalogue, pas de création à la volée dans ce formulaire)
     const produit = this.produits.find(p => p.id === this.achatForm.produitId);
-    let nouveauPrixVente: number | undefined;
+    // BUG FIX (2026-08-16) : cette variable/le champ envoyé au backend s'appelaient
+    // "nouveauPrixVente", mais LigneAchatRequest.java n'a QUE "nouveauPrixAchat" —
+    // le backend ignorait donc silencieusement ce champ inconnu, et le CUMP
+    // confirmé par l'utilisateur n'était jamais réellement appliqué au produit.
+    // React Native envoie déjà le bon nom ; on aligne Ionic dessus.
+    let nouveauPrixAchat: number | undefined;
 
     if (produit && Number(produit.prixAchat) !== Number(this.achatForm.prixAchatUnitaire)) {
       const stockActuel = Number(produit.quantite) || 0;
@@ -292,13 +297,13 @@ export class FournisseursPage {
 
       const confirme = await this.confirmerCump(produit, stockActuel, quantiteEntree, prixEntree, cump);
       if (confirme) {
-        nouveauPrixVente = Math.round(cump);
+        nouveauPrixAchat = Math.round(cump);
       }
     }
 
     const ligne: any = { produitId: this.achatForm.produitId, quantite: this.achatForm.quantite, prixAchatUnitaire: this.achatForm.prixAchatUnitaire, prixVente: this.achatForm.prixVente };
-    if (nouveauPrixVente !== undefined) {
-      ligne.nouveauPrixVente = nouveauPrixVente;
+    if (nouveauPrixAchat !== undefined) {
+      ligne.nouveauPrixAchat = nouveauPrixAchat;
     }
 
     this.productService.creerAchat({
@@ -317,7 +322,7 @@ export class FournisseursPage {
   }
 
   /**
-   * Affiche un popup de confirmation pour le recalcul du prix de vente via le CUMP (coût moyen pondéré)
+   * Affiche un popup de confirmation pour le recalcul du prix d'achat via le CUMP (coût moyen pondéré)
    * quand le prix d'achat saisi pour un produit existant diffère du prix d'achat actuel du produit.
    * Retourne true si l'utilisateur confirme l'application du nouveau prix, false sinon (l'achat continue quand même).
    */
@@ -330,12 +335,12 @@ export class FournisseursPage {
       `Stock actuel : ${stockActuel} × ${this.money(ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
       `Entrée : ${quantiteEntree} × ${this.money(prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
       `CUMP = (Stock × Ancien prix + Qté entrée × Prix entrée) / (Stock + Qté entrée)<br><br>` +
-      `Nouveau prix de vente proposé : <strong>${this.money(cump)}</strong><br><br>` +
-      `Appliquer ce nouveau prix de vente au produit ?`;
+      `Nouveau prix d'achat proposé : <strong>${this.money(cump)}</strong><br><br>` +
+      `Appliquer ce nouveau prix d'achat au produit ?`;
 
     return new Promise<boolean>(resolve => {
       this.alertCtrl.create({
-        header: 'Recalcul du prix de vente (CUMP)',
+        header: 'Recalcul du prix d\'achat (CUMP)',
         message,
         backdropDismiss: false,
         buttons: [
@@ -429,18 +434,9 @@ export class FournisseursPage {
     }
     this.productService.payerFournisseur({ ...this.paiementForm, utilisateurId: this.auth.getUserId() }).subscribe({
       next: () => {
-        const payerLabel = this.auth.getDisplayName();
-        this.paiements = [{
-          id: Date.now(),
-          montant: this.paiementForm.montant,
-          modePaiement: this.paiementForm.modePaiement,
-          reference: this.paiementForm.reference,
-          observation: this.paiementForm.observation,
-          datePaiement: new Date().toISOString(),
-          utilisateurNom: payerLabel
-        }, ...this.paiements];
         this.toast('Paiement enregistré');
         this.showPaiementModal = false;
+        if (this.selectedFournisseur) this.loadDetails(this.selectedFournisseur.id);
       },
       error: err => this.toast(err?.error?.message || 'Paiement impossible', 'danger')
     });

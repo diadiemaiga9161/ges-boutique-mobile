@@ -433,6 +433,40 @@
 ion-alert .alert-head h2 { font-size: 1rem; font-weight: 800; color: #0f172a; }
 ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5; }
 
+// Popup "vente validée" — centré, icône succès, auto-fermeture (cart.page.ts)
+.sale-success-alert {
+  --backdrop-opacity: 0.55;
+
+  .alert-wrapper { border-radius: 20px !important; padding-top: 26px !important; }
+  .alert-message {
+    text-align: center !important;
+    padding-top: 0 !important;
+    color: var(--ion-text-color) !important;
+  }
+
+  .sale-success-badge {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0e9f6e, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    box-shadow: 0 6px 18px rgba(14,159,110,0.35);
+    animation: sale-success-pop .35s ease;
+
+    ion-icon { color: #ffffff; font-size: 1.9rem; }
+  }
+  .sale-success-text { font-size: 1rem; font-weight: 700; }
+}
+
+@keyframes sale-success-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 // ══════════════════════════════════════════════════
 //  INLINE FORM HELPERS
 // ══════════════════════════════════════════════════
@@ -1020,6 +1054,15 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+// Variante pour une zone remplie d'ion-chip (période, type...) : les puces doivent
+// s'enchaîner côte à côte et passer à la ligne, pas s'empiler une par ligne comme les
+// champs de formulaire (select/date) de la variante par défaut ci-dessus.
+.filter-zone--chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .fz-search {

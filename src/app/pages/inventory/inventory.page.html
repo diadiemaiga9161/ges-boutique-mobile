@@ -59,11 +59,11 @@
       </ion-segment>
 
       <div class="search-scan-row">
-        <ion-item class="search-scan-input">
-          <ion-input label="Rechercher produit" labelPlacement="floating"
-            [(ngModel)]="form.searchProduit"
-            (ionInput)="searchProductsForForm()"></ion-input>
-        </ion-item>
+        <ion-input class="search-scan-input" label="Rechercher produit" labelPlacement="floating" fill="outline"
+          [(ngModel)]="form.searchProduit"
+          (ionInput)="searchProductsForForm()">
+          <ion-icon name="search-outline" slot="start"></ion-icon>
+        </ion-input>
         <ion-button class="scan-btn" color="primary" (click)="scanProduit()">
           <ion-icon name="scan-outline" slot="icon-only"></ion-icon>
         </ion-button>
@@ -77,15 +77,15 @@
         Produit sélectionné: <strong>{{ form.searchProduit }}</strong>
       </p>
 
-      <ion-item *ngIf="typeMouvement !== 'AJUSTEMENT'">
-        <ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
-      </ion-item>
-      <ion-item *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT">
-        <ion-input label="Nouvelle quantité" labelPlacement="floating" type="number" [(ngModel)]="form.nouvelleQuantite"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="form.motif"></ion-input>
-      </ion-item>
+      <ion-input *ngIf="typeMouvement !== 'AJUSTEMENT'" label="Quantité" labelPlacement="floating" type="number" fill="outline" [(ngModel)]="form.quantite">
+        <ion-icon name="cube-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT" label="Nouvelle quantité" labelPlacement="floating" type="number" fill="outline" [(ngModel)]="form.nouvelleQuantite">
+        <ion-icon name="cube-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Motif" labelPlacement="floating" fill="outline" [(ngModel)]="form.motif">
+        <ion-icon name="create-outline" slot="start"></ion-icon>
+      </ion-input>
       <ion-button expand="block" (click)="saveMovement()" [disabled]="!form.produitId">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         Enregistrer le mouvement
@@ -124,12 +124,12 @@
           <ion-button size="small" fill="clear" color="medium" (click)="resetFilters()">Réinitialiser</ion-button>
         </div>
         <div class="two-cols">
-          <ion-item>
-            <ion-input label="Du" labelPlacement="floating" type="date" [(ngModel)]="dateDebut" (ionChange)="loadMovements()"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Au" labelPlacement="floating" type="date" [(ngModel)]="dateFin" (ionChange)="loadMovements()"></ion-input>
-          </ion-item>
+          <ion-input label="Du" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateDebut" (ionChange)="loadMovements()">
+            <ion-icon name="calendar-outline" slot="start"></ion-icon>
+          </ion-input>
+          <ion-input label="Au" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateFin" (ionChange)="loadMovements()">
+            <ion-icon name="calendar-outline" slot="start"></ion-icon>
+          </ion-input>
         </div>
         <ion-item>
           <ion-select label="Type" labelPlacement="stacked" [(ngModel)]="typeMouvFilter" (ionChange)="applyFilters()">

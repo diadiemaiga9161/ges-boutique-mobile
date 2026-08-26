@@ -6,6 +6,7 @@ import { WebSocketService } from './services/websocket.service';
 import { NotificationService } from './services/notification.service';
 import { BoutiqueConfigService } from './services/boutique-config.service';
 import { SyncService } from './services/sync.service';
+import { AppUpdateService } from './services/app-update.service';
 import { environment } from '../environments/environment';
 import { Subscription } from 'rxjs';
 
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { title: 'Employés', icon: 'person-add-outline', route: '/resources/employes' },
     { title: 'Paiements employés', icon: 'wallet-outline', route: '/resources/paiement-employe' },
     { title: 'Objectifs Fournisseurs', icon: 'trophy-outline', route: '/resources/objectifs-fournisseur' },
+    { title: 'Primes Vendeurs', icon: 'cash-outline', route: '/resources/objectifs-vendeur' },
     { title: 'Crédits clients', icon: 'time-outline', route: '/credits' },
     { title: 'Fournisseurs', icon: 'business-outline', route: '/fournisseurs' },
     { title: 'Dépôts Garde', icon: 'lock-closed-outline', route: '/depots' },
@@ -45,11 +47,14 @@ export class AppComponent implements OnInit, OnDestroy {
     public notifService: NotificationService,
     private boutiqueConfig: BoutiqueConfigService,
     private syncService: SyncService,
+    private appUpdateService: AppUpdateService,
   ) {}
 
   ngOnInit(): void {
     this.hideSplash();
     this.syncService.startAutoSync();
+    // Détecte les nouvelles versions déployées et propose de recharger
+    this.appUpdateService.init();
 
     if (environment.isCapacitor && !this.boutiqueConfig.isConfigured()) {
       this.router.navigateByUrl('/boutique-select', { replaceUrl: true });

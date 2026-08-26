@@ -78,6 +78,7 @@
     "SAFE": "Dépôts Garde",
     "SUPPLIER_OBJ": "Objectifs Fournisseurs",
     "SUPPLIER_BONUS": "Bonus Fournisseurs",
+    "SELLER_BONUS": "Primes Vendeurs",
     "EXPENSES": "Dépenses",
     "NET_RESULT": "Résultat Net",
     "SUPPLIERS": "Fournisseurs",
@@ -225,6 +226,9 @@
     "SAVED": "Client enregistré",
     "DELETED": "Client supprimé",
     "NO_RESULTS": "Aucun résultat"
+  },
+  "RELEVE": {
+    "BUTTON": "Relevé"
   },
   "CAISSE": {
     "TITLE": "Caisse",

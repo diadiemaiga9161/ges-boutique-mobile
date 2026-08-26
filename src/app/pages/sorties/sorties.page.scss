@@ -1,3 +1,15 @@
+// BUG FIX (vérifié par capture d'écran) : .lic-footer (global.scss) a
+// gap:0 — pensé pour des boutons d'action collés bord à bord, mais ici
+// réutilisé pour du texte info (badge + "avant → après" + auteur), qui se
+// retrouvait collé sans espace ("94 → 92Administrateur Principal").
+// Corrigé localement plutôt que dans la classe globale, pour ne pas
+// affecter les autres pages qui utilisent .lic-footer pour de vrais boutons.
+.lic-footer {
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+}
+
 .stat-chip {
   display: inline-flex;
   align-items: center;

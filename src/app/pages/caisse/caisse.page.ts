@@ -29,6 +29,11 @@ export class CaissePage implements OnDestroy {
   credits: CreditInfo[] = [];
   creditsEnRetard: CreditInfo[] = [];
   statsJour?: StatistiquesCaisse;
+  // Bénéfice du mois : dernier mois CLÔTURÉ (le précédent, entièrement terminé), pas le mois
+  // en cours — même logique et même raison que côté Angular (toutes les entrées ET sorties
+  // du mois affiché sont déjà connues, donc le chiffre est fiable et non un instantané partiel).
+  statsMois?: StatistiquesCaisse;
+  moisAffiche?: Date;
   comptes: Compte[] = [];
   segment: 'etat' | 'credits' | 'operations' | 'stats' = 'etat';
   loadingStats = false;
@@ -52,16 +57,11 @@ export class CaissePage implements OnDestroy {
     referencePaiement: ''
   };
 
-  reglement = {
-    venteCreditId: 0,
-    montantRegle: 0,
-    modePaiement: ModePaiementCaisse.ESPECES,
-    referencePaiement: ''
-  };
-
-  // Règlement par groupe
-  selectedCreditsForGroup: Set<number> = new Set();
-  showGroupReglementPanel = false;
+  // Le règlement de crédit ne se fait plus depuis la Caisse (uniquement depuis la page
+  // dédiée "Crédits") : la Caisse affiche seulement la liste en lecture seule, groupée
+  // par client, pour ne pas avoir deux endroits différents où encaisser un même crédit.
+  showCreditsClientModal = false;
+  selectedClientCreditsNom = '';
 
   transfertForm = {
     compteId: null as number | null,
@@ -72,6 +72,7 @@ export class CaissePage implements OnDestroy {
   showTransfertModal = false;
 
   ModePaiementCaisse = ModePaiementCaisse;
+  Math = Math;
 
   trackById = (_: number, item: any) => item.id;
 
@@ -118,6 +119,7 @@ export class CaissePage implements OnDestroy {
       event?.target?.complete();
     });
     this.loadStatsJour();
+    this.loadStatsMois();
   }
 
   loadStatsJour(): void {
@@ -129,6 +131,33 @@ export class CaissePage implements OnDestroy {
       },
       error: () => this.loadingStats = false
     });
+  }
+
+  loadStatsMois(): void {
+    const aujourdhui = new Date();
+    const finMoisPrecedent = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 0);
+    const debutMoisPrecedent = new Date(finMoisPrecedent.getFullYear(), finMoisPrecedent.getMonth(), 1);
+    this.moisAffiche = finMoisPrecedent;
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+    this.caisseService.getStatistiquesParPeriode(fmt(debutMoisPrecedent), fmt(finMoisPrecedent)).subscribe({
+      next: stats => { this.statsMois = stats; },
+      error: () => {}
+    });
+  }
+
+  // ── Cartes KPI (mêmes calculs que la page Caisse Angular) ─────────────────
+
+  get ecart(): number { return this.caisse?.ecart || 0; }
+
+  get profitNetMois(): number { return this.statsMois?.soldeNetPeriode ?? 0; }
+  get isPerteMois(): boolean { return this.profitNetMois < 0; }
+  get labelBilanceMois(): string { return this.isPerteMois ? 'Perte nette' : 'Bénéfice net'; }
+  get nomMoisCourant(): string {
+    return (this.moisAffiche || new Date()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  }
+
+  get montantTotalCredits(): number {
+    return this.credits.reduce((sum, c) => sum + (c.montantRestant || 0), 0);
   }
 
   async openCash(): Promise<void> {
@@ -183,51 +212,36 @@ export class CaissePage implements OnDestroy {
     });
   }
 
-  prepareReglement(credit: CreditInfo): void {
-    this.segment = 'credits';
-    this.reglement = {
-      venteCreditId: credit.venteId,
-      montantRegle: credit.montantRestant,
-      modePaiement: ModePaiementCaisse.ESPECES,
-      referencePaiement: ''
-    };
+  /** Crédits en cours regroupés par client, en lecture seule (même principe que la page Caisse Angular). */
+  creditsGroupesParClient(): { nom: string; count: number; totalTotal: number; totalVerse: number; totalRestant: number; enRetard: boolean }[] {
+    const map = new Map<string, CreditInfo[]>();
+    for (const c of this.credits) {
+      const nom = (c.clientNom || 'Client') + (c.clientPrenom ? ' ' + c.clientPrenom : '');
+      if (!map.has(nom)) map.set(nom, []);
+      map.get(nom)!.push(c);
+    }
+    return Array.from(map.entries()).map(([nom, liste]) => ({
+      nom,
+      count: liste.length,
+      totalTotal: liste.reduce((s, c) => s + (c.montantTotal || 0), 0),
+      totalVerse: liste.reduce((s, c) => s + (c.montantVerse || 0), 0),
+      totalRestant: liste.reduce((s, c) => s + (c.montantRestant || 0), 0),
+      enRetard: liste.some(c => c.enRetard)
+    })).sort((a, b) => b.totalRestant - a.totalRestant);
   }
 
-  onCreditSelected(venteId: number): void {
-    const credit = this.credits.find(c => c.venteId === venteId);
-    if (credit) {
-      this.reglement.montantRegle = credit.montantRestant;
-    }
+  get selectedClientCreditsList(): CreditInfo[] {
+    return this.credits.filter(c => ((c.clientNom || 'Client') + (c.clientPrenom ? ' ' + c.clientPrenom : '')) === this.selectedClientCreditsNom);
   }
 
-  getCreditByVenteId(venteId: number): CreditInfo | undefined {
-    return this.credits.find(c => c.venteId === venteId);
+  openCreditsClientModal(nom: string): void {
+    this.selectedClientCreditsNom = nom;
+    this.showCreditsClientModal = true;
   }
 
-  saveReglement(): void {
-    if (!this.reglement.venteCreditId || this.reglement.venteCreditId === 0) {
-      this.presentToast('Sélectionnez un crédit', 'danger');
-      return;
-    }
-    if (!this.reglement.montantRegle || this.reglement.montantRegle <= 0) {
-      this.presentToast('Le montant doit être supérieur à 0', 'danger');
-      return;
-    }
-
-    const credit = this.credits.find(c => c.venteId === this.reglement.venteCreditId);
-    if (credit && this.reglement.montantRegle > credit.montantRestant) {
-      this.presentToast(`Montant max: ${this.caisseService.formatPrice(credit.montantRestant)}`, 'danger');
-      return;
-    }
-
-    this.caisseService.reglementCredit({ ...this.reglement, utilisateurId: this.auth.getUserId() }).subscribe({
-      next: () => {
-        this.presentToast('Règlement enregistré ✓');
-        this.reglement = { venteCreditId: 0, montantRegle: 0, modePaiement: ModePaiementCaisse.ESPECES, referencePaiement: '' };
-        this.load();
-      },
-      error: error => this.presentToast(error.message || 'Règlement impossible', 'danger')
-    });
+  closeCreditsClientModal(): void {
+    this.showCreditsClientModal = false;
+    this.selectedClientCreditsNom = '';
   }
 
   openTransfertModal(): void {
@@ -383,82 +397,6 @@ export class CaissePage implements OnDestroy {
 
   totalMontantCredits(): number {
     return this.credits.reduce((s, c) => s + (c.montantRestant || 0), 0);
-  }
-
-  toggleCreditGroup(venteId: number): void {
-    if (this.selectedCreditsForGroup.has(venteId)) {
-      this.selectedCreditsForGroup.delete(venteId);
-    } else {
-      this.selectedCreditsForGroup.add(venteId);
-    }
-  }
-
-  isCreditSelected(venteId: number): boolean {
-    return this.selectedCreditsForGroup.has(venteId);
-  }
-
-  totalGroupSelected(): number {
-    return this.credits
-      .filter(c => this.selectedCreditsForGroup.has(c.venteId))
-      .reduce((s, c) => s + (c.montantRestant || 0), 0);
-  }
-
-  async regleGroupeCredits(): Promise<void> {
-    if (!this.selectedCreditsForGroup.size) {
-      this.presentToast('Sélectionnez au moins un crédit', 'danger');
-      return;
-    }
-    const total = this.totalGroupSelected();
-    const alert = await this.alertCtrl.create({
-      header: 'Règlement par groupe',
-      message: `${this.selectedCreditsForGroup.size} crédit(s) · Total : <strong>${this.caisseService.formatPrice(total)}</strong>`,
-      inputs: [
-        { name: 'mode', type: 'text', placeholder: 'Mode paiement (ESPECES)', value: 'ESPECES' },
-        { name: 'reference', type: 'text', placeholder: 'Référence (optionnel)' }
-      ],
-      buttons: [
-        { text: 'Annuler', role: 'cancel' },
-        {
-          text: 'Confirmer le règlement groupe',
-          cssClass: 'alert-btn-success',
-          handler: async (data) => {
-            const venteIds = Array.from(this.selectedCreditsForGroup);
-            const mode = (data.mode || 'ESPECES') as ModePaiementCaisse;
-            let success = 0;
-            let errors = 0;
-            for (const venteId of venteIds) {
-              const credit = this.credits.find(c => c.venteId === venteId);
-              if (!credit || !credit.venteId) { errors++; continue; }
-              try {
-                await this.caisseService.reglementCredit({
-                  venteCreditId: credit.venteId,
-                  montantRegle: credit.montantRestant,
-                  modePaiement: mode,
-                  referencePaiement: data.reference || '',
-                  utilisateurId: this.auth.getUserId()
-                }).toPromise();
-                success++;
-              } catch {
-                errors++;
-              }
-            }
-            this.selectedCreditsForGroup.clear();
-            if (success > 0) this.presentToast(`${success} crédit(s) réglé(s) ✓`);
-            if (errors > 0) this.presentToast(`${errors} erreur(s) — vérifiez les crédits`, 'danger');
-            this.load();
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  selectAllCredits(): void {
-    this.credits.forEach(c => { if (c.venteId) this.selectedCreditsForGroup.add(c.venteId); });
-  }
-
-  clearSelection(): void {
-    this.selectedCreditsForGroup.clear();
   }
 
   imprimerCreditsEnCours(): void {

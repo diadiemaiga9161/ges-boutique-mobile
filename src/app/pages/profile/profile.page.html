@@ -49,25 +49,25 @@
     <section class="form-panel stack">
       <h2 class="card-title">Modifier mes informations</h2>
 
-      <ion-item>
-        <ion-input label="Nom complet *" labelPlacement="floating"
-          [(ngModel)]="form.nomComplet"
-          [class.ion-invalid]="!form.nomComplet.trim()"></ion-input>
-      </ion-item>
+      <ion-input label="Nom complet *" labelPlacement="floating" fill="outline"
+        [(ngModel)]="form.nomComplet"
+        [class.ion-invalid]="!form.nomComplet.trim()">
+        <ion-icon name="person-outline" slot="start"></ion-icon>
+      </ion-input>
 
-      <ion-item>
-        <ion-input label="Nom d'utilisateur" labelPlacement="floating"
-          [value]="user?.username" [disabled]="true"></ion-input>
-      </ion-item>
+      <ion-input label="Nom d'utilisateur" labelPlacement="floating" fill="outline"
+        [value]="user?.username" [disabled]="true">
+        <ion-icon name="at-outline" slot="start"></ion-icon>
+      </ion-input>
 
-      <ion-item>
-        <ion-input label="Email *" labelPlacement="floating"
-          type="email"
-          [(ngModel)]="form.email"></ion-input>
-      </ion-item>
+      <ion-input label="Email *" labelPlacement="floating" fill="outline"
+        type="email"
+        [(ngModel)]="form.email">
+        <ion-icon name="mail-outline" slot="start"></ion-icon>
+      </ion-input>
 
       <!-- Téléphone avec sélecteur indicatif pays -->
-      <ion-item class="phone-item">
+      <ion-item class="phone-item" fill="outline">
         <div slot="start" class="country-selector">
           <select [(ngModel)]="selectedCountryCode" class="country-select">
             <option *ngFor="let c of countryCodes" [value]="c.code">
@@ -84,17 +84,18 @@
         Numéro complet : {{ getFullPhone() }}
       </ion-note>
 
-      <ion-item>
-        <ion-input
-          label="Nouveau mot de passe"
-          labelPlacement="floating"
-          [type]="showPassword ? 'text' : 'password'"
-          [(ngModel)]="form.password"
-          placeholder="Laisser vide pour ne pas changer"></ion-input>
+      <ion-input
+        label="Nouveau mot de passe"
+        labelPlacement="floating"
+        fill="outline"
+        [type]="showPassword ? 'text' : 'password'"
+        [(ngModel)]="form.password"
+        placeholder="Laisser vide pour ne pas changer">
+        <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
         <ion-button slot="end" fill="clear" (click)="showPassword = !showPassword">
           <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" slot="icon-only"></ion-icon>
         </ion-button>
-      </ion-item>
+      </ion-input>
       <small class="muted ion-padding-start">Minimum 6 caractères si vous souhaitez le modifier</small>
 
       <ion-button expand="block" [disabled]="loading || !isFormValid" (click)="save()">

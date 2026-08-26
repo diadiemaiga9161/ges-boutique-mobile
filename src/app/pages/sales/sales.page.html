@@ -371,6 +371,11 @@
             <ion-icon name="qr-code-outline"></ion-icon>
             <span>QR</span>
           </button>
+          <button class="saction saction--whatsapp" (click)="envoyerFactureWhatsApp(sale)" [disabled]="!sale.clientTelephone"
+                  [title]="sale.clientTelephone ? 'Envoyer la facture par WhatsApp' : 'Ajoutez un numéro de téléphone au client pour activer l\'envoi WhatsApp'">
+            <ion-icon name="logo-whatsapp"></ion-icon>
+            <span>WhatsApp</span>
+          </button>
         </div>
 
       </article>

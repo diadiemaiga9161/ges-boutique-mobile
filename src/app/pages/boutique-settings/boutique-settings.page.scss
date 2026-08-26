@@ -3,6 +3,66 @@ h1 {
   margin: 0 0 6px;
 }
 
+// -------- En-tête de section (icône + titre) --------
+.settings-section-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+
+  ion-icon { font-size: 1.15rem; color: #1a56db; flex-shrink: 0; }
+}
+
+// -------- Champs de formulaire : espace entre les inputs "outline" --------
+.form-panel {
+  ion-input, ion-textarea {
+    margin-bottom: 10px;
+    --border-radius: 10px;
+    --border-color: #dde5f0;
+    --highlight-color-focused: #1a56db;
+
+    ion-icon[slot="start"] {
+      color: #1a56db;
+      margin-inline-end: 8px;
+      font-size: 1.05rem;
+    }
+  }
+
+  ion-input:last-child, ion-textarea:last-child { margin-bottom: 0; }
+
+  .two-cols {
+    ion-input { margin-bottom: 0; }
+  }
+}
+
+// -------- Ligne "toggle" (fonctionnalité on/off) --------
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-toggle-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 1.2rem; color: #1a56db; }
+}
+
+.settings-toggle-text {
+  flex: 1;
+  min-width: 0;
+
+  h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+  p { font-size: 0.78rem; margin: 0; }
+}
+
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
   h1 { font-size: 1.7rem; }

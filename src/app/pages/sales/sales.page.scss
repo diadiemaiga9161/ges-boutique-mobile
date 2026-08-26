@@ -586,6 +586,9 @@
   &--primary { color: #1a56db; }
   &--qr      { color: #7c3aed; }
   &--retour  { color: #0f766e; }
+  &--whatsapp { color: #0e9f6e; }
+
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 // ══════════════════════════════════════════════════

@@ -15,17 +15,13 @@
 <ion-content [fullscreen]="true">
   <div class="page-pad stack">
 
-    <div class="filter-card">
-      <div class="filter-row">
-        <label>
-          Du
-          <input type="date" [(ngModel)]="dateDebut" (change)="charger()" />
-        </label>
-        <label>
-          Au
-          <input type="date" [(ngModel)]="dateFin" (change)="charger()" />
-        </label>
-      </div>
+    <div class="two-cols">
+      <ion-input label="Du" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateDebut" (ionChange)="charger()">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Au" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateFin" (ionChange)="charger()">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+      </ion-input>
     </div>
 
     <div *ngIf="isLoading" style="text-align:center;padding:24px">

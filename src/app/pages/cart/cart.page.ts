@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ToastController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { Client, ClientService } from '../../services/client.service';
 import { ProductService, Produit } from '../../services/product.service';
@@ -77,6 +77,7 @@ export class CartPage implements OnInit {
     public venteService: VenteService,
     private auth: AuthService,
     private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
     private barcodeService: BarcodeService,
     private promotionService: PromotionService,
     private fonctionnalite: FonctionnaliteService,
@@ -581,7 +582,7 @@ export class CartPage implements OnInit {
       await this.offlineSync.addOfflineAction(this.estCredit ? 'VENTE_CREDIT' : 'VENTE', endpoint, 'POST', base);
       this.mettreAJourStockLocal();
       this.submitting = false;
-      this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
+      this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
       this.reset();
       return;
     }
@@ -594,7 +595,7 @@ export class CartPage implements OnInit {
       next: vente => {
         this.mettreAJourStockLocal();
         this.submitting = false;
-        this.presentToast(`Vente ${vente.numeroVente || vente.id} enregistrée`);
+        this.presentSaleSuccess(`Vente ${vente.numeroVente || vente.id} enregistrée`);
         this.reset();
       },
       error: async error => {
@@ -607,7 +608,7 @@ export class CartPage implements OnInit {
           await this.offlineSync.addOfflineAction(this.estCredit ? 'VENTE_CREDIT' : 'VENTE', endpoint, 'POST', base);
           this.mettreAJourStockLocal();
           this.submitting = false;
-          this.presentToast('📡 Vente enregistrée hors ligne — sera synchronisée');
+          this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée');
           this.reset();
           return;
         }
@@ -665,5 +666,16 @@ export class CartPage implements OnInit {
   private async presentToast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2400, position: 'top' });
     await toast.present();
+  }
+
+  /** Confirmation de vente validée : popup centré (pas un toast en haut) qui se ferme tout seul. */
+  private async presentSaleSuccess(message: string): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'sale-success-alert',
+      message: `<div class="sale-success-badge"><ion-icon name="checkmark"></ion-icon></div><div class="sale-success-text">${message}</div>`,
+      backdropDismiss: true,
+    });
+    await alert.present();
+    setTimeout(() => alert.dismiss().catch(() => {}), 1700);
   }
 }

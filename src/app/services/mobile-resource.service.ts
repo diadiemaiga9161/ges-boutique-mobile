@@ -95,6 +95,14 @@ export const RESOURCE_CONFIGS: ResourceConfig[] = [
     fields: ['fournisseurNom', 'statut'],
     amountField: 'bonusCalcule',
     dateField: 'dateCreation'
+  },
+  {
+    type: 'objectifs-vendeur',
+    title: 'Primes Vendeurs',
+    endpoint: '/objectifs-vendeur',
+    fields: ['vendeurNom', 'statut'],
+    amountField: 'bonusMontant',
+    dateField: 'dateCreation'
   }
 ];
 

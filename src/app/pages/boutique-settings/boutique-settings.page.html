@@ -40,67 +40,63 @@
 
     <!-- Informations générales -->
     <section class="form-panel stack">
-      <h2 class="card-title">Informations générales</h2>
-      <ion-item>
-        <ion-input label="Nom de la boutique *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Téléphone" labelPlacement="floating" type="tel" [(ngModel)]="form.telephone"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Téléphone 2 (rapport)" labelPlacement="floating" type="tel" [(ngModel)]="form.telephone2"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Téléphone 3 (rapport)" labelPlacement="floating" type="tel" [(ngModel)]="form.telephone3"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Email" labelPlacement="floating" type="email" [(ngModel)]="form.email"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="form.adresse"></ion-textarea>
-      </ion-item>
+      <h2 class="card-title settings-section-hdr"><ion-icon name="storefront-outline"></ion-icon> Informations générales</h2>
+      <ion-input label="Nom de la boutique *" labelPlacement="floating" fill="outline" [(ngModel)]="form.nom">
+        <ion-icon name="business-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Téléphone" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone">
+        <ion-icon name="call-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Téléphone 2 (rapport)" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone2">
+        <ion-icon name="call-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Téléphone 3 (rapport)" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone3">
+        <ion-icon name="call-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Email" labelPlacement="floating" type="email" fill="outline" [(ngModel)]="form.email">
+        <ion-icon name="mail-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-textarea label="Adresse" labelPlacement="floating" fill="outline" [(ngModel)]="form.adresse"></ion-textarea>
       <div class="two-cols">
-        <ion-item>
-          <ion-input label="Ville" labelPlacement="floating" [(ngModel)]="form.ville"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-input label="Pays" labelPlacement="floating" [(ngModel)]="form.pays"></ion-input>
-        </ion-item>
+        <ion-input label="Ville" labelPlacement="floating" fill="outline" [(ngModel)]="form.ville">
+          <ion-icon name="location-outline" slot="start"></ion-icon>
+        </ion-input>
+        <ion-input label="Pays" labelPlacement="floating" fill="outline" [(ngModel)]="form.pays">
+          <ion-icon name="flag-outline" slot="start"></ion-icon>
+        </ion-input>
       </div>
-      <ion-item>
-        <ion-input label="Devise" labelPlacement="floating" [(ngModel)]="form.devise" placeholder="FCFA"></ion-input>
-      </ion-item>
+      <ion-input label="Devise" labelPlacement="floating" fill="outline" [(ngModel)]="form.devise" placeholder="FCFA">
+        <ion-icon name="cash-outline" slot="start"></ion-icon>
+      </ion-input>
     </section>
 
     <!-- Informations légales -->
     <section class="form-panel stack">
-      <h2 class="card-title">Informations légales</h2>
-      <ion-item>
-        <ion-input label="Numéro RC (Registre du commerce)" labelPlacement="floating" [(ngModel)]="form.numeroRc"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Numéro IFU (Identifiant fiscal)" labelPlacement="floating" [(ngModel)]="form.numeroIfu"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="form.description"></ion-textarea>
-      </ion-item>
+      <h2 class="card-title settings-section-hdr"><ion-icon name="document-text-outline"></ion-icon> Informations légales</h2>
+      <ion-input label="Numéro RC (Registre du commerce)" labelPlacement="floating" fill="outline" [(ngModel)]="form.numeroRc">
+        <ion-icon name="ribbon-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-input label="Numéro IFU (Identifiant fiscal)" labelPlacement="floating" fill="outline" [(ngModel)]="form.numeroIfu">
+        <ion-icon name="finger-print-outline" slot="start"></ion-icon>
+      </ion-input>
+      <ion-textarea label="Description" labelPlacement="floating" fill="outline" [(ngModel)]="form.description"></ion-textarea>
     </section>
 
     <!-- Fonctionnalités avancées -->
     <section class="form-panel stack">
-      <h2 class="card-title">Fonctionnalités avancées</h2>
+      <h2 class="card-title settings-section-hdr"><ion-icon name="options-outline"></ion-icon> Fonctionnalités avancées</h2>
 
-      <ion-item lines="none">
-        <ion-icon name="cube-outline" slot="start" color="primary"></ion-icon>
-        <ion-label>
+      <div class="settings-toggle-row">
+        <div class="settings-toggle-icon"><ion-icon name="cube-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
           <h3>Gestion par conditionnement</h3>
           <p class="muted">Vendre par Carton, Cartouche, Pièce... avec prix différents</p>
-        </ion-label>
-        <ion-toggle slot="end"
+        </div>
+        <ion-toggle
           [checked]="conditionnementActif"
           (ionChange)="toggleConditionnement($event)">
         </ion-toggle>
-      </ion-item>
+      </div>
     </section>
 
     <!-- Actions -->

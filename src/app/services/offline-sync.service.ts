@@ -68,13 +68,26 @@ export class OfflineSyncService {
     for (const action of actionsToSync) {
       try {
         await this.queueService.updateActionStatus(action.id, 'EN_COURS');
-        const result = await this.executeAction(action).toPromise();
-
-        if (result) {
+        // Le corps de la réponse n'est jamais utilisé ici — seul le fait que
+        // la requête aboutisse compte. Si elle n'a pas levé d'exception,
+        // c'est un succès, même si le corps est vide (result falsy) : ne
+        // JAMAIS laisser l'action bloquée en EN_COURS faute de résultat.
+        await this.executeAction(action).toPromise();
+        await this.queueService.updateActionStatus(action.id, 'SUCCES');
+        successCount++;
+      } catch (error: any) {
+        // Piège HttpClient : une réponse 2xx avec un corps vide/non-JSON
+        // (fréquent sur des endpoints qui ne renvoient rien) fait échouer le
+        // parsing JSON même quand la requête a réussi côté serveur. Dans ce
+        // cas error.status reflète le vrai statut HTTP — on traite ça comme
+        // un succès plutôt que d'afficher une fausse "erreur JSON" et de
+        // rejouer indéfiniment une opération déjà appliquée côté serveur.
+        if (error?.status >= 200 && error.status < 300) {
           await this.queueService.updateActionStatus(action.id, 'SUCCES');
           successCount++;
+          continue;
         }
-      } catch (error: any) {
+
         failureCount++;
         const errorMsg = error?.error?.message || error?.message || 'Erreur inconnue';
         await this.queueService.updateActionStatus(action.id, 'ECHEC', errorMsg);
@@ -137,14 +150,20 @@ export class OfflineSyncService {
   private executeAction(action: OfflineAction): Observable<any> {
     const headers = { 'X-Client-Request-ID': action.clientRequestId };
     const data = this.sanitizeActionData(action);
+    // responseType 'text' : on ne se sert jamais du corps de la réponse ici,
+    // seulement du fait que la requête aboutisse. Demander du JSON par
+    // défaut fait planter HttpClient (SyntaxError) dès qu'un endpoint répond
+    // avec un corps vide — cas fréquent sur des POST/PUT qui ne renvoient
+    // rien — même quand le serveur a bien appliqué l'opération.
+    const opts = { headers, responseType: 'text' as const };
 
     switch (action.method) {
       case 'POST':
-        return this.http.post(action.endpoint, data, { headers });
+        return this.http.post(action.endpoint, data, opts);
       case 'PUT':
-        return this.http.put(action.endpoint, data, { headers });
+        return this.http.put(action.endpoint, data, opts);
       case 'DELETE':
-        return this.http.delete(action.endpoint, { headers });
+        return this.http.delete(action.endpoint, opts);
       default:
         throw new Error(`Méthode HTTP non supportée: ${action.method}`);
     }

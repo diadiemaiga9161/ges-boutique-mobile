@@ -400,6 +400,44 @@ export class SalesPage implements OnDestroy {
     document.body.removeChild(link);
   }
 
+  // ==================== WHATSAPP ====================
+
+  envoyerFactureWhatsApp(vente: VenteMap): void {
+    if (!vente.clientTelephone) {
+      this.presentToast('Ajoutez un numéro de téléphone à ce client pour activer l\'envoi WhatsApp', 'danger');
+      return;
+    }
+    const message = this.construireMessageWhatsAppVente(vente);
+    const clean = vente.clientTelephone.replace(/[\s()\-+]/g, '');
+    window.open(`https://wa.me/${clean}?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
+  private construireMessageWhatsAppVente(vente: VenteMap): string {
+    const boutique = this.boutiqueService.getInfo();
+    const nomClient = [vente.clientPrenom, vente.clientNom].filter(Boolean).join(' ') || vente.clientNom || 'Client';
+    const lignesVente = vente.lignes || vente.produits || [];
+
+    const lignes = [
+      `🧾 *Facture de vente N°${vente.numeroVente}*`,
+      `🏪 ${boutique.nom || 'Ges Boutique'}`,
+      `👤 Client : ${nomClient}`,
+      `📅 ${this.venteService.formatDate(vente.dateVente)}`,
+      ``,
+      ...lignesVente.map(l => `${l.produitNom} ×${l.quantite} — ${this.money(l.sousTotal || l.quantite * l.prixUnitaire)}`),
+      ``,
+      `💰 Montant total : ${this.money(vente.montantTotal)}`
+    ];
+    if (vente.montantRemiseTotal > 0) {
+      lignes.push(`🏷️ Remise : -${this.money(vente.montantRemiseTotal)}`);
+    }
+    lignes.push(`✅ Net à payer : ${this.money(vente.montantApresRemise ?? vente.montantTotal)}`);
+    if (vente.estCredit) {
+      lignes.push(`💵 Versé : ${this.money(vente.montantVerse || 0)}`);
+      lignes.push(`⏳ Reste à payer : ${this.money(vente.montantRestant || 0)}`);
+    }
+    return lignes.join('\n');
+  }
+
   private creerEtImprimerFacture(vente: VenteMap): void {
     const userId = this.auth.getUserId();
     this.factureService.creerFactureDepuisVente(vente.id, null, userId).subscribe({

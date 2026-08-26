@@ -148,6 +148,10 @@
       <p class="hsr-val">{{ transferts.length }}</p>
       <p class="hsr-lbl">Transferts</p>
     </div>
+    <div class="hsr-item">
+      <p class="hsr-val">{{ montantTotalAffiche | number:'1.0-0' }} F</p>
+      <p class="hsr-lbl">Montant total</p>
+    </div>
   </div>
 
   <div class="sk-list" *ngIf="isLoading">

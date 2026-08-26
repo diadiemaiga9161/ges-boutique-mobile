@@ -204,6 +204,11 @@
             <ion-icon name="document-text-outline" slot="start"></ion-icon>
             Reçu
           </ion-button>
+          <ion-button *ngIf="d.sourceExterne" fill="solid" size="small" style="--background:#25D366;--color:#fff"
+                      (click)="envoyerRecuWhatsApp(d)">
+            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+            WhatsApp
+          </ion-button>
         </div>
       </div>
 

@@ -18,11 +18,14 @@
   </ion-refresher>
 
   <div class="page-pad stack" *ngIf="config">
-    <ion-searchbar [(ngModel)]="query" placeholder="Rechercher" (keyup.enter)="load()"></ion-searchbar>
-    <ion-button expand="block" fill="outline" (click)="load()">
-      <ion-icon name="search-outline" slot="start"></ion-icon>
-      Rechercher
-    </ion-button>
+    <!-- Recherche + bouton compacts sur une seule ligne (au lieu de deux invites "Rechercher"
+         empilées, redondantes et encombrantes). -->
+    <div style="display:flex; align-items:center; gap:6px">
+      <ion-searchbar [(ngModel)]="query" placeholder="Rechercher" (keyup.enter)="load()" style="flex:1; padding:0"></ion-searchbar>
+      <ion-button (click)="load()" style="flex-shrink:0; margin:0; height:40px" title="Rechercher">
+        <ion-icon name="search-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
 
     <section class="form-panel stack" *ngIf="showForm && type !== 'fournisseurs'">
       <div class="row-between">
@@ -265,9 +268,28 @@
           </div>
           <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="objectifForm.observation" rows="2"></ion-textarea></ion-item>
         </ng-container>
+
+        <ng-container *ngSwitchCase="'objectifs-vendeur'">
+          <ion-item>
+            <ion-select label="Vendeur *" labelPlacement="stacked" [(ngModel)]="objectifVendeurForm.vendeurId" [disabled]="selected?.bonusValide">
+              <ion-select-option [value]="0">— Sélectionner —</ion-select-option>
+              <ion-select-option [value]="v.id" *ngFor="let v of sellerUsers">{{ v.nomComplet }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div class="two-cols">
+            <ion-item><ion-input label="Semaine (1-53) *" labelPlacement="floating" type="number" min="1" max="53" [(ngModel)]="objectifVendeurForm.semaine" [disabled]="selected?.bonusValide"></ion-input></ion-item>
+            <ion-item><ion-input label="Année *" labelPlacement="floating" type="number" [(ngModel)]="objectifVendeurForm.annee" [disabled]="selected?.bonusValide"></ion-input></ion-item>
+          </div>
+          <div class="two-cols">
+            <ion-item><ion-input label="Objectif ventes *" labelPlacement="floating" type="number" [(ngModel)]="objectifVendeurForm.objectifNombreVentes" placeholder="ex: 1000" [disabled]="selected?.bonusValide"></ion-input></ion-item>
+            <ion-item><ion-input label="Bonus (FCFA) *" labelPlacement="floating" type="number" [(ngModel)]="objectifVendeurForm.bonusMontant" placeholder="ex: 10000" [disabled]="selected?.bonusValide"></ion-input></ion-item>
+          </div>
+          <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="objectifVendeurForm.observation" rows="2" [disabled]="selected?.bonusValide"></ion-textarea></ion-item>
+          <p class="muted" *ngIf="selected?.bonusValide" style="color:#dc2626">Cette prime est déjà validée : modification impossible.</p>
+        </ng-container>
       </ng-container>
 
-      <ion-button expand="block" (click)="save()" *ngIf="type !== 'paiement-employe'">
+      <ion-button expand="block" (click)="save()" *ngIf="type !== 'paiement-employe' && !(type === 'objectifs-vendeur' && selected?.bonusValide)">
         <ion-icon name="save-outline" slot="start"></ion-icon>
         Enregistrer
       </ion-button>
@@ -746,13 +768,83 @@
     </ng-container>
     <!-- ======= FIN OBJECTIFS FOURNISSEURS ======= -->
 
-    <!-- Autres types : liste générique -->
-    <section class="stack" *ngIf="type !== 'fournisseurs' && type !== 'vendeurs' && type !== 'employes' && type !== 'depots-garde' && type !== 'objectifs-fournisseur' && items.length; else emptyGeneric">
+    <!-- ======= PRIMES VENDEURS (objectifs-vendeur) ======= -->
+    <ng-container *ngIf="type === 'objectifs-vendeur'">
+      <section class="stack" *ngIf="items.length; else emptyGeneric">
+        <article class="client-card" *ngFor="let o of items">
+          <div class="client-header">
+            <div class="client-avatar" [style.background]="o.statut === 'ATTEINT' ? '#16a34a' : '#f59e0b'">
+              {{ (o.vendeurNom || '?')[0].toUpperCase() }}
+            </div>
+            <div class="client-info">
+              <h2 class="client-name">
+                {{ o.vendeurNom }}
+                <ion-badge [color]="o.statut === 'ATTEINT' ? 'success' : 'warning'" style="font-size:0.62rem">
+                  {{ o.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint' }}
+                </ion-badge>
+                <ion-badge *ngIf="o.bonusValide" color="primary" style="font-size:0.58rem">Prime validée ✓</ion-badge>
+              </h2>
+              <p class="client-phone">
+                <ion-icon name="calendar-outline"></ion-icon>
+                Semaine {{ o.semaine }}/{{ o.annee }}
+              </p>
+              <p class="client-phone">
+                <ion-icon name="trophy-outline"></ion-icon>
+                Objectif : {{ o.objectifNombreVentes | number:'1.0-0' }} ventes · Atteint : {{ o.nombreVentesAtteint | number:'1.0-0' }} ventes
+              </p>
+              <div style="margin-top:4px">
+                <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
+                  <div [style.width.%]="objectifVendeurService.getPourcentageAtteinte(o)"
+                    [style.background]="o.statut === 'ATTEINT' ? '#16a34a' : '#f59e0b'"
+                    style="height:100%;border-radius:3px"></div>
+                </div>
+                <p style="font-size:0.7rem;color:#64748b;margin-top:2px">
+                  {{ objectifVendeurService.getPourcentageAtteinte(o) }}% · Bonus : {{ objectifVendeurService.formatMontant(o.bonusMontant) }}
+                </p>
+                <p *ngIf="o.observation" style="font-size:0.7rem;color:#64748b;margin-top:2px">{{ o.observation }}</p>
+              </div>
+            </div>
+            <div class="client-edit-btns">
+              <ion-button fill="clear" size="small" (click)="edit(o)" *ngIf="!o.bonusValide">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <div class="client-actions">
+            <button class="client-action-btn accent"
+              *ngIf="o.statut === 'ATTEINT' && !o.bonusValide"
+              (click)="action(o, 'objectif-vendeur-valider')">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>Valider</span>
+            </button>
+            <button class="client-action-btn" style="color:#dc2626"
+              (click)="action(o, 'objectif-vendeur-delete')" *ngIf="!o.bonusValide">
+              <ion-icon name="trash-outline" style="color:#dc2626"></ion-icon>
+              <span>Supprimer</span>
+            </button>
+          </div>
+        </article>
+      </section>
+    </ng-container>
+    <!-- ======= FIN PRIMES VENDEURS ======= -->
+
+    <!-- Autres types : liste générique. Le "type" et le "vide" sont deux conditions
+         séparées exprès : les types avec leur propre section (fournisseurs, vendeurs,
+         employes, depots-garde, objectifs-fournisseur, objectifs-vendeur) gèrent déjà leur propre état vide
+         plus haut — sans ce ng-container, ce bloc retombait AUSSI sur #emptyGeneric dès
+         que le type ne correspondait pas, doublant le message "Aucune donnée". -->
+    <ng-container *ngIf="type !== 'fournisseurs' && type !== 'vendeurs' && type !== 'employes' && type !== 'depots-garde' && type !== 'objectifs-fournisseur' && type !== 'objectifs-vendeur'">
+    <section class="stack" *ngIf="items.length; else emptyGeneric">
       <article class="mobile-card" *ngFor="let item of items">
         <div class="row-between">
-          <div>
-            <h2 class="card-title">{{ title(item) }}</h2>
-            <p class="card-subtitle">{{ subtitle(item) }}</p>
+          <div style="display:flex; gap:12px; align-items:flex-start; min-width:0">
+            <div class="lic-avatar" [ngClass]="iconMeta().color" style="width:36px;height:36px;flex-shrink:0">
+              <ion-icon [name]="iconMeta().icon" style="font-size:1.1rem"></ion-icon>
+            </div>
+            <div style="min-width:0">
+              <h2 class="card-title">{{ title(item) }}</h2>
+              <p class="card-subtitle">{{ subtitle(item) }}</p>
+            </div>
           </div>
           <p class="price">{{ amount(item) }}</p>
         </div>
@@ -787,6 +879,7 @@
         </div>
       </article>
     </section>
+    </ng-container>
 
     <ng-template #emptyGeneric>
       <div class="empty-state" *ngIf="type !== 'fournisseurs'">Aucune donnée</div>

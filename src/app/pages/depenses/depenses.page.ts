@@ -3,6 +3,7 @@ import { AlertController, ToastController } from '@ionic/angular';
 import { forkJoin } from 'rxjs';
 import { Depense, DepenseRequest, DepenseService, TypeDepense } from '../../services/depense.service';
 import { PaiementEmploye, PaiementEmployeService } from '../../services/paiement-employe.service';
+import { Employe, EmployeService } from '../../services/employe.service';
 import { BoutiqueService } from '../../services/boutique.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
@@ -17,6 +18,7 @@ export class DepensesPage {
 
   depenses: Depense[] = [];
   paiementsEmploye: PaiementEmploye[] = [];
+  employes: Employe[] = [];
   totalDepenses = 0;
   loading = false;
   showForm = false;
@@ -48,6 +50,7 @@ export class DepensesPage {
   constructor(
     private depenseService: DepenseService,
     private paiementEmployeService: PaiementEmployeService,
+    private employeService: EmployeService,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private boutiqueService: BoutiqueService,
@@ -65,14 +68,16 @@ export class DepensesPage {
     this.pageActuelle = 1;
     forkJoin({
       dep: this.depenseService.getAll(),
-      sal: this.paiementEmployeService.getTous()
+      sal: this.paiementEmployeService.getTous(),
+      emp: this.employeService.getTous()
     }).subscribe({
-      next: ({ dep, sal }) => {
+      next: ({ dep, sal, emp }) => {
         // Normalisation robuste de la réponse
         const depenses = (dep as any)?.data?.depenses || (dep as any)?.depenses || (Array.isArray(dep) ? dep : []);
         const total = (dep as any)?.data?.total || (dep as any)?.total || depenses.reduce((s: number, d: any) => s + (d.montant || 0), 0);
         this.depenses = depenses;
         this.paiementsEmploye = (Array.isArray(sal) ? sal : []).filter((p: PaiementEmploye) => p.statut === 'PAYE');
+        this.employes = Array.isArray(emp) ? emp : [];
         this.totalDepenses = total + this.paiementsEmploye.reduce((s, p) => s + p.montant, 0);
         this.loading = false;
         this.calculerTotauxParType();
@@ -119,6 +124,7 @@ export class DepensesPage {
   get paiementsCommeDep(): any[] {
     return this.paiementsEmploye.map(p => ({
       id: 'emp_' + p.id,
+      employeId: p.employeId,
       nom: p.employeNomComplet,
       motif: p.employePoste || 'Salaire',
       date: (p.datePaiement || '').split('T')[0],
@@ -391,6 +397,39 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
 </div></body></html>`;
 
     this.openLocalOverlay(html);
+  }
+
+  /** Envoi du reçu de paiement par WhatsApp directement au numéro enregistré sur la fiche employé. */
+  envoyerRecuWhatsApp(dep: any): void {
+    const employe = this.employes.find(e => e.id === dep.employeId);
+    const telephone = employe?.telephone;
+    const telPropre = (telephone || '').replace(/\D/g, '');
+    if (!telPropre) {
+      this.toast(`Ajoutez un numéro de téléphone à la fiche de ${dep.nom} pour activer l'envoi WhatsApp.`, 'warning');
+      return;
+    }
+
+    const boutique = this.boutiqueService.getInfo();
+    const montantFmt = (dep.montant || 0).toLocaleString('fr-FR');
+    const periodeLabel = dep.periodeFin && dep.periodeFin !== dep.periodeDebut ? `${dep.periodeDebut} à ${dep.periodeFin}` : dep.periodeDebut;
+
+    const lignes = [
+      `*${boutique?.nom || 'Ges Boutique'}*`,
+      `Reçu de paiement de salaire`,
+      `Employé : ${dep.nom}`,
+      `Date : ${dep.date || new Date().toLocaleDateString('fr-FR')}`,
+      ``,
+      `Poste : ${dep.employePoste || '—'}`,
+      `Période : ${periodeLabel || '—'}`,
+      `Nombre de mois : ${dep.nombreMois || 1}`,
+      ``,
+      `Montant payé : ${montantFmt} FCFA`,
+      ``,
+      `Merci de votre confiance.`
+    ];
+    if (boutique?.telephone) lignes.push(`${boutique.nom} — ${boutique.telephone}`);
+
+    window.open(`https://wa.me/${telPropre}?text=${encodeURIComponent(lignes.join('\n'))}`, '_blank');
   }
 
   ouvrirPdfDepenses(): void {

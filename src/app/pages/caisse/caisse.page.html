@@ -17,39 +17,41 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Cartes colorées principales -->
+  <!-- Cartes colorées principales — mêmes 4 chiffres que Caisse Angular, mais une seule
+       ligne de détail par carte pour que ce soit compris d'un coup d'œil (pas de double
+       ligne entrées/sorties, pas de note en plus). -->
   <div class="color-cards" style="padding: 14px 14px 0;">
 
-    <!-- Caisse Totale — Bleu -->
+    <!-- Solde actuel — Bleu -->
     <div class="color-card cc-blue">
       <ion-icon name="wallet-outline"></ion-icon>
-      <p class="cc-label">Caisse Totale</p>
-      <p class="cc-value">{{ caisseService.formatPrice(caisse?.soldeActuel || 0) }}</p>
-      <p class="cc-sub">{{ caisse?.estOuverte ? 'Ouverte' : 'Fermée' }}</p>
+      <p class="cc-label">Solde actuel</p>
+      <p class="cc-value" style="font-size:1.4rem">{{ caisseService.formatPrice(caisse?.soldeActuel || 0) }}</p>
+      <p class="cc-sub">{{ ecart === 0 ? 'Aucun écart' : (ecart > 0 ? '+' : '') + caisseService.formatPrice(ecart) + ' d\'écart' }}</p>
     </div>
 
-    <!-- Bilan Net — Violet -->
-    <div class="color-card cc-purple">
-      <ion-icon name="trending-up-outline"></ion-icon>
-      <p class="cc-label">Bilan net</p>
-      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.soldeNetPeriode || 0) }}</p>
-      <p class="cc-sub">Entrées - Sorties</p>
-    </div>
-
-    <!-- Entrées — Vert -->
+    <!-- Caisse du jour — Vert -->
     <div class="color-card cc-green">
-      <ion-icon name="arrow-up-circle-outline"></ion-icon>
-      <p class="cc-label">Entrées</p>
-      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.totalEntrees || 0) }}</p>
-      <p class="cc-sub">Aujourd'hui</p>
+      <ion-icon name="calendar-outline"></ion-icon>
+      <p class="cc-label">Caisse du jour</p>
+      <p class="cc-value" style="font-size:1.4rem">{{ caisseService.formatPrice(statsJour?.soldeNetPeriode || 0) }}</p>
+      <p class="cc-sub">↑ {{ caisseService.formatPrice(statsJour?.totalEntrees || 0) }} · ↓ {{ caisseService.formatPrice(statsJour?.totalSorties || 0) }}</p>
     </div>
 
-    <!-- Sorties — Rouge -->
-    <div class="color-card cc-red">
-      <ion-icon name="arrow-down-circle-outline"></ion-icon>
-      <p class="cc-label">Sorties</p>
-      <p class="cc-value">{{ caisseService.formatPrice(statsJour?.totalSorties || 0) }}</p>
-      <p class="cc-sub">Aujourd'hui</p>
+    <!-- Bénéfice net du mois clôturé — Violet (ou rouge si perte) -->
+    <div class="color-card" [class.cc-purple]="!isPerteMois" [class.cc-red]="isPerteMois">
+      <ion-icon [name]="isPerteMois ? 'trending-down-outline' : 'trending-up-outline'"></ion-icon>
+      <p class="cc-label">{{ labelBilanceMois }} · {{ nomMoisCourant }}</p>
+      <p class="cc-value" style="font-size:1.4rem">{{ isPerteMois ? '-' : '+' }}{{ caisseService.formatPrice(Math.abs(profitNetMois)) }}</p>
+      <p class="cc-sub">Mois clôturé</p>
+    </div>
+
+    <!-- Crédits clients — Orange -->
+    <div class="color-card cc-orange">
+      <ion-icon name="card-outline"></ion-icon>
+      <p class="cc-label">Crédits clients</p>
+      <p class="cc-value" style="font-size:1.4rem">{{ credits.length }}</p>
+      <p class="cc-sub">Reste à payer : {{ caisseService.formatPrice(montantTotalCredits) }}</p>
     </div>
 
   </div>
@@ -60,7 +62,9 @@
       <ion-segment-button value="etat">État</ion-segment-button>
       <ion-segment-button value="credits">Crédits</ion-segment-button>
       <ion-segment-button value="operations">Opérations</ion-segment-button>
-      <ion-segment-button value="stats">Stats</ion-segment-button>
+      <!-- Onglet Stats retiré : les KPI (bilan du jour, crédits...) sont désormais déjà
+           affichés en haut de page (cartes colorées), cet onglet devenait redondant. -->
+      <!-- <ion-segment-button value="stats">Stats</ion-segment-button> -->
     </ion-segment>
 
     <!-- Onglet État -->
@@ -71,19 +75,12 @@
             <h2 class="card-title">{{ caisse?.numeroCaisse || 'Caisse principale' }}</h2>
             <p class="card-subtitle">Ouverte: {{ caisse?.dateOuverture ? caisseService.formatDateShort(caisse?.dateOuverture) : '-' }}</p>
           </div>
-          <ion-badge [color]="caisse?.estOuverte ? 'success' : 'medium'">
-            {{ caisse?.estOuverte ? 'Active' : 'Inactive' }}
-          </ion-badge>
         </div>
-        <div class="two-cols" *ngIf="caisse">
-          <div class="stat-card">
-            <p class="stat-label">Entrées totales</p>
-            <p class="stat-value success">{{ caisseService.formatPrice(caisse.totalEntrees || 0) }}</p>
-          </div>
-          <div class="stat-card">
-            <p class="stat-label">Sorties totales</p>
-            <p class="stat-value danger">{{ caisseService.formatPrice(caisse.totalSorties || 0) }}</p>
-          </div>
+        <!-- Sorties du jour (spécifiquement aujourd'hui, pas le total depuis toujours —
+             c'est cette valeur-là qui est utile pour surveiller la caisse au quotidien). -->
+        <div class="stat-card" *ngIf="statsJour">
+          <p class="stat-label">Sorties du jour</p>
+          <p class="stat-value danger">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
         </div>
         <ion-button expand="block" color="success" *ngIf="!caisse?.estOuverte" (click)="openCash()">
           <ion-icon name="lock-open-outline" slot="start"></ion-icon>
@@ -144,104 +141,27 @@
         </div>
       </div>
 
-      <!-- Règlement crédit EN HAUT -->
-      <div class="form-panel stack" *ngIf="credits.length">
-        <h2 class="card-title">
-          <ion-icon name="checkmark-circle-outline" style="color:#0e9f6e;margin-right:6px"></ion-icon>
-          Régler un crédit
-        </h2>
-
-        <ion-item>
-          <ion-select label="Sélectionner le crédit *" labelPlacement="stacked"
-            [(ngModel)]="reglement.venteCreditId"
-            (ionChange)="onCreditSelected(reglement.venteCreditId)"
-            interface="action-sheet">
-            <ion-select-option [value]="credit.venteId" *ngFor="let credit of credits">
-              {{ credit.clientNom }} · {{ caisseService.formatPrice(credit.montantRestant) }}
-              {{ credit.enRetard ? '⚠ En retard' : '' }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <div class="credit-selected-info" *ngIf="reglement.venteCreditId">
-          <ng-container *ngFor="let c of credits">
-            <ng-container *ngIf="c.venteId === reglement.venteCreditId">
-              <div class="stat-row"><span>Client</span><strong>{{ c.clientNom }}</strong></div>
-              <div class="stat-row"><span>Total vente</span><strong>{{ caisseService.formatPrice(c.montantTotal) }}</strong></div>
-              <div class="stat-row"><span>Déjà versé</span><strong class="success">{{ caisseService.formatPrice(c.montantVerse) }}</strong></div>
-              <div class="stat-row"><span>Reste à payer</span><strong class="warning">{{ caisseService.formatPrice(c.montantRestant) }}</strong></div>
-            </ng-container>
-          </ng-container>
-        </div>
-
-        <ion-item>
-          <ion-input label="Montant à régler *" labelPlacement="floating"
-            type="number" [(ngModel)]="reglement.montantRegle"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-select label="Mode paiement *" labelPlacement="stacked" [(ngModel)]="reglement.modePaiement">
-            <ion-select-option value="ESPECES">Espèces</ion-select-option>
-            <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
-            <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
-            <ion-select-option value="CARTE_BANCAIRE">Carte bancaire</ion-select-option>
-            <ion-select-option value="VIREMENT">Virement</ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-item *ngIf="reglement.modePaiement !== 'ESPECES'">
-          <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="reglement.referencePaiement"></ion-input>
-        </ion-item>
-
-        <ion-button expand="block" color="success" (click)="saveReglement()"
-          [disabled]="!reglement.venteCreditId || !reglement.montantRegle">
-          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-          Confirmer le règlement
-        </ion-button>
-      </div>
-
-      <!-- Barre d'actions groupe -->
-      <div class="group-bar" *ngIf="!loadingCredits && credits.length">
-        <div class="group-bar-left">
-          <ion-button fill="outline" size="small" (click)="selectAllCredits()">Tout sélectionner</ion-button>
-          <ion-button fill="clear" size="small" color="medium" (click)="clearSelection()" *ngIf="selectedCreditsForGroup.size">Désélectionner</ion-button>
-        </div>
-        <ion-button size="small" color="success" (click)="regleGroupeCredits()" *ngIf="selectedCreditsForGroup.size">
-          <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
-          Régler ({{ selectedCreditsForGroup.size }}) · {{ money(totalGroupSelected()) }}
-        </ion-button>
-      </div>
-
+      <!-- Lecture seule : le règlement des crédits se fait uniquement depuis la page
+           "Crédits" dédiée (bouton "Régler" retiré ici), pour ne pas avoir deux endroits
+           différents où encaisser un même crédit. -->
       <div *ngIf="creditsEnRetard.length" class="mobile-card row-between">
         <span class="muted">Crédits en retard</span>
         <ion-badge color="danger">{{ creditsEnRetard.length }}</ion-badge>
       </div>
 
-      <article class="mobile-card" *ngFor="let credit of credits; trackBy: trackById"
-        [class.credit-retard]="credit.enRetard"
-        [class.credit-selected]="isCreditSelected(credit.venteId || credit.id)">
+      <article class="mobile-card" *ngFor="let groupe of creditsGroupesParClient()" [class.credit-retard]="groupe.enRetard" (click)="openCreditsClientModal(groupe.nom)">
         <div class="row-between">
-          <div style="display:flex;align-items:center;gap:8px">
-            <ion-checkbox
-              [checked]="isCreditSelected(credit.venteId)"
-              (ionChange)="toggleCreditGroup(credit.venteId)">
-            </ion-checkbox>
-            <div>
-              <h2 class="card-title">{{ credit.clientNom || 'Client' }}</h2>
-              <p class="card-subtitle">{{ credit.numeroVente }} · {{ caisseService.formatDateShort(credit.dateEcheance) }}</p>
-            </div>
+          <div>
+            <h2 class="card-title">{{ groupe.nom }}</h2>
+            <p class="card-subtitle">{{ groupe.count }} crédit{{ groupe.count > 1 ? 's' : '' }}</p>
           </div>
-          <ion-button fill="clear" size="small" (click)="prepareReglement(credit)">
-            <ion-icon name="cash-outline" slot="icon-only"></ion-icon>
-          </ion-button>
+          <ion-icon name="chevron-forward-outline" style="color:#94a3b8"></ion-icon>
         </div>
         <div class="row-between">
-          <span class="muted">Total: {{ caisseService.formatPrice(credit.montantTotal) }}</span>
-          <span class="price">Reste: {{ caisseService.formatPrice(credit.montantRestant) }}</span>
+          <span class="muted">Total: {{ caisseService.formatPrice(groupe.totalTotal) }}</span>
+          <span class="price">Reste: {{ caisseService.formatPrice(groupe.totalRestant) }}</span>
         </div>
-        <ion-badge [color]="getCreditStatus(credit) === 'Réglé' ? 'success' : (credit.enRetard ? 'danger' : 'warning')">
-          {{ getCreditStatus(credit) }}
-        </ion-badge>
+        <ion-badge [color]="groupe.enRetard ? 'danger' : 'warning'" *ngIf="groupe.enRetard">En retard</ion-badge>
       </article>
 
       <div class="empty-v2" *ngIf="!credits.length && !loadingCredits">
@@ -250,6 +170,45 @@
         <p class="empty-v2__text">Tous les crédits ont été réglés</p>
       </div>
     </section>
+
+    <!-- Modal : crédits d'un client (lecture seule) -->
+    <ion-modal [isOpen]="showCreditsClientModal" (didDismiss)="closeCreditsClientModal()">
+      <ng-template>
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ selectedClientCreditsNom }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button (click)="closeCreditsClientModal()">
+                <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding stack">
+          <article class="mobile-card" *ngFor="let credit of selectedClientCreditsList" [class.credit-retard]="credit.enRetard">
+            <div class="row-between">
+              <h2 class="card-title">{{ credit.numeroVente }}</h2>
+              <ion-badge [color]="getCreditStatus(credit) === 'Réglé' ? 'success' : (credit.enRetard ? 'danger' : 'warning')">
+                {{ getCreditStatus(credit) }}
+              </ion-badge>
+            </div>
+            <div class="row-between">
+              <span class="muted">Échéance: {{ credit.dateEcheance ? caisseService.formatDateShort(credit.dateEcheance) : '—' }}</span>
+            </div>
+            <div class="two-cols">
+              <div class="stat-card">
+                <p class="stat-label">Versé</p>
+                <p class="stat-value success">{{ caisseService.formatPrice(credit.montantVerse) }}</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-label">Reste</p>
+                <p class="stat-value danger">{{ caisseService.formatPrice(credit.montantRestant) }}</p>
+              </div>
+            </div>
+          </article>
+        </ion-content>
+      </ng-template>
+    </ion-modal>
 
     <!-- Onglet Opérations -->
     <section class="stack animate-cards" *ngIf="segment === 'operations'">
@@ -431,12 +390,11 @@
       </ng-template>
     </ion-modal>
 
-    <!-- Onglet Stats -->
+    <!-- Onglet Stats retiré (redondant avec les cartes colorées en haut de page) :
     <section class="stack" *ngIf="segment === 'stats'">
       <ion-spinner *ngIf="loadingStats"></ion-spinner>
       <div *ngIf="statsJour && !loadingStats">
 
-        <!-- Stats colorées du jour -->
         <div class="color-cards">
           <div class="color-card cc-blue">
             <ion-icon name="cash-outline"></ion-icon>
@@ -460,7 +418,6 @@
           </div>
         </div>
 
-        <!-- Situation crédits -->
         <div class="form-panel stack" style="margin-top: 12px">
           <h2 class="card-title">Situation crédits</h2>
           <div class="mini-stats">
@@ -479,7 +436,6 @@
           </div>
         </div>
 
-        <!-- Bilan net -->
         <div class="color-card" style="margin-top:12px"
           [class.cc-green]="(statsJour.soldeNetPeriode || 0) >= 0"
           [class.cc-red]="(statsJour.soldeNetPeriode || 0) < 0">
@@ -489,6 +445,7 @@
         </div>
       </div>
     </section>
+    -->
 
   </div>
 </ion-content>

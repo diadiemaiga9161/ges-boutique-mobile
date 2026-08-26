@@ -27,7 +27,7 @@
     </div>
 
     <!-- Onglets -->
-    <div class="filter-zone">
+    <div class="filter-zone filter-zone--chips">
       <ion-chip
         [color]="onglet === 'fournisseur' ? 'primary' : 'medium'"
         [outline]="onglet !== 'fournisseur'"
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Filtres periode -->
-    <div class="filter-zone">
+    <div class="filter-zone filter-zone--chips">
       <ion-chip
         (click)="filterByPeriod('today')"
         [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"

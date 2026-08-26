@@ -20,6 +20,12 @@
 .form-panel {
   display: grid;
   gap: 12px;
+
+  ion-input[fill="outline"] ion-icon[slot="start"] {
+    color: #1a56db;
+    margin-inline-end: 8px;
+    font-size: 1.05rem;
+  }
 }
 
 // ── Tablette (720px+) ─────────────────────────────
