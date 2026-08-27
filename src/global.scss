@@ -442,23 +442,28 @@ ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5;
     text-align: center !important;
     padding-top: 0 !important;
     color: var(--ion-text-color) !important;
-  }
+    font-size: 1rem;
+    font-weight: 700;
 
-  .sale-success-badge {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0e9f6e, #059669);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 12px;
-    box-shadow: 0 6px 18px rgba(14,159,110,0.35);
-    animation: sale-success-pop .35s ease;
-
-    ion-icon { color: #ffffff; font-size: 1.9rem; }
+    // Badge "coche verte" en CSS pur (pas de HTML dans AlertController.message,
+    // voir commentaire de presentSaleSuccess() dans cart.page.ts).
+    &::before {
+      content: "\2713";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0e9f6e, #059669);
+      margin: 0 auto 12px;
+      box-shadow: 0 6px 18px rgba(14,159,110,0.35);
+      animation: sale-success-pop .35s ease;
+      color: #ffffff;
+      font-size: 1.9rem;
+      font-weight: 900;
+    }
   }
-  .sale-success-text { font-size: 1rem; font-weight: 700; }
 }
 
 @keyframes sale-success-pop {

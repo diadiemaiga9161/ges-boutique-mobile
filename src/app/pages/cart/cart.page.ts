@@ -673,11 +673,17 @@ export class CartPage implements OnInit {
     await toast.present();
   }
 
-  /** Confirmation de vente validée : popup centré (pas un toast en haut) qui se ferme tout seul. */
+  /**
+   * Confirmation de vente validée : popup centré (pas un toast en haut) qui se ferme tout seul.
+   * Important : `message` doit rester du texte brut, jamais du HTML — Ionic n'interprète pas le
+   * HTML dans `AlertController.message` par défaut (innerHTMLTemplatesEnabled=false), donc des
+   * balises passées ici s'affichaient littéralement à l'écran au lieu d'être rendues. Le badge
+   * "coche verte" est fait en CSS pur (::before sur .alert-message dans global.scss), pas en HTML.
+   */
   private async presentSaleSuccess(message: string): Promise<void> {
     const alert = await this.alertCtrl.create({
       cssClass: 'sale-success-alert',
-      message: `<div class="sale-success-badge"><ion-icon name="checkmark"></ion-icon></div><div class="sale-success-text">${message}</div>`,
+      message,
       backdropDismiss: true,
     });
     await alert.present();
