@@ -234,10 +234,10 @@
           <p class="modal-section-title">{{ 'PRODUCTS.SECTION_PRICE' | translate }}</p>
           <div class="two-cols">
             <ion-item>
-              <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.prixAchat"></ion-input>
+              <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.prixAchat"></ion-input>
             </ion-item>
             <ion-item>
-              <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.prixVente"></ion-input>
+              <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.prixVente"></ion-input>
             </ion-item>
           </div>
           <div class="two-cols">
@@ -470,41 +470,73 @@
               </ion-card-content>
             </ion-card>
 
-            <!-- Mode édition inline -->
+            <!-- Mode édition inline (dialogue guidé, en langage courant) -->
             <ion-card *ngIf="editingNiveauId === n.id" style="margin-bottom:4px;border:2px solid var(--ion-color-primary)">
               <ion-card-content>
                 <p style="font-weight:700;margin-bottom:8px;color:var(--ion-color-primary);font-size:0.9rem">
                   <ion-icon name="pencil-outline"></ion-icon> {{ 'PRODUCTS.EDIT_LEVEL' | translate }} {{ n.nom }}
                 </p>
+
                 <ion-item>
-                  <ion-input [label]="'PRODUCTS.LEVEL_NAME_LABEL' | translate" labelPlacement="floating" [(ngModel)]="editNiveau.nom"></ion-input>
-                </ion-item>
-                <ion-item style="margin-top:4px">
-                  <ion-select [label]="'PRODUCTS.LEVEL_PARENT' | translate" labelPlacement="stacked" [(ngModel)]="editNiveau.parentId">
-                    <ion-select-option [value]="undefined">{{ 'PRODUCTS.LEVEL_NO_PARENT' | translate }}</ion-select-option>
-                    <ion-select-option *ngFor="let p of niveaux" [value]="p.id" [disabled]="p.id === n.id">{{ p.nom }}</ion-select-option>
-                  </ion-select>
-                </ion-item>
-                <ion-item *ngIf="editNiveau.parentId" style="margin-top:4px">
                   <ion-input
-                    [label]="'PRODUCTS.LEVEL_FACTOR_LABEL' | translate"
+                    label="Comment s'appelle ce conditionnement ?"
                     labelPlacement="floating"
-                    type="number"
-                    [(ngModel)]="editNiveau.facteur"
-                    [placeholder]="'PRODUCTS.LEVEL_FACTOR_PLACEHOLDER' | translate">
+                    [(ngModel)]="editNiveau.nom">
                   </ion-input>
                 </ion-item>
-                <div class="two-cols" style="margin-top:4px">
-                  <ion-item>
-                    <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.prixAchat"></ion-input>
-                  </ion-item>
-                  <ion-item>
-                    <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.prixVente"></ion-input>
-                  </ion-item>
+
+                <ion-item style="margin-top:4px">
+                  <ion-input
+                    [label]="questionQuantiteEditNiveau(n)"
+                    labelPlacement="floating"
+                    type="number"
+                    min="1"
+                    [(ngModel)]="editNiveau.facteur">
+                  </ion-input>
+                </ion-item>
+
+                <ion-item style="margin-top:4px">
+                  <ion-input
+                    [label]="questionPrixVenteEditNiveau(n)"
+                    labelPlacement="floating"
+                    type="text"
+                    inputmode="numeric"
+                    appMontantInput
+                    [(ngModel)]="editNiveau.prixVente">
+                  </ion-input>
+                </ion-item>
+
+                <div style="margin-top:8px;color:#2563eb;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:4px;cursor:pointer" (click)="editNiveauAdvancedOpen = !editNiveauAdvancedOpen">
+                  <ion-icon [name]="editNiveauAdvancedOpen ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+                  Avancé
                 </div>
+                <ion-item *ngIf="editNiveauAdvancedOpen" style="margin-top:4px">
+                  <ion-input
+                    [label]="questionPrixAchatEditNiveau(n)"
+                    labelPlacement="floating"
+                    type="text"
+                    inputmode="numeric"
+                    appMontantInput
+                    [(ngModel)]="editNiveau.prixAchat">
+                  </ion-input>
+                </ion-item>
+
                 <ion-item style="margin-top:4px">
                   <ion-input [label]="'PRODUCTS.STOCK' | translate" labelPlacement="floating" type="number" [(ngModel)]="editNiveau.stock"></ion-input>
                 </ion-item>
+
+                <!-- Comparaison gros/détail en direct -->
+                <div *ngIf="comparaisonEditNiveau as comp" class="comparaison-box"
+                  [style.background]="comp.ecart >= 0 ? '#f0fdf4' : '#fef2f2'"
+                  [style.border]="comp.ecart >= 0 ? '1px solid #bbf7d0' : '1px solid #fecaca'"
+                  style="border-radius:10px;padding:12px;margin-top:10px">
+                  <p style="font-size:0.85rem;line-height:1.4;margin:0"
+                    [style.color]="comp.ecart >= 0 ? '#15803d' : '#b91c1c'">
+                    <ion-icon [name]="comp.ecart >= 0 ? 'trending-down-outline' : 'warning-outline'"></ion-icon>
+                    {{ comp.texte }}
+                  </p>
+                </div>
+
                 <div style="display:flex;gap:8px;margin-top:10px">
                   <ion-button expand="block" style="flex:1" (click)="saveEditNiveau()">
                     <ion-icon name="checkmark-outline" slot="start"></ion-icon>
@@ -548,55 +580,94 @@
     <ion-content class="ion-padding">
       <div class="stack">
 
-        <!-- Nom de l'emballage -->
-        <ion-item>
-          <ion-input
-            [label]="'PRODUCTS.LEVEL_NAME_LABEL' | translate"
-            labelPlacement="floating"
-            [(ngModel)]="newNiveau.nom"
-            [placeholder]="'PRODUCTS.LEVEL_NAME_PLACEHOLDER' | translate">
-          </ion-input>
-        </ion-item>
-
-        <!-- Contenu dans (parent) -->
-        <ion-item>
-          <ion-select
-            [label]="'PRODUCTS.LEVEL_PARENT' | translate"
-            labelPlacement="stacked"
-            [(ngModel)]="newNiveau.parentId"
-            (ngModelChange)="onParentChange()">
-            <ion-select-option [value]="null">{{ produitNiveaux?.nom }} — produit principal</ion-select-option>
-            <ion-select-option *ngFor="let p of niveaux" [value]="p.id">{{ p.nom }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <!-- Facteur — toujours visible -->
-        <ion-item>
-          <ion-input
-            [label]="labelFacteur"
-            labelPlacement="floating"
-            type="number"
-            [(ngModel)]="newNiveau.facteur"
-            [value]="newNiveau.facteur || 1"
-            [placeholder]="'PRODUCTS.LEVEL_FACTOR_PLACEHOLDER' | translate"
-            [min]="1">
-          </ion-input>
-        </ion-item>
-
-        <!-- Prix achat et vente -->
-        <div class="two-cols">
-          <ion-item>
-            <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="number" [(ngModel)]="newNiveau.prixAchat"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input [label]="'PRODUCTS.PRICE_SELL' | translate" labelPlacement="floating" type="number" [(ngModel)]="newNiveau.prixVente"></ion-input>
-          </ion-item>
+        <!-- Étape 1 (tout premier niveau uniquement) : question Oui/Non en langage courant -->
+        <div *ngIf="guidedNiveauStep === 'question-gros'">
+          <p style="font-size:1.05rem;font-weight:700;color:#1e293b;margin-bottom:16px">
+            Ce produit se vend-il aussi en plus grand conditionnement (en gros) ?
+          </p>
+          <div style="display:flex;gap:10px">
+            <ion-button expand="block" color="success" style="flex:1" (click)="guidedNiveauStep = 'form'">
+              <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+              Oui
+            </ion-button>
+            <ion-button expand="block" fill="outline" color="medium" style="flex:1" (click)="showAjoutNiveauModal = false">
+              <ion-icon name="close-outline" slot="start"></ion-icon>
+              Non
+            </ion-button>
+          </div>
         </div>
 
-        <ion-button expand="block" color="success" (click)="ajouterNiveau()" style="margin-top:8px">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          {{ 'PRODUCTS.ADD_LEVEL_BTN' | translate }}
-        </ion-button>
+        <!-- Étape 2 : formulaire conversationnel + comparaison gros/détail en direct -->
+        <div *ngIf="guidedNiveauStep === 'form'">
+
+          <p *ngIf="newNiveau.parentId" style="font-weight:700;color:#1e293b;margin-bottom:10px">
+            {{ 'Ajouter un sous-conditionnement sous ' + niveauReferenceNom }}
+          </p>
+
+          <ion-item>
+            <ion-input
+              label="Comment s'appelle ce conditionnement ?"
+              labelPlacement="floating"
+              [(ngModel)]="newNiveau.nom"
+              placeholder="Ex: Carton, Sachet, Bidon">
+            </ion-input>
+          </ion-item>
+
+          <ion-item style="margin-top:4px">
+            <ion-input
+              [label]="questionQuantiteNouveauNiveau()"
+              labelPlacement="floating"
+              type="number"
+              min="1"
+              [(ngModel)]="newNiveau.facteur">
+            </ion-input>
+          </ion-item>
+
+          <ion-item style="margin-top:4px">
+            <ion-input
+              [label]="questionPrixVenteNouveauNiveau()"
+              labelPlacement="floating"
+              type="text"
+              inputmode="numeric"
+              appMontantInput
+              [(ngModel)]="newNiveau.prixVente">
+            </ion-input>
+          </ion-item>
+
+          <!-- Avancé (repliable) -->
+          <div style="margin-top:10px;color:#2563eb;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:4px;cursor:pointer" (click)="guidedNiveauAdvancedOpen = !guidedNiveauAdvancedOpen">
+            <ion-icon [name]="guidedNiveauAdvancedOpen ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+            Avancé
+          </div>
+          <ion-item *ngIf="guidedNiveauAdvancedOpen" style="margin-top:4px">
+            <ion-input
+              [label]="questionPrixAchatNouveauNiveau()"
+              labelPlacement="floating"
+              type="text"
+              inputmode="numeric"
+              appMontantInput
+              [(ngModel)]="newNiveau.prixAchat">
+            </ion-input>
+          </ion-item>
+
+          <!-- Comparaison gros/détail en direct -->
+          <div *ngIf="comparaisonNiveau as comp" class="comparaison-box"
+            [style.background]="comp.ecart >= 0 ? '#f0fdf4' : '#fef2f2'"
+            [style.border]="comp.ecart >= 0 ? '1px solid #bbf7d0' : '1px solid #fecaca'"
+            style="border-radius:10px;padding:12px;margin-top:14px">
+            <p style="font-size:0.85rem;line-height:1.4;margin:0"
+              [style.color]="comp.ecart >= 0 ? '#15803d' : '#b91c1c'">
+              <ion-icon [name]="comp.ecart >= 0 ? 'trending-down-outline' : 'warning-outline'"></ion-icon>
+              {{ comp.texte }}
+            </p>
+          </div>
+
+          <ion-button expand="block" color="success" (click)="ajouterNiveau()" style="margin-top:16px">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            {{ 'PRODUCTS.ADD_LEVEL_BTN' | translate }}
+          </ion-button>
+
+        </div>
 
       </div>
     </ion-content>

@@ -206,9 +206,9 @@
         <ion-label position="stacked">Montant (0 = retrait total)</ion-label>
         <ion-input
           [(ngModel)]="retraitGlobalForm.montant"
-          type="number"
-          min="0"
-          [max]="clientRetraitGlobal.totalMontantRestant"
+          type="text"
+          inputmode="numeric"
+          appMontantInput
           placeholder="0 = retirer tout">
         </ion-input>
       </ion-item>
@@ -292,7 +292,7 @@
       </ion-item>
       <ion-item *ngIf="!depotForm.id">
         <ion-label position="stacked">Montant déposé *</ion-label>
-        <ion-input [(ngModel)]="depotForm.montant" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="depotForm.montant" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">Observation</ion-label>
@@ -328,9 +328,9 @@
         <ion-label position="stacked">Montant à retirer *</ion-label>
         <ion-input
           [(ngModel)]="retraitForm.montant"
-          type="number"
-          min="0"
-          [max]="retraitDepot?.montantRestant ?? null">
+          type="text"
+          inputmode="numeric"
+          appMontantInput>
         </ion-input>
       </ion-item>
       <ion-item>

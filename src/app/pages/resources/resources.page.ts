@@ -477,7 +477,7 @@ export class ResourcesPage {
     this.compteService.getTousLesComptes().subscribe(comptes => this.comptes = comptes);
     this.productService.getAllFournisseurs().subscribe(fournisseurs => this.fournisseurs = fournisseurs);
     this.depotGardeService.getTousClients().subscribe(clients => this.depotClients = clients);
-    this.userService.getAllUsers().subscribe(users => this.sellerUsers = users.filter(u => u.role === 'VENDEUR'));
+    this.userService.getAllUsers().subscribe(users => this.sellerUsers = users.filter(u => u.role === 'VENDEUR' || u.role === 'ADMIN'));
   }
 
   private async saveFacture(): Promise<void> {

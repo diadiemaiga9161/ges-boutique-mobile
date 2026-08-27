@@ -406,7 +406,7 @@
             </div>
             <div class="pf-field pf-field--wide">
               <label class="pf-label">Prix unit. (FCFA)</label>
-              <input class="pf-input pf-input--num" type="number" [(ngModel)]="proformaNewLine.prixUnitaire" min="0" />
+              <input class="pf-input pf-input--num" type="text" inputmode="numeric" appMontantInput [(ngModel)]="proformaNewLine.prixUnitaire" />
             </div>
             <button class="pf-btn-add" (click)="addProformaLine()">
               <ion-icon name="add-outline"></ion-icon>

@@ -193,7 +193,7 @@
       </div>
       <div class="form-group half">
         <label class="form-label">Montant (FCFA) *</label>
-        <input type="number" class="form-input" [(ngModel)]="form.montant" min="0" placeholder="0">
+        <input type="text" inputmode="numeric" appMontantInput class="form-input" [(ngModel)]="form.montant" placeholder="0">
       </div>
     </div>
 

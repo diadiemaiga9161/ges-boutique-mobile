@@ -11,6 +11,7 @@ import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-nive
 import { OfflineDbService } from '../../services/offline-db.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
+import { ConfirmationVocaleService } from '../../services/confirmation-vocale.service';
 
 interface CartItem {
   product: Produit;
@@ -85,6 +86,7 @@ export class CartPage implements OnInit {
     private offlineDb: OfflineDbService,
     private networkStatus: NetworkStatusService,
     private offlineSync: OfflineSyncService,
+    private confirmationVocale: ConfirmationVocaleService,
   ) {}
 
   async scanPourVente(): Promise<void> {
@@ -583,6 +585,7 @@ export class CartPage implements OnInit {
       this.mettreAJourStockLocal();
       this.submitting = false;
       this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
+      this.confirmationVocale.annoncerMontant(this.total());
       this.reset();
       return;
     }
@@ -596,6 +599,7 @@ export class CartPage implements OnInit {
         this.mettreAJourStockLocal();
         this.submitting = false;
         this.presentSaleSuccess(`Vente ${vente.numeroVente || vente.id} enregistrée`);
+        this.confirmationVocale.annoncerMontant(this.total());
         this.reset();
       },
       error: async error => {
@@ -609,6 +613,7 @@ export class CartPage implements OnInit {
           this.mettreAJourStockLocal();
           this.submitting = false;
           this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée');
+          this.confirmationVocale.annoncerMontant(this.total());
           this.reset();
           return;
         }

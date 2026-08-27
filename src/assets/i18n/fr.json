@@ -102,7 +102,10 @@
     "BOUTIQUE": "Boutique",
     "LOGOUT": "Se déconnecter",
     "LOGOUT_CONFIRM": "Voulez-vous vous déconnecter ?",
-    "SAVED": "Profil mis à jour"
+    "SAVED": "Profil mis à jour",
+    "PREFERENCES": "Préférences",
+    "VOICE_CONFIRM": "Confirmation vocale du montant",
+    "VOICE_CONFIRM_DESC": "Le téléphone annonce à voix haute le total après chaque vente validée"
   },
   "PRODUCTS": {
     "TITLE": "Produits",
@@ -242,7 +245,18 @@
     "SETTLE_CREDIT": "Régler un crédit",
     "AMOUNT": "Montant",
     "REASON": "Motif",
-    "OVERDUE": "En retard"
+    "OVERDUE": "En retard",
+    "RECONCILIATION": {
+      "TAB": "Réconciliation",
+      "DATE_LABEL": "Date",
+      "SALES_COUNT": "vente(s)",
+      "CASH_SALES": "Ventes espèces",
+      "CREDIT_SALES": "Ventes à crédit",
+      "CREDIT_PAYMENTS": "Règlements crédit encaissés",
+      "TO_REMIT": "Total à remettre",
+      "EMPTY_TITLE": "Aucune activité vendeur ce jour",
+      "EMPTY_TEXT": "Aucune vente ni règlement enregistré pour cette date"
+    }
   },
   "INVENTORY": {
     "TITLE": "Inventaire",
@@ -442,7 +456,13 @@
     "WA_TITLE": "Envoyer via WhatsApp", "WA_LOADING": "Préparation des liens...",
     "REDUCTION": "de réduction",
     "PREVIEW": "Aperçu du message :", "TOTAL_CLIENTS": "Total clients",
-    "WITH_PHONE": "Avec numéro", "WITHOUT_PHONE": "Sans numéro", "SEND": "Envoyer"
+    "WITH_PHONE": "Avec numéro", "WITHOUT_PHONE": "Sans numéro", "SEND": "Envoyer",
+    "SUGGESTIONS_TITLE": "Suggestions de promo flash",
+    "SUGGESTIONS_SUB": "Produits proches de leur date de péremption",
+    "SUGGESTION_DAYS_LEFT": "{{jours}} jour(s) restant(s)",
+    "SUGGESTION_EXPIRES_TODAY": "Expire aujourd'hui",
+    "SUGGESTION_EXPIRY": "Péremption",
+    "SUGGESTION_CREATE_BTN": "Créer une promo"
   },
   "BOUTIQUE_SETTINGS": {
     "TITLE": "Paramètres Boutique", "SUBTITLE": "Informations et configuration",
@@ -585,5 +605,81 @@
     "CREDITS": "crédits",
     "VENTES": "ventes",
     "ACCES_REFUSE": "Accès réservé aux administrateurs"
+  },
+  "EXPORT": {
+    "TITRE": "Export de données",
+    "ACCES_REFUSE": "Accès réservé aux administrateurs",
+    "CATEGORIE": "Catégorie à exporter",
+    "CAT_CLIENTS": "Clients",
+    "CAT_PRODUITS": "Produits",
+    "CAT_VENTES": "Ventes",
+    "CAT_FOURNISSEURS": "Fournisseurs",
+    "CAT_DEPENSES": "Dépenses",
+    "CAT_EMPLOYES": "Employés",
+    "CAT_CREDITS": "Crédits / Dettes",
+    "CAT_TRANSFERTS": "Transferts",
+    "PERIODE": "Période (optionnel)",
+    "DATE_FROM": "Du",
+    "DATE_TO": "Au",
+    "RESET_DATES": "Réinitialiser les dates",
+    "RESULTATS": "résultat(s)",
+    "EXPORT_PDF": "Exporter en PDF",
+    "EXPORT_EXCEL": "Exporter en Excel",
+    "AUCUNE_DONNEE": "Aucune donnée à exporter",
+    "SUCCES_EXCEL": "Fichier Excel généré avec succès",
+    "ERREUR_EXCEL": "Erreur lors de la génération du fichier Excel",
+    "ERREUR_CHARGEMENT": "Erreur lors du chargement des données",
+    "APERCU": "Aperçu",
+    "APERCU_LIMITE": "Seules les 5 premières lignes sont affichées ici — le fichier exporté contient toutes les données."
+  },
+  "JOURNAL_AUDIT": {
+    "TITRE": "Journal d'audit",
+    "ACCES_REFUSE": "Accès réservé aux administrateurs",
+    "COLONNE_DATE": "Date",
+    "COLONNE_UTILISATEUR": "Utilisateur",
+    "COLONNE_ACTION": "Action",
+    "COLONNE_DETAILS": "Détails",
+    "TOUS_UTILISATEURS": "Tous les utilisateurs",
+    "DATE_FROM": "Du",
+    "DATE_TO": "Au",
+    "RESET_FILTERS": "Réinitialiser les filtres",
+    "AUCUNE_DONNEE": "Aucune action enregistrée",
+    "ERREUR_CHARGEMENT": "Erreur lors du chargement du journal",
+    "PAGE": "Page",
+    "SUR": "sur",
+    "RESULTATS": "entrée(s)"
+  },
+  "BACKUP": {
+    "TITLE": "Sauvegardes",
+    "SUBTITLE": "Sauvegarde automatique programmée de la base de données. Une copie est également créée automatiquement chaque nuit.",
+    "ADMIN_ONLY": "Accès réservé aux administrateurs",
+    "COL_FILENAME": "Fichier",
+    "COL_DATE": "Date",
+    "COL_SIZE": "Taille",
+    "BTN_BACKUP_NOW": "Sauvegarder maintenant",
+    "BTN_DOWNLOAD": "Télécharger",
+    "CONFIRM_TITLE": "Lancer une sauvegarde ?",
+    "CONFIRM_TEXT": "Une sauvegarde complète de la base de données va être générée. Cela peut prendre quelques secondes, merci de patienter.",
+    "SUCCESS_MESSAGE": "Sauvegarde effectuée avec succès",
+    "ERROR_MESSAGE": "Échec de la sauvegarde. Veuillez réessayer.",
+    "EMPTY_LIST": "Aucune sauvegarde disponible pour le moment",
+    "LOADING": "Sauvegarde en cours..."
+  },
+  "TUTORIEL_VENDEUR": {
+    "STEP_LABEL": "Étape",
+    "OF": "sur",
+    "PREV": "Précédent",
+    "NEXT": "Suivant",
+    "FINISH": "Compris, commencer",
+    "STEP1_TITLE": "Bienvenue {{nom}} !",
+    "STEP1_TEXT": "Vous êtes connecté(e) en tant que {{role}}. Ce petit guide vous explique les bases essentielles en quelques secondes.",
+    "STEP2_TITLE": "Enregistrer une vente",
+    "STEP2_TEXT": "Depuis l'onglet Vente, ajoutez les produits au panier, ajustez les quantités puis validez le paiement (espèces, mobile money...). Le stock et la caisse se mettent à jour automatiquement.",
+    "STEP3_TITLE": "Gérer un crédit",
+    "STEP3_TEXT": "Pour une vente à crédit, choisissez le client puis le mode de paiement 'Crédit'. Pour régler un crédit existant, allez dans Crédits, sélectionnez le client concerné et enregistrez son paiement.",
+    "STEP4_TITLE": "Vous êtes prêt(e) !",
+    "STEP4_TEXT": "Vous pouvez revoir ce tutoriel à tout moment depuis votre Profil.",
+    "REVOIR": "Revoir le tutoriel",
+    "REVOIR_DESC": "Réafficher le petit guide de démarrage"
   }
 }

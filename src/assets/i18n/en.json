@@ -51,7 +51,9 @@
     "PHONE": "Phone", "COUNTRY_CODE": "Country code", "PASSWORD": "New password",
     "SAVE": "Save changes", "LANGUAGE": "App language", "ROLE": "Role",
     "BOUTIQUE": "Shop", "LOGOUT": "Sign out",
-    "LOGOUT_CONFIRM": "Do you want to sign out?", "SAVED": "Profile updated"
+    "LOGOUT_CONFIRM": "Do you want to sign out?", "SAVED": "Profile updated",
+    "PREFERENCES": "Preferences", "VOICE_CONFIRM": "Voice confirmation of the amount",
+    "VOICE_CONFIRM_DESC": "The phone announces the total out loud after each validated sale"
   },
   "PRODUCTS": {
     "TITLE": "Products", "ADD": "New product", "NAME": "Product name *",
@@ -120,7 +122,14 @@
     "TITLE": "Cash Register", "BALANCE": "Current balance", "INCOME": "Income",
     "EXPENSE": "Expense", "TRANSFER": "Bank transfer", "OPERATIONS": "Operations",
     "CREDITS": "Credits", "STATS": "Statistics", "SETTLE_CREDIT": "Settle a credit",
-    "AMOUNT": "Amount", "REASON": "Reason", "OVERDUE": "Overdue"
+    "AMOUNT": "Amount", "REASON": "Reason", "OVERDUE": "Overdue",
+    "RECONCILIATION": {
+      "TAB": "Reconciliation", "DATE_LABEL": "Date", "SALES_COUNT": "sale(s)",
+      "CASH_SALES": "Cash sales", "CREDIT_SALES": "Credit sales",
+      "CREDIT_PAYMENTS": "Credit payments collected", "TO_REMIT": "Total to remit",
+      "EMPTY_TITLE": "No seller activity today",
+      "EMPTY_TEXT": "No sale or payment recorded for this date"
+    }
   },
   "INVENTORY": {
     "TITLE": "Inventory", "MOVEMENT": "Movement", "LOW_STOCK": "Low stock",
@@ -299,7 +308,13 @@
     "WA_TITLE": "Send via WhatsApp", "WA_LOADING": "Preparing links...",
     "REDUCTION": "discount",
     "PREVIEW": "Message preview:", "TOTAL_CLIENTS": "Total clients",
-    "WITH_PHONE": "With number", "WITHOUT_PHONE": "Without number", "SEND": "Send"
+    "WITH_PHONE": "With number", "WITHOUT_PHONE": "Without number", "SEND": "Send",
+    "SUGGESTIONS_TITLE": "Flash promo suggestions",
+    "SUGGESTIONS_SUB": "Products nearing their expiry date",
+    "SUGGESTION_DAYS_LEFT": "{{jours}} day(s) left",
+    "SUGGESTION_EXPIRES_TODAY": "Expires today",
+    "SUGGESTION_EXPIRY": "Expiry",
+    "SUGGESTION_CREATE_BTN": "Create a promo"
   },
   "BOUTIQUE_SETTINGS": {
     "TITLE": "Shop Settings", "SUBTITLE": "Information and configuration",
@@ -442,5 +457,81 @@
     "CREDITS": "credits",
     "VENTES": "sales",
     "ACCES_REFUSE": "Access restricted to administrators"
+  },
+  "EXPORT": {
+    "TITRE": "Data Export",
+    "ACCES_REFUSE": "Access restricted to administrators",
+    "CATEGORIE": "Category to export",
+    "CAT_CLIENTS": "Customers",
+    "CAT_PRODUITS": "Products",
+    "CAT_VENTES": "Sales",
+    "CAT_FOURNISSEURS": "Suppliers",
+    "CAT_DEPENSES": "Expenses",
+    "CAT_EMPLOYES": "Employees",
+    "CAT_CREDITS": "Credits / Debts",
+    "CAT_TRANSFERTS": "Transfers",
+    "PERIODE": "Period (optional)",
+    "DATE_FROM": "From",
+    "DATE_TO": "To",
+    "RESET_DATES": "Reset dates",
+    "RESULTATS": "result(s)",
+    "EXPORT_PDF": "Export as PDF",
+    "EXPORT_EXCEL": "Export as Excel",
+    "AUCUNE_DONNEE": "No data to export",
+    "SUCCES_EXCEL": "Excel file generated successfully",
+    "ERREUR_EXCEL": "Error generating the Excel file",
+    "ERREUR_CHARGEMENT": "Error loading data",
+    "APERCU": "Preview",
+    "APERCU_LIMITE": "Only the first 5 rows are shown here — the exported file contains all the data."
+  },
+  "JOURNAL_AUDIT": {
+    "TITRE": "Audit Log",
+    "ACCES_REFUSE": "Access restricted to administrators",
+    "COLONNE_DATE": "Date",
+    "COLONNE_UTILISATEUR": "User",
+    "COLONNE_ACTION": "Action",
+    "COLONNE_DETAILS": "Details",
+    "TOUS_UTILISATEURS": "All users",
+    "DATE_FROM": "From",
+    "DATE_TO": "To",
+    "RESET_FILTERS": "Reset filters",
+    "AUCUNE_DONNEE": "No action recorded",
+    "ERREUR_CHARGEMENT": "Error loading the log",
+    "PAGE": "Page",
+    "SUR": "of",
+    "RESULTATS": "entry(ies)"
+  },
+  "BACKUP": {
+    "TITLE": "Backups",
+    "SUBTITLE": "Scheduled automatic database backup. A copy is also created automatically every night.",
+    "ADMIN_ONLY": "Access restricted to administrators",
+    "COL_FILENAME": "File",
+    "COL_DATE": "Date",
+    "COL_SIZE": "Size",
+    "BTN_BACKUP_NOW": "Back up now",
+    "BTN_DOWNLOAD": "Download",
+    "CONFIRM_TITLE": "Start a backup?",
+    "CONFIRM_TEXT": "A full database backup will be generated. This may take a few seconds, please wait.",
+    "SUCCESS_MESSAGE": "Backup completed successfully",
+    "ERROR_MESSAGE": "Backup failed. Please try again.",
+    "EMPTY_LIST": "No backups available yet",
+    "LOADING": "Backing up..."
+  },
+  "TUTORIEL_VENDEUR": {
+    "STEP_LABEL": "Step",
+    "OF": "of",
+    "PREV": "Previous",
+    "NEXT": "Next",
+    "FINISH": "Got it, let's start",
+    "STEP1_TITLE": "Welcome {{nom}}!",
+    "STEP1_TEXT": "You are signed in as {{role}}. This quick guide explains the essential basics in a few seconds.",
+    "STEP2_TITLE": "Recording a sale",
+    "STEP2_TEXT": "From the Sale tab, add products to the cart, adjust quantities, then confirm the payment (cash, mobile money...). Stock and cash register update automatically.",
+    "STEP3_TITLE": "Managing credit",
+    "STEP3_TEXT": "For a sale on credit, choose the customer then the 'Credit' payment method. To settle an existing credit, go to Credits, select the customer and record their payment.",
+    "STEP4_TITLE": "You're ready!",
+    "STEP4_TEXT": "You can review this tutorial anytime from your Profile.",
+    "REVOIR": "Review the tutorial",
+    "REVOIR_DESC": "Show the quick start guide again"
   }
 }

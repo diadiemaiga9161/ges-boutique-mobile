@@ -277,6 +277,7 @@ export class FactureService {
     lignes: string[][];
     totaux?: string[];
     pied?: string;
+    paysage?: boolean;
   }): string {
     const design = this.designService.getDesign();
     const couleur = design === 2 ? '#b8860b' : design === 3 ? '#1a1a1a' : '#1a56db';
@@ -292,7 +293,7 @@ export class FactureService {
     return `<!doctype html><html><head><meta charset="utf-8"><title>${config.titre}</title>
     <style>
       body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f0f4f8}
-      .doc{background:#fff;border-radius:8px;padding:24px;max-width:900px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+      .doc{background:#fff;border-radius:8px;padding:24px;max-width:${config.paysage ? '1400px' : '900px'};margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.08)}
       .header{background:${fond};color:#fff;padding:16px 24px;border-radius:6px;margin-bottom:20px}
       .header h1{margin:0;font-size:20px;color:${couleur}}
       .header p{margin:4px 0 0;font-size:12px;opacity:.85}
@@ -301,7 +302,7 @@ export class FactureService {
       .btn-bar{display:flex;gap:8px;margin-bottom:16px}
       .btn-print{background:${couleur};color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
       .btn-close{background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
-      @media print{.btn-bar{display:none}body{background:#fff;padding:0}.doc{box-shadow:none}}
+      @media print{@page{size:A4 ${config.paysage ? 'landscape' : 'portrait'}}.btn-bar{display:none}body{background:#fff;padding:0}.doc{box-shadow:none}}
     </style></head><body>
     <div class="doc">
       <div class="btn-bar">
@@ -331,6 +332,7 @@ export class FactureService {
     lignes: string[][];
     totaux?: string[];
     pied?: string;
+    paysage?: boolean;
   }): void {
     this.openOverlay(this.genererHTMLDocument(config), false);
   }

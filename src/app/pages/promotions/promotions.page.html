@@ -150,6 +150,47 @@
       <ion-refresher-content></ion-refresher-content>
     </ion-refresher>
 
+    <!-- Suggestions de promo flash (produits proches péremption) -->
+    <div class="suggestions-section ion-padding" *ngIf="suggestionsFiltrees.length > 0">
+      <div class="suggestions-header">
+        <ion-icon name="flash-outline"></ion-icon>
+        <div class="suggestions-header-text">
+          <div class="suggestions-title">{{ 'PROMO.SUGGESTIONS_TITLE' | translate }}</div>
+          <div class="suggestions-subtitle">{{ 'PROMO.SUGGESTIONS_SUB' | translate }}</div>
+        </div>
+      </div>
+
+      <div class="suggestions-list">
+        <div class="promo-card suggestion-card" *ngFor="let s of suggestionsFiltrees; trackBy: trackById">
+          <div class="promo-header">
+            <div class="promo-titre">{{ s.nom }}</div>
+            <span class="status-badge status-badge--warning">
+              <ng-container *ngIf="joursRestants(s) > 0; else expireToday">
+                {{ 'PROMO.SUGGESTION_DAYS_LEFT' | translate: { jours: joursRestants(s) } }}
+              </ng-container>
+              <ng-template #expireToday>{{ 'PROMO.SUGGESTION_EXPIRES_TODAY' | translate }}</ng-template>
+            </span>
+          </div>
+
+          <div class="promo-dates">
+            <ion-icon name="cube-outline"></ion-icon>
+            {{ s.quantite }} {{ s.uniteMesure }}
+          </div>
+          <div class="promo-dates">
+            <ion-icon name="calendar-outline"></ion-icon>
+            {{ 'PROMO.SUGGESTION_EXPIRY' | translate }} : {{ s.datePeremption | date:'dd/MM/yyyy' }}
+          </div>
+
+          <div class="promo-actions">
+            <ion-button expand="block" color="warning" size="small" (click)="creerPromoDepuisSuggestion(s)">
+              <ion-icon name="flash-outline" slot="start"></ion-icon>
+              {{ 'PROMO.SUGGESTION_CREATE_BTN' | translate }}
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="sk-list" *ngIf="loading">
       <div class="sk-card" *ngFor="let i of [1,2,3,4]">
         <div class="skeleton sk-avatar"></div>

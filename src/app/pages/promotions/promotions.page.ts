@@ -37,6 +37,9 @@ export class PromotionsPage implements OnInit {
   produitSearch = '';
   showProduitDropdown = false;
 
+  // Suggestions de promo flash (produits proches péremption)
+  suggestions: Produit[] = [];
+
   constructor(
     private promotionService: PromotionService,
     private toastCtrl: ToastController,
@@ -50,6 +53,7 @@ export class PromotionsPage implements OnInit {
   ionViewWillEnter(): void {
     this.load();
     this.loadProduits();
+    this.loadSuggestions();
   }
 
   loadProduits(): void {
@@ -57,6 +61,63 @@ export class PromotionsPage implements OnInit {
       next: p => this.allProduits = p,
       error: () => {}
     });
+  }
+
+  /** Produits proches péremption (endpoint réservé ADMIN) — échec silencieux, la section ne s'affiche pas */
+  loadSuggestions(): void {
+    this.productService.getNearExpiryProducts(7).subscribe({
+      next: p => this.suggestions = p,
+      error: () => { this.suggestions = []; }
+    });
+  }
+
+  /** Suggestions qui n'ont pas déjà une promotion active en cours */
+  get suggestionsFiltrees(): Produit[] {
+    return this.suggestions.filter(p => !this.estDejaCouvertParPromo(p.id));
+  }
+
+  private estDejaCouvertParPromo(produitId: number): boolean {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return this.promotions.some(promo => {
+      if (!promo.active) return false;
+      const fin = new Date(promo.dateFin);
+      fin.setHours(0, 0, 0, 0);
+      if (fin < today) return false;
+      return promo.globale === true || (promo.produitIds || []).includes(produitId);
+    });
+  }
+
+  /** Nombre de jours restants avant péremption (peut être négatif/0) */
+  joursRestants(produit: Produit): number {
+    if (!produit.datePeremption) return 0;
+    return Math.ceil((new Date(produit.datePeremption).getTime() - Date.now()) / 86400000);
+  }
+
+  /** Ouvre le formulaire de création pré-rempli à partir d'une suggestion — aucune promo n'est créée automatiquement */
+  creerPromoDepuisSuggestion(produit: Produit): void {
+    this.startCreate();
+    this.form.produitIds = [produit.id];
+    this.form.globale = false;
+    this.form.dateFin = this.toDateInputValue(produit.datePeremption);
+    this.form.typeReduction = 'POURCENTAGE';
+    this.form.valeurReduction = 20;
+
+    // S'assure que le produit suggéré est bien connu du formulaire (chips, getProduitNom...)
+    if (!this.allProduits.some(p => p.id === produit.id)) {
+      this.allProduits = [...this.allProduits, produit];
+    }
+  }
+
+  /** Convertit une date backend (LocalDate ISO, ex: "2026-09-01") au format attendu par <ion-input type="date"> */
+  private toDateInputValue(date?: string): string {
+    if (!date) return '';
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(date);
+    if (match) return match[1];
+    const d = new Date(date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   get produitsFiltres(): Produit[] {

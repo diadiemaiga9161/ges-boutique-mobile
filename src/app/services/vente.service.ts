@@ -207,8 +207,9 @@ export class VenteService {
     );
   }
 
-  getAllVentes(): Observable<VenteMap[]> {
-    return this.http.get<any>(this.apiUrl).pipe(
+  getAllVentes(inclureAnnulees?: boolean): Observable<VenteMap[]> {
+    const params = inclureAnnulees ? new HttpParams().set('inclureAnnulees', true) : undefined;
+    return this.http.get<any>(this.apiUrl, { params }).pipe(
       map(response => this.mapVenteList(response)),
       catchError(error => this.handleError(error, 'récupérer les ventes'))
     );

@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { SalesPageRoutingModule } from './sales-routing.module';
 import { SalesPage } from './sales.page';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../directives/montant-input.directive';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, SalesPageRoutingModule, TranslateModule],
+  imports: [CommonModule, FormsModule, IonicModule, SalesPageRoutingModule, TranslateModule, MontantInputDirective],
   declarations: [SalesPage]
 })
 export class SalesPageModule {}

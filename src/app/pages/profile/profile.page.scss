@@ -145,3 +145,32 @@ label.photo-btn {
 .country-select:focus {
   outline: none;
 }
+
+// ── Réglage "Confirmation vocale du montant" (même style que les
+// autres toggles de préférences, ex: Fonctionnalités avancées) ──
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-toggle-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 1.2rem; color: #1a56db; }
+}
+
+.settings-toggle-text {
+  flex: 1;
+  min-width: 0;
+
+  h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+  p { font-size: 0.78rem; margin: 0; }
+}

@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProductsPageRoutingModule } from './products-routing.module';
 import { ProductsPage } from './products.page';
+import { MontantInputDirective } from '../../directives/montant-input.directive';
 
 @NgModule({
   imports: [
@@ -12,7 +13,8 @@ import { ProductsPage } from './products.page';
     FormsModule,
     IonicModule,
     TranslateModule,
-    ProductsPageRoutingModule
+    ProductsPageRoutingModule,
+    MontantInputDirective
   ],
   declarations: [ProductsPage]
 })

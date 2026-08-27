@@ -53,6 +53,13 @@ export class ProductsPage implements OnInit {
   editNiveau: Partial<ProduitNiveau> = {};
   showAjoutNiveauModal = false;
 
+  // Dialogue guidé d'ajout de niveau (langage courant, pas de champs techniques)
+  // 'question-gros' : uniquement pour le tout premier niveau (Oui/Non)
+  // 'form' : formulaire conversationnel (nom, quantité, prix)
+  guidedNiveauStep: 'question-gros' | 'form' = 'form';
+  guidedNiveauAdvancedOpen = false;
+  editNiveauAdvancedOpen = false;
+
   constructor(
     public productsService: ProductService,
     public auth: AuthService,
@@ -323,6 +330,17 @@ export class ProductsPage implements OnInit {
 
   ouvrirAjoutNiveau(): void {
     this.resetNewNiveau();
+    this.guidedNiveauAdvancedOpen = false;
+    const feuille = this.feuilleActuelle;
+    if (!feuille) {
+      // Aucun niveau existant : on démarre par la question Oui/Non "vente en gros ?"
+      this.guidedNiveauStep = 'question-gros';
+      this.newNiveau.parentId = null;
+    } else {
+      // Un niveau existe déjà : le parent est toujours implicitement la feuille actuelle
+      this.guidedNiveauStep = 'form';
+      this.newNiveau.parentId = feuille.id ?? null;
+    }
     this.showAjoutNiveauModal = true;
   }
 
@@ -330,17 +348,104 @@ export class ProductsPage implements OnInit {
     this.newNiveau = { nom: '', parentId: null, facteur: 1, prixAchat: 0, prixVente: 0, stock: 0 };
   }
 
-  get labelFacteur(): string {
-    if (this.newNiveau.parentId) {
-      const parent = this.niveaux.find(n => n.id === this.newNiveau.parentId);
-      return `Quantité dans 1 ${parent?.nom || 'unité parent'}`;
-    }
-    const nomProduit = this.produitNiveaux?.nom || 'produit';
-    return `Quantité dans 1 ${nomProduit}`;
+  // Le niveau le plus bas de la chaîne actuelle (celui qu'aucun autre niveau
+  // n'a comme parent) — c'est TOUJOURS le parent implicite du prochain niveau ajouté.
+  get feuilleActuelle(): ProduitNiveau | null {
+    if (!this.niveaux.length) return null;
+    return this.niveaux.find(n => !this.niveaux.some(other => other.parentId === n.id)) || null;
   }
 
-  onParentChange(): void {
-    this.newNiveau.facteur = this.newNiveau.facteur && this.newNiveau.facteur >= 1 ? this.newNiveau.facteur : 1;
+  // Nom du "niveau de référence" pour les questions du dialogue guidé :
+  // le produit principal (vendu à l'unité) si on crée le tout premier niveau,
+  // ou la feuille actuelle si on ajoute un sous-conditionnement.
+  get niveauReferenceNom(): string {
+    if (this.newNiveau.parentId) {
+      return this.niveaux.find(n => n.id === this.newNiveau.parentId)?.nom || 'niveau parent';
+    }
+    return this.produitNiveaux?.nom || 'produit';
+  }
+
+  questionNomConditionnement(): string {
+    return "Comment s'appelle ce conditionnement ?";
+  }
+
+  questionQuantiteNouveauNiveau(): string {
+    const nom = this.newNiveau.nom?.trim() || 'ce conditionnement';
+    if (this.newNiveau.parentId) {
+      return `Combien de ${nom} dans un(e) ${this.niveauReferenceNom} ?`;
+    }
+    const nomProduit = this.produitNiveaux?.nom || 'produit';
+    return `Combien de ${nomProduit} (vendu à l'unité) contient un(e) ${nom} ?`;
+  }
+
+  questionPrixVenteNouveauNiveau(): string {
+    const nom = this.newNiveau.nom?.trim() || 'ce conditionnement';
+    return `Prix de vente d'un(e) ${nom} ?`;
+  }
+
+  questionPrixAchatNouveauNiveau(): string {
+    const nom = this.newNiveau.nom?.trim() || 'ce conditionnement';
+    return `Prix d'achat d'un(e) ${nom} ?`;
+  }
+
+  questionQuantiteEditNiveau(n: ProduitNiveau): string {
+    const nom = this.editNiveau.nom?.trim() || n.nom;
+    if (n.parentId) {
+      return `Combien de ${nom} dans un(e) ${this.nomParentNiveau(n)} ?`;
+    }
+    const nomProduit = this.produitNiveaux?.nom || 'produit';
+    return `Combien de ${nomProduit} (vendu à l'unité) contient un(e) ${nom} ?`;
+  }
+
+  questionPrixVenteEditNiveau(n: ProduitNiveau): string {
+    const nom = this.editNiveau.nom?.trim() || n.nom;
+    return `Prix de vente d'un(e) ${nom} ?`;
+  }
+
+  questionPrixAchatEditNiveau(n: ProduitNiveau): string {
+    const nom = this.editNiveau.nom?.trim() || n.nom;
+    return `Prix d'achat d'un(e) ${nom} ?`;
+  }
+
+  // Comparaison gros/détail recalculée en direct pour le formulaire de création guidé
+  get comparaisonNiveau(): { texte: string; ecart: number } | null {
+    return this.calculerComparaison(this.newNiveau.nom, this.newNiveau.facteur, this.newNiveau.prixVente, this.newNiveau.parentId ?? null);
+  }
+
+  // Comparaison gros/détail recalculée en direct pour le formulaire d'édition guidé
+  get comparaisonEditNiveau(): { texte: string; ecart: number } | null {
+    return this.calculerComparaison(this.editNiveau.nom, this.editNiveau.facteur, this.editNiveau.prixVente, this.editNiveau.parentId ?? null);
+  }
+
+  // Calcule le texte de comparaison "achat en gros vs achat au détail" en langage courant.
+  // - Niveau racine (parentId null) : compare au prix unitaire du produit principal.
+  // - Niveau enfant (parentId défini) : compare au prix de vente de son niveau parent.
+  private calculerComparaison(nom: string | undefined, facteur: number | undefined, prixVente: number | undefined, parentId: number | null): { texte: string; ecart: number } | null {
+    const f = Number(facteur) || 0;
+    const pv = Number(prixVente) || 0;
+    const n = nom?.trim();
+    if (!f || !pv || !n) return null;
+
+    if (!parentId) {
+      const prixUnite = this.produitNiveaux?.prixVente || 0;
+      const nomProduit = this.produitNiveaux?.nom || 'produit';
+      const valeur = f * prixUnite;
+      const ecart = valeur - pv;
+      const texte = ecart >= 0
+        ? `1 ${n} = ${f} ${nomProduit} à ${this.money(prixUnite)} l'unité = ${this.money(valeur)} si vendu(s) à l'unité. Ton prix ${n} (${this.money(pv)}) fait économiser ${this.money(ecart)} au client qui achète en gros.`
+        : `1 ${n} = ${f} ${nomProduit} à ${this.money(prixUnite)} l'unité = ${this.money(valeur)} si vendu(s) à l'unité. Ton prix ${n} (${this.money(pv)}) coûte ${this.money(Math.abs(ecart))} de plus que l'achat à l'unité — vérifie ce prix.`;
+      return { texte, ecart };
+    }
+
+    const parent = this.niveaux.find(x => x.id === parentId);
+    const prixParent = parent?.prixVente || 0;
+    const nomParent = parent?.nom || 'niveau parent';
+    const valeur = f * pv;
+    const ecart = valeur - prixParent;
+    const texte = ecart >= 0
+      ? `1 ${nomParent} = ${f} ${n} à ${this.money(pv)} l'unité = ${this.money(valeur)} si vendus séparément. Le prix actuel d'1 ${nomParent} (${this.money(prixParent)}) fait économiser ${this.money(ecart)} au client qui achète en ${nomParent}.`
+      : `1 ${nomParent} = ${f} ${n} à ${this.money(pv)} l'unité = ${this.money(valeur)} si vendus séparément. Le prix actuel d'1 ${nomParent} (${this.money(prixParent)}) coûte ${this.money(Math.abs(ecart))} de plus — vérifie le prix de ${nomParent} ou de ${n}.`;
+    return { texte, ecart };
   }
 
   chargerNiveaux(produitId: number): void {
@@ -378,13 +483,17 @@ export class ProductsPage implements OnInit {
       facteur: Math.max(1, Number(this.newNiveau.facteur) || 1),
       prixAchat: Number(this.newNiveau.prixAchat) || 0,
       prixVente: Number(this.newNiveau.prixVente) || 0,
-      stock: Number(this.newNiveau.stock) || 0,
+      stock: 0,
     };
     this.niveauService.creer(this.produitNiveaux.id, payload).subscribe({
-      next: () => {
+      next: (niveauCree) => {
         this.presentToast('Niveau ajouté');
         this.showAjoutNiveauModal = false;
         this.chargerNiveaux(this.produitNiveaux!.id);
+        if (parentIdValue != null) {
+          // Sous-conditionnement ajouté : proposer de continuer la chaîne
+          this.proposerSousConditionnement(payload.nom!, niveauCree);
+        }
         this.resetNewNiveau();
       },
       error: (err) => {
@@ -392,6 +501,27 @@ export class ProductsPage implements OnInit {
         this.presentToast(msg, 'danger');
       }
     });
+  }
+
+  private async proposerSousConditionnement(nomCree: string, niveauCree: ProduitNiveau): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Continuer ?',
+      message: `Ajouter encore un sous-conditionnement sous ${nomCree} ?`,
+      buttons: [
+        { text: 'Non', role: 'cancel' },
+        {
+          text: 'Oui',
+          handler: () => {
+            this.resetNewNiveau();
+            this.guidedNiveauAdvancedOpen = false;
+            this.newNiveau.parentId = niveauCree?.id ?? null;
+            this.guidedNiveauStep = 'form';
+            this.showAjoutNiveauModal = true;
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   decomposerNiveau(niveau: ProduitNiveau): void {
@@ -443,6 +573,7 @@ export class ProductsPage implements OnInit {
 
   startEditNiveau(niveau: ProduitNiveau): void {
     this.editingNiveauId = niveau.id!;
+    this.editNiveauAdvancedOpen = false;
     this.editNiveau = {
       nom: niveau.nom,
       parentId: niveau.parentId,
@@ -455,6 +586,7 @@ export class ProductsPage implements OnInit {
 
   cancelEditNiveau(): void {
     this.editingNiveauId = null;
+    this.editNiveauAdvancedOpen = false;
     this.editNiveau = {};
   }
 

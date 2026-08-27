@@ -378,7 +378,7 @@
               </ion-item>
               <ion-item lines="none" style="--padding-start:0;--background:transparent;flex:1">
                 <ion-label position="stacked" style="font-size:.75rem">Prix unit. (optionnel)</ion-label>
-                <ion-input type="number" [(ngModel)]="l.prixUnitaire" placeholder="0"></ion-input>
+                <ion-input type="text" inputmode="numeric" appMontantInput [(ngModel)]="l.prixUnitaire" placeholder="0"></ion-input>
               </ion-item>
               <ion-button fill="clear" color="danger" (click)="supprimerLigneModal(i)" style="margin-bottom:6px">
                 <ion-icon name="trash-outline"></ion-icon>
@@ -441,7 +441,7 @@
           <div *ngIf="afficherSectionPaiements" class="ion-padding">
             <ion-item>
               <ion-label position="stacked">Montant (FCFA)</ion-label>
-              <ion-input type="number" [(ngModel)]="formPaiement.montant"></ion-input>
+              <ion-input type="text" inputmode="numeric" appMontantInput [(ngModel)]="formPaiement.montant"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label position="stacked">Mode de paiement</ion-label>

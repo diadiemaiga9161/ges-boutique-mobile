@@ -1,0 +1,125 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ 'EXPORT.TITRE' | translate }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="charger()" [disabled]="loading">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="export-content">
+
+  <!-- Accès réservé admin -->
+  <div *ngIf="!isAdmin" class="param-access-denied">
+    <ion-icon name="lock-closed-outline"></ion-icon>
+    <p>{{ 'EXPORT.ACCES_REFUSE' | translate }}</p>
+  </div>
+
+  <ng-container *ngIf="isAdmin">
+    <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <div class="page-pad stack">
+
+      <!-- === Sélecteur de catégorie === -->
+      <div class="export-section">
+        <p class="export-section-label">{{ 'EXPORT.CATEGORIE' | translate }}</p>
+        <div class="cat-grid">
+          <button type="button" class="cat-card" *ngFor="let cat of categories"
+                  [class.cat-card--active]="selectedCategorie.key === cat.key"
+                  (click)="selectionnerCategorie(cat)">
+            <ion-icon [name]="cat.icon"></ion-icon>
+            <span>{{ cat.labelKey | translate }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- === Filtre de date (optionnel) === -->
+      <div class="export-section" *ngIf="selectedCategorie.hasDateRange">
+        <p class="export-section-label">{{ 'EXPORT.PERIODE' | translate }}</p>
+        <div class="fz-row">
+          <div class="fz-date-wrap">
+            <label>{{ 'EXPORT.DATE_FROM' | translate }}</label>
+            <input type="date" [(ngModel)]="dateDebut" (change)="filtrerParDate()" />
+          </div>
+          <div class="fz-date-wrap">
+            <label>{{ 'EXPORT.DATE_TO' | translate }}</label>
+            <input type="date" [(ngModel)]="dateFin" (change)="filtrerParDate()" />
+          </div>
+          <button class="fz-chip" style="margin-top:auto" (click)="effacerDates()" [title]="'EXPORT.RESET_DATES' | translate">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- === Résultat + actions d'export === -->
+      <ion-card class="export-result-card">
+        <ion-card-content>
+
+          <div *ngIf="loading" class="export-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>{{ 'COMMON.LOADING' | translate }}</span>
+          </div>
+
+          <ng-container *ngIf="!loading">
+            <p class="export-count">
+              <ion-icon name="list-outline"></ion-icon>
+              <strong>{{ donnees.length }}</strong> {{ 'EXPORT.RESULTATS' | translate }}
+            </p>
+
+            <div class="export-actions">
+              <ion-button expand="block" color="danger" [disabled]="!donnees.length" (click)="exporterPDF()">
+                <ion-icon name="document-text-outline" slot="start"></ion-icon>
+                {{ 'EXPORT.EXPORT_PDF' | translate }}
+              </ion-button>
+
+              <ion-button expand="block" color="success" [disabled]="!donnees.length || exportingExcel" (click)="exporterExcel()">
+                <ion-spinner *ngIf="exportingExcel" name="crescent" slot="start"></ion-spinner>
+                <ion-icon *ngIf="!exportingExcel" name="grid-outline" slot="start"></ion-icon>
+                {{ 'EXPORT.EXPORT_EXCEL' | translate }}
+              </ion-button>
+            </div>
+          </ng-container>
+
+        </ion-card-content>
+      </ion-card>
+
+      <!-- === Aperçu (5 premières lignes) === -->
+      <div class="export-preview" *ngIf="!loading && donnees.length">
+        <p class="export-section-label">{{ 'EXPORT.APERCU' | translate }}</p>
+        <div class="preview-scroll">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th *ngFor="let col of previewColonnes">{{ col }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ligne of previewLignes">
+                <td *ngFor="let cell of ligne">{{ cell }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="preview-hint" *ngIf="donnees.length > 5">
+          {{ 'EXPORT.APERCU_LIMITE' | translate }}
+        </p>
+      </div>
+
+      <!-- === État vide === -->
+      <div class="empty-v2" *ngIf="!loading && !donnees.length">
+        <div class="empty-v2__icon"><ion-icon name="file-tray-outline"></ion-icon></div>
+        <p class="empty-v2__title">{{ 'EXPORT.AUCUNE_DONNEE' | translate }}</p>
+      </div>
+
+      <div style="height: 24px"></div>
+    </div>
+  </ng-container>
+
+</ion-content>

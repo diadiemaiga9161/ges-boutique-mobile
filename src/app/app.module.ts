@@ -23,6 +23,7 @@ import { LoadingInterceptor } from './interceptors/loading.interceptor';
 import { CapacitorUrlInterceptor } from './interceptors/capacitor-url.interceptor';
 import { OfflineStatusModule } from './components/offline-status/offline-status.module';
 import { PwaInstallComponent } from './components/pwa-install/pwa-install.component';
+import { TutorielVendeurComponent } from './components/tutoriel-vendeur/tutoriel-vendeur.component';
 import { DataPreloadService } from './services/data-preload.service';
 import { BoutiqueConfigService } from './services/boutique-config.service';
 import { environment } from '../environments/environment';
@@ -53,6 +54,7 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
     AppRoutingModule,
     OfflineStatusModule,
     PwaInstallComponent,
+    TutorielVendeurComponent,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000'

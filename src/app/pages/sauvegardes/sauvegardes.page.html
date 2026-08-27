@@ -1,0 +1,90 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ 'BACKUP.TITLE' | translate }}</ion-title>
+    <ion-buttons slot="end" *ngIf="isAdmin">
+      <ion-button (click)="charger()" fill="clear" [disabled]="loading">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bkp-content">
+
+  <!-- Accès réservé admin -->
+  <div *ngIf="!isAdmin" class="bkp-access-denied">
+    <ion-icon name="lock-closed-outline"></ion-icon>
+    <p>{{ 'BACKUP.ADMIN_ONLY' | translate }}</p>
+  </div>
+
+  <ng-container *ngIf="isAdmin">
+    <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <div class="bkp-intro">
+      <p>{{ 'BACKUP.SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- ═══════════ ACTION : DECLENCHER ═══════════ -->
+    <ion-card class="bkp-action-card">
+      <ion-card-content>
+        <ion-button expand="block" color="primary" [disabled]="declenchement" (click)="confirmerDeclencher()">
+          <ion-spinner *ngIf="declenchement" name="crescent" slot="start"></ion-spinner>
+          <ion-icon *ngIf="!declenchement" name="cloud-upload-outline" slot="start"></ion-icon>
+          {{ (declenchement ? 'BACKUP.LOADING' : 'BACKUP.BTN_BACKUP_NOW') | translate }}
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ═══════════ LOADING (liste) ═══════════ -->
+    <div class="bkp-skeleton-list" *ngIf="loading">
+      <ion-card class="bkp-skeleton-card" *ngFor="let i of [1,2,3]">
+        <ion-card-content>
+          <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- ═══════════ ERREUR ═══════════ -->
+    <div *ngIf="!loading && errorMessage" class="bkp-empty">
+      <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <!-- ═══════════ VIDE ═══════════ -->
+    <div *ngIf="!loading && !errorMessage && sauvegardes.length === 0" class="bkp-empty">
+      <ion-icon name="server-outline" color="medium"></ion-icon>
+      <p>{{ 'BACKUP.EMPTY_LIST' | translate }}</p>
+    </div>
+
+    <!-- ═══════════ LISTE ═══════════ -->
+    <ion-list class="bkp-list" *ngIf="!loading && !errorMessage && sauvegardes.length > 0" lines="none">
+      <ion-item class="bkp-item" *ngFor="let s of sauvegardes; trackBy: trackByNomFichier">
+        <ion-icon name="archive-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>
+          <h2 class="bkp-item-name">{{ s.nomFichier }}</h2>
+          <p class="bkp-item-meta">
+            <span>{{ 'BACKUP.COL_DATE' | translate }} : {{ formatDate(s.dateCreation) }}</span>
+            <span>{{ 'BACKUP.COL_SIZE' | translate }} : {{ formatTaille(s.tailleOctets) }}</span>
+          </p>
+        </ion-label>
+        <ion-button
+          slot="end"
+          fill="clear"
+          [disabled]="!!telechargementEnCours"
+          [attr.aria-label]="'BACKUP.BTN_DOWNLOAD' | translate"
+          (click)="telecharger(s)">
+          <ion-spinner *ngIf="telechargementEnCours === s.nomFichier" name="crescent" slot="icon-only"></ion-spinner>
+          <ion-icon *ngIf="telechargementEnCours !== s.nomFichier" name="download-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+
+  </ng-container>
+
+</ion-content>

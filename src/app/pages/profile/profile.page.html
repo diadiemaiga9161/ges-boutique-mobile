@@ -123,6 +123,31 @@
       </ion-segment>
     </section>
 
+    <section class="form-panel stack">
+      <h2 class="card-title">{{ 'PROFILE.PREFERENCES' | translate }}</h2>
+      <div class="settings-toggle-row">
+        <div class="settings-toggle-icon"><ion-icon name="volume-high-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>{{ 'PROFILE.VOICE_CONFIRM' | translate }}</h3>
+          <p class="muted">{{ 'PROFILE.VOICE_CONFIRM_DESC' | translate }}</p>
+        </div>
+        <ion-toggle
+          [checked]="annonceVocaleActive"
+          (ionChange)="toggleAnnonceVocale($event)">
+        </ion-toggle>
+      </div>
+
+      <!-- Revoir le tutoriel — vendeur uniquement -->
+      <div class="settings-toggle-row" *ngIf="auth.isVendeur()" (click)="revoirTutoriel()" style="cursor:pointer">
+        <div class="settings-toggle-icon"><ion-icon name="school-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>{{ 'TUTORIEL_VENDEUR.REVOIR' | translate }}</h3>
+          <p class="muted">{{ 'TUTORIEL_VENDEUR.REVOIR_DESC' | translate }}</p>
+        </div>
+        <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+      </div>
+    </section>
+
     <section class="form-panel" *ngIf="user">
       <h2 class="card-title">Informations du compte</h2>
       <div class="mini-stats">

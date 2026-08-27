@@ -155,6 +155,24 @@ const routes: Routes = [
     loadChildren: () => import('./pages/parametres/parametres.module').then(m => m.ParametresPageModule)
   },
   {
+    path: 'export-donnees',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/export-donnees/export-donnees.module').then(m => m.ExportDonneesPageModule)
+  },
+  {
+    path: 'journal-audit',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/journal-audit/journal-audit.module').then(m => m.JournalAuditPageModule)
+  },
+  {
+    path: 'sauvegardes',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/sauvegardes/sauvegardes.module').then(m => m.SauvegardesPageModule)
+  },
+  {
     path: 'a-propos',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/ressources/ressources.module').then(m => m.RessourcesPageModule)

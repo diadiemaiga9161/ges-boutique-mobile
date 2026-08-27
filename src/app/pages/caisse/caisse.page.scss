@@ -155,6 +155,40 @@
   flex-shrink: 0;
 }
 
+// -------- Réconciliation caisse par vendeur (lecture seule) --------
+.reconciliation-date-item {
+  --background: #ffffff;
+  --border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.reconciliation-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(135deg, #0e9f6e 0%, #065f46 100%);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 14px rgba(14,159,110,0.28);
+}
+
+.reconciliation-highlight__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+.reconciliation-highlight__value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
 // -------- Info crédit sélectionné --------
 .credit-selected-info {
   background: #eff6ff;

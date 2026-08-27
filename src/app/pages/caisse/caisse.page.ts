@@ -8,6 +8,7 @@ import {
   CreditInfo,
   ModePaiementCaisse,
   OperationCaisse,
+  ReconciliationVendeur,
   StatistiquesCaisse,
   TransfertCaisseBanqueRequest
 } from '../../services/caisse.service';
@@ -35,10 +36,16 @@ export class CaissePage implements OnDestroy {
   statsMois?: StatistiquesCaisse;
   moisAffiche?: Date;
   comptes: Compte[] = [];
-  segment: 'etat' | 'credits' | 'operations' | 'stats' = 'etat';
+  segment: 'etat' | 'credits' | 'operations' | 'stats' | 'reconciliation' = 'etat';
   loadingStats = false;
   loadingOperations = false;
   loadingCredits = false;
+
+  // Réconciliation caisse par vendeur — rapport en lecture seule (voir loadReconciliation()).
+  reconciliationDate: string = new Date().toISOString().split('T')[0];
+  reconciliationToday: string = new Date().toISOString().split('T')[0];
+  reconciliationList: ReconciliationVendeur[] = [];
+  loadingReconciliation = false;
 
   // Filtres opérations
   opPeriode: 'today' | 'week' | 'month' | 'year' = 'today';
@@ -120,6 +127,7 @@ export class CaissePage implements OnDestroy {
     });
     this.loadStatsJour();
     this.loadStatsMois();
+    this.loadReconciliation();
   }
 
   loadStatsJour(): void {
@@ -142,6 +150,16 @@ export class CaissePage implements OnDestroy {
     this.caisseService.getStatistiquesParPeriode(fmt(debutMoisPrecedent), fmt(finMoisPrecedent)).subscribe({
       next: stats => { this.statsMois = stats; },
       error: () => {}
+    });
+  }
+
+  /** Rapport en lecture seule : total par vendeur (ventes espèces/crédit, règlements
+   * crédit encaissés, montant total à remettre) pour la date sélectionnée. */
+  loadReconciliation(): void {
+    this.loadingReconciliation = true;
+    this.caisseService.getReconciliationVendeurs(this.reconciliationDate).subscribe({
+      next: liste => { this.reconciliationList = liste; this.loadingReconciliation = false; },
+      error: () => { this.reconciliationList = []; this.loadingReconciliation = false; }
     });
   }
 

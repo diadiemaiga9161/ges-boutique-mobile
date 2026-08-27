@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { FournisseursPageRoutingModule } from './fournisseurs-routing.module';
 import { FournisseursPage } from './fournisseurs.page';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../directives/montant-input.directive';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, FournisseursPageRoutingModule, TranslateModule],
+  imports: [CommonModule, FormsModule, IonicModule, FournisseursPageRoutingModule, TranslateModule, MontantInputDirective],
   declarations: [FournisseursPage]
 })
 export class FournisseursPageModule {}

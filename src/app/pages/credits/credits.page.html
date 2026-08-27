@@ -821,8 +821,7 @@
       <div class="reglement-form">
         <div class="form-field">
           <label>Montant à régler</label>
-          <input type="number" class="field-input" [(ngModel)]="reglementSimple.montant"
-                 [max]="selectedCredit.montantRestant" min="1" />
+          <input type="text" inputmode="numeric" appMontantInput class="field-input" [(ngModel)]="reglementSimple.montant" />
         </div>
 
         <div class="form-field">
@@ -903,7 +902,7 @@
       <div class="reglement-form">
         <div class="form-field">
           <label>Montant total à régler</label>
-          <input type="number" class="field-input" [(ngModel)]="reglementGroupe.montant" min="1" />
+          <input type="text" inputmode="numeric" appMontantInput class="field-input" [(ngModel)]="reglementGroupe.montant" />
           <small class="field-hint" *ngIf="reglementGroupe.montant < getGroupTotal()">
             Montant partiel — distribué proportionnellement
           </small>

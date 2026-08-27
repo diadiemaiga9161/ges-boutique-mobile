@@ -323,7 +323,7 @@
             </div>
             <div class="md-ligne-field">
               <label>Prix unit. (F)</label>
-              <input type="number" [(ngModel)]="l.prixUnitaire" min="0" />
+              <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="l.prixUnitaire" />
             </div>
             <div class="md-ligne-field">
               <label>Remise (%)</label>
@@ -377,7 +377,7 @@
       <div class="md-fields" *ngIf="form.estCredit">
         <div class="md-field">
           <label>Montant versé (FCFA)</label>
-          <input type="number" [(ngModel)]="form.montantVerse" placeholder="0" min="0" />
+          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montantVerse" placeholder="0" />
         </div>
         <div class="md-field">
           <label>Date d'échéance</label>
@@ -450,8 +450,8 @@
       <div class="md-fields">
         <div class="md-field">
           <label>Montant à régler (FCFA)</label>
-          <input type="number" [(ngModel)]="montantReglement"
-            [min]="0" [max]="commandeSelectionnee.montantRestant" placeholder="0" />
+          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="montantReglement"
+            placeholder="0" />
         </div>
       </div>
 
@@ -516,7 +516,7 @@
       <div class="md-fields">
         <div class="md-field">
           <label>Montant total à répartir (FCFA)</label>
-          <input type="number" [(ngModel)]="montantReglementGroupe" placeholder="0" min="0" />
+          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="montantReglementGroupe" placeholder="0" />
         </div>
       </div>
 

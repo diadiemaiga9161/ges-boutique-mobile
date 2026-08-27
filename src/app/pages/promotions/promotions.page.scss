@@ -22,6 +22,53 @@
   .form-actions { padding: 0 16px 16px; }
 }
 
+// Suggestions de promo flash (produits proches péremption)
+.suggestions-section {
+  padding-top: 8px;
+  padding-bottom: 4px;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  ion-icon {
+    font-size: 1.4rem;
+    color: var(--ion-color-warning, #f59e0b);
+    flex-shrink: 0;
+  }
+
+  .suggestions-header-text {
+    min-width: 0;
+  }
+
+  .suggestions-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ion-text-color);
+  }
+
+  .suggestions-subtitle {
+    font-size: 0.78rem;
+    color: var(--ion-color-medium);
+  }
+}
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.suggestion-card {
+  border-color: var(--ion-color-warning, #f59e0b);
+  border-width: 1.5px;
+  border-style: dashed;
+}
+
 // Liste promotions
 .promos-list {
   display: flex;

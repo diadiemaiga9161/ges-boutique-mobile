@@ -561,15 +561,15 @@
       </ion-item>
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.UNIT_PRICE' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="achatForm.prixAchatUnitaire" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="achatForm.prixAchatUnitaire" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.SALE_PRICE' | translate }}</ion-label>
-        <ion-input [(ngModel)]="achatForm.prixVente" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="achatForm.prixVente" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.AMOUNT_PAID' | translate }}</ion-label>
-        <ion-input [(ngModel)]="achatForm.montantPaye" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="achatForm.montantPaye" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.COMMENT' | translate }}</ion-label>
@@ -605,7 +605,7 @@
       </div>
       <ion-item>
         <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="paiementForm.montant" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="paiementForm.montant" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">{{ 'SUPPLIERS.PAYMENT_MODE' | translate }}</ion-label>
@@ -652,7 +652,7 @@
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="avanceForm.montant" type="number" min="0"></ion-input>
+        <ion-input [(ngModel)]="avanceForm.montant" type="text" inputmode="numeric" appMontantInput></ion-input>
       </ion-item>
       <ion-item>
         <ion-label position="stacked">Source</ion-label>

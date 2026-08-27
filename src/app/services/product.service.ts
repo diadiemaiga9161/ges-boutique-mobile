@@ -56,6 +56,7 @@ export interface Produit {
   seuilAlerte: number;
   codeBarre?: string;
   datePeremption?: string;
+  uniteMesure?: string;
   stockFaible?: boolean;
   perime?: boolean;
   prochePeremption?: boolean;

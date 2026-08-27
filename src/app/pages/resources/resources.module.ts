@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { ResourcesPageRoutingModule } from './resources-routing.module';
 import { ResourcesPage } from './resources.page';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../directives/montant-input.directive';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, ResourcesPageRoutingModule, TranslateModule],
+  imports: [CommonModule, FormsModule, IonicModule, ResourcesPageRoutingModule, TranslateModule, MontantInputDirective],
   declarations: [ResourcesPage]
 })
 export class ResourcesPageModule {}

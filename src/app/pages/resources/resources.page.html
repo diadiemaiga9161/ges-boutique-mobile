@@ -75,7 +75,7 @@
 
             <div class="two-cols">
               <ion-item><ion-input label="Qté" labelPlacement="floating" type="number" min="1" [(ngModel)]="factureLigneEnCours.quantite"></ion-input></ion-item>
-              <ion-item><ion-input label="Prix unit. (FCFA)" labelPlacement="floating" type="number" min="0" [(ngModel)]="factureLigneEnCours.prixUnitaire"></ion-input></ion-item>
+              <ion-item><ion-input label="Prix unit. (FCFA)" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="factureLigneEnCours.prixUnitaire"></ion-input></ion-item>
             </div>
             <ion-item><ion-input label="Remise %" labelPlacement="floating" type="number" min="0" max="100" [(ngModel)]="factureLigneEnCours.remisePourcentage"></ion-input></ion-item>
             <ion-button expand="block" fill="outline" color="primary" (click)="addFactureLigne()">
@@ -116,7 +116,7 @@
             <ion-item><ion-input label="Agence" labelPlacement="floating" [(ngModel)]="compteForm.agence"></ion-input></ion-item>
             <ion-item><ion-input label="Titulaire" labelPlacement="floating" [(ngModel)]="compteForm.titulaire"></ion-input></ion-item>
           </div>
-          <ion-item><ion-input label="Solde initial" labelPlacement="floating" type="number" [(ngModel)]="compteForm.soldeInitial"></ion-input></ion-item>
+          <ion-item><ion-input label="Solde initial" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="compteForm.soldeInitial"></ion-input></ion-item>
           <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="compteForm.description"></ion-textarea></ion-item>
         </ng-container>
 
@@ -127,7 +127,7 @@
             </ion-select>
           </ion-item>
           <div class="two-cols">
-            <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="detteForm.montant"></ion-input></ion-item>
+            <ion-item><ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="detteForm.montant"></ion-input></ion-item>
             <ion-item><ion-input label="Date crédit" labelPlacement="floating" type="date" [(ngModel)]="detteForm.dateCredit"></ion-input></ion-item>
           </div>
           <ion-item><ion-textarea label="Description" labelPlacement="floating" [(ngModel)]="detteForm.description"></ion-textarea></ion-item>
@@ -140,7 +140,7 @@
           </div>
           <ion-item><ion-input label="Poste" labelPlacement="floating" [(ngModel)]="employeForm.poste"></ion-input></ion-item>
           <div class="two-cols">
-            <ion-item><ion-input label="Salaire" labelPlacement="floating" type="number" [(ngModel)]="employeForm.salaireMensuel"></ion-input></ion-item>
+            <ion-item><ion-input label="Salaire" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="employeForm.salaireMensuel"></ion-input></ion-item>
             <ion-item><ion-input label="Téléphone" labelPlacement="floating" [(ngModel)]="employeForm.telephone"></ion-input></ion-item>
           </div>
           <ion-item><ion-input label="Date embauche" labelPlacement="floating" type="date" [(ngModel)]="employeForm.dateEmbauche"></ion-input></ion-item>
@@ -221,7 +221,7 @@
             </ion-button>
           </div>
           <ion-item *ngIf="!depotForm.id">
-            <ion-input label="Montant déposé *" labelPlacement="floating" type="number" [(ngModel)]="depotForm.montant"></ion-input>
+            <ion-input label="Montant déposé *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="depotForm.montant"></ion-input>
           </ion-item>
           <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="depotForm.observation" rows="2"></ion-textarea></ion-item>
         </ng-container>
@@ -260,7 +260,7 @@
           </div>
           <div class="two-cols">
             <ion-item><ion-input label="Objectif quantité *" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.objectifQuantite" placeholder="ex: 50000"></ion-input></ion-item>
-            <ion-item><ion-input label="Bonus/unité (FCFA) *" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.bonusParUnite" placeholder="ex: 25"></ion-input></ion-item>
+            <ion-item><ion-input label="Bonus/unité (FCFA) *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="objectifForm.bonusParUnite" placeholder="ex: 25"></ion-input></ion-item>
           </div>
           <div class="two-cols">
             <ion-item><ion-input label="Quantité atteinte (auto)" labelPlacement="floating" type="number" [(ngModel)]="objectifForm.quantiteAtteinte" [disabled]="true"></ion-input></ion-item>
@@ -282,7 +282,7 @@
           </div>
           <div class="two-cols">
             <ion-item><ion-input label="Objectif ventes *" labelPlacement="floating" type="number" [(ngModel)]="objectifVendeurForm.objectifNombreVentes" placeholder="ex: 1000" [disabled]="selected?.bonusValide"></ion-input></ion-item>
-            <ion-item><ion-input label="Bonus (FCFA) *" labelPlacement="floating" type="number" [(ngModel)]="objectifVendeurForm.bonusMontant" placeholder="ex: 10000" [disabled]="selected?.bonusValide"></ion-input></ion-item>
+            <ion-item><ion-input label="Bonus (FCFA) *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="objectifVendeurForm.bonusMontant" placeholder="ex: 10000" [disabled]="selected?.bonusValide"></ion-input></ion-item>
           </div>
           <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="objectifVendeurForm.observation" rows="2" [disabled]="selected?.bonusValide"></ion-textarea></ion-item>
           <p class="muted" *ngIf="selected?.bonusValide" style="color:#dc2626">Cette prime est déjà validée : modification impossible.</p>
@@ -312,7 +312,7 @@
             <ion-select-option value="BON_CAISSE">Bon caisse</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="compteOperation.montant"></ion-input></ion-item>
+        <ion-item><ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="compteOperation.montant"></ion-input></ion-item>
       </div>
       <ion-item><ion-input label="Motif" labelPlacement="floating" [(ngModel)]="compteOperation.motif"></ion-input></ion-item>
       <ion-button expand="block" (click)="saveCompteOperation()">Enregistrer opération</ion-button>
@@ -326,7 +326,7 @@
           <ion-select-option [value]="dette.id" *ngFor="let dette of items">{{ title(dette) }} · {{ amount(dette) }}</ion-select-option>
         </ion-select>
       </ion-item>
-      <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="detteReglement.montantPaye"></ion-input></ion-item>
+      <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="detteReglement.montantPaye"></ion-input></ion-item>
       <ion-button expand="block" (click)="saveDetteReglement()">Régler</ion-button>
     </section>
 
@@ -360,11 +360,11 @@
       </ion-item>
       <div class="two-cols">
         <ion-item><ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
-        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
+        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
       </div>
       <div class="two-cols">
-        <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
-        <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
+        <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
+        <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
       </div>
       <ion-button expand="block" (click)="saveAchatFournisseur()">Enregistrer achat</ion-button>
 
@@ -374,7 +374,7 @@
           <ion-select-option [value]="supplier.id" *ngFor="let supplier of fournisseurs">{{ supplier.nom }}</ion-select-option>
         </ion-select>
       </ion-item>
-      <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
+      <ion-item><ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
       <ion-button expand="block" fill="outline" (click)="payFournisseur()">Payer fournisseur</ion-button>
 
       <h2 class="card-title">Avance fournisseur</h2>
@@ -384,7 +384,7 @@
         </ion-select>
       </ion-item>
       <div class="two-cols">
-        <ion-item><ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="avanceFournisseur.montant"></ion-input></ion-item>
+        <ion-item><ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="avanceFournisseur.montant"></ion-input></ion-item>
         <ion-item><ion-input label="Référence" labelPlacement="floating" [(ngModel)]="avanceFournisseur.reference"></ion-input></ion-item>
       </div>
       <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="avanceFournisseur.observation"></ion-textarea></ion-item>
@@ -412,7 +412,7 @@
       </div>
       <div class="two-cols">
         <ion-item><ion-input label="Quantité retournée" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.quantiteRetournee"></ion-input></ion-item>
-        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
+        <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
       </div>
       <ion-item><ion-textarea label="Motif" labelPlacement="floating" [(ngModel)]="retourAchatForm.motif"></ion-textarea></ion-item>
       <ion-button expand="block" fill="outline" (click)="saveRetourAchat()">Enregistrer retour achat</ion-button>
@@ -952,11 +952,11 @@
           </ion-item>
           <div class="two-cols">
             <ion-item><ion-input label="Quantité *" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
-            <ion-item><ion-input label="Prix achat *" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
+            <ion-item><ion-input label="Prix achat *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
           </div>
           <div class="two-cols">
-            <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="number" [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
-            <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="number" [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
+            <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
+            <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
           </div>
           <ion-item><ion-textarea label="Commentaire" labelPlacement="floating" [(ngModel)]="achatForm.commentaire" rows="2"></ion-textarea></ion-item>
         </div>
@@ -986,7 +986,7 @@
       <div class="stack">
         <div class="modal-section">
           <p class="modal-section-title">Détails du paiement</p>
-          <ion-item><ion-input label="Montant *" labelPlacement="floating" type="number" [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
+          <ion-item><ion-input label="Montant *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
           <ion-item>
             <ion-select label="Mode paiement" labelPlacement="stacked" [(ngModel)]="paiementFournisseur.modePaiement">
               <ion-select-option value="ESPECES">Espèces</ion-select-option>
@@ -1038,7 +1038,7 @@
           </div>
           <p class="modal-section-title">Retrait</p>
           <ion-item>
-            <ion-input label="Montant à retirer *" labelPlacement="floating" type="number" [(ngModel)]="retraitDepotForm.montant" [max]="selectedDepot?.montantRestant ?? null"></ion-input>
+            <ion-input label="Montant à retirer *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="retraitDepotForm.montant"></ion-input>
           </ion-item>
           <ion-item>
             <ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="retraitDepotForm.observation" rows="2"></ion-textarea>

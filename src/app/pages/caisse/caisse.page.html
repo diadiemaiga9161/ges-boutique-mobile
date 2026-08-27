@@ -62,6 +62,7 @@
       <ion-segment-button value="etat">État</ion-segment-button>
       <ion-segment-button value="credits">Crédits</ion-segment-button>
       <ion-segment-button value="operations">Opérations</ion-segment-button>
+      <ion-segment-button value="reconciliation">{{ 'CAISSE.RECONCILIATION.TAB' | translate }}</ion-segment-button>
       <!-- Onglet Stats retiré : les KPI (bilan du jour, crédits...) sont désormais déjà
            affichés en haut de page (cartes colorées), cet onglet devenait redondant. -->
       <!-- <ion-segment-button value="stats">Stats</ion-segment-button> -->
@@ -99,7 +100,7 @@
           <ion-segment-button value="sortie">Sortie</ion-segment-button>
         </ion-segment>
         <ion-item>
-          <ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="operationForm.montant"></ion-input>
+          <ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="operationForm.montant"></ion-input>
         </ion-item>
         <ion-item>
           <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="operationForm.motif"></ion-input>
@@ -323,6 +324,71 @@
       </ng-container>
     </section>
 
+    <!-- Onglet Réconciliation caisse par vendeur — rapport en LECTURE SEULE
+         (aucun bouton d'action, de validation ou de clôture). -->
+    <section class="stack animate-cards" *ngIf="segment === 'reconciliation'">
+
+      <ion-item class="reconciliation-date-item" lines="none">
+        <ion-label>{{ 'CAISSE.RECONCILIATION.DATE_LABEL' | translate }}</ion-label>
+        <ion-datetime-button datetime="dtReconciliation" slot="end"></ion-datetime-button>
+        <ion-modal [keepContentsMounted]="true">
+          <ng-template>
+            <ion-datetime id="dtReconciliation" presentation="date" [(ngModel)]="reconciliationDate"
+              (ionChange)="loadReconciliation()" [max]="reconciliationToday"></ion-datetime>
+          </ng-template>
+        </ion-modal>
+      </ion-item>
+
+      <div class="sk-list" *ngIf="loadingReconciliation">
+        <div class="sk-card" *ngFor="let i of [1,2,3]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!loadingReconciliation">
+        <article class="mobile-card stack" *ngFor="let vendeur of reconciliationList">
+          <div class="row-between">
+            <div>
+              <h2 class="card-title">{{ vendeur.vendeurNom }}</h2>
+              <p class="card-subtitle">{{ vendeur.nombreVentes }} {{ 'CAISSE.RECONCILIATION.SALES_COUNT' | translate }}</p>
+            </div>
+          </div>
+
+          <div class="two-cols">
+            <div class="stat-card">
+              <p class="stat-label">{{ 'CAISSE.RECONCILIATION.CASH_SALES' | translate }}</p>
+              <p class="stat-value success">{{ money(vendeur.totalVentesEspeces) }}</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">{{ 'CAISSE.RECONCILIATION.CREDIT_SALES' | translate }}</p>
+              <p class="stat-value warning">{{ money(vendeur.totalVentesCredit) }}</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <p class="stat-label">{{ 'CAISSE.RECONCILIATION.CREDIT_PAYMENTS' | translate }}</p>
+            <p class="stat-value">{{ money(vendeur.totalReglementsCreditEspeces) }}</p>
+          </div>
+
+          <div class="reconciliation-highlight">
+            <span class="reconciliation-highlight__label">{{ 'CAISSE.RECONCILIATION.TO_REMIT' | translate }}</span>
+            <span class="reconciliation-highlight__value">{{ money(vendeur.totalAiRemettre) }}</span>
+          </div>
+        </article>
+
+        <div class="empty-v2" *ngIf="!reconciliationList.length">
+          <div class="empty-v2__icon"><ion-icon name="people-outline"></ion-icon></div>
+          <p class="empty-v2__title">{{ 'CAISSE.RECONCILIATION.EMPTY_TITLE' | translate }}</p>
+          <p class="empty-v2__text">{{ 'CAISSE.RECONCILIATION.EMPTY_TEXT' | translate }}</p>
+        </div>
+      </ng-container>
+    </section>
+
     <!-- Modal détail opération -->
     <ion-modal [isOpen]="showOpDetail" (didDismiss)="showOpDetail = false" [breakpoints]="[0,0.6,1]" [initialBreakpoint]="0.6">
       <ng-template>
@@ -473,7 +539,7 @@
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-input label="Montant" labelPlacement="floating" type="number" [(ngModel)]="transfertForm.montant"></ion-input>
+        <ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="transfertForm.montant"></ion-input>
       </ion-item>
       <ion-item>
         <ion-input label="Motif" labelPlacement="floating" [(ngModel)]="transfertForm.motif"></ion-input>

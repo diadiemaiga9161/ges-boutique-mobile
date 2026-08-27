@@ -700,7 +700,7 @@
           </div>
           <div class="ml-price-wrap">
             <label class="ml-price-label">Prix unitaire</label>
-            <ion-input class="ml-price-input" type="number" [(ngModel)]="line.prixUnitaire" (ionChange)="updateModifyLine(i)"></ion-input>
+            <ion-input class="ml-price-input" type="text" inputmode="numeric" appMontantInput [(ngModel)]="line.prixUnitaire" (ionChange)="updateModifyLine(i)"></ion-input>
           </div>
           <div class="ml-subtotal">
             <label class="ml-price-label">Sous-total</label>

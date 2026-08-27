@@ -1,0 +1,146 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ 'JOURNAL_AUDIT.TITRE' | translate }}</ion-title>
+    <ion-buttons slot="end" *ngIf="isAdmin">
+      <ion-button (click)="charger()" fill="clear" [disabled]="loading">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ja-content">
+
+  <!-- Accès réservé admin -->
+  <div *ngIf="!isAdmin" class="ja-access-denied">
+    <ion-icon name="lock-closed-outline"></ion-icon>
+    <p>{{ 'JOURNAL_AUDIT.ACCES_REFUSE' | translate }}</p>
+  </div>
+
+  <ng-container *ngIf="isAdmin">
+
+    <!-- ═══════════ FILTRES ═══════════ -->
+    <ion-card class="ja-filtres-card">
+      <ion-card-content>
+
+        <!-- Filtre par utilisateur -->
+        <ion-item lines="none" class="ja-filtre-item">
+          <ion-icon name="person-outline" slot="start" color="medium"></ion-icon>
+          <ion-select
+            [(ngModel)]="utilisateurId"
+            (ionChange)="appliquerFiltres()"
+            [placeholder]="'JOURNAL_AUDIT.TOUS_UTILISATEURS' | translate"
+            interface="action-sheet">
+            <ion-select-option [value]="null">{{ 'JOURNAL_AUDIT.TOUS_UTILISATEURS' | translate }}</ion-select-option>
+            <ion-select-option *ngFor="let u of utilisateurs" [value]="u.id">{{ u.nomComplet || u.username }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Filtre par plage de dates -->
+        <div class="ja-dates-row">
+          <ion-input
+            type="date"
+            [(ngModel)]="dateDebut"
+            (ionChange)="appliquerFiltres()"
+            [label]="'JOURNAL_AUDIT.DATE_FROM' | translate"
+            labelPlacement="stacked"
+            fill="outline">
+          </ion-input>
+          <ion-input
+            type="date"
+            [(ngModel)]="dateFin"
+            (ionChange)="appliquerFiltres()"
+            [label]="'JOURNAL_AUDIT.DATE_TO' | translate"
+            labelPlacement="stacked"
+            fill="outline">
+          </ion-input>
+        </div>
+
+        <ion-button
+          *ngIf="aFiltresActifs"
+          fill="clear"
+          size="small"
+          color="medium"
+          (click)="effacerFiltres()">
+          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+          {{ 'JOURNAL_AUDIT.RESET_FILTERS' | translate }}
+        </ion-button>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ═══════════ LOADING ═══════════ -->
+    <div class="ja-skeleton-list" *ngIf="loading">
+      <ion-card class="ja-skeleton-card" *ngFor="let i of [1,2,3,4,5]">
+        <ion-card-content>
+          <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 70%"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 55%"></ion-skeleton-text>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- ═══════════ ERREUR ═══════════ -->
+    <div *ngIf="!loading && errorMessage" class="ja-empty">
+      <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <!-- ═══════════ VIDE ═══════════ -->
+    <div *ngIf="!loading && !errorMessage && journaux.length === 0" class="ja-empty">
+      <ion-icon name="document-text-outline" color="medium"></ion-icon>
+      <p>{{ 'JOURNAL_AUDIT.AUCUNE_DONNEE' | translate }}</p>
+    </div>
+
+    <!-- ═══════════ LISTE ═══════════ -->
+    <div class="ja-list" *ngIf="!loading && !errorMessage && journaux.length > 0">
+
+      <div class="ja-resume">
+        <span>{{ totalElements }} {{ 'JOURNAL_AUDIT.RESULTATS' | translate }}</span>
+        <span *ngIf="totalPages > 1">{{ 'JOURNAL_AUDIT.PAGE' | translate }} {{ pageActuelle + 1 }} {{ 'JOURNAL_AUDIT.SUR' | translate }} {{ totalPages }}</span>
+      </div>
+
+      <ion-card class="ja-item" *ngFor="let j of journaux; trackBy: trackById">
+        <ion-card-content>
+          <div class="ja-item-top">
+            <span class="ja-item-date">
+              <ion-icon name="calendar-outline"></ion-icon>
+              {{ formatDate(j.dateAction) }}
+            </span>
+          </div>
+          <p class="ja-item-action">{{ libelleAction(j.action) }}</p>
+          <div class="ja-item-user">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            {{ j.utilisateurNom || '—' }}
+          </div>
+          <p class="ja-item-details" *ngIf="j.details">{{ j.details }}</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- ═══════════ PAGINATION SERVEUR ═══════════ -->
+      <div class="ja-pagination" *ngIf="totalPages > 1">
+        <button
+          class="ja-page-btn"
+          (click)="pagePrecedente()"
+          [disabled]="pageActuelle === 0">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+
+        <span class="ja-page-label">{{ pageActuelle + 1 }} / {{ totalPages }}</span>
+
+        <button
+          class="ja-page-btn"
+          (click)="pageSuivante()"
+          [disabled]="pageActuelle >= totalPages - 1">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</ion-content>

@@ -123,8 +123,9 @@
                 <ion-icon name="cash-outline" class="ci-price-icon"></ion-icon>
                 <ion-input
                   class="ci-price-input"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputmode="numeric"
+                  appMontantInput
                   [(ngModel)]="item.customPrice"
                   (ionChange)="clampPrice(item)"
                   [placeholder]="''+item.product.prixVente">
@@ -384,7 +385,7 @@
             <label class="field-label">Montant versé (acompte)</label>
             <div class="field-input-wrap">
               <ion-icon name="cash-outline" class="field-icon"></ion-icon>
-              <ion-input class="field-input" type="number" placeholder="0" [(ngModel)]="montantVerse"></ion-input>
+              <ion-input class="field-input" type="text" inputmode="numeric" appMontantInput placeholder="0" [(ngModel)]="montantVerse"></ion-input>
             </div>
           </div>
         </div>
@@ -412,9 +413,10 @@
               <ion-icon name="cash-outline" class="field-icon"></ion-icon>
               <ion-input
                 class="field-input"
-                type="number"
+                type="text"
+                inputmode="numeric"
+                appMontantInput
                 placeholder="0"
-                [max]="soldeAvanceClient"
                 [(ngModel)]="montantAvanceAUtiliser">
               </ion-input>
               <button class="avance-max-btn" (click)="utiliserTouteAvance()">Tout</button>

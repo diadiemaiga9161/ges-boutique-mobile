@@ -1,0 +1,68 @@
+<div class="tv-overlay" *ngIf="visible">
+  <div class="tv-card">
+
+    <!-- Croix de fermeture : équivaut à "compris", marque comme vu -->
+    <button class="tv-close" (click)="terminer()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+
+    <!-- Progression -->
+    <div class="tv-progress-bar">
+      <div class="tv-progress-fill" [style.width]="(step / totalSteps * 100) + '%'"></div>
+    </div>
+    <p class="tv-step-label">
+      {{ 'TUTORIEL_VENDEUR.STEP_LABEL' | translate }} {{ step }} {{ 'TUTORIEL_VENDEUR.OF' | translate }} {{ totalSteps }}
+    </p>
+
+    <!-- ─── Étape 1 : Bienvenue ─── -->
+    <div *ngIf="step === 1" class="tv-step">
+      <div class="tv-icon-wrap">
+        <ion-icon name="hand-left-outline"></ion-icon>
+      </div>
+      <h2 class="tv-title">{{ 'TUTORIEL_VENDEUR.STEP1_TITLE' | translate: { nom: boutiqueNom } }}</h2>
+      <p class="tv-text">{{ 'TUTORIEL_VENDEUR.STEP1_TEXT' | translate: { role: roleLabel } }}</p>
+    </div>
+
+    <!-- ─── Étape 2 : Enregistrer une vente ─── -->
+    <div *ngIf="step === 2" class="tv-step">
+      <div class="tv-icon-wrap">
+        <ion-icon name="cart-outline"></ion-icon>
+      </div>
+      <h2 class="tv-title">{{ 'TUTORIEL_VENDEUR.STEP2_TITLE' | translate }}</h2>
+      <p class="tv-text">{{ 'TUTORIEL_VENDEUR.STEP2_TEXT' | translate }}</p>
+    </div>
+
+    <!-- ─── Étape 3 : Gérer un crédit ─── -->
+    <div *ngIf="step === 3" class="tv-step">
+      <div class="tv-icon-wrap">
+        <ion-icon name="time-outline"></ion-icon>
+      </div>
+      <h2 class="tv-title">{{ 'TUTORIEL_VENDEUR.STEP3_TITLE' | translate }}</h2>
+      <p class="tv-text">{{ 'TUTORIEL_VENDEUR.STEP3_TEXT' | translate }}</p>
+    </div>
+
+    <!-- ─── Étape 4 : Fin ─── -->
+    <div *ngIf="step === 4" class="tv-step">
+      <div class="tv-icon-wrap tv-icon-wrap--success">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </div>
+      <h2 class="tv-title">{{ 'TUTORIEL_VENDEUR.STEP4_TITLE' | translate }}</h2>
+      <p class="tv-text">{{ 'TUTORIEL_VENDEUR.STEP4_TEXT' | translate }}</p>
+    </div>
+
+    <!-- Navigation : Précédent / Suivant, PAS de "passer" -->
+    <div class="tv-nav">
+      <ion-button fill="outline" color="medium" *ngIf="step > 1" (click)="precedent()">
+        <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+        {{ 'TUTORIEL_VENDEUR.PREV' | translate }}
+      </ion-button>
+      <ion-button color="primary" [class.tv-btn-full]="step === 1" (click)="suivant()">
+        <span *ngIf="step < totalSteps">{{ 'TUTORIEL_VENDEUR.NEXT' | translate }}</span>
+        <span *ngIf="step === totalSteps">{{ 'TUTORIEL_VENDEUR.FINISH' | translate }}</span>
+        <ion-icon *ngIf="step < totalSteps" name="arrow-forward-outline" slot="end"></ion-icon>
+        <ion-icon *ngIf="step === totalSteps" name="checkmark-outline" slot="end"></ion-icon>
+      </ion-button>
+    </div>
+
+  </div>
+</div>

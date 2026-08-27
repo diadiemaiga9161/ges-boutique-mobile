@@ -3,6 +3,8 @@ import { ToastController } from '@ionic/angular';
 import { AuthService, User } from '../../services/auth.service';
 import { Language, LanguageService, LANGUAGES } from '../../services/language.service';
 import { ThemeService, ThemeMode } from '../../services/theme.service';
+import { ConfirmationVocaleService } from '../../services/confirmation-vocale.service';
+import { TutorielVendeurService } from '../../services/tutoriel-vendeur.service';
 
 export const COUNTRY_CODES = [
   { code: '+223', flag: '🇲🇱', name: 'Mali' },
@@ -58,12 +60,20 @@ export class ProfilePage implements OnInit {
   readonly languages: Language[] = LANGUAGES;
   readonly countryCodes = COUNTRY_CODES;
 
+  annonceVocaleActive = true;
+
   constructor(
     public auth: AuthService,
     public langService: LanguageService,
     private toastCtrl: ToastController,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private confirmationVocale: ConfirmationVocaleService,
+    private tutorielVendeur: TutorielVendeurService
   ) {}
+
+  revoirTutoriel(): void {
+    this.tutorielVendeur.demanderAffichage();
+  }
 
   get themeMode(): ThemeMode {
     return this.themeService.getCurrent();
@@ -71,6 +81,13 @@ export class ProfilePage implements OnInit {
 
   setTheme(mode: ThemeMode): void {
     this.themeService.setTheme(mode);
+  }
+
+  toggleAnnonceVocale(event: any): void {
+    const actif = !!event.detail.checked;
+    this.confirmationVocale.setActive(actif);
+    this.annonceVocaleActive = actif;
+    this.presentToast(actif ? 'Confirmation vocale activée' : 'Confirmation vocale désactivée');
   }
 
   ngOnInit() {
@@ -82,6 +99,7 @@ export class ProfilePage implements OnInit {
   }
 
   load(): void {
+    this.annonceVocaleActive = this.confirmationVocale.isActive();
     this.user = this.auth.getUser();
     if (this.user) {
       this.fillForm(this.user);

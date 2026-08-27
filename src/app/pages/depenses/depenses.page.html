@@ -386,7 +386,7 @@
 
         <ion-item>
           <ion-input label="{{ 'EXPENSES.AMOUNT_LABEL' | translate }} *" labelPlacement="floating"
-            type="number" [(ngModel)]="form.montant" placeholder="0"></ion-input>
+            type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montant" placeholder="0"></ion-input>
         </ion-item>
 
         <div class="info-box" [class.info-box--warn]="editing">

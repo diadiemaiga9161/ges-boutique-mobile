@@ -380,6 +380,10 @@ export class CommandesPage {
 
   confirmerReglementIndividuel(): void {
     if (!this.commandeSelectionnee || this.montantReglement <= 0) return;
+    if (this.montantReglement > this.commandeSelectionnee.montantRestant) {
+      this.toast(`Montant max : ${this.formatMontant(this.commandeSelectionnee.montantRestant)}`, 'danger');
+      return;
+    }
     this.commandeService.payerCredit(this.commandeSelectionnee.id, this.montantReglement).subscribe({
       next: () => {
         this.fermerReglementModal();

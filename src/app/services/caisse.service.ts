@@ -136,6 +136,16 @@ export interface StatistiquesCaisse {
   nombreOperations: number;
 }
 
+export interface ReconciliationVendeur {
+  vendeurId: number;
+  vendeurNom: string;
+  nombreVentes: number;
+  totalVentesEspeces: number;
+  totalVentesCredit: number;
+  totalReglementsCreditEspeces: number;
+  totalAiRemettre: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -362,6 +372,17 @@ export class CaisseService {
     return this.http.get<any>(`${this.apiUrl}/operations/periode`, { params }).pipe(
       map(response => this.extractList<OperationCaisse>(response, 'operations')),
       catchError(error => this.handleError(error, 'récupérer les opérations de l\'année'))
+    );
+  }
+
+  /** Rapport en lecture seule : totaux du jour par vendeur (ventes espèces, crédit,
+   * règlements crédit encaissés et montant total à remettre). Réservé ADMIN côté backend. */
+  getReconciliationVendeurs(date?: string): Observable<ReconciliationVendeur[]> {
+    let params = new HttpParams();
+    if (date) params = params.set('date', date);
+    return this.http.get<any>(`${this.apiUrl}/reconciliation-vendeurs`, { params }).pipe(
+      map(response => this.extractList<ReconciliationVendeur>(response, 'reconciliation')),
+      catchError(error => this.handleError(error, 'récupérer la réconciliation des vendeurs'))
     );
   }
 

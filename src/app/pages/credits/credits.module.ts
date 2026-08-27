@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { CreditsPageRoutingModule } from './credits-routing.module';
 import { CreditsPage } from './credits.page';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../directives/montant-input.directive';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, CreditsPageRoutingModule, TranslateModule],
+  imports: [CommonModule, FormsModule, IonicModule, CreditsPageRoutingModule, TranslateModule, MontantInputDirective],
   declarations: [CreditsPage]
 })
 export class CreditsPageModule {}
