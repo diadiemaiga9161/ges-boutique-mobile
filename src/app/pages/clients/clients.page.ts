@@ -133,9 +133,13 @@ export class ClientsPage {
     const actionType = this.editing?.id ? 'CLIENT_UPDATE' : 'CLIENT_CREATE';
 
     if (this.networkStatus.isOnline()) {
+      // payload (pas this.form) : le formulaire lie le téléphone à "telephone", mais le
+      // backend n'a que "numeroTelephone" — envoyer this.form brut faisait silencieusement
+      // ignorer le numéro tapé (nom/prénom/email/adresse passaient, car ces clés matchent
+      // déjà). payload fait la conversion juste au-dessus.
       const request = this.editing?.id
-        ? this.clientService.update(this.editing.id, this.form)
-        : this.clientService.create(this.form);
+        ? this.clientService.update(this.editing.id, payload as any)
+        : this.clientService.create(payload as any);
       request.subscribe({
         next: () => { this.presentToast(this.editing ? 'Client modifié' : 'Client créé'); this.showForm = false; this.load(); },
         error: async error => {

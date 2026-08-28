@@ -12,6 +12,9 @@ export interface HistoriqueTransfert { action: string; description: string; effe
 export interface TransfertStock {
   id?: number; numeroTransfert?: string;
   boutiqueSourceNom: string; boutiqueDestNom: string;
+  // Vide côté expéditeur ou destinataire selon le cas — sert à distinguer le rôle réel
+  // d'une ligne (envoyée vs reçue) indépendamment de l'onglet actif (cf. transferts.page.html).
+  boutiqueSourceUrl?: string; boutiqueDestUrl?: string;
   statut: string; typePaiement: string; notes?: string;
   dateCreation?: string; creePar?: string; motifRejet?: string;
   lignes: LigneTransfert[]; historique?: HistoriqueTransfert[];

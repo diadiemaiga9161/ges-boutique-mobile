@@ -1596,6 +1596,34 @@ ion-alert {
     --ion-item-background: #1f2937;
     --ion-toolbar-background: #1e3a8a;
   }
+
+  // Cartes/panneaux "maison" ci-dessous : couleurs fixes (#fff, #e8eef8...) qui ne
+  // suivaient pas le thème sombre, contrairement au texte/labels Ionic (déjà passés en
+  // clair via --ion-text-color juste au-dessus) — résultat : texte clair sur fond resté
+  // blanc, illisible ou carrément invisible. Concerne Profil, Boutique, et toutes les
+  // listes/formulaires qui utilisent ces classes (clients, produits, transferts...).
+  .mobile-card,
+  .form-panel,
+  .metric-card,
+  .sk-card,
+  .list-item-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .mobile-card.annulee { background: #172033; }
+  .dropdown-list {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .filter-zone {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .fz-chip {
+    background: #1f2937;
+    border-color: #374151;
+    color: #9ca3af;
+  }
 }
 
 // ══════════════════════════════════════════════════

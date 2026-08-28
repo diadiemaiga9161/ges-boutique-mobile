@@ -131,6 +131,9 @@
             {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : (c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon') }}
           </span>
           <span class="cmd-badge cmd-badge--orange" *ngIf="c.estCredit && c.montantRestant > 0">Crédit</span>
+          <span class="cmd-badge cmd-badge--blue" *ngIf="c.origine === 'VITRINE'" title="Reçue via la vitrine en ligne">
+            <ion-icon name="globe-outline"></ion-icon> En ligne
+          </span>
         </div>
       </div>
 

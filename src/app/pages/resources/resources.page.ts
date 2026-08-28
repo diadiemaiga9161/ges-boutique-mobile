@@ -199,8 +199,13 @@ export class ResourcesPage {
           .subscribe({ next: items => { this.items = items; done(); }, error: fail });
         break;
       case 'vendeurs':
+        // "Supprimer" un utilisateur (deleteUser) est un soft-delete côté backend
+        // (actif=false, la ligne reste en base) — findAll() les renvoie donc toujours.
+        // Angular masque les inactifs par défaut (vendeur.component.ts, showInactive
+        // = false) ; on aligne Ionic sur ce même comportement au lieu de tous les
+        // afficher, ce qui donnait l'impression qu'un utilisateur supprimé revenait.
         (this.query ? this.userService.searchUsers(this.query) : this.userService.getAllUsers())
-          .subscribe({ next: items => { this.items = items; done(); }, error: fail });
+          .subscribe({ next: items => { this.items = items.filter(u => u.actif); done(); }, error: fail });
         break;
       case 'objectifs-fournisseur':
         this.objectifFournisseurService.getTous()
@@ -477,7 +482,7 @@ export class ResourcesPage {
     this.compteService.getTousLesComptes().subscribe(comptes => this.comptes = comptes);
     this.productService.getAllFournisseurs().subscribe(fournisseurs => this.fournisseurs = fournisseurs);
     this.depotGardeService.getTousClients().subscribe(clients => this.depotClients = clients);
-    this.userService.getAllUsers().subscribe(users => this.sellerUsers = users.filter(u => u.role === 'VENDEUR' || u.role === 'ADMIN'));
+    this.userService.getAllUsers().subscribe(users => this.sellerUsers = users.filter(u => u.actif && (u.role === 'VENDEUR' || u.role === 'ADMIN')));
   }
 
   private async saveFacture(): Promise<void> {

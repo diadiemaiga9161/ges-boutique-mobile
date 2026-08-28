@@ -43,6 +43,8 @@ export interface Commande {
   venteId?: number;
   notes?: string;
   vendeur?: { id: number; nomComplet: string };
+  /** MAGASIN (par défaut) ou VITRINE (déposée par un client depuis le mini-site public). */
+  origine?: 'MAGASIN' | 'VITRINE';
 }
 
 export interface CommandeRequest {
@@ -68,6 +70,11 @@ export class CommandeService {
 
   getAll(): Observable<Commande[]> {
     return this.http.get<Commande[]>(this.apiUrl);
+  }
+
+  /** Commandes vitrine (en ligne) pas encore traitées — pour le popup/badge "en attente". */
+  getVitrineEnAttente(): Observable<Commande[]> {
+    return this.http.get<Commande[]>(`${this.apiUrl}/vitrine-en-attente`);
   }
 
   getById(id: number): Observable<Commande> {

@@ -33,10 +33,23 @@ export class AppUpdateService {
         {
           text: 'Mettre à jour',
           cssClass: 'alert-btn-primary',
-          handler: () => document.location.reload(),
+          handler: async () => {
+            // Vide aussi le cache de données du service worker (dataGroups de
+            // ngsw-config.json) — sinon la nouvelle version peut réafficher une
+            // réponse API mise en cache par l'ANCIENNE version.
+            await this.viderCacheDonnees();
+            document.location.reload();
+          },
         },
       ],
     });
     await alert.present();
+  }
+
+  private async viderCacheDonnees(): Promise<void> {
+    try {
+      const noms = await caches.keys();
+      await Promise.all(noms.filter(n => n.includes('ngsw:')).map(n => caches.delete(n)));
+    } catch { /* pas grave si ça échoue, le reload reste utile seul */ }
   }
 }
