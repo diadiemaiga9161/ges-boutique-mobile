@@ -11,6 +11,7 @@ import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
 import { NetworkStatusService } from '../../services/network-status.service';
+import { UniteVente, UniteVenteRequest, UniteVenteService } from '../../services/unite-vente.service';
 
 @Component({
   selector: 'app-products',
@@ -60,6 +61,20 @@ export class ProductsPage implements OnInit {
   guidedNiveauAdvancedOpen = false;
   editNiveauAdvancedOpen = false;
 
+  // Vente en gros / détail (VENTE_GROS_DETAIL) — nouvelle fonctionnalité, alternative
+  // simple à ProduitNiveau ci-dessus (laissé intact, plus utilisé pour cette fonctionnalité).
+  // Activable/désactivable par le super admin, voir BoutiqueService.fonctionnalitesAvancees$
+  // (même mécanisme déjà utilisé pour Dépôt garde/Comptes bancaires).
+  venteGrosDetailActif = false;
+  showUnitesVenteModal = false;
+  produitUnitesVente: Produit | null = null;
+  unitesVente: UniteVente[] = [];
+  loadingUnitesVente = false;
+  showAjoutUniteVenteModal = false;
+  newUniteVente: { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number } = this.emptyUniteVente();
+  editingUniteVenteId: number | null = null;
+  editUniteVente: { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number } = this.emptyUniteVente();
+
   constructor(
     public productsService: ProductService,
     public auth: AuthService,
@@ -70,6 +85,7 @@ export class ProductsPage implements OnInit {
     private stockAlert: StockAlertService,
     private fonctionnalite: FonctionnaliteService,
     private niveauService: ProduitNiveauService,
+    private uniteVenteService: UniteVenteService,
     private offlineSync: OfflineSyncService,
     private networkStatus: NetworkStatusService,
     private boutiqueService: BoutiqueService
@@ -83,6 +99,9 @@ export class ProductsPage implements OnInit {
   ngOnInit() {
     this.stockAlert.requestPermission();
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+    });
     this.load();
   }
 
@@ -186,7 +205,8 @@ export class ProductsPage implements OnInit {
       codeBarre: product.codeBarre || '',
       datePeremption: product.datePeremption || '',
       bio: !!product.bio,
-      typeVente: product.typeVente || 'UNITE'
+      typeVente: product.typeVente || 'UNITE',
+      uniteBase: product.uniteBase || 'Unité'
     };
     this.showForm = true;
   }
@@ -626,6 +646,176 @@ export class ProductsPage implements OnInit {
     await alert.present();
   }
 
+  // ==================== VENTE EN GROS / DÉTAIL (unités de vente) ====================
+  // Nouvelle fonctionnalité (VENTE_GROS_DETAIL) — ne touche jamais à ProduitNiveau /
+  // ProduitNiveauService ci-dessus. Le produit garde un stock unique ; chaque unité de
+  // vente ajoute juste un facteur de conversion + un prix propre.
+
+  private emptyUniteVente(): { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number } {
+    return { nom: '', prixVente: 0, prixAchat: 0, uniteReferenceId: null, facteurRelatif: 1 };
+  }
+
+  ouvrirUnitesVente(product: Produit): void {
+    this.produitUnitesVente = product;
+    this.showUnitesVenteModal = true;
+    this.showAjoutUniteVenteModal = false;
+    this.editingUniteVenteId = null;
+    this.newUniteVente = this.emptyUniteVente();
+    this.chargerUnitesVente(product.id);
+  }
+
+  chargerUnitesVente(produitId: number): void {
+    this.loadingUnitesVente = true;
+    this.uniteVenteService.getUnites(produitId).subscribe({
+      next: unites => {
+        this.unitesVente = unites;
+        this.loadingUnitesVente = false;
+      },
+      error: () => {
+        this.loadingUnitesVente = false;
+        this.presentToast('Chargement des unités de vente impossible', 'danger');
+      }
+    });
+  }
+
+  /** Nom de l'unité de base du produit courant, affiché comme premier choix du sélecteur
+   *  "par rapport à quelle unité" (valeur null = unité de base, aucun uniteReferenceId envoyé). */
+  get nomUniteBaseCourante(): string {
+    return this.produitUnitesVente?.uniteBase || 'Unité';
+  }
+
+  /** Options du sélecteur "par rapport à" pour l'ajout : unité de base + unités déjà créées. */
+  get referenceOptionsAjout(): Array<{ id: number | null; nom: string }> {
+    return [{ id: null, nom: this.nomUniteBaseCourante }, ...this.unitesVente.map(u => ({ id: u.id as number, nom: u.nom }))];
+  }
+
+  /** Idem pour l'édition, en excluant l'unité en cours d'édition (pas de référence à soi-même). */
+  referenceOptionsEdition(uniteId: number): Array<{ id: number | null; nom: string }> {
+    return [{ id: null, nom: this.nomUniteBaseCourante }, ...this.unitesVente.filter(u => u.id !== uniteId).map(u => ({ id: u.id as number, nom: u.nom }))];
+  }
+
+  private nomReference(uniteReferenceId: number | null): string {
+    if (uniteReferenceId == null) return this.nomUniteBaseCourante;
+    return this.unitesVente.find(u => u.id === uniteReferenceId)?.nom || this.nomUniteBaseCourante;
+  }
+
+  /** Texte d'aide en direct pour le formulaire d'ajout, ex: "1 Carton = 5 Cartouches". */
+  get factorHintAjout(): string | null {
+    const nom = this.newUniteVente.nom?.trim();
+    const facteur = Number(this.newUniteVente.facteurRelatif) || 0;
+    if (!nom || !facteur) return null;
+    return `1 ${nom} = ${facteur} ${this.nomReference(this.newUniteVente.uniteReferenceId)}`;
+  }
+
+  factorHintEdition(edit: { nom: string; facteurRelatif: number; uniteReferenceId: number | null }): string | null {
+    const nom = edit.nom?.trim();
+    const facteur = Number(edit.facteurRelatif) || 0;
+    if (!nom || !facteur) return null;
+    return `1 ${nom} = ${facteur} ${this.nomReference(edit.uniteReferenceId)}`;
+  }
+
+  ouvrirAjoutUniteVente(): void {
+    this.newUniteVente = this.emptyUniteVente();
+    this.showAjoutUniteVenteModal = true;
+  }
+
+  private buildUniteVenteRequest(source: { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number }): UniteVenteRequest {
+    const request: UniteVenteRequest = {
+      nom: source.nom.trim(),
+      prixVente: Number(source.prixVente) || 0,
+      prixAchat: Number(source.prixAchat) || 0,
+      facteurRelatif: Math.max(0.0001, Number(source.facteurRelatif) || 1),
+    };
+    // uniteReferenceId omis = relatif à l'unité de base (voir contrat backend)
+    if (source.uniteReferenceId != null) {
+      request.uniteReferenceId = source.uniteReferenceId;
+    }
+    return request;
+  }
+
+  ajouterUniteVente(): void {
+    if (!this.produitUnitesVente || !this.newUniteVente.nom?.trim()) {
+      this.presentToast("Nom de l'unité obligatoire", 'danger');
+      return;
+    }
+    if (!this.newUniteVente.prixVente || this.newUniteVente.prixVente <= 0) {
+      this.presentToast('Prix de vente obligatoire', 'danger');
+      return;
+    }
+    if (!this.newUniteVente.facteurRelatif || Number(this.newUniteVente.facteurRelatif) <= 0) {
+      this.presentToast('Le facteur doit être supérieur à 0', 'danger');
+      return;
+    }
+    const payload = this.buildUniteVenteRequest(this.newUniteVente);
+    this.uniteVenteService.creer(this.produitUnitesVente.id, payload).subscribe({
+      next: () => {
+        this.presentToast('Unité de vente ajoutée');
+        this.showAjoutUniteVenteModal = false;
+        this.newUniteVente = this.emptyUniteVente();
+        this.chargerUnitesVente(this.produitUnitesVente!.id);
+      },
+      error: err => {
+        const msg = err?.error?.message || err?.message || "Erreur lors de la création de l'unité";
+        this.presentToast(msg, 'danger');
+      }
+    });
+  }
+
+  startEditUniteVente(unite: UniteVente): void {
+    this.editingUniteVenteId = unite.id!;
+    // Le backend ne renvoie que le facteur total (facteurBase) : on repart par défaut
+    // d'une référence "unité de base" avec ce facteur comme valeur de départ, modifiable.
+    this.editUniteVente = {
+      nom: unite.nom,
+      prixVente: unite.prixVente,
+      prixAchat: unite.prixAchat,
+      uniteReferenceId: null,
+      facteurRelatif: unite.facteurBase
+    };
+  }
+
+  cancelEditUniteVente(): void {
+    this.editingUniteVenteId = null;
+    this.editUniteVente = this.emptyUniteVente();
+  }
+
+  saveEditUniteVente(): void {
+    if (!this.editingUniteVenteId || !this.editUniteVente.nom?.trim()) return;
+    const payload = this.buildUniteVenteRequest(this.editUniteVente);
+    this.uniteVenteService.modifier(this.editingUniteVenteId, payload).subscribe({
+      next: () => {
+        this.presentToast('Unité de vente modifiée');
+        this.editingUniteVenteId = null;
+        this.editUniteVente = this.emptyUniteVente();
+        this.chargerUnitesVente(this.produitUnitesVente!.id);
+      },
+      error: err => this.presentToast(err?.error?.message || err?.message || 'Modification impossible', 'danger')
+    });
+  }
+
+  async supprimerUniteVente(unite: UniteVente): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: "Supprimer l'unité",
+      message: `Supprimer "${unite.nom}" ?`,
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Supprimer', role: 'destructive',
+          handler: () => {
+            this.uniteVenteService.supprimer(unite.id!).subscribe({
+              next: () => {
+                this.unitesVente = this.unitesVente.filter(u => u.id !== unite.id);
+                this.presentToast('Unité de vente supprimée');
+              },
+              error: error => this.presentToast(error.message || 'Suppression impossible', 'danger')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   // ==================== UTILITAIRES ====================
 
   getStockClass(product: Produit): string {
@@ -669,7 +859,8 @@ export class ProductsPage implements OnInit {
       seuilAlerte: 10,
       codeBarre: '',
       bio: false,
-      typeVente: 'UNITE'
+      typeVente: 'UNITE',
+      uniteBase: 'Unité'
     };
   }
 

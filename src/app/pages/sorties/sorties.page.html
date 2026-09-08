@@ -98,7 +98,7 @@
     <section class="stack animate-cards" *ngIf="!loading">
       <article class="list-item-card" *ngFor="let s of sortiesFiltrees; trackBy: trackById">
         <div class="lic-header">
-          <div class="lic-avatar --orange">
+          <div class="lic-avatar lic-avatar--orange">
             <ion-icon name="arrow-down-outline"></ion-icon>
           </div>
           <div class="lic-info">
@@ -106,7 +106,7 @@
             <div class="lic-sub">{{ formatDate(s.dateMouvement) }}</div>
           </div>
           <div class="lic-right">
-            <span class="status-badge --danger">-{{ s.quantite }}</span>
+            <span class="status-badge status-badge--danger">-{{ s.quantite }}</span>
           </div>
         </div>
         <div class="lic-footer">

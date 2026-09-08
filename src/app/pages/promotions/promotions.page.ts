@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Promotion, PromotionService, WhatsAppLien, WhatsAppResult } from '../../services/promotion.service';
 import { BoutiqueService } from '../../services/boutique.service';
@@ -241,6 +241,13 @@ export class PromotionsPage implements OnInit {
     this.showWAModal = false;
     this.whatsAppResult = null;
     this.envoiEnCours = false;
+  }
+
+  // Modale WhatsApp maison (pas un ion-modal) : fermeture au clavier avec
+  // Échap, comme demandé par le standard modales (X / clic overlay / Échap).
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.showWAModal) this.fermerWhatsApp();
   }
 
   get liensFiltered(): WhatsAppLien[] {

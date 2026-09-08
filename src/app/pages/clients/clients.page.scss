@@ -571,3 +571,105 @@
 @media (min-width: 1024px) {
   .client-avatar { width: 56px; height: 56px; font-size: 1.5rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .client-card,
+  .vente-detail-card,
+  .releve-ligne-card,
+  .releve-stat--balance {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .client-avatar,
+  .vdp-qty,
+  .rlc-prod-qty {
+    background: rgba(26,86,219,0.18);
+    border-color: #3b72f6;
+    color: #93c5fd;
+  }
+
+  .client-name,
+  .vdc-num,
+  .vdc-amount,
+  .releve-client-name,
+  .releve-stat-value,
+  .rlc-date,
+  .vdp-total,
+  .rlc-montant-value,
+  .csb-val {
+    color: #f1f5f9;
+  }
+
+  .vdp-name,
+  .rlc-prod-name {
+    color: #cbd5e1;
+  }
+
+  .releve-client-meta,
+  .releve-stat-label {
+    color: #cbd5e1;
+  }
+
+  .client-actions,
+  .client-doc-actions,
+  .vdc-products,
+  .vdc-actions,
+  .rlc-produit,
+  .rlc-montants,
+  .rlc-footer {
+    border-color: #374151;
+  }
+
+  .client-action-btn,
+  .vda-btn {
+    border-right-color: #374151;
+    &:active { background: #172033; }
+  }
+
+  .vcb-track { background: #374151; }
+
+  .modal-section,
+  .doc-btn,
+  .periode-date-input {
+    background: #172033;
+    border-color: #374151;
+  }
+  .doc-btn:active { background: #1f2937; }
+
+  .doc-btn--qr {
+    background: rgba(124,58,237,0.15);
+    color: #c4b5fd;
+    &:active { background: rgba(124,58,237,0.28); }
+  }
+
+  .vda-btn--pdf:active { background: rgba(220,38,38,0.18); }
+
+  .periode-date-input { color: #e5e7eb; }
+
+  .credits-summary-banner {
+    background: linear-gradient(135deg, rgba(217,119,6,0.15) 0%, rgba(180,83,9,0.25) 100%);
+    border-bottom-color: #92400e;
+  }
+  .csb-header { color: #fbbf24; ion-icon { color: #f59e0b; } }
+  .csb-stat { background: rgba(255,255,255,0.06); }
+  .csb-label { color: #fcd34d; }
+
+  .releve-header {
+    background: linear-gradient(135deg, rgba(26,86,219,0.18) 0%, rgba(26,86,219,0.28) 100%);
+    border-bottom-color: #374151;
+  }
+  .releve-stat { background: rgba(255,255,255,0.06); }
+
+  .periode-filter { background: #111827; }
+
+  .pchip2 {
+    background: rgba(26,86,219,0.15);
+    border-color: #3b72f6;
+    color: #93c5fd;
+    &--active { background: var(--ion-color-primary); border-color: var(--ion-color-primary); color: #ffffff; }
+  }
+}

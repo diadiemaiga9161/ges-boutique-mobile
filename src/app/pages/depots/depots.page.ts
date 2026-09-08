@@ -214,7 +214,7 @@ export class DepotsPage {
   async cloturerDepot(depot: DepotGarde): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Clôturer ce dépôt ?',
-      message: `${depot.nomComplet} — Solde restant : <strong>${this.money(depot.montantRestant)}</strong>`,
+      message: `${depot.nomComplet} — Solde restant : ${this.money(depot.montantRestant)}`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -266,9 +266,10 @@ export class DepotsPage {
 
     const alert = await this.alertCtrl.create({
       header: 'Confirmer le retrait global ?',
-      message: `Client : <strong>${this.clientRetraitGlobal.nomComplet}</strong><br>
-                Montant : <strong>${montant > 0 ? this.money(montant) : this.money(total) + ' (total)'}</strong><br>
-                ${this.clientRetraitGlobal.nombreDepotsActifs} dépôt(s) concerné(s)`,
+      cssClass: 'alert-pre-line',
+      message: `Client : ${this.clientRetraitGlobal.nomComplet}\n`
+        + `Montant : ${montant > 0 ? this.money(montant) : this.money(total) + ' (total)'}\n`
+        + `${this.clientRetraitGlobal.nombreDepotsActifs} dépôt(s) concerné(s)`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

@@ -487,3 +487,82 @@
     margin-top: 6px;
   }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .type-summary-card,
+  .type-item {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .ts-title,
+  .dep-nom,
+  .type-item-name {
+    color: #f1f5f9;
+  }
+
+  .date-input,
+  .types-add-box {
+    background: #172033;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .dep-card {
+    --background: #1f2937;
+    --color: #f1f5f9;
+    background: #1f2937 !important;
+    color: #f1f5f9;
+    border-color: #374151;
+
+    &--salary {
+      --background: rgba(48,38,15,0.9);
+      background: rgba(48,38,15,0.9) !important;
+      border-color: #92400e;
+    }
+  }
+
+  .dep-icon-wrap {
+    background: rgba(220,38,38,0.18);
+    ion-icon { color: #fca5a5; }
+    &--salary {
+      background: rgba(217,119,6,0.18);
+      ion-icon { color: #fbbf24; }
+    }
+  }
+
+  .dep-type-badge { background: rgba(220,38,38,0.22); color: #fca5a5; }
+  .dep-motif { color: #cbd5e1; }
+  .dep-card-body,
+  .dep-card-footer {
+    border-top-color: #374151;
+  }
+  .dep-card-footer { background: rgba(255,255,255,0.03); }
+
+  .pagination-info { color: #cbd5e1; }
+
+  .info-box {
+    background: rgba(26,86,219,0.15);
+    border-color: #3b72f6;
+    color: #93c5fd;
+
+    &--warn {
+      background: rgba(217,119,6,0.15);
+      border-color: #92400e;
+      color: #fcd34d;
+    }
+  }
+
+  .types-error-box {
+    background: rgba(220,38,38,0.18);
+    border-color: #dc2626;
+    color: #fca5a5;
+  }
+
+  .type-item-icon {
+    background: rgba(220,38,38,0.18);
+    ion-icon { color: #fca5a5; }
+  }
+}

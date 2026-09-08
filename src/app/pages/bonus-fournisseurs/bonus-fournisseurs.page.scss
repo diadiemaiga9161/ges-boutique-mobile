@@ -167,6 +167,7 @@
   z-index: 1000;
   display: flex;
   align-items: flex-end;
+  animation: modalOverlayFade 0.2s ease;
 }
 
 .modal-sheet {
@@ -176,6 +177,17 @@
   width: 100%;
   max-height: 92vh;
   overflow-y: auto;
+  animation: modalSheetIn 0.22s cubic-bezier(.22,1,.36,1);
+}
+
+@keyframes modalOverlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalSheetIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-handle {
@@ -185,11 +197,36 @@
   margin: 0 auto 14px;
 }
 
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
 .modal-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  ion-icon { font-size: 1.1rem; }
+  &:active { background: #e2e8f0; }
 }
 
 .form-group {
@@ -256,4 +293,38 @@ textarea.form-input { resize: none; }
   .tb-value   { font-size: 2.2rem; }
   .rm-value   { font-size: 2.8rem; }
   .modal-sheet { width: min(680px, 95vw); }
+}
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .filter-card,
+  .bonus-card,
+  .detail-card,
+  .modal-sheet {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .bonus-fournisseur,
+  .modal-title {
+    color: #f1f5f9;
+  }
+
+  .dr-label { color: #cbd5e1; }
+  .detail-sep { background: #374151; &.total-sep { background: #64748b; } }
+
+  .modal-handle { background: #4b5563; }
+  .modal-close-btn {
+    background: #172033;
+    color: #cbd5e1;
+    &:active { background: #263244; }
+  }
+
+  .form-input, .form-select {
+    background: #172033;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
 }

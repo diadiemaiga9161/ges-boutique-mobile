@@ -708,3 +708,190 @@
   .rs-ca-val    { font-size: 2.8rem; }
   .rs-metrics   { grid-template-columns: repeat(4, 1fr); }
 }
+
+// ══════════════════════════════════════════════════
+//  ACCORDÉON "ANALYSES VISUELLES" / "PRÉVISIONS"
+// ══════════════════════════════════════════════════
+.rpt-accordion-group { margin: 12px 0; }
+
+.rpt-accordion-header {
+  --background: #f8fafc;
+  --color:      #1e293b;
+}
+
+.rpt-analytics-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: .85rem;
+  color: #0f172a;
+
+  &--spaced { margin: 12px 0 8px; }
+}
+
+.rpt-ca-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 70px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.rpt-ca-chart-col {
+  flex: 1;
+  min-width: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rpt-ca-chart-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  border-radius: 1px 1px 0 0;
+  min-height: 2px;
+}
+
+.rpt-mini-produit { margin-bottom: 6px; }
+
+.rpt-mini-produit-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .75rem;
+  margin-bottom: 2px;
+  color: #0f172a;
+}
+
+.rpt-mini-produit-qty { color: #6b7280; }
+
+.rpt-mini-bar-bg {
+  background: #e5e7eb;
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.rpt-mini-bar-fill {
+  background: #10b981;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.rpt-hour-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 50px;
+}
+
+.rpt-hour-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rpt-hour-bar {
+  width: 100%;
+  background: #f59e0b;
+  border-radius: 1px 1px 0 0;
+  min-height: 2px;
+}
+
+.rpt-hour-label {
+  font-size: .5rem;
+  color: #6b7280;
+}
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  Cette page définit ses propres cartes/fonds (pas de
+//  classes globales) : on les adapte ici au thème sombre,
+//  sans toucher global.scss ni variables.scss.
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+
+  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+  // global.scss (cf. transferts.page.scss) : sans ce correctif la page reste
+  // gris clair même écran sombre.
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+
+  .period-selector,
+  .filter-card,
+  .rapport-summary,
+  .section-block,
+  .credits-panel {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .fdr-label { color: #cbd5e1; }
+  .fdr-input-wrap { background: #172033; border-color: #374151; }
+  .fdr-input { color: #f1f5f9; }
+  .fdr-arrow { color: #9ca3af; }
+
+  .rs-header { border-bottom-color: #374151; }
+  .rs-titre  { color: #e2e8f0; }
+  .rs-export {
+    background: rgba(26,86,219,0.18);
+    border-color: rgba(59,114,246,0.45);
+    color: #93c5fd;
+    &:active { background: rgba(26,86,219,0.28); }
+  }
+
+  .rs-metric { border-right-color: #374151; }
+  .rs-metric__val { color: #f1f5f9; }
+  .rs-metric__val--red  { color: #f87171; }
+  .rs-metric__val--blue { color: #93c5fd; }
+
+  .section-block__head  { border-bottom-color: #374151; }
+  .section-block__title { color: #f1f5f9; }
+  .section-block__badge { background: rgba(26,86,219,0.18); color: #93c5fd; }
+
+  .tp-item, .pm-item { border-bottom-color: #172033; }
+  .tp-rank  { background: #172033; color: #9ca3af; }
+  .tp-name, .pm-name { color: #f1f5f9; }
+  .tp-bar-wrap, .pm-bar-wrap { background: #374151; }
+  .tp-ca, .pm-amount { color: #f1f5f9; }
+  .pm-icon { background: rgba(26,86,219,0.18); }
+
+  .credits-panel { border-color: #92400e; }
+  .credits-panel__head {
+    background: rgba(217,119,6,0.14);
+    border-bottom-color: #92400e;
+  }
+  .credits-panel__icon {
+    background: rgba(217,119,6,0.16);
+    border-color: #92400e;
+  }
+  .credits-panel__title { color: #fbbf24; }
+  .credits-panel__sub   { color: #f59e0b; }
+
+  .credits-chips { border-bottom-color: #92400e; }
+  .cchip--orange { background: rgba(217,119,6,0.16); border-color: #92400e; }
+  .cchip--red    { background: rgba(220,38,38,0.18); border-color: #7f1d1d; }
+
+  .credit-item { border-bottom-color: #172033; }
+  .ci-name { color: #f1f5f9; }
+  .ci-progress-bar { background: #374151; }
+
+  .rpt-accordion-header {
+    --background: #172033;
+    --color:      #e5e7eb;
+  }
+  .rpt-prevision-list ion-item {
+    --background: #1f2937;
+    --border-color: #374151;
+    --color: #f1f5f9;
+    border-color: #374151;
+  }
+
+  .rpt-analytics-label { color: #e5e7eb; }
+  .rpt-mini-produit-row { color: #e5e7eb; }
+  .rpt-mini-produit-qty,
+  .rpt-hour-label { color: #9ca3af; }
+  .rpt-mini-bar-bg { background: #374151; }
+}

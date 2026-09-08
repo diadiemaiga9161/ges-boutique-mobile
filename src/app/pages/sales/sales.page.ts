@@ -11,6 +11,7 @@ import { FactureService } from '../../services/facture.service';
 import { Produit, ProductService } from '../../services/product.service';
 import { RemiseType, RetourVenteRequest, Statistiques, VenteMap, VenteService, VentesDuJourResponse } from '../../services/vente.service';
 import { WebSocketService } from '../../services/websocket.service';
+import { ImpressionRecuService } from '../../services/impression-recu.service';
 
 @Component({
   selector: 'app-sales',
@@ -61,6 +62,12 @@ export class SalesPage implements OnDestroy {
   queryAnnulees = '';
   loadingAnnulees = false;
 
+  // Impression du reçu sur imprimante thermique Bluetooth depuis l'historique — désactivable
+  // côté super admin (même mécanisme que Dépôt garde/Comptes bancaires/Fidélité, voir
+  // BoutiqueService.fonctionnalitesAvancees$). Action optionnelle et séparée de la facture
+  // PDF existante (confirmPrint/telechargerFactureVente ci-dessous, non touchées).
+  impressionTicketActif = false;
+
   trackById = (_: number, item: any) => item.id;
 
   get boutiqueName(): string {
@@ -79,7 +86,8 @@ export class SalesPage implements OnDestroy {
     private sanitizer: DomSanitizer,
     private designService: FactureDesignService,
     private boutiqueConfig: BoutiqueConfigService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private impressionRecuService: ImpressionRecuService
   ) {}
 
   ionViewWillEnter(): void {
@@ -91,6 +99,9 @@ export class SalesPage implements OnDestroy {
     this.reloadCurrent();
     this.loadVentesAnnulees();
     this.scheduleAlerte22h();
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.impressionTicketActif = liste.find(f => f.cle === 'IMPRESSION_TICKET')?.actif === true;
+    });
   }
 
   ionViewWillLeave(): void {
@@ -125,7 +136,7 @@ export class SalesPage implements OnDestroy {
     localStorage.setItem(todayKey, '1');
     const alert = await this.alertCtrl.create({
       header: '⏰ Fin de journée proche',
-      message: 'Il est 22h00. Les ventes du jour se terminent à <strong>23h59</strong>. Les ventes enregistrées après minuit seront comptées dans la journée du lendemain.',
+      message: 'Il est 22h00. Les ventes du jour se terminent à 23h59. Les ventes enregistrées après minuit seront comptées dans la journée du lendemain.',
       buttons: [{ text: 'Compris', role: 'cancel' }],
       cssClass: 'alerte-22h'
     });
@@ -489,7 +500,7 @@ export class SalesPage implements OnDestroy {
   async confirmPrint(sale: VenteMap): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Télécharger la facture',
-      message: `Imprimer la facture <strong>${sale.numeroVente}</strong> ?`,
+      message: `Imprimer la facture ${sale.numeroVente} ?`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -508,11 +519,20 @@ export class SalesPage implements OnDestroy {
     await alert.present();
   }
 
+  /** Impression du reçu sur imprimante thermique Bluetooth (SPP/ESC-POS) — distincte de la
+   *  facture PDF ci-dessus. Entièrement gérée par ImpressionRecuService, qui n'affiche jamais
+   *  qu'un toast en cas d'erreur (imprimante éteinte/hors de portée/non appairée...) sans
+   *  jamais perturber cet écran. */
+  imprimerRecuThermique(sale: VenteMap): void {
+    this.impressionRecuService.imprimerRecuVente(sale, this.boutiqueService.getInfo());
+  }
+
   async confirmModify(sale: VenteMap): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Modifier la vente',
       subHeader: sale.numeroVente,
-      message: `Total actuel : <strong>${this.money(sale.montantTotal)}</strong><br>Voulez-vous modifier cette vente ?`,
+      cssClass: 'alert-pre-line',
+      message: `Total actuel : ${this.money(sale.montantTotal)}\nVoulez-vous modifier cette vente ?`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -529,7 +549,7 @@ export class SalesPage implements OnDestroy {
     const alert = await this.alertCtrl.create({
       header: '⚠️ Annuler la vente',
       subHeader: `${sale.numeroVente} · ${this.money(sale.montantTotal)}`,
-      message: 'Cette action est <strong>irréversible</strong>. Le stock sera remis à jour.',
+      message: 'Cette action est irréversible. Le stock sera remis à jour.',
       inputs: [{ name: 'motif', type: 'textarea', placeholder: 'Motif (optionnel)' }],
       buttons: [
         { text: 'Fermer', role: 'cancel' },
@@ -626,11 +646,10 @@ export class SalesPage implements OnDestroy {
         : `${this.money(diff)} → remboursement au client`;
     const alert = await this.alertCtrl.create({
       header: 'Confirmer la modification',
-      message: `
-        Ancien total : <strong>${this.money(this.getModifyOldTotal())}</strong><br>
-        Nouveau total : <strong>${this.money(this.getModifyTotal())}</strong><br>
-        <span style="color:${diff > 0 ? '#16a34a' : diff < 0 ? '#dc2626' : '#64748b'}">${diffLabel}</span>
-      `,
+      cssClass: 'alert-pre-line',
+      message: `Ancien total : ${this.money(this.getModifyOldTotal())}\n`
+        + `Nouveau total : ${this.money(this.getModifyTotal())}\n`
+        + diffLabel,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -689,7 +708,8 @@ export class SalesPage implements OnDestroy {
 
     const alert = await this.alertCtrl.create({
       header: 'Confirmer le retour ?',
-      message: `Retour de <strong>${this.money(this.totalRetour)}</strong> pour la vente <strong>${this.selectedVentePourRetour?.numeroVente}</strong>.<br>Le stock et la caisse seront mis à jour.`,
+      cssClass: 'alert-pre-line',
+      message: `Retour de ${this.money(this.totalRetour)} pour la vente ${this.selectedVentePourRetour?.numeroVente}.\nLe stock et la caisse seront mis à jour.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

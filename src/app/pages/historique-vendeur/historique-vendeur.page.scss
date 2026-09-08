@@ -1,3 +1,11 @@
 // (Les filtres Du/Au utilisent désormais ion-input type="date" fill="outline"
 // dans le HTML — plus fiable/cohérent visuellement que le <input type="date">
 // natif précédent, dont le style ne s'appliquait pas correctement.)
+
+// Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+// global.scss : sans ce correctif la page reste gris clair même écran sombre.
+@media (prefers-color-scheme: dark) {
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}

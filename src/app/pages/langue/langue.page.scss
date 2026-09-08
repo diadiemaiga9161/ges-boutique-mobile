@@ -82,3 +82,27 @@
     font-size: 1.2rem;
   }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .lang-content { --background: #111827; }
+
+  .lang-hero {
+    .lang-hero-title { color: #f1f5f9; }
+    .lang-hero-sub   { color: #94a3b8; }
+  }
+
+  .lang-card {
+    background: #1f2937;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+
+    &--active {
+      background: rgba(59,114,246,0.18);
+      border-color: #3b72f6;
+    }
+
+    .lang-card-name { color: #e5e7eb; }
+  }
+}

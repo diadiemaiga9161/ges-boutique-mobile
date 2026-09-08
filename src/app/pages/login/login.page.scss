@@ -151,6 +151,8 @@
   }
 }
 
+.lh-wave-path { fill: #f0f4f8; }
+
 // ── Formulaire ────────────────────────────────────
 .login-form-zone {
   background:  #f0f4f8;
@@ -341,4 +343,54 @@
 @media (min-width: 1024px) {
   .login-card { max-width: 520px; }
   .lh-app-name { font-size: 3rem; }
+}
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .login-content { --background: #111827; }
+  .login-form-zone { background: #111827; }
+  .lh-wave-path { fill: #111827; }
+
+  .login-card {
+    background:  #1f2937;
+    border-color: #374151;
+  }
+
+  .login-card__title { color: #f1f5f9; }
+
+  .input-label { color: #e2e8f0; }
+
+  .input-wrap {
+    background:  #172033;
+    border-color: #374151;
+
+    &:focus-within {
+      border-color: #3b72f6;
+      background:   #1e293b;
+      box-shadow:   0 0 0 4px rgba(59,114,246,0.18);
+    }
+  }
+
+  .input-field {
+    --color:             #f1f5f9;
+    --placeholder-color: #64748b;
+    color:               #f1f5f9;
+  }
+
+  .lang-dropdown {
+    background:  #1f2937;
+    border-color: #374151;
+    box-shadow:  0 8px 32px rgba(0,0,0,0.45);
+  }
+
+  .lang-option {
+    color: #e5e7eb;
+
+    &:hover, &.active { background: rgba(59,114,246,0.18); }
+    &.active { color: #60a5fa; }
+  }
+
+  .login-version { color: #4b5563; }
 }

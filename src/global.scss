@@ -433,6 +433,24 @@
 ion-alert .alert-head h2 { font-size: 1rem; font-weight: 800; color: #0f172a; }
 ion-alert .alert-message { font-size: 0.88rem; color: #475569; line-height: 1.5; }
 
+// Popup "nouvelle(s) commande(s) vitrine" (app.component.ts) — message en texte brut
+// (jamais de HTML, voir le commentaire dans afficherPopupCommandesVitrine), les \n du
+// texte ne deviennent des retours à la ligne visibles qu'avec white-space: pre-line.
+.commande-vitrine-alert .alert-message {
+  white-space: pre-line;
+  text-align: left !important;
+}
+
+// Classe réutilisable pour tout popup Ionic multi-lignes : AlertController.message
+// n'interprète jamais le HTML par défaut (innerHTMLTemplatesEnabled=false), donc des
+// balises <strong>/<br> s'affichaient littéralement à l'écran au lieu d'être rendues
+// (cf. cart.page.ts/presentSaleSuccess, déjà corrigé ainsi). On construit le message en
+// texte brut avec de vrais \n, rendus visibles grâce à cette classe.
+.alert-pre-line .alert-message {
+  white-space: pre-line;
+  text-align: left !important;
+}
+
 // Popup "vente validée" — centré, icône succès, auto-fermeture (cart.page.ts)
 .sale-success-alert {
   --backdrop-opacity: 0.55;
@@ -1595,6 +1613,37 @@ ion-alert {
     --ion-card-background: #1f2937;
     --ion-item-background: #1f2937;
     --ion-toolbar-background: #1e3a8a;
+
+    // --gl-slate-900 (variables.scss) = #0f172a, utilisé comme couleur de TEXTE par
+    // plusieurs classes (.metric-value ici, potentiellement d'autres dans les pages) —
+    // jamais réévalué en sombre jusqu'ici, d'où du texte quasi noir sur fond de carte
+    // devenu sombre. Le redéfinir ici corrige tout ce qui l'utilise, sans devoir
+    // toucher chaque classe individuellement.
+    --gl-slate-900: #f9fafb;
+
+    // ion-card color="light" et tout --background: var(--ion-color-light, ...) restaient
+    // blancs en mode sombre (jamais réévalués) — signalé indépendamment par 3 équipes
+    // différentes lors du passage de polish UI/UX du 2026-09-02 sur les 41 pages Ionic.
+    --ion-color-light: #1f2937;
+    --ion-color-light-rgb: 31, 41, 55;
+    --ion-color-light-contrast: #f9fafb;
+    --ion-color-light-shade: #374151;
+    --ion-color-light-tint: #374151;
+  }
+
+  // ion-content garde un fond clair fixe (#f6f8fb, voir plus bas dans ce fichier) tant
+  // qu'il n'est pas explicitement réévalué ici — bug de base touchant potentiellement
+  // TOUTE page qui n'a pas son propre correctif local (plusieurs pages en avaient déjà
+  // un copié-collé au cas par cas avant ce correctif centralisé).
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+
+  // Texte de titre de carte — couleur fixe (pas une variable), donc --gl-slate-900
+  // ci-dessus ne suffit pas à la corriger : même bug "texte quasi noir sur fond sombre"
+  // que .metric-value, signalé sur plusieurs pages (Inventaire, Boutique, Profil...).
+  .card-title {
+    color: #f9fafb;
   }
 
   // Cartes/panneaux "maison" ci-dessous : couleurs fixes (#fff, #e8eef8...) qui ne

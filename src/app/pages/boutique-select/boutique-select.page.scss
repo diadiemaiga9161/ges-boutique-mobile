@@ -112,3 +112,30 @@
   .boutique-list { gap: 14px; }
   .boutique-item { padding: 18px 22px; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .select-content { --background: #111827; }
+
+  .select-card {
+    background: #1f2937;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+
+    &__title { color: #60a5fa; }
+    &__sub   { color: #94a3b8; }
+  }
+
+  .boutique-item {
+    background: #263244;
+
+    &:active, &:hover { border-color: #3b72f6; background: rgba(59,114,246,0.18); }
+
+    &__nom  { color: #f1f5f9; }
+    &__url  { color: #94a3b8; }
+    &__arrow { color: #60a5fa; }
+  }
+
+  .select-version { color: #64748b; }
+}

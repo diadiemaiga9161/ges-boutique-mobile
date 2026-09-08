@@ -1,0 +1,44 @@
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.settings-toggle-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 1.2rem; color: #1a56db; }
+}
+
+.settings-toggle-text {
+  flex: 1;
+  min-width: 0;
+
+  h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0; }
+  p { font-size: 0.78rem; color: #64748b; margin: 2px 0 0; }
+}
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  (.form-panel passe déjà en sombre via global.scss —
+//  ici on corrige textes/icônes restés en couleur claire
+//  fixe sur la carte assombrie)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .card-title { color: #f1f5f9; }
+
+  .settings-toggle-icon { background: rgba(59,114,246,0.18); }
+
+  .settings-toggle-text {
+    h3 { color: #f1f5f9; }
+    p  { color: #94a3b8; }
+  }
+}

@@ -337,6 +337,72 @@ export class FactureService {
     this.openOverlay(this.genererHTMLDocument(config), false);
   }
 
+  /** Variante multi-sections de ouvrirDocumentPDF : chaque section a son propre titre et
+   * son propre tableau, clairement séparés — utilisée par le rapport de ventes enrichi
+   * (liste des ventes, top produits, modes de paiement, crédits). N'affecte aucun autre
+   * export PDF existant (ouvrirDocumentPDF reste inchangée pour les autres écrans). */
+  ouvrirRapportCompletPDF(config: {
+    titre: string;
+    sousTitre?: string;
+    sections: Array<{ titre: string; colonnes: string[]; lignes: string[][] }>;
+  }): void {
+    this.openOverlay(this.genererHTMLDocumentMultiSections(config), false);
+  }
+
+  private genererHTMLDocumentMultiSections(config: {
+    titre: string;
+    sousTitre?: string;
+    sections: Array<{ titre: string; colonnes: string[]; lignes: string[][] }>;
+  }): string {
+    const design = this.designService.getDesign();
+    const couleur = design === 2 ? '#b8860b' : design === 3 ? '#1a1a1a' : '#1a56db';
+    const fond = design === 2 ? '#1a1a2e' : design === 3 ? '#f8f8f8' : '#1e3a5f';
+
+    const sectionsHtml = config.sections.map(section => {
+      const entetes = section.colonnes.map(c => `<th style="background:${couleur};color:#fff;padding:8px;text-align:left;border:1px solid #ddd">${c}</th>`).join('');
+      const lignesHtml = section.lignes.length
+        ? section.lignes.map((row, i) =>
+            `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">${row.map(cell => `<td style="padding:7px 8px;border:1px solid #eee;font-size:12px">${cell}</td>`).join('')}</tr>`
+          ).join('')
+        : `<tr><td colspan="${section.colonnes.length}" style="padding:10px;text-align:center;color:#888;font-size:12px">Aucune donnée</td></tr>`;
+
+      return `<div style="margin-top:22px">
+        <h2 style="font-size:14px;color:${couleur};border-bottom:2px solid ${couleur};padding-bottom:6px;margin-bottom:8px">${section.titre}</h2>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>${entetes}</tr></thead>
+          <tbody>${lignesHtml}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${config.titre}</title>
+    <style>
+      body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f0f4f8}
+      .doc{background:#fff;border-radius:8px;padding:24px;max-width:900px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+      .header{background:${fond};color:#fff;padding:16px 24px;border-radius:6px;margin-bottom:20px}
+      .header h1{margin:0;font-size:20px;color:${couleur}}
+      .header p{margin:4px 0 0;font-size:12px;opacity:.85}
+      .btn-bar{display:flex;gap:8px;margin-bottom:16px}
+      .btn-print{background:${couleur};color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+      .btn-close{background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+      @media print{@page{size:A4 portrait}.btn-bar{display:none}body{background:#fff;padding:0}.doc{box-shadow:none}}
+    </style></head><body>
+    <div class="doc">
+      <div class="btn-bar">
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+        <button class="btn-close" onclick="window.close()">✕ Fermer</button>
+      </div>
+      <div class="header">
+        <h1>${config.titre}</h1>
+        ${config.sousTitre ? `<p>${config.sousTitre}</p>` : ''}
+      </div>
+      ${sectionsHtml}
+      <p style="font-size:11px;color:#aaa;text-align:right;margin-top:16px">Généré le ${new Date().toLocaleDateString('fr-FR')} · Ges-Boutique</p>
+    </div>
+    <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
+    </body></html>`;
+  }
+
   formatPrice(value: number): string {
     const n = Math.round(value || 0);
     return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;

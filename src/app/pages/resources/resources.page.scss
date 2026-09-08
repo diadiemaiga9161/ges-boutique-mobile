@@ -378,3 +378,66 @@
   .two-cols      { grid-template-columns: repeat(4, 1fr); }
   .client-avatar { width: 58px; height: 58px; font-size: 1.6rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  Cartes "maison" hardcodées en blanc (fournisseurs, dépôts, objectifs,
+//  vendeurs/employés, lignes de facture, sections modales) : sans ce bloc
+//  leur fond ne suit pas le thème sombre, ou le texte enfant codé en dur
+//  reste foncé sur fond redevenu sombre -> illisible. Même traitement que
+//  cart.page.scss / products.page.scss (portée limitée à cette page).
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .client-card,
+  .user-profile-card,
+  .modal-section,
+  .facture-line-item {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .client-name,
+  .upc-name,
+  .facture-line-name,
+  .facture-line-actions,
+  .card-title {
+    color: #f1f5f9;
+  }
+
+  .client-phone,
+  .client-email,
+  .upc-username,
+  .facture-line-detail {
+    color: #94a3b8;
+  }
+
+  .client-actions,
+  .client-doc-actions,
+  .upc-contacts,
+  .upc-actions {
+    border-top-color: #374151;
+  }
+
+  .client-action-btn {
+    border-right-color: #374151;
+    &:active { background: #263244; }
+  }
+
+  .upc-contact { color: #cbd5e1; }
+
+  .facture-lines-list { border-color: #374151; }
+  .facture-line-item:last-of-type { border-bottom-color: transparent; }
+
+  .facture-total-row {
+    background: rgba(59,130,246,0.15);
+    color: #93c5fd;
+  }
+
+  // Textes sombres codés en dur sur .form-panel/.mobile-card (déjà sombres
+  // via global.scss) dans les sections "Achats"/"Paiements"/stats fournisseur.
+  .stat-row {
+    color: #cbd5e1;
+    border-bottom-color: #374151;
+    strong { color: #f1f5f9; }
+  }
+}

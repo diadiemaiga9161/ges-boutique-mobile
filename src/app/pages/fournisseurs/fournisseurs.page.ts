@@ -250,7 +250,7 @@ export class FournisseursPage {
   async deleteFournisseur(f: Fournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Supprimer le fournisseur',
-      message: `<strong>${f.nom}</strong> sera supprimé définitivement.`,
+      message: `${f.nom} sera supprimé définitivement.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

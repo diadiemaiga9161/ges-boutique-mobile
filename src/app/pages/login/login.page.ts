@@ -86,7 +86,10 @@ export class LoginPage implements OnInit {
         const alert = await this.alertCtrl.create({
           header: this.translate.instant('LOGIN.WELCOME', { name: nom }),
           message: `${roleLabel}\n${boutique}`,
-          cssClass: 'welcome-alert',
+          // alert-pre-line : sans elle, le \n ci-dessus ne produit aucun retour à la
+          // ligne visible (white-space par défaut d'Ionic) et affiche tout sur une
+          // seule ligne — voir les autres popups corrigés pour le même problème.
+          cssClass: ['welcome-alert', 'alert-pre-line'],
           buttons: [{ text: 'OK', cssClass: 'alert-btn-primary', handler: () => this.router.navigateByUrl('/tabs') }]
         });
         await alert.present();

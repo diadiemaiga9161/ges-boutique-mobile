@@ -23,7 +23,7 @@ export class ReportsPage {
   weekly?: RapportHebdomadaire;
   monthly?: RapportMensuel;
   custom?: any;
-  activeReport: 'day' | 'week' | 'month' | 'custom' = 'day';
+  activeReport: 'day' | 'week' | 'month' | 'custom' | 'year' = 'day';
   selectedDate = this.reports.formaterDate(new Date());
   dateDebut = this.reports.formaterDate(new Date(Date.now() - 7 * 86400000));
   dateFin = this.reports.formaterDate(new Date());
@@ -54,6 +54,8 @@ export class ReportsPage {
   ) {}
 
   get isVendeur(): boolean { return this.authService.isVendeur(); }
+
+  get currentYear(): number { return new Date().getFullYear(); }
 
   ionViewWillEnter(): void {
     this.currentUser = this.authService.getUser();
@@ -143,11 +145,22 @@ export class ReportsPage {
     });
   }
 
-  switchReport(type: 'day' | 'week' | 'month' | 'custom'): void {
+  // "Annuel" : 1er janvier au 31 décembre de l'année en cours, puis réutilise EXACTEMENT
+  // le même mécanisme que "Personnalisé" (mêmes dateDebut/dateFin, même loadCustom()) —
+  // aucun nouvel appel/calcul spécifique, seules les dates sont auto-calculées ici.
+  loadYearly(): void {
+    const annee = this.currentYear;
+    this.dateDebut = this.reports.formaterDate(new Date(annee, 0, 1));
+    this.dateFin = this.reports.formaterDate(new Date(annee, 11, 31));
+    this.loadCustom();
+  }
+
+  switchReport(type: 'day' | 'week' | 'month' | 'custom' | 'year'): void {
     this.activeReport = type;
     if (type === 'day' && !this.daily) this.loadDaily();
     if (type === 'week' && !this.weekly) this.loadWeekly();
     if (type === 'month' && !this.monthly) this.loadMonthly();
+    if (type === 'year') this.loadYearly();
   }
 
   refresh(): void {
@@ -155,29 +168,32 @@ export class ReportsPage {
     if (this.activeReport === 'week') { this.weekly = undefined; this.loadWeekly(); }
     if (this.activeReport === 'month') { this.monthly = undefined; this.loadMonthly(); }
     if (this.activeReport === 'custom') { this.custom = undefined; this.loadCustom(); }
+    if (this.activeReport === 'year') { this.custom = undefined; this.loadYearly(); }
   }
 
   exportDaily(): void {
     if (!this.daily) return;
-    this.reports.exporterRapportPDF(this.daily, 'journalier');
+    this.reports.exporterRapportPDF(this.selectedDate, this.selectedDate, `Rapport du ${this.reports.formatDateShort(this.selectedDate)}`);
     this.presentToast('Export PDF lancé');
   }
 
   exportWeekly(): void {
     if (!this.weekly) return;
-    this.reports.exporterRapportPDF(this.weekly, 'hebdomadaire');
+    const titre = `Rapport semaine du ${this.reports.formatDateShort(this.weekly.debutSemaine)} au ${this.reports.formatDateShort(this.weekly.finSemaine)}`;
+    this.reports.exporterRapportPDF(this.weekly.debutSemaine, this.weekly.finSemaine, titre);
     this.presentToast('Export PDF lancé');
   }
 
   exportMonthly(): void {
     if (!this.monthly) return;
-    this.reports.exporterRapportPDF(this.monthly, 'mensuel');
+    this.reports.exporterRapportPDF(this.monthly.dateDebut, this.monthly.dateFin, `Rapport ${this.monthly.mois} ${this.monthly.annee}`);
     this.presentToast('Export PDF lancé');
   }
 
   exportCustom(): void {
     if (!this.custom) return;
-    this.reports.exporterRapportPDF(this.custom, 'personnalise');
+    const titre = this.activeReport === 'year' ? `Rapport annuel ${this.currentYear}` : 'Rapport personnalisé';
+    this.reports.exporterRapportPDF(this.dateDebut, this.dateFin, titre);
     this.presentToast('Export PDF lancé');
   }
 

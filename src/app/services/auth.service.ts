@@ -30,6 +30,7 @@ export interface User {
   telephone: string;
   actif?: boolean;
   photo?: string;
+  superAdmin?: boolean;
 }
 
 @Injectable({
@@ -128,6 +129,14 @@ export class AuthService {
     return this.hasRole('VENDEUR');
   }
 
+  // Privilège additionnel réservé au propriétaire de l'app, activé manuellement en
+  // base sur un compte ADMIN existant (pas un rôle séparé — voir Utilisateur.java
+  // côté backend). Le serveur revérifie systématiquement le privilège sur
+  // PUT /api/boutique/fonctionnalites (403 sinon), ceci ne contrôle que l'affichage.
+  isSuperAdmin(): boolean {
+    return this.isAdmin() && this.getUser()?.superAdmin === true;
+  }
+
   getAuthHeaders(): HttpHeaders {
     const token = this.getToken();
     if (!token) throw new Error('Token non disponible. Veuillez vous reconnecter.');
@@ -189,7 +198,8 @@ export class AuthService {
       nomComplet: response.nomComplet,
       email: response.email,
       telephone: response.telephone,
-      photo: (response as any).photo || undefined
+      photo: (response as any).photo || undefined,
+      superAdmin: (response as any).superAdmin === true
     };
 
     this.persistUser(user);

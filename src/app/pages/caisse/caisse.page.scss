@@ -299,3 +299,53 @@
   .op-amount-col, .op-amount { font-size: 1.1rem; }
   .op-motif-row { font-size: 0.92rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .period-btn,
+  .op-search,
+  .op-type-select,
+  .op-card,
+  .reconciliation-date-item {
+    --background: #1f2937;
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .period-btn.active {
+    background: #1a56db;
+    border-color: #1a56db;
+    color: #fff;
+  }
+
+  .credit-selected-info,
+  .group-bar {
+    background: rgba(26,86,219,0.15);
+    border-color: rgba(59,114,246,0.4);
+  }
+
+  .credit-selected {
+    border-color: #3b72f6 !important;
+    background: rgba(26,86,219,0.15) !important;
+  }
+
+  .op-motif-row { color: #cbd5e1; }
+  .op-title { color: #f1f5f9; }
+
+  .reconciliation-highlight { box-shadow: 0 4px 14px rgba(6,95,70,0.4); }
+
+  // Classes globales (card-title, stat-card, empty-v2) réutilisées dans cette page —
+  // scoping local à Caisse uniquement (Angular emulated encapsulation, aucun impact
+  // sur les autres pages qui utilisent les mêmes noms de classe globale).
+  .card-title { color: #f1f5f9; }
+  .stat-card {
+    background: #172033;
+    border-color: #374151;
+    .stat-value { color: #f1f5f9; }
+  }
+  .empty-v2__icon { background: #263244; }
+  .empty-v2__title { color: #f1f5f9; }
+}

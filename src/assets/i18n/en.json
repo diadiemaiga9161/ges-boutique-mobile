@@ -139,9 +139,10 @@
   },
   "REPORTS": {
     "TITLE": "Reports", "DAILY": "Daily", "WEEKLY": "Weekly", "MONTHLY": "Monthly",
+    "YEARLY": "Yearly",
     "CUSTOM": "Custom", "REVENUE": "Revenue", "PROFIT": "Profit",
     "EXPENSES": "Expenses", "NET": "Net result", "SALES_COUNT": "Sales count",
-    "START_DATE": "Start date", "END_DATE": "End date"
+    "START_DATE": "Start date", "END_DATE": "End date", "NO_DATA_TITLE": "No data for this period"
   },
   "NOTIFICATIONS": {
     "LOW_STOCK": "Low stock", "OUT_OF_STOCK": "Out of stock", "CREDIT_OVERDUE": "Overdue credit"

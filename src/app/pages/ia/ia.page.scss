@@ -592,3 +592,103 @@
     --border-radius: 12px;
   }
 }
+
+// ── État vide "boutique en bonne santé" ──────────
+.ia-empty-success-icon { color: #0e9f6e; }
+.ia-empty-success-title { color: #065f46; font-weight: 700; margin: 0; }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  Les cartes .mobile-card / .metric-card passent déjà
+//  en sombre via global.scss ; on corrige ici les
+//  textes et fonds propres à la page IA qui ne
+//  suivaient pas le thème (jamais global.scss).
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+
+  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+  // global.scss (cf. transferts.page.scss) : sans ce correctif la page reste
+  // gris clair même écran sombre.
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+
+  // Titres de carte (classe globale .card-title, texte
+  // très sombre invisible sur une mobile-card passée en
+  // fond sombre) — correction locale à cette page.
+  .card-title {
+    color: #f1f5f9;
+  }
+
+  .ia-empty-success-title { color: #6ee7b7; }
+
+  .ia-loading-circle {
+    background: linear-gradient(135deg, rgba(26,86,219,0.22), rgba(8,22,72,0.55));
+  }
+  .ia-loading-text { color: #f1f5f9; }
+
+  .ia-alerte {
+    background: rgba(217,119,6,0.16);
+    border-color: #92400e;
+    ion-icon { color: #fbbf24; }
+  }
+  .ia-alerte--danger {
+    background: rgba(220,38,38,0.18);
+    border-color: #7f1d1d;
+    ion-icon { color: #f87171; }
+  }
+  .ia-alerte-titre { color: #f1f5f9; }
+  .ia-alerte-msg   { color: #cbd5e1; }
+
+  .ia-reco-done-badge {
+    &.suivie  { background: rgba(16,185,129,0.20); color: #6ee7b7; }
+    &.ignoree { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+  }
+
+  .ia-confidence-bar-bg,
+  .ia-segment-bar-bg,
+  .wizard-progress-bar {
+    background: #374151;
+  }
+  .ia-confidence-pct { color: #cbd5e1; }
+
+  .ia-segment-bar-name { color: #cbd5e1; }
+  .ia-segment-bar-val  { color: #f1f5f9; }
+
+  .wizard-title,
+  .wizard-step-title { color: #f1f5f9; }
+
+  .wizard-type-card,
+  .wizard-day-chip,
+  .wizard-option-pill {
+    background: #172033;
+    border-color: #374151;
+  }
+
+  .wizard-type-card {
+    ion-icon { color: #94a3b8; }
+    span     { color: #cbd5e1; }
+
+    &.selected {
+      background: rgba(26,86,219,0.22);
+      border-color: #3b72f6;
+      ion-icon { color: #93c5fd; }
+      span     { color: #93c5fd; }
+    }
+  }
+
+  .wizard-day-chip {
+    color: #cbd5e1;
+
+    &.selected {
+      background: rgba(26,86,219,0.22);
+      border-color: #3b72f6;
+      color: #93c5fd;
+    }
+  }
+
+  .wizard-option-pill {
+    color: #cbd5e1;
+    // état sélectionné déjà en dégradé foncé + texte blanc : lisible dans les 2 thèmes
+  }
+}

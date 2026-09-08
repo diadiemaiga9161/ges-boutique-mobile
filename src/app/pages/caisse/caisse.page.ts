@@ -83,6 +83,14 @@ export class CaissePage implements OnDestroy {
 
   trackById = (_: number, item: any) => item.id;
 
+  // Ouverture/fermeture caisse, entrée/sortie et transfert vers banque sont
+  // réservés à l'ADMIN côté backend (@PreAuthorize hasRole('ADMIN')) — cet
+  // écran doit masquer ces actions pour VENDEUR, sinon il obtient une erreur
+  // 403 en cliquant sur des boutons qui n'auraient jamais dû s'afficher.
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
+
   constructor(
     public caisseService: CaisseService,
     private auth: AuthService,
@@ -305,7 +313,8 @@ export class CaissePage implements OnDestroy {
     const solde = this.caisseService.formatPrice(this.caisse?.soldeActuel || 0);
     const alert = await this.alertCtrl.create({
       header: '⚠️ Fermer la caisse',
-      message: `Solde actuel : <strong>${solde}</strong><br><br>La caisse sera fermée et les opérations ne seront plus possibles jusqu'à la réouverture.`,
+      cssClass: 'alert-pre-line',
+      message: `Solde actuel : ${solde}\n\nLa caisse sera fermée et les opérations ne seront plus possibles jusqu'à la réouverture.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         { text: 'Confirmer la fermeture', cssClass: 'alert-btn-danger', handler: () => this.closeCash() }

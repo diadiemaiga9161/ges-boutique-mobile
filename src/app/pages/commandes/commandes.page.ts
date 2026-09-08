@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular';
+import { Component, HostListener } from '@angular/core';
+import { AlertController, ToastController, ActionSheetController } from '@ionic/angular';
 import { CommandeService, Commande, CommandeRequest, StatutCommande } from '../../services/commande.service';
 import { ProductService, Produit } from '../../services/product.service';
 import { Client, ClientService } from '../../services/client.service';
@@ -70,13 +70,23 @@ export class CommandesPage {
   idsSelectionnes: number[] = [];
   montantReglementGroupe = 0;
 
+  // Fermeture des modales custom (pas ion-modal) à la touche Échap, comme exigé par
+  // le standard de design (fermeture par X, clic overlay, ou Échap).
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showModal) this.fermerModal();
+    if (this.showReglementModal) this.fermerReglementModal();
+    if (this.showReglementGroupeModal) this.fermerReglementGroupeModal();
+  }
+
   constructor(
     private commandeService: CommandeService,
     private productService: ProductService,
     private clientService: ClientService,
     private auth: AuthService,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private actionSheetCtrl: ActionSheetController
   ) {}
 
   ionViewWillEnter(): void {
@@ -286,6 +296,9 @@ export class CommandesPage {
   // ─── Valider ───────────────────────────────────────────────────────────────
 
   async valider(commande: Commande): Promise<void> {
+    if (commande.origine === 'VITRINE') {
+      return this.validerVitrine(commande);
+    }
     const alert = await this.alertCtrl.create({
       header: 'Valider la commande ?',
       message: `${commande.numeroCommande} sera convertie en vente. Le stock sera décrémenté.`,
@@ -303,6 +316,105 @@ export class CommandesPage {
       ]
     });
     await alert.present();
+  }
+
+  // ─── Valider (commande VITRINE — avec infos de livraison) ─────────────────
+
+  private async validerVitrine(commande: Commande): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Valider la commande en ligne ?',
+      message: `${commande.numeroCommande} sera convertie en vente. Vous pouvez renseigner les infos de livraison (facultatif).`,
+      inputs: [
+        { name: 'fraisLivraison', type: 'number', placeholder: 'Frais de livraison (FCFA)' },
+        { name: 'chauffeurNom', type: 'text', placeholder: 'Nom du chauffeur' },
+        { name: 'chauffeurTelephone', type: 'tel', placeholder: 'Téléphone chauffeur (ex: +223 70010203)' }
+      ],
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Valider',
+          handler: (data: any) => {
+            const fraisLivraison = data?.fraisLivraison !== '' && data?.fraisLivraison != null ? Number(data.fraisLivraison) : undefined;
+            const chauffeurNom = data?.chauffeurNom?.trim() || undefined;
+            const chauffeurTelephone = data?.chauffeurTelephone?.trim() || undefined;
+            this.commandeService.valider(commande.id, { fraisLivraison, chauffeurNom, chauffeurTelephone }).subscribe({
+              next: (res: any) => {
+                this.charger();
+                this.toast('Commande validée ! Stock mis à jour.', 'success');
+                const commandeMaj: Commande = res?.commande || { ...commande, fraisLivraison, chauffeurNom, chauffeurTelephone };
+                this.proposerWhatsappLivraison(commandeMaj);
+              },
+              error: (e: any) => this.toast(e.error?.message || 'Erreur validation', 'danger')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  private async proposerWhatsappLivraison(commande: Commande): Promise<void> {
+    const buttons: any[] = [
+      {
+        text: 'Ouvrir WhatsApp — Client',
+        icon: 'logo-whatsapp',
+        handler: () => this.envoyerWhatsappClient(commande)
+      }
+    ];
+    if (commande.chauffeurTelephone) {
+      buttons.push({
+        text: 'Ouvrir WhatsApp — Chauffeur',
+        icon: 'car-outline',
+        handler: () => this.envoyerWhatsappChauffeur(commande)
+      });
+    }
+    buttons.push({ text: 'Fermer', role: 'cancel' });
+
+    const sheet = await this.actionSheetCtrl.create({
+      header: 'Notifier la livraison par WhatsApp',
+      buttons
+    });
+    await sheet.present();
+  }
+
+  private envoyerWhatsappClient(commande: Commande): void {
+    if (!commande.clientTelephone) {
+      this.toast('Aucun numéro de téléphone client enregistré', 'warning');
+      return;
+    }
+    const total = (commande.montantTotal || 0) + (commande.fraisLivraison || 0);
+    const lignes = [
+      `Commande ${commande.numeroCommande}`,
+      `Total produits : ${this.formatMontant(commande.montantTotal)}`
+    ];
+    if (commande.fraisLivraison) {
+      lignes.push(`Frais de livraison : ${this.formatMontant(commande.fraisLivraison)}`);
+    }
+    lignes.push(`TOTAL à préparer : ${this.formatMontant(total)}`);
+    lignes.push(`Montant payable à la livraison.`);
+    this.ouvrirWhatsapp(commande.clientTelephone, lignes.join('\n'));
+  }
+
+  private envoyerWhatsappChauffeur(commande: Commande): void {
+    if (!commande.chauffeurTelephone) return;
+    const total = (commande.montantTotal || 0) + (commande.fraisLivraison || 0);
+    const lignes = [
+      `Livraison — Commande ${commande.numeroCommande}`,
+      `Client : ${this.getClientNom(commande)}`
+    ];
+    if (commande.clientTelephone) {
+      lignes.push(`Téléphone client : ${commande.clientTelephone}`);
+    }
+    if (commande.adresseLivraison) {
+      lignes.push(`Adresse : ${commande.adresseLivraison}`);
+    }
+    lignes.push(`Montant à collecter : ${this.formatMontant(total)}`);
+    this.ouvrirWhatsapp(commande.chauffeurTelephone, lignes.join('\n'));
+  }
+
+  private ouvrirWhatsapp(numero: string, message: string): void {
+    const clean = numero.replace(/[\s()\-+]/g, '');
+    window.open(`https://wa.me/${clean}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
   // ─── Annuler ───────────────────────────────────────────────────────────────

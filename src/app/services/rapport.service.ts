@@ -68,6 +68,8 @@ export interface RapportHebdomadaire {
 export interface RapportMensuel {
   mois: string;
   annee: number;
+  dateDebut: string;
+  dateFin: string;
   chiffreAffaireTotal: number;
   nombreVentes: number;
   montantRemisesTotal: number;
@@ -88,6 +90,32 @@ export interface RapportJournalier {
     quantite: number;
     chiffreAffaire: number;
   }>;
+}
+
+/** Réponse de GET /api/rapports/complet?dateDebut=...&dateFin=... — regroupe tout ce
+ * qu'un rapport doit contenir pour une période donnée (utilisé pour enrichir le PDF
+ * exporté depuis l'écran Rapports, quelle que soit la période sélectionnée). */
+export interface RapportComplet {
+  dateDebut: string;
+  dateFin: string;
+  nombreVentes: number;
+  totalVentes: number;
+  ventes: Array<{
+    date: string;
+    numeroVente: string;
+    clientNom: string;
+    modePaiement: string;
+    montantTotal: number;
+  }>;
+  topProduits: Array<{ produitNom: string; quantiteVendue: number; ca: number }>;
+  repartitionModePaiement: Array<{ mode: string; montant: number; nombre: number }>;
+  resumeCredits: {
+    nombreCredits: number;
+    totalCredits: number;
+    totalVerse: number;
+    totalRestant: number;
+  };
+  nombreClients: number;
 }
 
 @Injectable({
@@ -207,6 +235,8 @@ export class RapportService {
       map(ventesListe => ({
         mois: moisNoms[today.getMonth()],
         annee: today.getFullYear(),
+        dateDebut: debut,
+        dateFin: fin,
         chiffreAffaireTotal: this.totalVentes(ventesListe),
         nombreVentes: ventesListe.length,
         montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
@@ -237,30 +267,83 @@ export class RapportService {
     );
   }
 
-  exporterRapportPDF(rapport: any, type: string): void {
-    const titre = type === 'journalier' ? `Rapport du ${rapport.date || ''}` :
-      type === 'hebdomadaire' ? `Rapport semaine du ${rapport.debutSemaine || ''}` :
-      type === 'mensuel' ? `Rapport ${rapport.mois || ''} ${rapport.annee || ''}` :
-      `Rapport du ${rapport.resume?.dateDebut || rapport.dateDebut || ''} au ${rapport.resume?.dateFin || rapport.dateFin || ''}`;
+  /** Récupère le rapport complet (ventes, top produits, répartition modes de paiement,
+   * résumé crédits, nombre de clients) pour une plage de dates donnée. Utilisé pour
+   * enrichir le PDF exporté depuis l'écran Rapports, quelle que soit la période choisie. */
+  obtenirRapportComplet(dateDebut: string, dateFin: string): Observable<RapportComplet> {
+    return this.http.get<RapportComplet>(`${environment.apiUrl}/rapports/complet?dateDebut=${dateDebut}&dateFin=${dateFin}`);
+  }
 
-    const ca = rapport.chiffreAffaireTotal || rapport.resume?.chiffreAffaireTotal || 0;
-    const nbVentes = rapport.nombreVentes || rapport.resume?.nombreVentes || 0;
-    const topProduits: any[] = (rapport.topProduits || []).slice(0, 10);
+  /** Exporte en PDF le rapport complet (ventes, top produits, modes de paiement, crédits,
+   * clients servis) pour la période [dateDebut, dateFin] — même mécanisme pour toutes les
+   * périodes (journalier/hebdomadaire/mensuel/annuel/personnalisé), seule la plage de dates
+   * et le titre changent selon la période active à l'écran. */
+  exporterRapportPDF(dateDebut: string, dateFin: string, titre: string): void {
+    this.obtenirRapportComplet(dateDebut, dateFin).subscribe({
+      next: rapport => this.construireEtOuvrirPdfRapportComplet(rapport, titre),
+      error: () => {
+        // Rapport complet indisponible (serveur hors-ligne, etc.) : rien de fiable à
+        // exporter — le composant appelant affiche déjà un toast d'erreur générique
+        // via son propre traitement d'erreur HTTP habituel.
+      }
+    });
+  }
 
-    const lignes = topProduits.map((p: any) => [
-      p.nom || '',
-      String(p.quantite || 0),
-      this.formaterPrixFCFA(p.chiffreAffaire || 0)
+  private construireEtOuvrirPdfRapportComplet(rapport: RapportComplet, titre: string): void {
+    const ventesLignes = (rapport.ventes || []).map(v => [
+      this.formatDateShort(v.date),
+      v.numeroVente || '',
+      v.clientNom || 'Client divers',
+      this.getModePaiementLabel(v.modePaiement),
+      this.formaterPrixFCFA(v.montantTotal || 0)
     ]);
 
-    this.factureService.ouvrirDocumentPDF({
+    const topProduitsLignes = (rapport.topProduits || []).map(p => [
+      p.produitNom || '',
+      String(p.quantiteVendue || 0),
+      this.formaterPrixFCFA(p.ca || 0)
+    ]);
+
+    const modesLignes = (rapport.repartitionModePaiement || []).map(m => [
+      this.getModePaiementLabel(m.mode),
+      this.formaterPrixFCFA(m.montant || 0),
+      String(m.nombre || 0)
+    ]);
+
+    const rc = rapport.resumeCredits;
+    const creditsLignes = [
+      ['Nombre de crédits', String(rc?.nombreCredits || 0)],
+      ['Montant total', this.formaterPrixFCFA(rc?.totalCredits || 0)],
+      ['Montant versé', this.formaterPrixFCFA(rc?.totalVerse || 0)],
+      ['Restant dû', this.formaterPrixFCFA(rc?.totalRestant || 0)]
+    ];
+
+    this.factureService.ouvrirRapportCompletPDF({
       titre,
-      sousTitre: `CA : ${this.formaterPrixFCFA(ca)} · Ventes : ${nbVentes}`,
-      colonnes: topProduits.length > 0 ? ['Produit', 'Quantité', 'CA'] : ['Données'],
-      lignes: topProduits.length > 0 ? lignes : [['Aucun produit dans ce rapport']],
-      totaux: [
-        `Chiffre d'affaires : ${this.formaterPrixFCFA(ca)}`,
-        `Nombre de ventes : ${nbVentes}`
+      sousTitre: `Du ${this.formatDateShort(rapport.dateDebut)} au ${this.formatDateShort(rapport.dateFin)} · `
+        + `CA : ${this.formaterPrixFCFA(rapport.totalVentes)} · Ventes : ${rapport.nombreVentes} · `
+        + `Clients servis : ${rapport.nombreClients || 0}`,
+      sections: [
+        {
+          titre: 'Liste des ventes',
+          colonnes: ['Date', 'N° Vente', 'Client', 'Mode paiement', 'Montant'],
+          lignes: ventesLignes.length ? ventesLignes : [['Aucune vente sur cette période', '', '', '', '']]
+        },
+        {
+          titre: 'Produits les plus vendus',
+          colonnes: ['Produit', 'Quantité vendue', "Chiffre d'affaires"],
+          lignes: topProduitsLignes.length ? topProduitsLignes : [['Aucun produit vendu', '', '']]
+        },
+        {
+          titre: 'Répartition par mode de paiement',
+          colonnes: ['Mode de paiement', 'Montant', 'Nombre de transactions'],
+          lignes: modesLignes.length ? modesLignes : [['Aucune donnée', '', '']]
+        },
+        {
+          titre: 'Résumé des crédits',
+          colonnes: ['Indicateur', 'Valeur'],
+          lignes: creditsLignes
+        }
       ]
     });
   }
@@ -268,7 +351,7 @@ export class RapportService {
   getModePaiementLabel(mode: string): string {
     const labels: Record<string, string> = {
       ESPECES: 'Espèces', ORANGE_MONEY: 'Orange Money', MOOV_MONEY: 'Moov Money',
-      CARTE_BANCAIRE: 'Carte bancaire', VIREMENT: 'Virement'
+      WAVE_MONEY: 'Wave', CARTE_BANCAIRE: 'Carte bancaire', VIREMENT: 'Virement'
     };
     return labels[mode] || mode;
   }

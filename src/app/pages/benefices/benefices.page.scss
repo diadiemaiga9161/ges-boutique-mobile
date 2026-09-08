@@ -129,3 +129,15 @@ ion-card-title {
   .ben-kpi__val { font-size: 19px; }
   .chart-wrap   { height: 340px; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .ben-kpi {
+    &__label { color: #9ca3af; }
+    &--blue   { background: rgba(59,130,246,.18); }
+    &--purple { background: rgba(139,92,246,.18); }
+    &--amber  { background: rgba(245,158,11,.18); }
+  }
+}

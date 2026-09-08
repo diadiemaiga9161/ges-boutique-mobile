@@ -10,6 +10,8 @@ import { DesignFacture, FactureDesignService } from '../../services/facture-desi
 import { FactureService } from '../../services/facture.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
+import { BoutiqueService } from '../../services/boutique.service';
+import { FideliteService, MouvementFidelite, SoldeFidelite } from '../../services/fidelite.service';
 
 @Component({
   selector: 'app-clients',
@@ -67,8 +69,23 @@ export class ClientsPage {
 
   design: DesignFacture = 1;
 
+  // Fidélité client (CleFonctionnalite.PROGRAMME_FIDELITE) — masqué entièrement si
+  // désactivé pour la boutique (même mécanisme que Dépôt garde/Comptes bancaires).
+  programmeFideliteActif = false;
+  showFideliteModal = false;
+  selectedClientForFidelite?: Client;
+  soldeFidelite?: SoldeFidelite;
+  mouvementsFidelite: MouvementFidelite[] = [];
+  loadingFidelite = false;
+  ajustementFideliteForm = { delta: 0, motif: '' };
+  savingAjustementFidelite = false;
+
   get boutiqueName(): string {
     return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
+  }
+
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
   }
 
   constructor(
@@ -83,12 +100,17 @@ export class ClientsPage {
     private designService: FactureDesignService,
     private boutiqueConfig: BoutiqueConfigService,
     private networkStatus: NetworkStatusService,
-    private offlineSync: OfflineSyncService
+    private offlineSync: OfflineSyncService,
+    private boutiqueService: BoutiqueService,
+    private fideliteService: FideliteService
   ) {}
 
   ionViewWillEnter(): void {
     this.design = this.designService.getDesign();
     this.load();
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.programmeFideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+    });
   }
 
   load(event?: any): void {
@@ -511,6 +533,74 @@ export class ClientsPage {
       case 'UTILISE_PARTIELLEMENT': return 'warning';
       default: return 'medium';
     }
+  }
+
+  // ==================== FIDÉLITÉ CLIENT ====================
+
+  openFideliteModal(client: Client): void {
+    if (!client.id) return;
+    this.selectedClientForFidelite = client;
+    this.soldeFidelite = undefined;
+    this.mouvementsFidelite = [];
+    this.ajustementFideliteForm = { delta: 0, motif: '' };
+    this.showFideliteModal = true;
+    this.loadFidelite(client.id);
+  }
+
+  private loadFidelite(clientId: number): void {
+    this.loadingFidelite = true;
+    this.fideliteService.getSoldeClient(clientId).subscribe({
+      next: solde => { this.soldeFidelite = solde; this.loadingFidelite = false; },
+      error: error => { this.loadingFidelite = false; this.presentToast(error.message || 'Solde fidélité indisponible', 'danger'); }
+    });
+    this.fideliteService.getMouvementsClient(clientId).subscribe({
+      next: liste => this.mouvementsFidelite = liste.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      error: () => this.mouvementsFidelite = []
+    });
+  }
+
+  enregistrerAjustementFidelite(): void {
+    if (!this.selectedClientForFidelite?.id || !this.ajustementFideliteForm.delta) {
+      this.presentToast('Indiquez un nombre de points (positif ou négatif)', 'danger');
+      return;
+    }
+    this.savingAjustementFidelite = true;
+    this.fideliteService.ajusterSolde(
+      this.selectedClientForFidelite.id,
+      Number(this.ajustementFideliteForm.delta),
+      this.ajustementFideliteForm.motif.trim()
+    ).subscribe({
+      next: solde => {
+        this.soldeFidelite = solde;
+        this.savingAjustementFidelite = false;
+        this.ajustementFideliteForm = { delta: 0, motif: '' };
+        this.presentToast('Solde de points ajusté');
+        this.loadFidelite(this.selectedClientForFidelite!.id!);
+      },
+      error: error => {
+        this.savingAjustementFidelite = false;
+        this.presentToast(error.message || 'Ajustement impossible', 'danger');
+      }
+    });
+  }
+
+  closeFideliteModal(): void {
+    this.showFideliteModal = false;
+    this.selectedClientForFidelite = undefined;
+    this.soldeFidelite = undefined;
+    this.mouvementsFidelite = [];
+  }
+
+  getMouvementFideliteLabel(m: MouvementFidelite): string {
+    if (m.type === 'GAGNE') return 'Gagné';
+    if (m.type === 'UTILISE') return 'Utilisé';
+    return 'Ajustement';
+  }
+
+  getMouvementFideliteColor(m: MouvementFidelite): string {
+    if (m.type === 'GAGNE') return 'success';
+    if (m.type === 'UTILISE') return 'warning';
+    return 'medium';
   }
 
   // ==================== UTILITAIRES ====================

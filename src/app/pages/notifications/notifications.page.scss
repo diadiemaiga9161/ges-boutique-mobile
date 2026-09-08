@@ -11,3 +11,15 @@ ion-item { --padding-start: 12px; }
   ion-list { max-width: 900px; }
   ion-item { --padding-start: 28px; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  (.list-item-card et .sk-card passent déjà en sombre
+//  via global.scss — ici on corrige les textes qui
+//  restaient en couleur foncée sur la carte assombrie)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .lic-name { color: #f1f5f9; }
+
+  .empty-v2__title { color: #e5e7eb; }
+}

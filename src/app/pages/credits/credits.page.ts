@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { forkJoin, from } from 'rxjs';
 import { concatMap, toArray } from 'rxjs/operators';
@@ -79,6 +79,15 @@ export class CreditsPage {
   savingGroupe = false;
 
   ModePaiementCaisse = ModePaiementCaisse;
+
+  // Fermeture des modales custom (pas ion-modal) à la touche Échap, comme exigé par
+  // le standard de design (fermeture par X, clic overlay, ou Échap).
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showDetailModal) this.showDetailModal = false;
+    if (this.showSimpleModal) this.showSimpleModal = false;
+    if (this.showGroupModal) this.showGroupModal = false;
+  }
 
   // ── Onglet paiements groupés ──────────────────────────────
   activeTab: 'credits' | 'groupes' = 'credits';
@@ -523,7 +532,7 @@ export class CreditsPage {
     const total = this.getGroupTotal();
     const alert = await this.alertCtrl.create({
       header: 'Confirmer le règlement groupé',
-      message: `${creditsARegler.length} crédit(s) — <strong>${this.money(this.reglementGroupe.montant)}</strong>`,
+      message: `${creditsARegler.length} crédit(s) — ${this.money(this.reglementGroupe.montant)}`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

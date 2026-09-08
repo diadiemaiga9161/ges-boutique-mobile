@@ -101,6 +101,11 @@
         <ion-icon name="bar-chart-outline"></ion-icon>
         {{ 'REPORTS.MONTHLY' | translate }}
       </button>
+      <button class="ps-btn" [class.ps-btn--active]="activeReport==='year'"
+        (click)="switchReport('year')">
+        <ion-icon name="calendar-number-outline"></ion-icon>
+        {{ 'REPORTS.YEARLY' | translate }}
+      </button>
       <button class="ps-btn" [class.ps-btn--active]="activeReport==='custom'"
         (click)="switchReport('custom')">
         <ion-icon name="options-outline"></ion-icon>
@@ -169,6 +174,38 @@
     </div>
 
     <!-- ══════════════════════════════════
+         ÉTAT VIDE — rapport indisponible
+         (ex. erreur réseau lors du chargement)
+    ══════════════════════════════════ -->
+    <div class="empty-state" *ngIf="!loading && activeReport === 'day' && !daily">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <p>{{ 'REPORTS.NO_DATA_TITLE' | translate }}</p>
+      <ion-button size="small" (click)="loadDaily()">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        {{ 'COMMON.REFRESH' | translate }}
+      </ion-button>
+    </div>
+    <div class="empty-state" *ngIf="!loading && activeReport === 'week' && !weekly">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <p>{{ 'REPORTS.NO_DATA_TITLE' | translate }}</p>
+      <ion-button size="small" (click)="loadWeekly()">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        {{ 'COMMON.REFRESH' | translate }}
+      </ion-button>
+    </div>
+    <div class="empty-state" *ngIf="!loading && activeReport === 'month' && !monthly">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <p>{{ 'REPORTS.NO_DATA_TITLE' | translate }}</p>
+      <ion-button size="small" (click)="loadMonthly()">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        {{ 'COMMON.REFRESH' | translate }}
+      </ion-button>
+    </div>
+    <!-- Le rapport "Personnalisé" est généré à la demande (bouton "Générer" du
+         filtre ci-dessus) : tant que l'utilisateur n'a rien demandé, l'absence
+         de résultat est normale et n'affiche donc pas d'état vide/erreur ici. -->
+
+    <!-- ══════════════════════════════════
          RÉSUMÉ DU RAPPORT ACTIF
     ══════════════════════════════════ -->
 
@@ -217,6 +254,21 @@
     <ng-container *ngIf="activeReport === 'custom' && custom && !loading">
       <ng-container *ngTemplateOutlet="resumeCard; context: {
         titre: 'Rapport personnalisé',
+        ca: getCA(),
+        ventes: getNombreVentes(),
+        remises: 0,
+        benefice: getBenefice(),
+        exportFn: 'exportCustom'
+      }"></ng-container>
+      <ng-container *ngTemplateOutlet="topProduitsSection; context: { $implicit: getTopProduits() }"></ng-container>
+      <ng-container *ngTemplateOutlet="modesPaiementSection; context: { $implicit: getModePaiementStats() }"></ng-container>
+    </ng-container>
+
+    <!-- Annuel — réutilise exactement le même mécanisme que "Personnalisé" (this.custom,
+         loadCustom()) avec des dates auto-calculées (1er janv. au 31 déc. de l'année en cours) -->
+    <ng-container *ngIf="activeReport === 'year' && custom && !loading">
+      <ng-container *ngTemplateOutlet="resumeCard; context: {
+        titre: 'Rapport annuel ' + currentYear,
         ca: getCA(),
         ventes: getNombreVentes(),
         remises: 0,
@@ -389,47 +441,44 @@
        rapport de la période choisie ci-dessus (jour/semaine/mois) : on les garde donc,
        mais repliées par défaut pour ne pas surcharger l'écran — l'essentiel (rapport de
        la période + crédits) reste visible tout de suite, le détail est à un tap. -->
-  <ion-accordion-group style="margin:12px 0">
+  <ion-accordion-group class="rpt-accordion-group">
     <ion-accordion value="analyses">
-      <ion-item slot="header" color="light">
+      <ion-item slot="header" class="rpt-accordion-header">
         <ion-icon name="stats-chart-outline" slot="start" color="medium"></ion-icon>
         <ion-label>Analyses visuelles (30 derniers jours)</ion-label>
       </ion-item>
-      <div class="ion-padding" slot="content">
+      <div class="ion-padding rpt-analytics" slot="content">
 
         <!-- CA 30 jours -->
-        <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">CA 30 derniers jours</p>
-        <div style="display:flex;align-items:flex-end;gap:1px;height:70px;overflow-x:auto;margin-bottom:16px">
-          <div *ngFor="let d of ca30Jours"
-            style="flex:1;min-width:8px;display:flex;flex-direction:column;align-items:center">
+        <p class="rpt-analytics-label">CA 30 derniers jours</p>
+        <div class="rpt-ca-chart">
+          <div *ngFor="let d of ca30Jours" class="rpt-ca-chart-col">
             <div [style.height.%]="pct(d.ca, maxCA)"
                  [title]="d.date"
-                 style="width:100%;background:#4f46e5;border-radius:1px 1px 0 0;min-height:2px"></div>
+                 class="rpt-ca-chart-bar"></div>
           </div>
         </div>
 
         <!-- Top produits -->
-        <p style="font-weight:600;margin-bottom:8px;font-size:.85rem">Top 10 produits</p>
-        <div *ngFor="let p of topProduits" style="margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px">
+        <p class="rpt-analytics-label">Top 10 produits</p>
+        <div *ngFor="let p of topProduits" class="rpt-mini-produit">
+          <div class="rpt-mini-produit-row">
             <span>{{ p.produitNom }}</span>
-            <span style="color:#6b7280">{{ p.quantiteVendue }}</span>
+            <span class="rpt-mini-produit-qty">{{ p.quantiteVendue }}</span>
           </div>
-          <div style="background:#e5e7eb;border-radius:4px;height:6px">
-            <div [style.width.%]="pct(p.quantiteVendue, maxQte)"
-                 style="background:#10b981;height:100%;border-radius:4px"></div>
+          <div class="rpt-mini-bar-bg">
+            <div [style.width.%]="pct(p.quantiteVendue, maxQte)" class="rpt-mini-bar-fill"></div>
           </div>
         </div>
 
         <!-- Ventes par heure -->
-        <p style="font-weight:600;margin:12px 0 8px;font-size:.85rem">Ventes par heure</p>
-        <div style="display:flex;align-items:flex-end;gap:2px;height:50px">
-          <div *ngFor="let h of ventesParHeure"
-            style="flex:1;display:flex;flex-direction:column;align-items:center">
+        <p class="rpt-analytics-label rpt-analytics-label--spaced">Ventes par heure</p>
+        <div class="rpt-hour-chart">
+          <div *ngFor="let h of ventesParHeure" class="rpt-hour-col">
             <div [style.height.%]="pct(h.nbVentes, maxVentes)"
                  [title]="h.heure + 'h'"
-                 style="width:100%;background:#f59e0b;border-radius:1px 1px 0 0;min-height:2px"></div>
-            <span style="font-size:.5rem;color:#6b7280">{{ h.heure }}</span>
+                 class="rpt-hour-bar"></div>
+            <span class="rpt-hour-label">{{ h.heure }}</span>
           </div>
         </div>
 
@@ -438,13 +487,13 @@
 
     <!-- Prévisions de stock -->
     <ion-accordion value="previsions" *ngIf="previsionStock.length > 0">
-      <ion-item slot="header" color="light">
+      <ion-item slot="header" class="rpt-accordion-header">
         <ion-icon name="cube-outline" slot="start" color="medium"></ion-icon>
         <ion-label>Prévisions de stock</ion-label>
         <ion-badge slot="end" color="medium">{{ previsionStock.length }}</ion-badge>
       </ion-item>
       <div slot="content">
-        <ion-list>
+        <ion-list class="rpt-prevision-list">
           <ion-item *ngFor="let p of previsionStock">
             <ion-label>
               <h3>{{ p.produitNom }}</h3>

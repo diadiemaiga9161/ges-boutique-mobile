@@ -7,6 +7,7 @@ import { Employe, EmployeService } from '../../services/employe.service';
 import { BoutiqueService } from '../../services/boutique.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-depenses',
@@ -55,8 +56,16 @@ export class DepensesPage {
     private alertCtrl: AlertController,
     private boutiqueService: BoutiqueService,
     private networkStatus: NetworkStatusService,
-    private offlineSync: OfflineSyncService
+    private offlineSync: OfflineSyncService,
+    private auth: AuthService
   ) {}
+
+  // Créer/modifier/valider/supprimer une dépense déduit ou ajuste directement le
+  // solde de la caisse côté backend (@PreAuthorize hasRole('ADMIN')) — cet écran
+  // doit masquer ces actions pour VENDEUR, qui ne doit avoir qu'un accès lecture.
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
 
   ionViewWillEnter(): void {
     this.load();

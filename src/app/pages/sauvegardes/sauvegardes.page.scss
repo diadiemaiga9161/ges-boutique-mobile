@@ -2,6 +2,12 @@
   --background: var(--ion-color-light, #f4f5f8);
 }
 
+@media (prefers-color-scheme: dark) {
+  .bkp-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}
+
 // Accès refusé
 .bkp-access-denied {
   display: flex;
@@ -78,7 +84,7 @@
 }
 
 .bkp-item {
-  --background: #fff;
+  --background: var(--ion-item-background, #fff);
   --border-radius: 10px;
   margin-bottom: 8px;
   border-radius: 10px;

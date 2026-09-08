@@ -75,3 +75,24 @@ h1 {
   h1 { font-size: 2rem; }
   ion-list { max-width: 900px; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  (.form-panel/.mobile-card passent déjà en sombre via
+//  global.scss — ici on corrige textes/icônes/bordures
+//  restés en couleur claire fixe sur la carte assombrie)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .card-title { color: #f1f5f9; }
+
+  .form-panel {
+    ion-input, ion-textarea {
+      --border-color: #374151;
+      --highlight-color-focused: #3b72f6;
+    }
+  }
+
+  .settings-toggle-icon { background: rgba(59,114,246,0.18); }
+
+  .settings-toggle-text h3 { color: #f1f5f9; }
+}

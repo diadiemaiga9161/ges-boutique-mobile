@@ -1449,3 +1449,90 @@
   .filter-row { grid-template-columns: repeat(4, 1fr); }
   .hero-amount { font-size: 2.6rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .filter-card,
+  .filter-select-wrap,
+  .tab-segment-wrap,
+  .sale-card,
+  .sale-expand,
+  .stats-top-products,
+  .annulation-info-block,
+  .modify-line,
+  .retour-line,
+  .receipt-footer,
+  .retour-footer,
+  .modify-footer {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .date-input,
+  .ml-price-input,
+  .ml-produit-select,
+  .ml-motif-input,
+  .retour-motif-input {
+    background: #172033;
+    border-color: #374151;
+    color: #f1f5f9;
+    &::placeholder { color: #64748b; }
+  }
+  .date-input:focus,
+  .ml-produit-select:focus { border-color: #3b72f6; background: #1f2937; }
+  .filter-select-wrap:focus-within { border-color: #3b72f6; }
+
+  .receipt-content { --background: #0b1220; }
+  .modify-content { --background: rgba(245,158,11,0.06); }
+
+  .sale-expand { background: #172033; }
+  .sale-card--annulee { background: #172033; }
+  .sale-card--retard  { border-color: rgba(220,38,38,0.4); }
+  .sale-card--credit  { border-color: rgba(245,158,11,0.4); }
+  .sale-accent.accent-gray { background: #374151; }
+
+  .sale-num, .sale-amount, .expand-name, .expand-subtotal,
+  .rp-name, .rp-total, .ml-name, .stp-name, .stp-amount,
+  .retour-line-name {
+    color: #f1f5f9;
+  }
+
+  .sale-client-row, .sale-vendeur-row { color: #cbd5e1; }
+  .sale-vendeur-name { color: #c4b5fd; }
+
+  .credit-bar-fill, .stp-bar-wrap { background: #374151; }
+  .sale-credit-bar { border-top-color: #374151; }
+  .expand-line, .expand-head { border-color: #374151; }
+  .expand-qty { background: rgba(99,102,241,0.25); color: #c7d2fe; }
+
+  .sale-actions, .saction { border-color: #374151 !important; }
+  .saction:active { background: #172033; }
+  .sale-mode-chip { background: rgba(26,86,219,0.2); color: #93c5fd; }
+
+  .annulation-info-block { background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.35); }
+  .annul-val { color: #e5e7eb; }
+  .annul-val--motif { color: #fca5a5; }
+
+  .stp-rank { background: rgba(26,86,219,0.2); color: #93c5fd; }
+
+  .modify-toolbar { --background: #3f2d0a; --color: #fcd34d; border-bottom-color: rgba(245,158,11,0.4); }
+  .modify-section-title { color: #fbbf24; }
+  .ml-qty { background: #172033; border-color: #374151; }
+  .ml-qty-val, .ml-subtotal-val { color: #f1f5f9; }
+  .modify-total-card { background: rgba(26,86,219,0.15); border-color: rgba(59,114,246,0.4); }
+  .mtc-label { color: #93c5fd; }
+  .modify-totals-banner { background: rgba(26,86,219,0.12); border-color: rgba(59,114,246,0.35); }
+  .mtb-label { color: #94a3b8; }
+
+  .retour-toolbar { --background: #0b3b30; --color: #6ee7b7; }
+  .retour-info-banner { background: rgba(16,185,129,0.12); border-color: rgba(110,231,183,0.4); color: #6ee7b7; }
+  .retour-total-row { background: rgba(16,185,129,0.15); border-top-color: rgba(110,231,183,0.4); color: #6ee7b7; }
+  .retour-qty-btn { background: rgba(3,105,161,0.25); color: #7dd3fc; }
+
+  // Classes globales (empty-v2) réutilisées dans cette page — scoping local à Sales
+  // uniquement (Angular emulated encapsulation), pas de risque pour les autres pages.
+  .empty-v2__icon { background: #263244; }
+  .empty-v2__title { color: #f1f5f9; }
+}

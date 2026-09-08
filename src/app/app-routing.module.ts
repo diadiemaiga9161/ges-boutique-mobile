@@ -47,6 +47,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/boutique-settings/boutique-settings.module').then(m => m.BoutiqueSettingsPageModule)
   },
   {
+    path: 'super-admin-fonctionnalites',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'], superAdminOnly: true },
+    loadChildren: () => import('./pages/super-admin-fonctionnalites/super-admin-fonctionnalites.module').then(m => m.SuperAdminFonctionnalitesPageModule)
+  },
+  {
     path: 'resources/:type',
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },

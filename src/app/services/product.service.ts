@@ -62,6 +62,9 @@ export interface Produit {
   prochePeremption?: boolean;
   bio?: boolean;
   typeVente?: string;
+  /** Libellé de l'unité de base pour la vente en gros/détail (VENTE_GROS_DETAIL), ex:
+   *  "Pièce", "Kg" — défaut serveur "Unité". Voir UniteVenteService. */
+  uniteBase?: string;
 }
 
 export interface ProduitRequest {
@@ -77,6 +80,7 @@ export interface ProduitRequest {
   datePeremption?: string;
   bio?: boolean;
   typeVente?: string;
+  uniteBase?: string;
 }
 
 export interface StatistiquesStock {

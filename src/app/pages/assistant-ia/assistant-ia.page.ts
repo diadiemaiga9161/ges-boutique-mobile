@@ -28,6 +28,7 @@ const QUESTIONS_PREDEFINIES: Record<string, string> = {
 @Component({
   selector: 'app-assistant-ia',
   templateUrl: './assistant-ia.page.html',
+  styleUrls: ['./assistant-ia.page.scss'],
   standalone: false
 })
 export class AssistantIaPage implements OnInit, AfterViewChecked {

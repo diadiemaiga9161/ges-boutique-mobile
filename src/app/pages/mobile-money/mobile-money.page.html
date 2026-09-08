@@ -18,7 +18,7 @@
   <ion-segment [(ngModel)]="activeTab" style="margin-bottom:12px">
     <ion-segment-button value="operations"><ion-label>{{ 'MOBILE_MONEY.OPERATIONS' | translate }}</ion-label></ion-segment-button>
     <ion-segment-button value="resume"><ion-label>{{ 'MOBILE_MONEY.SUMMARY' | translate }}</ion-label></ion-segment-button>
-    <ion-segment-button value="telecharger"><ion-label>Télécharger</ion-label></ion-segment-button>
+    <ion-segment-button value="telecharger"><ion-label>{{ 'MOBILE_MONEY.DOWNLOAD' | translate }}</ion-label></ion-segment-button>
   </ion-segment>
 
   <!-- ===== ONGLET OPÉRATIONS ===== -->
@@ -26,7 +26,7 @@
 
     <!-- Filtre opérateur -->
     <ion-segment [(ngModel)]="type" (ionChange)="onTypeChange($any($event).detail.value)" style="margin-bottom:8px">
-      <ion-segment-button value="TOUS"><ion-label>Tous</ion-label></ion-segment-button>
+      <ion-segment-button value="TOUS"><ion-label>{{ 'MOBILE_MONEY.ALL' | translate }}</ion-label></ion-segment-button>
       <ion-segment-button value="ORANGE_MONEY"><ion-label>🟠 Orange</ion-label></ion-segment-button>
       <ion-segment-button value="MOOV_MONEY"><ion-label>🔵 Moov</ion-label></ion-segment-button>
       <ion-segment-button value="WAVE_MONEY"><ion-label>🌊 Wave</ion-label></ion-segment-button>
@@ -115,43 +115,53 @@
   </div>
 
   <!-- ===== ONGLET RÉSUMÉ ===== -->
-  <div *ngIf="activeTab === 'resume' && resume">
-    <ion-card *ngFor="let p of [
-      {label: 'Aujourd\'hui', key: 'jour'},
-      {label: 'Cette semaine', key: 'semaine'},
-      {label: 'Ce mois', key: 'mois'},
-      {label: 'Cette année', key: 'annee'}
-    ]">
-      <ion-card-header>
-        <ion-card-title style="font-size:15px">📅 {{ p.label }}</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="4" style="text-align:center">
-              <div style="font-size:10px;color:#888;font-weight:600">🟠 Orange ({{ resume[p.key]?.nombreOrange || 0 }})</div>
-              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</div>
-            </ion-col>
-            <ion-col size="4" style="text-align:center">
-              <div style="font-size:10px;color:#888;font-weight:600">🔵 Moov ({{ resume[p.key]?.nombreMoov || 0 }})</div>
-              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</div>
-            </ion-col>
-            <ion-col size="4" style="text-align:center">
-              <div style="font-size:10px;color:#888;font-weight:600">🌊 Wave ({{ resume[p.key]?.nombreWave || 0 }})</div>
-              <div style="font-weight:700;font-size:13px">{{ formatMontant(resume[p.key]?.waveMoney || 0) }}</div>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12">
-              <div style="text-align:center;border-top:1px solid #eee;padding-top:8px;margin-top:4px">
-                <div style="font-size:11px;color:#888">Total ({{ resume[p.key]?.nombreTotal || 0 }} opérations)</div>
-                <div style="font-weight:700;font-size:17px;color:var(--ion-color-success)">{{ formatMontant(resume[p.key]?.total || 0) }}</div>
-              </div>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+  <div *ngIf="activeTab === 'resume'">
+
+    <!-- Loading -->
+    <div class="sk-list" *ngIf="!resume">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-square"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w60"></div>
+          <div class="skeleton sk-line sk-line--w40 sk-line--sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="mm-resume" *ngIf="resume">
+      <article class="mm-resume-card" *ngFor="let p of [
+        {label: 'Aujourd\'hui', key: 'jour'},
+        {label: 'Cette semaine', key: 'semaine'},
+        {label: 'Ce mois', key: 'mois'},
+        {label: 'Cette année', key: 'annee'}
+      ]">
+        <div class="mm-resume-head">
+          <span class="mm-resume-icon">📅</span>
+          <p class="mm-resume-title">{{ p.label }}</p>
+        </div>
+        <div class="mm-resume-grid">
+          <div class="mm-resume-op mm-resume-op--orange">
+            <p class="mm-resume-op-label">🟠 Orange</p>
+            <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</p>
+            <p class="mm-resume-op-count">{{ resume[p.key]?.nombreOrange || 0 }} op.</p>
+          </div>
+          <div class="mm-resume-op mm-resume-op--moov">
+            <p class="mm-resume-op-label">🔵 Moov</p>
+            <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</p>
+            <p class="mm-resume-op-count">{{ resume[p.key]?.nombreMoov || 0 }} op.</p>
+          </div>
+          <div class="mm-resume-op mm-resume-op--wave">
+            <p class="mm-resume-op-label">🌊 Wave</p>
+            <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.waveMoney || 0) }}</p>
+            <p class="mm-resume-op-count">{{ resume[p.key]?.nombreWave || 0 }} op.</p>
+          </div>
+        </div>
+        <div class="mm-resume-total">
+          <span>Total ({{ resume[p.key]?.nombreTotal || 0 }} opérations)</span>
+          <strong>{{ formatMontant(resume[p.key]?.total || 0) }}</strong>
+        </div>
+      </article>
+    </section>
   </div>
 
   <!-- ===== ONGLET TÉLÉCHARGEMENT ===== -->

@@ -287,8 +287,8 @@
 
       <!-- État vide : boutique en bonne santé -->
       <div *ngIf="recommandations.length === 0" class="empty-state">
-        <ion-icon name="checkmark-circle-outline" style="color:#0e9f6e"></ion-icon>
-        <p style="color:#065f46;font-weight:700">{{ 'IA.RECO_EMPTY' | translate }}</p>
+        <ion-icon name="checkmark-circle-outline" class="ia-empty-success-icon"></ion-icon>
+        <p class="ia-empty-success-title">{{ 'IA.RECO_EMPTY' | translate }}</p>
         <p class="muted">{{ 'IA.RECO_EMPTY_SUB' | translate }}</p>
       </div>
 

@@ -496,6 +496,7 @@ export class ResourcesPage {
 
     const alert = await this.alertCtrl.create({
       header: isEdit ? 'Modifier la facture ?' : 'Créer la facture ?',
+      cssClass: 'alert-pre-line',
       message: `Client : ${clientLabel}\n${this.factureLines.length} article(s)\nTotal : ${total.toLocaleString()} FCFA`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
@@ -689,6 +690,7 @@ export class ResourcesPage {
   private async alertObjectifAtteint(objectif: ObjectifFournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: '🎯 Objectif atteint !',
+      cssClass: 'alert-pre-line',
       message: `${objectif.fournisseurNom} — ${this.moisLabels[objectif.mois] || ''} ${objectif.annee}\n\nVous pouvez valider pour ajouter les bonus au stock.`,
       buttons: [
         { text: 'Plus tard', role: 'cancel' },
@@ -767,6 +769,7 @@ export class ResourcesPage {
     }
     const alert = await this.alertCtrl.create({
       header: 'Valider la prime ?',
+      cssClass: 'alert-pre-line',
       message: `${objectif.vendeurNom} — Semaine ${objectif.semaine}/${objectif.annee}\nBonus : ${this.objectifVendeurService.formatMontant(objectif.bonusMontant)}`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
@@ -1052,7 +1055,7 @@ export class ResourcesPage {
   async confirmDeleteFournisseur(fournisseur: Fournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: '⚠️ Supprimer le fournisseur',
-      message: `<strong>${fournisseur.nom}</strong> sera supprimé définitivement.`,
+      message: `${fournisseur.nom} sera supprimé définitivement.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

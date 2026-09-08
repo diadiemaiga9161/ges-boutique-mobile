@@ -1,0 +1,103 @@
+// ══════════════════════════════════════════════════
+//  ONGLET RÉSUMÉ — cartes par période
+// ══════════════════════════════════════════════════
+.mm-resume {
+  padding: 12px 16px;
+}
+
+.mm-resume-card {
+  background: var(--ion-card-background, #fff);
+  border: 1px solid #e8eef8;
+  border-radius: 16px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 2px 12px rgba(8, 22, 72, 0.07);
+  margin-bottom: 12px;
+}
+
+.mm-resume-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mm-resume-icon { font-size: 1rem; }
+
+.mm-resume-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ion-text-color, #0f172a);
+}
+
+.mm-resume-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.mm-resume-op {
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.mm-resume-op-label {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--ion-color-medium, #64748b);
+  white-space: nowrap;
+}
+
+.mm-resume-op-value {
+  margin: 3px 0 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ion-text-color, #0f172a);
+}
+
+.mm-resume-op-count {
+  margin: 1px 0 0;
+  font-size: 0.6rem;
+  color: var(--ion-color-medium, #94a3b8);
+}
+
+.mm-resume-op--orange { border-bottom: 2px solid #f59e0b; }
+.mm-resume-op--moov   { border-bottom: 2px solid #3b82f6; }
+.mm-resume-op--wave   { border-bottom: 2px solid #8b5cf6; }
+
+.mm-resume-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #eef2f7;
+  margin-top: 10px;
+  padding-top: 10px;
+  font-size: 0.78rem;
+  color: var(--ion-color-medium, #64748b);
+
+  strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0e9f6e;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .mm-resume-card {
+    border-color: #374151;
+  }
+  .mm-resume-op {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .mm-resume-total {
+    border-top-color: #374151;
+  }
+  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+  // global.scss : sans ce correctif la page reste gris clair même écran sombre.
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}

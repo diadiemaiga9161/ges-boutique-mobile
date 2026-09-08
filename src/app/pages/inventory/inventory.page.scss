@@ -44,3 +44,24 @@
     max-width: 1000px;
   }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  .metric-value / .card-title / .dropdown-item sont des classes globales
+//  dont le fond du conteneur (.metric-card/.mobile-card/.dropdown-list)
+//  passe déjà en sombre via global.scss, mais dont le TEXTE reste codé en
+//  dur en couleur foncée -> illisible sur fond sombre. Corrigé ici, portée
+//  limitée à cette page grâce à l'encapsulation Angular.
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .metric-value,
+  .card-title {
+    color: #f1f5f9;
+  }
+
+  .dropdown-item {
+    color: #e5e7eb;
+    border-bottom-color: #374151;
+    &:hover, &:active { background: #263244; color: #93c5fd; }
+  }
+}

@@ -28,6 +28,7 @@ interface ResumeMM {
 @Component({
   selector: 'app-mobile-money',
   templateUrl: './mobile-money.page.html',
+  styleUrls: ['./mobile-money.page.scss'],
   standalone: false
 })
 export class MobileMoneyPage implements OnInit {

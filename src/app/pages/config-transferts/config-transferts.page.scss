@@ -94,3 +94,24 @@
 @media (min-width: 1024px) {
   .form-card { max-width: 800px; margin: 24px auto; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .form-card {
+    background: #1f2937;
+  }
+  .form-item {
+    --background: #172033;
+  }
+  .partenaire-icon {
+    &--actif   { background: rgba(26, 86, 219, 0.18); }
+    &--inactif { background: rgba(148, 163, 184, 0.12); }
+  }
+  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+  // global.scss : sans ce correctif la page reste gris clair même écran sombre.
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}

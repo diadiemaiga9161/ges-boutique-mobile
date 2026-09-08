@@ -41,6 +41,23 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Impression reçu via imprimante thermique Bluetooth classique (SPP) —
+         voir ImpressionRecuService / @e-is/capacitor-bluetooth-serial.
+         BLUETOOTH / BLUETOOTH_ADMIN : requis jusqu'à Android 11 (API <= 30).
+         BLUETOOTH_SCAN / BLUETOOTH_CONNECT : requis à partir d'Android 12 (API 31+),
+         demandés à l'exécution par le plugin (pas seulement déclarés ici).
+         ACCESS_FINE_LOCATION : requis par Android pour la découverte Bluetooth classique
+         (scan) sur les versions antérieures à Android 12, même si on ne cible que des
+         imprimantes déjà appairées dans les réglages du téléphone. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 </manifest>

@@ -174,3 +174,24 @@ label.photo-btn {
   h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
   p { font-size: 0.78rem; margin: 0; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  (.mobile-card/.form-panel passent déjà en sombre via
+//  global.scss — ici on corrige textes/icônes/bordures
+//  restés en couleur claire fixe sur la carte assombrie)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .card-title { color: #f1f5f9; }
+
+  .settings-toggle-icon { background: rgba(59,114,246,0.18); }
+
+  .settings-toggle-text h3 { color: #f1f5f9; }
+
+  .country-select { color: #f1f5f9; }
+
+  .stat-row {
+    border-bottom-color: #374151;
+    strong { color: #f1f5f9; }
+  }
+}

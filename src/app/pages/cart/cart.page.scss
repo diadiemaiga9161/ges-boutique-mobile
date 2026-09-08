@@ -1248,3 +1248,93 @@
   .cart-wrapper { max-width: 1000px; padding: 28px; }
   .totaux-total-val { font-size: 1.8rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .cart-content, .nv-content { --background: #111827; }
+
+  .cart-section,
+  .totaux-card,
+  .search-wrap,
+  .product-chip,
+  .cart-item,
+  .cart-empty,
+  .ci-price-btn,
+  .ci-discount-wrap,
+  .ci-qty,
+  .field-input-wrap,
+  .client-search-input-row,
+  .field-select-wrap,
+  .payment-chip,
+  .toggle-card,
+  .toggle-icon,
+  .rtype-btn,
+  .nv-card,
+  .ci-benefice,
+  .ci-benefice--neutre {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .search-wrap:focus-within,
+  .field-input-wrap:focus-within,
+  .client-search-input-row:focus-within,
+  .field-select-wrap:focus-within {
+    background: #172033;
+    border-color: #3b72f6;
+  }
+
+  .pc-icon, .ci-avatar { background: #172033; }
+  .pc-stock { background: #263244; color: #cbd5e1; }
+
+  .payment-chip--active,
+  .toggle-card--active {
+    background: rgba(59,114,246,0.18);
+    border-color: #3b72f6;
+  }
+  .toggle-icon--active { background: rgba(59,114,246,0.18); }
+
+  .client-dropdown { background: #1f2937; border-color: #374151; }
+  .client-option { border-bottom-color: #374151; }
+  .client-option:active { background: #263244; }
+  .client-option .co-name { color: #e5e7eb; }
+  .client-option .co-phone { color: #94a3b8; }
+
+  .client-selected-badge { background: rgba(22,163,74,0.18); color: #86efac; }
+  .client-selected-badge .cs-phone { color: #cbd5e1; }
+
+  .avance-alert { background: rgba(26,86,219,0.18); border-color: #3b72f6; }
+  .avance-alert-info { color: #93c5fd; }
+
+  .ci-benefice--gain { background: rgba(22,163,74,0.18); border-color: #16a34a; }
+  .ci-benefice--perte { background: rgba(220,38,38,0.18); border-color: #dc2626; }
+
+  .totaux-benefice--gain { background: rgba(22,163,74,0.2); }
+  .totaux-benefice--perte { background: rgba(220,38,38,0.2); }
+  .totaux-benefice--neutre { background: #263244; }
+
+  .credit-fields {
+    background: rgba(245,158,11,0.1);
+    border-color: rgba(245,158,11,0.4);
+  }
+
+  // Textes sombres codés en dur sur les surfaces ci-dessus
+  .section-title,
+  .ci-name,
+  .toggle-title,
+  .nv-card__nom,
+  .field-label,
+  .ci-total,
+  .field-input-native,
+  .client-search-input {
+    color: #f1f5f9;
+  }
+
+  .totaux-row strong,
+  .rtype-btn { color: #e5e7eb; }
+  .rtype-btn--active { color: #ffffff; }
+
+  .co-avatar { border-color: #374151; }
+}

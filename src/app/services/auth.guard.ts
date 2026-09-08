@@ -30,6 +30,13 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       return false;
     }
 
+    // Page super admin (flag super_admin en base, pas un rôle séparé — voir
+    // AuthService.isSuperAdmin) : bloque même un ADMIN classique.
+    if (route.data['superAdminOnly'] && !this.auth.isSuperAdmin()) {
+      this.router.navigateByUrl('/tabs/sales');
+      return false;
+    }
+
     // Si VENDEUR, bloquer les routes admin
     if (this.auth.isVendeur()) {
       const path = route.routeConfig?.path || '';

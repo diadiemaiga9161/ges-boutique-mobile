@@ -1,0 +1,67 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Fonctionnalités (super admin)</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="page-pad stack">
+
+    <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+
+    <div class="form-panel stack" *ngIf="!loading">
+      <p class="muted">
+        Active ou désactive certaines fonctionnalités pour cette boutique. Les administrateurs et
+        vendeurs ne voient plus ces fonctionnalités une fois désactivées, et ne peuvent pas
+        modifier ce réglage eux-mêmes.
+      </p>
+
+      <div class="settings-toggle-row">
+        <div class="settings-toggle-icon"><ion-icon name="swap-horizontal-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>Transferts inter-boutiques</h3>
+        </div>
+        <ion-toggle [(ngModel)]="featureTransfertsActif" name="featureTransferts"></ion-toggle>
+      </div>
+
+      <div class="settings-toggle-row">
+        <div class="settings-toggle-icon"><ion-icon name="storefront-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>Vitrine en ligne (commandes clients)</h3>
+        </div>
+        <ion-toggle [(ngModel)]="featureVitrineActif" name="featureVitrine"></ion-toggle>
+      </div>
+    </div>
+
+    <ion-button expand="block" (click)="enregistrer()" [disabled]="saving || loading">
+      <ion-spinner *ngIf="saving" slot="start" name="crescent"></ion-spinner>
+      <ion-icon *ngIf="!saving" name="save-outline" slot="start"></ion-icon>
+      Enregistrer
+    </ion-button>
+
+    <!-- Fonctionnalités avancées — système séparé, chaque bascule s'enregistre
+         immédiatement (pas de bouton "Enregistrer" groupé). -->
+    <h2 class="card-title" style="margin-top: 24px">Fonctionnalités avancées</h2>
+    <p class="muted">
+      Pour garder le contrôle sur une boutique (ex: en cas de non-paiement) : chaque bascule
+      s'applique immédiatement, y compris sur le serveur — pas seulement dans le menu.
+    </p>
+
+    <ion-spinner *ngIf="loadingAvancees" name="crescent"></ion-spinner>
+
+    <div class="form-panel stack" *ngIf="!loadingAvancees">
+      <div class="settings-toggle-row" *ngFor="let f of fonctionnalitesAvancees">
+        <div class="settings-toggle-icon"><ion-icon [name]="getIcone(f.cle)"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>{{ f.libelle }}</h3>
+          <p *ngIf="getDescription(f.cle)">{{ getDescription(f.cle) }}</p>
+        </div>
+        <ion-toggle [checked]="f.actif" [disabled]="clesEnCours.has(f.cle)" (ionChange)="basculerFonctionnaliteAvancee(f)"></ion-toggle>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

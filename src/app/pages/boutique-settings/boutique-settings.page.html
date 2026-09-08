@@ -99,6 +99,53 @@
       </div>
     </section>
 
+    <!-- Programme de fidélité (taux) — visible seulement si activé par le super admin -->
+    <section class="form-panel stack" *ngIf="programmeFideliteActif">
+      <h2 class="card-title settings-section-hdr"><ion-icon name="star-outline"></ion-icon> {{ 'FIDELITE.SETTINGS_TITLE' | translate }}</h2>
+      <p class="muted">{{ 'FIDELITE.SETTINGS_DESC' | translate }}</p>
+
+      <ion-spinner *ngIf="loadingFidelite" name="crescent"></ion-spinner>
+
+      <div class="two-cols" *ngIf="!loadingFidelite">
+        <ion-input
+          [label]="'FIDELITE.AMOUNT_PER_POINT' | translate"
+          labelPlacement="floating" fill="outline" type="number" min="0"
+          [(ngModel)]="fideliteForm.montantParPoint">
+          <ion-icon name="cash-outline" slot="start"></ion-icon>
+        </ion-input>
+        <ion-input
+          [label]="'FIDELITE.POINT_VALUE' | translate"
+          labelPlacement="floating" fill="outline" type="number" min="0"
+          [(ngModel)]="fideliteForm.pointValeur">
+          <ion-icon name="star-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <ion-button expand="block" fill="outline" (click)="enregistrerFidelite()" [disabled]="savingFidelite || loadingFidelite">
+        <ion-spinner *ngIf="savingFidelite" slot="start" name="crescent"></ion-spinner>
+        <ion-icon *ngIf="!savingFidelite" name="save-outline" slot="start"></ion-icon>
+        {{ 'COMMON.SAVE' | translate }}
+      </ion-button>
+    </section>
+
+    <!-- Permissions vendeur -->
+    <section class="form-panel stack">
+      <h2 class="card-title settings-section-hdr"><ion-icon name="key-outline"></ion-icon> Permissions vendeur</h2>
+      <p class="muted">Donner au vendeur un accès en lecture seule à certaines pages</p>
+
+      <div class="settings-toggle-row">
+        <div class="settings-toggle-icon"><ion-icon name="clipboard-outline"></ion-icon></div>
+        <div class="settings-toggle-text">
+          <h3>Le vendeur peut consulter l'inventaire</h3>
+          <p class="muted">Accès en lecture seule : stock faible, historique et statistiques. Les mouvements de stock restent réservés à l'admin</p>
+        </div>
+        <ion-toggle
+          [checked]="inventaireLectureActive"
+          (ionChange)="toggleInventaireLecture($event)">
+        </ion-toggle>
+      </div>
+    </section>
+
     <!-- Actions -->
     <ion-button expand="block" (click)="save()" [disabled]="saving">
       <ion-spinner *ngIf="saving" slot="start" name="crescent"></ion-spinner>

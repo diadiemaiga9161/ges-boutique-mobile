@@ -405,3 +405,59 @@
 @media (min-width: 1024px) {
   .situation-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .segment-header,
+  .periode-date-input,
+  .ligne-produit-item,
+  .achat-lignes {
+    background: #172033;
+    border-color: #374151;
+  }
+
+  .info-row,
+  .depots-detail,
+  .ligne-produit {
+    border-bottom-color: #374151;
+  }
+  .depots-detail { border-top-color: #374151; }
+
+  .hist-badge {
+    background: #172033;
+    color: #cbd5e1;
+    &.badge--paid      { background: rgba(22,163,74,0.18); color: #86efac; }
+    &.badge--partial   { background: rgba(202,138,4,0.2);  color: #fde047; }
+    &.badge--cancelled { background: rgba(220,38,38,0.18); color: #fca5a5; }
+  }
+
+  .hist-produits span {
+    background: #172033;
+    color: #cbd5e1;
+  }
+
+  .hist-mode {
+    background: rgba(37,99,235,0.18);
+    color: #93c5fd;
+  }
+
+  .ligne-nom { color: #e5e7eb; }
+
+  .periode-filter { background: #111827; }
+
+  .pchip2 {
+    background: rgba(26,86,219,0.15);
+    border-color: #3b72f6;
+    color: #93c5fd;
+    &--active { background: var(--ion-color-primary); border-color: var(--ion-color-primary); color: #ffffff; }
+  }
+
+  .periode-date-input { color: #e5e7eb; }
+
+  .paiement-cible-note {
+    background: rgba(217,119,6,0.18);
+    color: #fcd34d;
+  }
+}

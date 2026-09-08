@@ -111,3 +111,26 @@
     height: 50px;
   }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .param-content { --background: #111827; }
+
+  .param-card {
+    background: #1f2937;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+
+    ion-item { --border-color: #374151; }
+  }
+
+  .param-stat { color: #e5e7eb; }
+
+  .param-warning {
+    background: rgba(245,158,11,0.14);
+    border-left-color: #f59e0b;
+
+    p { color: #fcd34d; }
+  }
+}

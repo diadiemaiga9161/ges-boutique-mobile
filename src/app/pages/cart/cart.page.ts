@@ -8,10 +8,15 @@ import { BarcodeService } from '../../services/barcode.service';
 import { Promotion, PromotionService } from '../../services/promotion.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-niveau.service';
+import { UniteVente, UniteVenteService } from '../../services/unite-vente.service';
 import { OfflineDbService } from '../../services/offline-db.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
 import { ConfirmationVocaleService } from '../../services/confirmation-vocale.service';
+import { BoutiqueService } from '../../services/boutique.service';
+import { FideliteService, SoldeFidelite } from '../../services/fidelite.service';
+import { ImpressionRecuService } from '../../services/impression-recu.service';
+import { VenteMap } from '../../services/vente.service';
 
 interface CartItem {
   product: Produit;
@@ -21,11 +26,16 @@ interface CartItem {
   editingPrice: boolean;
   promo?: Promotion;          // promo active appliquée sur ce produit
   prixOriginal?: number;      // prix avant promo
-  niveauId?: number;          // ID du ProduitNiveau vendu (cascade stock)
-  niveauPrixAchat?: number;   // prix achat du niveau (conditionnement)
-  niveauNom?: string;         // nom du niveau choisi
+  niveauId?: number;          // ID du ProduitNiveau vendu (cascade stock) — ANCIEN système uniquement.
+  niveauPrixAchat?: number;   // prix achat du niveau (conditionnement) OU de l'unité de vente (VENTE_GROS_DETAIL)
+  niveauNom?: string;         // nom du niveau OU de l'unité de vente choisie (affichage identique)
   niveauFacteurTotal?: number; // facteur total vers unité de base (ex: 200 pour 1 Carton = 200 Pièces)
-  niveauStockMax?: number;    // stock disponible du niveau sélectionné (pour affichage et validation)
+  niveauStockMax?: number;    // stock disponible du niveau sélectionné (ANCIEN système uniquement)
+  // NB VENTE_GROS_DETAIL (nouvelle fonctionnalité, voir choisirUniteVente()) : réutilise
+  // niveauPrixAchat/niveauNom/niveauFacteurTotal ci-dessus MAIS laisse toujours niveauId
+  // undefined — c'est précisément ce qui distingue les deux systèmes côté backend (stock
+  // unique déduit directement, pas de cascade). getStockMax()/getPrixAchatEffectif()
+  // distinguent les deux cas via la présence de niveauId.
 }
 
 @Component({
@@ -72,6 +82,35 @@ export class CartPage implements OnInit {
   loadingNiveauxVente = false;
   quantitePrincipale = 0; // stock du produit principal pas encore décomposé (cartons fermés)
 
+  // Vente en gros / détail (VENTE_GROS_DETAIL) — nouvelle fonctionnalité, alternative simple
+  // à ProduitNiveau ci-dessus (stock unique du produit, pas de cascade). Activable/
+  // désactivable par le super admin, voir BoutiqueService.fonctionnalitesAvancees$ (même
+  // mécanisme que Dépôt garde/Fidélité). N'est consultée que si conditionnementActif est
+  // false, pour ne jamais changer le comportement existant des boutiques utilisant déjà
+  // l'ancien système de niveaux.
+  venteGrosDetailActif = false;
+  showUniteVenteModal = false;
+  uniteVenteDisponibles: UniteVente[] = [];
+  loadingUniteVente = false;
+
+  // Programme de fidélité — désactivable côté super admin (voir BoutiqueService.
+  // fonctionnalitesAvancees$, système déjà utilisé pour Dépôt garde/Comptes bancaires,
+  // réutilisé tel quel ici). N'affiche rien si inactif ou si aucun client identifié
+  // n'est sélectionné (pas "client divers").
+  programmeFideliteActif = false;
+  soldeFidelite: SoldeFidelite | null = null;
+  loadingFidelite = false;
+  pointsAUtiliser = 0;
+  private pointValeurFidelite = 0; // taux courant (FCFA par point), chargé une fois
+
+  // Impression du reçu sur imprimante thermique Bluetooth — désactivable côté super admin
+  // (même mécanisme que Dépôt garde/Comptes bancaires/Fidélité, voir BoutiqueService.
+  // fonctionnalitesAvancees$). Le bouton "Imprimer le reçu" n'apparaît qu'après une vente
+  // réussie EN LIGNE (derniereVente non nul) ; c'est une action optionnelle et séparée qui
+  // ne bloque jamais le flux de vente en cas d'erreur (voir ImpressionRecuService).
+  impressionTicketActif = false;
+  derniereVente: VenteMap | null = null;
+
   constructor(
     private productService: ProductService,
     public clientService: ClientService,
@@ -83,10 +122,14 @@ export class CartPage implements OnInit {
     private promotionService: PromotionService,
     private fonctionnalite: FonctionnaliteService,
     private niveauService: ProduitNiveauService,
+    private uniteVenteService: UniteVenteService,
     private offlineDb: OfflineDbService,
     private networkStatus: NetworkStatusService,
     private offlineSync: OfflineSyncService,
     private confirmationVocale: ConfirmationVocaleService,
+    private boutiqueService: BoutiqueService,
+    private fideliteService: FideliteService,
+    private impressionRecuService: ImpressionRecuService,
   ) {}
 
   async scanPourVente(): Promise<void> {
@@ -120,6 +163,20 @@ export class CartPage implements OnInit {
     const due = new Date();
     due.setDate(due.getDate() + 30);
     this.dateEcheance = due.toISOString().split('T')[0];
+
+    // Programme fidélité — même mécanisme que Dépôt garde/Comptes bancaires (pas de
+    // nouveau système créé, on lit juste fonctionnalitesAvancees$ de BoutiqueService).
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.programmeFideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+      if (this.programmeFideliteActif && !this.pointValeurFidelite) {
+        this.fideliteService.getParametres().subscribe({
+          next: params => this.pointValeurFidelite = params.pointValeur || 0,
+          error: () => {}
+        });
+      }
+      this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+      this.impressionTicketActif = liste.find(f => f.cle === 'IMPRESSION_TICKET')?.actif === true;
+    });
   }
 
   ionViewWillEnter(): void {
@@ -177,6 +234,8 @@ export class CartPage implements OnInit {
     this.showClientDropdown = false;
     this.soldeAvanceClient = 0;
     this.utiliserAvance = false;
+    this.soldeFidelite = null;
+    this.pointsAUtiliser = 0;
   }
 
   loadProducts(): void {
@@ -225,7 +284,10 @@ export class CartPage implements OnInit {
       return;
     }
 
-    // Si conditionnement actif → vérifier si le produit a des niveaux
+    // Si conditionnement actif → vérifier si le produit a des niveaux (ANCIEN système,
+    // comportement strictement inchangé). Sinon, si VENTE_GROS_DETAIL est actif → proposer
+    // les unités de vente du produit (NOUVELLE fonctionnalité, stock unique). Les deux
+    // systèmes ne sont volontairement jamais consultés simultanément.
     if (this.conditionnementActif) {
       this.produitEnAttente = product;
       this.loadingNiveauxVente = true;
@@ -249,9 +311,100 @@ export class CartPage implements OnInit {
           this.addWithPromo(product);
         }
       });
+    } else if (this.venteGrosDetailActif) {
+      this.produitEnAttente = product;
+      this.loadingUniteVente = true;
+      this.showUniteVenteModal = true;
+      this.uniteVenteDisponibles = [];
+      this.uniteVenteService.getUnites(product.id!).subscribe({
+        next: unites => {
+          this.uniteVenteDisponibles = unites;
+          this.loadingUniteVente = false;
+          // Si aucune unité de vente définie pour ce produit, ajouter directement comme avant
+          if (!unites.length) {
+            this.showUniteVenteModal = false;
+            this.addWithPromo(product);
+          }
+        },
+        error: () => {
+          this.loadingUniteVente = false;
+          this.showUniteVenteModal = false;
+          this.addWithPromo(product);
+        }
+      });
     } else {
       this.addWithPromo(product);
     }
+  }
+
+  /** Stock disponible pour une unité de vente (VENTE_GROS_DETAIL) : le produit n'a qu'un
+   *  stock unique, donc le nombre max de cette unité vendable = stock ÷ facteur (arrondi
+   *  à l'entier inférieur, ex: 25 pièces en stock avec 1 Cartouche = 10 pièces → 2 max). */
+  disponibleUniteVente(unite: UniteVente): number {
+    const facteur = unite.facteurBase > 0 ? unite.facteurBase : 1;
+    return Math.floor((this.produitEnAttente?.quantite || 0) / facteur);
+  }
+
+  choisirUniteVente(unite: UniteVente): void {
+    const product = this.produitEnAttente;
+    if (!product) return;
+    this.showUniteVenteModal = false;
+    this.produitEnAttente = null;
+    this.uniteVenteDisponibles = [];
+
+    this.promotionService.getPromosPourProduit(product.id!).subscribe({
+      next: (promos: Promotion[]) => {
+        const promo = promos[0];
+        const prixOriginal = unite.prixVente;
+        const customPrice = promo
+          ? this.promotionService.calculerPrixPromo(prixOriginal, promo)
+          : prixOriginal;
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice, editingPrice: false,
+          promo: promo || undefined,
+          prixOriginal,
+          // NE JAMAIS renseigner niveauId ici (voir commentaire sur CartItem) — c'est ce qui
+          // distingue la déduction directe sur le stock unique (VENTE_GROS_DETAIL) de la
+          // cascade de l'ancien système ProduitNiveau.
+          niveauPrixAchat: unite.prixAchat,
+          niveauNom: unite.nom,
+          niveauFacteurTotal: unite.facteurBase,
+        }];
+        if (promo) {
+          const label = promo.typeReduction === 'POURCENTAGE'
+            ? `-${promo.valeurReduction}%`
+            : `-${promo.valeurReduction} FCFA`;
+          this.presentToast(`🏷️ ${promo.titre} ${label} appliqué`, 'success');
+        } else {
+          this.presentToast(`${unite.nom} — ${this.money(unite.prixVente)} ajouté`);
+        }
+      },
+      error: () => {
+        this.items = [...this.items, {
+          product, quantity: 1, remisePourcentage: 0,
+          customPrice: unite.prixVente, editingPrice: false,
+          niveauPrixAchat: unite.prixAchat,
+          niveauNom: unite.nom,
+          niveauFacteurTotal: unite.facteurBase,
+        }];
+      }
+    });
+  }
+
+  choisirUniteBase(): void {
+    const product = this.produitEnAttente;
+    if (!product) return;
+    this.showUniteVenteModal = false;
+    this.produitEnAttente = null;
+    this.uniteVenteDisponibles = [];
+    this.addWithPromo(product);
+  }
+
+  annulerChoixUniteVente(): void {
+    this.showUniteVenteModal = false;
+    this.produitEnAttente = null;
+    this.uniteVenteDisponibles = [];
   }
 
   private calculerFacteurTotal(niveaux: ProduitNiveau[], niveau: ProduitNiveau): number {
@@ -390,10 +543,17 @@ export class CartPage implements OnInit {
     this.items = this.items.filter(item => item.product.id !== productId);
   }
 
-  /** Retourne le stock disponible réel : celui du niveau si conditionnement, sinon produit.quantite */
+  /** Retourne le stock disponible réel :
+   *  - ANCIEN système (ProduitNiveau, niveauId défini) : stock propre du niveau (cascade).
+   *  - NOUVEAU système (VENTE_GROS_DETAIL, niveauFacteurTotal défini mais PAS niveauId) :
+   *    stock unique du produit ÷ facteur, arrondi à l'entier inférieur.
+   *  - Sinon : stock du produit tel quel. */
   getStockMax(item: CartItem): number {
     if (item.niveauId !== undefined && item.niveauStockMax !== undefined) {
       return item.niveauStockMax;
+    }
+    if (item.niveauId === undefined && item.niveauFacteurTotal) {
+      return Math.floor((item.product.quantite || 0) / item.niveauFacteurTotal);
     }
     return item.product.quantite;
   }
@@ -416,7 +576,9 @@ export class CartPage implements OnInit {
   }
 
   getPrixAchatEffectif(item: CartItem): number {
-    return item.niveauId ? (item.niveauPrixAchat || 0) : (item.product.prixAchat || 0);
+    // niveauPrixAchat est renseigné à la fois par l'ancien système (ProduitNiveau, avec
+    // niveauId) et par VENTE_GROS_DETAIL (sans niveauId) — voir choisirNiveau()/choisirUniteVente().
+    return item.niveauPrixAchat != null ? item.niveauPrixAchat : (item.product.prixAchat || 0);
   }
 
   getBeneficeLigne(item: CartItem): number {
@@ -505,14 +667,50 @@ export class CartPage implements OnInit {
         error: () => { this.soldeAvanceClient = 0; this.isLoadingAvance = false; }
       });
     }
+    this.chargerSoldeFidelite();
+  }
+
+  /** Solde de points du client identifié sélectionné — n'affiche rien si la fonctionnalité
+   * est désactivée ou hors ligne (échec silencieux, comme les autres appels de cette page). */
+  private chargerSoldeFidelite(): void {
+    this.soldeFidelite = null;
+    this.pointsAUtiliser = 0;
+    if (!this.programmeFideliteActif || !this.clientId) return;
+    this.loadingFidelite = true;
+    this.fideliteService.getSoldeClient(this.clientId).subscribe({
+      next: solde => { this.soldeFidelite = solde; this.loadingFidelite = false; },
+      error: () => { this.soldeFidelite = null; this.loadingFidelite = false; }
+    });
+  }
+
+  clampPointsFidelite(): void {
+    const max = this.soldeFidelite?.points || 0;
+    if (!this.pointsAUtiliser || this.pointsAUtiliser < 0) this.pointsAUtiliser = 0;
+    if (this.pointsAUtiliser > max) this.pointsAUtiliser = max;
+  }
+
+  /** Réduction FCFA correspondant aux points que le vendeur souhaite utiliser sur cette
+   * vente — clampée au solde du client. Passe entièrement par le mécanisme remiseGlobale/
+   * MONTANT_FIXE existant au moment de submit() ; ne modifie jamais total()/getRemiseGlobaleMontant(). */
+  get reductionFidelite(): number {
+    if (!this.programmeFideliteActif || !this.soldeFidelite) return 0;
+    const max = this.soldeFidelite.points || 0;
+    const points = Math.min(Math.max(0, Number(this.pointsAUtiliser) || 0), max);
+    return points * (this.pointValeurFidelite || 0);
+  }
+
+  /** Montant réellement à payer, remise fidélité incluse — identique à total() si aucun
+   * point n'est utilisé. Utilisé uniquement pour l'affichage et l'annonce vocale. */
+  totalAvecFidelite(): number {
+    return Math.max(0, this.total() - this.reductionFidelite);
   }
 
   get resteAPayerCredit(): number {
-    return Math.max(0, this.total() - Number(this.montantVerse || 0) - (this.utiliserAvance ? Number(this.montantAvanceAUtiliser || 0) : 0));
+    return Math.max(0, this.totalAvecFidelite() - Number(this.montantVerse || 0) - (this.utiliserAvance ? Number(this.montantAvanceAUtiliser || 0) : 0));
   }
 
   utiliserTouteAvance(): void {
-    this.montantAvanceAUtiliser = Math.min(this.soldeAvanceClient, this.total());
+    this.montantAvanceAUtiliser = Math.min(this.soldeAvanceClient, this.totalAvecFidelite());
   }
 
   private validateStock(): boolean {
@@ -548,6 +746,24 @@ export class CartPage implements OnInit {
     if (!this.validateStock()) return;
 
     this.submitting = true;
+    // Réinitialisé à chaque tentative : le bouton "Imprimer le reçu" ne doit jamais rester
+    // affiché pour une vente précédente si celle-ci est en cours de remplacement.
+    this.derniereVente = null;
+
+    // Programme fidélité : la réduction passe entièrement par le mécanisme remiseGlobale/
+    // MONTANT_FIXE déjà existant (remise manuelle), exactement comme si le vendeur avait
+    // tapé cette remise lui-même. Si aucun point n'est utilisé, remiseGlobale/
+    // typeRemiseGlobale restent strictement identiques à avant cette fonctionnalité.
+    const pointsFideliteUtilises = this.programmeFideliteActif && this.clientId
+      ? Math.min(Math.max(0, Number(this.pointsAUtiliser) || 0), this.soldeFidelite?.points || 0)
+      : 0;
+    const remiseGlobaleAEnvoyer = pointsFideliteUtilises > 0
+      ? this.getRemiseGlobaleMontant() + this.reductionFidelite
+      : Number(this.remiseGlobale || 0);
+    const typeRemiseGlobaleAEnvoyer = pointsFideliteUtilises > 0
+      ? RemiseType.MONTANT_FIXE
+      : this.typeRemiseGlobale;
+
     const base = {
       vendeurId: this.auth.getUserId(),
       lignes: this.items.map(item => ({
@@ -563,8 +779,8 @@ export class CartPage implements OnInit {
       })),
       modePaiement: this.modePaiement,
       referencePaiement: this.referencePaiement,
-      remiseGlobale: Number(this.remiseGlobale || 0),
-      typeRemiseGlobale: this.typeRemiseGlobale,
+      remiseGlobale: Number(remiseGlobaleAEnvoyer || 0),
+      typeRemiseGlobale: typeRemiseGlobaleAEnvoyer,
       clientId: this.clientId,
       clientNom: this.clientNom.trim(),
       clientPrenom: this.clientPrenom.trim(),
@@ -579,13 +795,16 @@ export class CartPage implements OnInit {
 
     const endpoint = this.estCredit ? '/api/ventes/credit' : '/api/ventes';
 
-    // Mode hors ligne
+    // Mode hors ligne — pas d'id de vente disponible immédiatement, donc pas de débit
+    // fidélité possible ici (la réduction reste appliquée via remiseGlobale ci-dessus,
+    // mais le solde de points du client ne sera pas débité tant que la vente n'a pas
+    // été synchronisée manuellement).
     if (!this.networkStatus.isOnline()) {
       await this.offlineSync.addOfflineAction(this.estCredit ? 'VENTE_CREDIT' : 'VENTE', endpoint, 'POST', base);
       this.mettreAJourStockLocal();
       this.submitting = false;
       this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée au retour');
-      this.confirmationVocale.annoncerMontant(this.total());
+      this.confirmationVocale.annoncerMontant(this.totalAvecFidelite());
       this.reset();
       return;
     }
@@ -598,8 +817,21 @@ export class CartPage implements OnInit {
       next: vente => {
         this.mettreAJourStockLocal();
         this.submitting = false;
+        this.derniereVente = vente;
         this.presentSaleSuccess(`Vente ${vente.numeroVente || vente.id} enregistrée`);
-        this.confirmationVocale.annoncerMontant(this.total());
+        this.confirmationVocale.annoncerMontant(this.totalAvecFidelite());
+        // Débit réel du solde de points — seulement une fois la vente créée avec succès.
+        // Si ce débit échoue, la vente reste valide : on avertit juste le vendeur qu'il
+        // faudra le refaire manuellement (on ne casse jamais une vente déjà encaissée).
+        if (pointsFideliteUtilises > 0 && this.clientId && vente.id) {
+          this.fideliteService.utiliserPoints(this.clientId, pointsFideliteUtilises, vente.id).subscribe({
+            next: () => {},
+            error: () => this.presentToast(
+              `Vente enregistrée, mais le débit de ${pointsFideliteUtilises} point(s) fidélité a échoué — à refaire manuellement`,
+              'danger'
+            )
+          });
+        }
         this.reset();
       },
       error: async error => {
@@ -613,7 +845,7 @@ export class CartPage implements OnInit {
           this.mettreAJourStockLocal();
           this.submitting = false;
           this.presentSaleSuccess('📡 Vente enregistrée hors ligne — sera synchronisée');
-          this.confirmationVocale.annoncerMontant(this.total());
+          this.confirmationVocale.annoncerMontant(this.totalAvecFidelite());
           this.reset();
           return;
         }
@@ -651,6 +883,8 @@ export class CartPage implements OnInit {
     this.utiliserAvance = false;
     this.montantAvanceAUtiliser = 0;
     this.estCredit = false;
+    this.soldeFidelite = null;
+    this.pointsAUtiliser = 0;
   }
 
   money(value: number): string {
@@ -671,6 +905,14 @@ export class CartPage implements OnInit {
   private async presentToast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2400, position: 'top' });
     await toast.present();
+  }
+
+  /** Bouton "Imprimer le reçu" affiché juste après une vente réussie — action entièrement
+   *  optionnelle et séparée du flux de vente (voir ImpressionRecuService, qui n'affiche
+   *  jamais rien de plus qu'un toast en cas d'erreur, sans jamais relancer d'exception ici). */
+  imprimerDernierRecu(): void {
+    if (!this.derniereVente) return;
+    this.impressionRecuService.imprimerRecuVente(this.derniereVente, this.boutiqueService.getInfo());
   }
 
   /**

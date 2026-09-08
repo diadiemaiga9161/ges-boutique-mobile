@@ -151,11 +151,22 @@
 }
 
 // Modal WhatsApp
+@keyframes wa-modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes wa-modal-zoom-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 .wa-modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 1000;
+  animation: wa-modal-fade-in 0.18s ease;
 }
 
 .wa-modal {
@@ -163,11 +174,11 @@
   inset: 0;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   z-index: 1001;
 
   @media (min-width: 576px) {
     align-items: center;
-    justify-content: center;
   }
 }
 
@@ -175,10 +186,11 @@
   background: var(--ion-background-color, #fff);
   border-radius: 20px 20px 0 0;
   width: 100%;
-  max-height: 90dvh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: wa-modal-zoom-in 0.2s ease;
 
   @media (min-width: 576px) {
     border-radius: 20px;
@@ -513,5 +525,35 @@
       border-top: 1.5px solid var(--ion-color-light-shade);
       background: rgba(var(--ion-color-primary-rgb), 0.04);
     }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  La majorité de cette page utilise déjà les variables Ionic (--ion-text-color,
+//  --ion-color-medium, --ion-card-background...) qui suivent le thème sombre
+//  automatiquement. Seule la bulle de prévisualisation WhatsApp (vert fixe,
+//  façon "chat bubble") est codée en dur : on l'assombrit légèrement pour
+//  rester cohérent avec le reste de la page en mode sombre.
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .wa-preview {
+    background: rgba(22,163,74,0.12);
+  }
+  .wa-bubble {
+    background: rgba(22,163,74,0.18);
+    color: #d1fae5;
+  }
+  .wa-promo-badge { color: #4ade80; }
+  .wa-promo-msg   { color: #d1fae5; }
+  .wa-boutique-sig {
+    color: #86efac;
+    border-top-color: rgba(22,163,74,0.3);
+  }
+  .wa-auto-row {
+    background: rgba(22,163,74,0.12);
+    border-color: rgba(22,163,74,0.4);
+    .wa-auto-label strong { color: #86efac; }
+    .wa-auto-label span   { color: #4ade80; }
   }
 }

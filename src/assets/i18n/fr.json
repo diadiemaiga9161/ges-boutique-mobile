@@ -277,6 +277,7 @@
     "DAILY": "Journalier",
     "WEEKLY": "Hebdomadaire",
     "MONTHLY": "Mensuel",
+    "YEARLY": "Annuel",
     "CUSTOM": "Personnalisé",
     "REVENUE": "Chiffre d'affaires",
     "PROFIT": "Bénéfice",
@@ -284,7 +285,8 @@
     "NET": "Résultat net",
     "SALES_COUNT": "Nb ventes",
     "START_DATE": "Date début",
-    "END_DATE": "Date fin"
+    "END_DATE": "Date fin",
+    "NO_DATA_TITLE": "Aucune donnée pour cette période"
   },
   "NOTIFICATIONS": {
     "LOW_STOCK": "Stock bas",

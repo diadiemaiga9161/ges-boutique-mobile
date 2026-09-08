@@ -502,3 +502,52 @@
   .btn-creer { margin: 0 28px 12px; width: calc(100% - 56px); }
 }
 
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  NB : les classes .facture-doc / .fd-* (aperçu "papier" de la facture, partagées
+//  avec Sales/Clients via global.scss) restent volontairement claires dans les deux
+//  thèmes — elles représentent un document imprimé, pas une surface d'app.
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .fact-hero .hs,
+  .chip,
+  .search-wrap,
+  .fact-card,
+  .detail-info,
+  .pf-input,
+  .pf-catalog-search,
+  .pf-catalog-results,
+  .pf-catalog-item,
+  .pf-footer {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .fact-hero .hs--blue { background: rgba(26,86,219,0.15); }
+  .fact-hero .hs--green { background: rgba(14,159,110,0.15); }
+
+  .hs-val, .fact-num, .detail-title, .di-val, .dl-name,
+  .pf-ci-nom, .pf-l-name, .search-wrap input, .pf-catalog-search input {
+    color: #f1f5f9;
+  }
+
+  .fact-client, .di-label, .dl-qty, .pf-label { color: #94a3b8; }
+
+  .chip--active.chip--brouillon { background: #64748b; }
+  .chip--active.chip--valide { background: #1a56db; }
+  .chip--active.chip--payee { background: #0e9f6e; }
+  .chip--active.chip--annulee { background: #dc2626; }
+
+  .act-btn--pdf { background: rgba(26,86,219,0.18); }
+  .act-btn--qr  { background: rgba(14,159,110,0.18); }
+  .act-btn--eye { background: #172033; color: #cbd5e1; }
+
+  .detail-ligne, .pf-ligne, .pf-section { border-color: #374151; }
+  .detail-total, .pf-total { border-top-color: #374151; }
+  .pf-btn-del { background: rgba(220,38,38,0.18); }
+
+  .empty-state ion-icon { color: #4b5563; }
+
+  .qr-body p, .pf-section-title, .detail-lignes-title { color: #cbd5e1; }
+}
+

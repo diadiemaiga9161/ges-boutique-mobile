@@ -128,6 +128,7 @@ export class AnnulationPaiementsPage {
 
     const alert = await this.alertCtrl.create({
       header: 'Annuler ce paiement ?',
+      cssClass: 'alert-pre-line',
       message: label + "\n\nL'argent sera remis a sa source (caisse ou banque).",
       buttons: [
         { text: 'Non', role: 'cancel' },

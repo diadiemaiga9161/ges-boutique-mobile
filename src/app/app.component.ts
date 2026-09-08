@@ -29,6 +29,19 @@ export class AppComponent implements OnInit, OnDestroy {
   private wsSubCommandes?: Subscription;
   private commandesVitrineVues = new Set<number>();
 
+  // Fonctionnalité désactivable par le super admin (Boutique > Paramètres) —
+  // masque l'entrée du menu ; le vrai blocage est fait côté serveur.
+  featureTransfertsActif = true;
+
+  // Fonctionnalités avancées (système séparé) — clés désactivées par le super admin,
+  // pour masquer les entrées de menu correspondantes (voir app.component.html).
+  fonctionnalitesDesactivees = new Set<string>();
+
+  // Permission vendeur "Inventaire en lecture seule" (système générique séparé —
+  // décision d'un ADMIN NORMAL, pas besoin de super admin — voir boutique.service.ts).
+  // Ne pas mélanger avec fonctionnalitesDesactivees ci-dessus.
+  permissionInventaireLectureActive = false;
+
   menuPages = [
     { title: 'Tableau de bord', icon: 'home-outline', route: '/home' },
     { title: 'Clients', icon: 'people-outline', route: '/clients' },
@@ -67,6 +80,15 @@ export class AppComponent implements OnInit, OnDestroy {
     this.syncService.startAutoSync();
     // Détecte les nouvelles versions déployées et propose de recharger
     this.appUpdateService.init();
+    this.boutiqueService.info$.subscribe(info => {
+      this.featureTransfertsActif = info.featureTransfertsActif !== false;
+    });
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.fonctionnalitesDesactivees = new Set(liste.filter(f => !f.actif).map(f => f.cle));
+    });
+    this.boutiqueService.permissionsVendeur$.subscribe(liste => {
+      this.permissionInventaireLectureActive = liste.find(p => p.cle === 'INVENTAIRE_LECTURE')?.actif === true;
+    });
 
     if (environment.isCapacitor && !this.boutiqueConfig.isConfigured()) {
       this.router.navigateByUrl('/boutique-select', { replaceUrl: true });
@@ -76,6 +98,8 @@ export class AppComponent implements OnInit, OnDestroy {
       if (isAuth) {
         this.ws.connect();
         this.connecterCommandesVitrine();
+        this.boutiqueService.chargerFonctionnalitesAvancees().subscribe();
+        this.boutiqueService.chargerPermissionsVendeur().subscribe();
       } else {
         this.ws.disconnect();
         this.wsSubCommandes?.unsubscribe();
@@ -91,6 +115,13 @@ export class AppComponent implements OnInit, OnDestroy {
       this.ws.connect();
       this.userPhoto = this.auth.getPhoto();
       this.connecterCommandesVitrine();
+      // Rafraîchit le profil stocké localement depuis le serveur au démarrage — une
+      // session ouverte AVANT l'ajout d'un champ (ex: superAdmin) gardait sinon un
+      // objet utilisateur incomplet en cache indéfiniment, sans jamais redemander de
+      // reconnexion à l'utilisateur.
+      this.auth.getCurrentProfile().subscribe({ error: () => {} });
+      this.boutiqueService.chargerFonctionnalitesAvancees().subscribe();
+      this.boutiqueService.chargerPermissionsVendeur().subscribe();
     }
   }
 
@@ -120,13 +151,22 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Important : `message` doit rester du texte brut, jamais du HTML — Ionic n'interprète
+   * pas le HTML dans AlertController.message par défaut (innerHTMLTemplatesEnabled=false),
+   * donc des balises passées ici s'affichaient littéralement à l'écran au lieu d'être
+   * rendues (même piège déjà documenté dans cart.page.ts/presentSaleSuccess). Les sauts
+   * de ligne sont rendus grâce à `white-space: pre-line` sur .commande-vitrine-alert
+   * (voir global.scss), pas via des balises <div>.
+   */
   private async afficherPopupCommandesVitrine(nouvelles: any[], total: number): Promise<void> {
     const liste = nouvelles.map(c =>
-      `<div style="text-align:left;margin-bottom:6px"><strong>${c.numeroCommande || ''}</strong> — ${c.clientNom || ''} ${c.clientPrenom || ''}</div>`
-    ).join('');
+      `${c.numeroCommande || ''} — ${c.clientNom || ''} ${c.clientPrenom || ''}`.trim()
+    ).join('\n');
     const alert = await this.alertCtrl.create({
+      cssClass: 'commande-vitrine-alert',
       header: nouvelles.length > 1 ? `${nouvelles.length} nouvelles commandes en ligne !` : 'Nouvelle commande en ligne !',
-      message: `${liste}<div style="margin-top:8px;font-size:.85rem;color:#64748b">${total} commande(s) en attente au total.</div>`,
+      message: `${liste}\n\n${total} commande(s) en attente au total.`,
       buttons: [
         { text: 'Plus tard', role: 'cancel' },
         { text: 'Voir', handler: () => this.router.navigateByUrl('/commandes') }

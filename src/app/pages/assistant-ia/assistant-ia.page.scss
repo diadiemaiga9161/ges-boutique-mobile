@@ -1,0 +1,183 @@
+// ══════════════════════════════════════════════════
+//  ASSISTANT IA — Chat conversationnel
+// ══════════════════════════════════════════════════
+.ai-title-icon {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.ai-chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// ── Zone messages ─────────────────────────────────
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+}
+
+.ai-msg-row {
+  display: flex;
+  margin-bottom: 12px;
+
+  &--user      { justify-content: flex-end; }
+  &--assistant { justify-content: flex-start; }
+}
+
+.ai-msg-group {
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-msg-row--user .ai-msg-group { align-items: flex-end; }
+
+.ai-bubble {
+  padding:        10px 14px;
+  border-radius:  18px;
+  font-size:      14px;
+  line-height:    1.5;
+  white-space:    pre-wrap;
+  text-align:     left;
+  box-shadow:     0 1px 4px rgba(8,22,72,0.06);
+  animation:      aiMsgIn 0.22s ease;
+
+  &--user {
+    background: linear-gradient(135deg, #1a56db, #081648);
+    color:      #ffffff;
+    border-bottom-right-radius: 6px;
+  }
+
+  &--assistant {
+    background: #f1f5f9;
+    color:      #0f172a;
+    border-bottom-left-radius: 6px;
+  }
+}
+
+.ai-msg-time {
+  font-size:  10px;
+  color:      #94a3b8;
+  margin-top: 3px;
+  padding:    0 4px;
+}
+
+@keyframes aiMsgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Indicateur "en train d'écrire" ────────────────
+.ai-typing-bubble {
+  display:        inline-flex;
+  align-items:    center;
+  background:     #f1f5f9;
+  padding:        10px 16px;
+  border-radius:  18px;
+  border-bottom-left-radius: 6px;
+
+  ion-spinner { width: 24px; height: 16px; }
+}
+
+// ── Suggestions ────────────────────────────────────
+.ai-suggestions {
+  padding:     10px 12px;
+  border-top:  1px solid #e8eef8;
+  background:  #ffffff;
+}
+
+.ai-suggestions__label {
+  font-size:      11px;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color:          #94a3b8;
+  margin-bottom:  6px;
+}
+
+.ai-suggestions__list {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       6px;
+
+  ion-chip { font-size: 12px; cursor: pointer; }
+  ion-icon { margin-right: 4px; }
+}
+
+// ── Zone de saisie ─────────────────────────────────
+.ai-input-bar {
+  padding:     10px 12px;
+  border-top:  1px solid #e8eef8;
+  background:  #ffffff;
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+}
+
+.ai-input-wrap {
+  flex:          1;
+  display:       flex;
+  align-items:   center;
+  background:    #f8fafc;
+  border:        1.5px solid #e2e8f0;
+  border-radius: 22px;
+  padding:       2px 14px;
+  transition:    border-color 0.2s, background 0.2s;
+
+  &:focus-within {
+    border-color: #1a56db;
+    background:   #eff6ff;
+  }
+}
+
+.ai-input {
+  flex:                1;
+  --background:        transparent;
+  --color:             #0f172a;
+  --placeholder-color: #94a3b8;
+  --padding-start:     0;
+  --padding-end:       0;
+  font-size: 14px;
+}
+
+.ai-send-btn { flex-shrink: 0; }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+
+  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
+  // global.scss (cf. transferts.page.scss) : sans ce correctif la page reste
+  // gris clair même écran sombre.
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+
+  .ai-bubble--assistant { background: #1f2937; color: #f1f5f9; }
+  .ai-typing-bubble     { background: #1f2937; }
+
+  .ai-suggestions,
+  .ai-input-bar {
+    background:      #111827;
+    border-top-color: #1f2937;
+  }
+
+  .ai-input-wrap {
+    background:   #1f2937;
+    border-color: #374151;
+
+    &:focus-within {
+      background:   #172033;
+      border-color: #1a56db;
+    }
+  }
+
+  .ai-input {
+    --color:             #f1f5f9;
+    --placeholder-color: #9ca3af;
+  }
+}

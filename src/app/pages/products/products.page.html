@@ -161,6 +161,10 @@
             <ion-icon name="layers-outline" slot="start"></ion-icon>
             {{ 'PRODUCTS.LEVELS' | translate }}
           </ion-button>
+          <ion-button *ngIf="venteGrosDetailActif" fill="clear" size="small" color="tertiary" (click)="ouvrirUnitesVente(product)">
+            <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+            {{ 'UNITE_VENTE.MANAGE_BTN' | translate }}
+          </ion-button>
         </div>
       </article>
     </section>
@@ -273,6 +277,19 @@
           <ion-item>
             <ion-label>{{ 'PRODUCTS.BIO' | translate }}</ion-label>
             <ion-checkbox slot="end" [(ngModel)]="form.bio"></ion-checkbox>
+          </ion-item>
+        </div>
+
+        <!-- Vente en gros / détail (VENTE_GROS_DETAIL) — unité de base du produit -->
+        <div class="modal-section" *ngIf="venteGrosDetailActif">
+          <p class="modal-section-title">{{ 'UNITE_VENTE.SECTION_TITLE' | translate }}</p>
+          <ion-item>
+            <ion-input
+              [label]="'UNITE_VENTE.BASE_UNIT_LABEL' | translate"
+              labelPlacement="floating"
+              [placeholder]="'UNITE_VENTE.BASE_UNIT_PLACEHOLDER' | translate"
+              [(ngModel)]="form.uniteBase">
+            </ion-input>
           </ion-item>
         </div>
 
@@ -668,6 +685,241 @@
           </ion-button>
 
         </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL LISTE UNITÉS DE VENTE (VENTE_GROS_DETAIL) ==================== -->
+<ion-modal [isOpen]="showUnitesVenteModal" (didDismiss)="showUnitesVenteModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>
+          {{ 'UNITE_VENTE.MODAL_TITLE' | translate }} — {{ produitUnitesVente?.nom }}
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showUnitesVenteModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+
+      <div *ngIf="loadingUnitesVente" style="text-align:center;padding:32px">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div *ngIf="!loadingUnitesVente">
+
+        <div class="empty-state" *ngIf="!unitesVente.length" style="padding:24px;text-align:center">
+          <ion-icon name="swap-horizontal-outline" style="font-size:2.5rem;color:#cbd5e1"></ion-icon>
+          <p class="muted" style="margin-top:8px">{{ 'UNITE_VENTE.NO_UNITS' | translate }}</p>
+        </div>
+
+        <div *ngFor="let u of unitesVente">
+
+          <!-- Mode affichage -->
+          <ion-card *ngIf="editingUniteVenteId !== u.id" style="margin-bottom:4px">
+            <ion-card-content style="padding:12px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <strong style="font-size:1rem;color:#1e293b">{{ u.nom }}</strong>
+
+                  <div style="display:flex;gap:12px;margin:6px 0;flex-wrap:wrap">
+                    <div style="background:#fef3c7;border-radius:8px;padding:4px 10px">
+                      <span style="font-size:0.7rem;color:#92400e;font-weight:700;text-transform:uppercase">{{ 'UNITE_VENTE.PRICE_BUY' | translate }}</span>
+                      <div style="font-size:0.95rem;font-weight:800;color:#92400e">{{ money(u.prixAchat) }}</div>
+                    </div>
+                    <div style="background:#dcfce7;border-radius:8px;padding:4px 10px">
+                      <span style="font-size:0.7rem;color:#15803d;font-weight:700;text-transform:uppercase">{{ 'UNITE_VENTE.PRICE_SELL' | translate }}</span>
+                      <div style="font-size:0.95rem;font-weight:800;color:#15803d">{{ money(u.prixVente) }}</div>
+                    </div>
+                  </div>
+
+                  <div style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border-radius:20px;padding:3px 10px">
+                    <ion-icon name="git-branch-outline" style="color:#2563eb;font-size:0.8rem"></ion-icon>
+                    <span style="font-size:0.8rem;font-weight:600;color:#1e40af">
+                      1 {{ u.nom }} = {{ u.facteurBase }} {{ nomUniteBaseCourante }}
+                    </span>
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                  <ion-button fill="clear" color="primary" size="small" (click)="startEditUniteVente(u)">
+                    <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" color="danger" size="small" (click)="supprimerUniteVente(u)">
+                    <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+
+          <!-- Mode édition inline -->
+          <ion-card *ngIf="editingUniteVenteId === u.id" style="margin-bottom:4px;border:2px solid var(--ion-color-primary)">
+            <ion-card-content>
+              <p style="font-weight:700;margin-bottom:8px;color:var(--ion-color-primary);font-size:0.9rem">
+                <ion-icon name="pencil-outline"></ion-icon> {{ 'UNITE_VENTE.EDIT_TITLE' | translate }}
+              </p>
+
+              <ion-item>
+                <ion-input
+                  [label]="'UNITE_VENTE.NAME' | translate"
+                  labelPlacement="floating"
+                  [(ngModel)]="editUniteVente.nom">
+                </ion-input>
+              </ion-item>
+
+              <ion-item style="margin-top:4px">
+                <ion-select
+                  [label]="'UNITE_VENTE.REFERENCE_LABEL' | translate"
+                  labelPlacement="floating"
+                  [(ngModel)]="editUniteVente.uniteReferenceId">
+                  <ion-select-option [value]="opt.id" *ngFor="let opt of referenceOptionsEdition(u.id!)">{{ opt.nom }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+
+              <ion-item style="margin-top:4px">
+                <ion-input
+                  [label]="'UNITE_VENTE.FACTOR_LABEL' | translate"
+                  labelPlacement="floating"
+                  type="number"
+                  min="0.0001"
+                  [placeholder]="'UNITE_VENTE.FACTOR_PLACEHOLDER' | translate"
+                  [(ngModel)]="editUniteVente.facteurRelatif">
+                </ion-input>
+              </ion-item>
+
+              <p *ngIf="factorHintEdition(editUniteVente) as hint" class="muted" style="margin:6px 0 0;font-size:0.85rem">
+                {{ hint }}
+              </p>
+
+              <ion-item style="margin-top:4px">
+                <ion-input
+                  [label]="'UNITE_VENTE.PRICE_SELL' | translate"
+                  labelPlacement="floating"
+                  type="text"
+                  inputmode="numeric"
+                  appMontantInput
+                  [(ngModel)]="editUniteVente.prixVente">
+                </ion-input>
+              </ion-item>
+
+              <ion-item style="margin-top:4px">
+                <ion-input
+                  [label]="'UNITE_VENTE.PRICE_BUY' | translate"
+                  labelPlacement="floating"
+                  type="text"
+                  inputmode="numeric"
+                  appMontantInput
+                  [(ngModel)]="editUniteVente.prixAchat">
+                </ion-input>
+              </ion-item>
+
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <ion-button expand="block" style="flex:1" (click)="saveEditUniteVente()">
+                  <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                  {{ 'COMMON.SAVE' | translate }}
+                </ion-button>
+                <ion-button expand="block" fill="outline" color="medium" style="flex:1" (click)="cancelEditUniteVente()">
+                  {{ 'COMMON.CANCEL' | translate }}
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+
+        </div>
+
+        <ion-button expand="block" color="success" style="margin-top:16px" (click)="ouvrirAjoutUniteVente()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          {{ 'UNITE_VENTE.ADD_BTN' | translate }}
+        </ion-button>
+
+      </div>
+
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL AJOUT UNITÉ DE VENTE ==================== -->
+<ion-modal [isOpen]="showAjoutUniteVenteModal" (didDismiss)="showAjoutUniteVenteModal = false" [breakpoints]="[0, 0.8]" initialBreakpoint="0.8">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="success">
+        <ion-title>{{ 'UNITE_VENTE.ADD_TITLE' | translate }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showAjoutUniteVenteModal = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="stack">
+
+        <ion-item>
+          <ion-input
+            [label]="'UNITE_VENTE.NAME' | translate"
+            labelPlacement="floating"
+            [(ngModel)]="newUniteVente.nom"
+            [placeholder]="'UNITE_VENTE.NAME_PLACEHOLDER' | translate">
+          </ion-input>
+        </ion-item>
+
+        <ion-item style="margin-top:4px">
+          <ion-select
+            [label]="'UNITE_VENTE.REFERENCE_LABEL' | translate"
+            labelPlacement="floating"
+            [(ngModel)]="newUniteVente.uniteReferenceId">
+            <ion-select-option [value]="opt.id" *ngFor="let opt of referenceOptionsAjout">{{ opt.nom }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item style="margin-top:4px">
+          <ion-input
+            [label]="'UNITE_VENTE.FACTOR_LABEL' | translate"
+            labelPlacement="floating"
+            type="number"
+            min="0.0001"
+            [placeholder]="'UNITE_VENTE.FACTOR_PLACEHOLDER' | translate"
+            [(ngModel)]="newUniteVente.facteurRelatif">
+          </ion-input>
+        </ion-item>
+
+        <p *ngIf="factorHintAjout as hint" class="muted" style="margin:6px 0 0;font-size:0.85rem">
+          {{ hint }}
+        </p>
+
+        <ion-item style="margin-top:4px">
+          <ion-input
+            [label]="'UNITE_VENTE.PRICE_SELL' | translate"
+            labelPlacement="floating"
+            type="text"
+            inputmode="numeric"
+            appMontantInput
+            [(ngModel)]="newUniteVente.prixVente">
+          </ion-input>
+        </ion-item>
+
+        <ion-item style="margin-top:4px">
+          <ion-input
+            [label]="'UNITE_VENTE.PRICE_BUY' | translate"
+            labelPlacement="floating"
+            type="text"
+            inputmode="numeric"
+            appMontantInput
+            [(ngModel)]="newUniteVente.prixAchat">
+          </ion-input>
+        </ion-item>
+
+        <ion-button expand="block" color="success" (click)="ajouterUniteVente()" style="margin-top:16px">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          {{ 'UNITE_VENTE.ADD_BTN' | translate }}
+        </ion-button>
 
       </div>
     </ion-content>

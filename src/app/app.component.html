@@ -79,7 +79,7 @@
           <ion-label>{{ 'NAV.CREDITS' | translate }}</ion-label>
         </ion-item>
 
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/inventory')">
+        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/inventory')" *ngIf="auth.isAdmin() || permissionInventaireLectureActive">
           <ion-icon name="clipboard-outline" slot="start"></ion-icon>
           <ion-label>{{ 'NAV.INVENTORY' | translate }}</ion-label>
         </ion-item>
@@ -100,12 +100,12 @@
             <ion-label>{{ 'NAV.INVOICES' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/comptes')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/comptes')" *ngIf="!fonctionnalitesDesactivees.has('COMPTES_BANCAIRES')">
             <ion-icon name="card-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.BANK' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/dettes')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/dettes')" *ngIf="!fonctionnalitesDesactivees.has('DETTES_ANCIENNES')">
             <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.DEBTS' | translate }}</ion-label>
           </ion-item>
@@ -131,17 +131,17 @@
             <ion-label>{{ 'NAV.SUPPLIERS' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/depots')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/depots')" *ngIf="!fonctionnalitesDesactivees.has('DEPOT_GARDE')">
             <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.SAFE' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-fournisseur')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-fournisseur')" *ngIf="!fonctionnalitesDesactivees.has('OBJECTIFS_FOURNISSEUR')">
             <ion-icon name="trophy-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.SUPPLIER_OBJ' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-vendeur')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-vendeur')" *ngIf="!fonctionnalitesDesactivees.has('OBJECTIFS_VENDEUR')">
             <ion-icon name="cash-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.SELLER_BONUS' | translate }}</ion-label>
           </ion-item>
@@ -156,6 +156,11 @@
             <ion-label>{{ 'NAV.SHOP' | translate }}</ion-label>
           </ion-item>
 
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/super-admin-fonctionnalites')" *ngIf="auth.isSuperAdmin()">
+            <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+            <ion-label>Fonctionnalités (super admin)</ion-label>
+          </ion-item>
+
           <ion-item class="menu-item" button detail="false" (click)="navigate('/facture-design')">
             <ion-icon name="color-palette-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.INVOICE_DESIGN' | translate }}</ion-label>
@@ -166,18 +171,20 @@
             <ion-label>{{ 'LANG.SELECT' | translate }}</ion-label>
           </ion-item>
 
-          <div class="menu-divider"></div>
-          <p class="menu-section-label">{{ 'NAV.TRANSFERS' | translate }}</p>
+          <ng-container *ngIf="featureTransfertsActif">
+            <div class="menu-divider"></div>
+            <p class="menu-section-label">{{ 'NAV.TRANSFERS' | translate }}</p>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/transferts')">
-            <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.TRANSFERS' | translate }}</ion-label>
-          </ion-item>
+            <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/transferts')">
+              <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+              <ion-label>{{ 'NAV.TRANSFERS' | translate }}</ion-label>
+            </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/config-transferts')">
-            <ion-icon name="settings-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'MENU.CONFIG_PARTNERS' | translate }}</ion-label>
-          </ion-item>
+            <ion-item class="menu-item" button detail="false" (click)="navigate('/config-transferts')">
+              <ion-icon name="settings-outline" slot="start"></ion-icon>
+              <ion-label>{{ 'MENU.CONFIG_PARTNERS' | translate }}</ion-label>
+            </ion-item>
+          </ng-container>
 
           <div class="menu-divider"></div>
           <p class="menu-section-label">{{ 'MENU.ANALYSES' | translate }}</p>
@@ -187,7 +194,7 @@
             <ion-label>{{ 'NAV.REPORTS' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/ia')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/ia')" *ngIf="!fonctionnalitesDesactivees.has('IA')">
             <ion-icon name="sparkles-outline" slot="start" style="color:#f59e0b"></ion-icon>
             <ion-label>{{ 'IA.TITLE' | translate }}</ion-label>
           </ion-item>
@@ -197,7 +204,7 @@
             <ion-label>{{ 'NAV.BENEFITS' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/bonus-fournisseurs')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/bonus-fournisseurs')" *ngIf="!fonctionnalitesDesactivees.has('BONUS_FOURNISSEURS')">
             <ion-icon name="gift-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.SUPPLIER_BONUS' | translate }}</ion-label>
           </ion-item>
@@ -207,12 +214,12 @@
             <ion-label>{{ 'NAV.EXPENSES' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/promotions')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/promotions')" *ngIf="!fonctionnalitesDesactivees.has('PROMOTIONS')">
             <ion-icon name="pricetag-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.PROMO' | translate }}</ion-label>
           </ion-item>
 
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resultat-net')">
+          <ion-item class="menu-item" button detail="false" (click)="navigate('/resultat-net')" *ngIf="!fonctionnalitesDesactivees.has('RESULTAT_NET')">
             <ion-icon name="analytics-outline" slot="start"></ion-icon>
             <ion-label>{{ 'NAV.NET_RESULT' | translate }}</ion-label>
           </ion-item>

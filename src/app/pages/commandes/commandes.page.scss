@@ -924,3 +924,72 @@
 .md-credit-info { flex: 1; }
 .md-credit-numero { font-size: 13px; font-weight: 600; color: #0f172a; }
 .md-credit-reste { font-size: 11px; color: #dc2626; margin-top: 2px; }
+
+// ══════════════════════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .cmd-filters,
+  .cmd-search-wrap,
+  .cmd-chip:not(.cmd-chip--green):not(.cmd-chip--orange):not(.cmd-chip--red),
+  .cmd-card,
+  .md-sheet,
+  .md-header,
+  .md-footer,
+  .md-dropdown,
+  .md-drop-item,
+  .md-regl-info,
+  .md-select-all,
+  .md-credit-item,
+  .md-ligne,
+  .md-check:not(.md-check--on) {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .cmd-search-wrap input,
+  .md-field input, .md-field select, .md-field textarea,
+  .md-ligne-nom, .md-qty-val, .md-ligne-prix, .md-title,
+  .cmd-numero, .cmd-info-main, .md-drop-name, .md-credit-numero,
+  .md-regl-row, .md-select-all span, .md-credit-item span {
+    background: transparent;
+    color: #f1f5f9;
+  }
+  .md-field input, .md-field select, .md-field textarea {
+    background: #172033;
+    border-color: #374151;
+  }
+  .md-field input:focus, .md-field select:focus, .md-field textarea:focus {
+    background: #1f2937;
+    border-color: #3b72f6;
+  }
+
+  .cmd-search-wrap input::placeholder { color: #64748b; }
+  .cmd-date, .cmd-info-sub, .md-drop-sub, .md-field label,
+  .md-regl-row span:first-child { color: #94a3b8; }
+
+  .cmd-chip--active { background: #1a56db; border-color: #1a56db; color: #fff; }
+
+  .cmd-credit-box { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); }
+  .cmd-credit-row { color: #fcd34d; }
+
+  .md-client-selected { background: rgba(22,163,74,0.12); border-color: rgba(22,163,74,0.35); }
+  .md-client-info strong { color: #f1f5f9; }
+
+  .md-reste-box { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+
+  .md-total-bar { border-top-color: #374151; span { color: #94a3b8; } }
+  .md-regl-row--total { border-top-color: #374151; }
+
+  .md-shortcut { background: rgba(26,86,219,0.18); border-color: rgba(59,114,246,0.4); }
+  .md-shortcut--full { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.4); }
+
+  .cmd-card-actions, .cmd-act-btn { border-color: #374151; }
+  .cmd-act-btn:active { background: #172033; }
+
+  .md-btn--outline { background: #172033; color: #cbd5e1; border-color: #374151; }
+
+  // Classe globale (empty-v2) réutilisée ici — scoping local à Commandes uniquement.
+  .empty-v2__icon { background: #263244; }
+  .empty-v2__title { color: #f1f5f9; }
+}

@@ -45,6 +45,11 @@ export interface Commande {
   vendeur?: { id: number; nomComplet: string };
   /** MAGASIN (par défaut) ou VITRINE (déposée par un client depuis le mini-site public). */
   origine?: 'MAGASIN' | 'VITRINE';
+  /** Infos de livraison — renseignées à la validation pour les commandes VITRINE. */
+  adresseLivraison?: string;
+  fraisLivraison?: number;
+  chauffeurNom?: string;
+  chauffeurTelephone?: string;
 }
 
 export interface CommandeRequest {
@@ -89,8 +94,8 @@ export class CommandeService {
     return this.http.put<any>(`${this.apiUrl}/${id}`, request);
   }
 
-  valider(id: number): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${id}/valider`, {});
+  valider(id: number, infosLivraison?: { fraisLivraison?: number; chauffeurNom?: string; chauffeurTelephone?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/valider`, infosLivraison || {});
   }
 
   supprimer(id: number): Observable<any> {

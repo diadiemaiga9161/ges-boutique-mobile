@@ -189,7 +189,7 @@
           </ion-chip>
         </div>
         <div class="dep-actions">
-          <ng-container *ngIf="!d.sourceExterne">
+          <ng-container *ngIf="!d.sourceExterne && isAdmin">
             <ion-button fill="outline" size="small" color="warning" (click)="startEdit(d)">
               <ion-icon name="create-outline" slot="start"></ion-icon>
               Modifier
@@ -237,7 +237,7 @@
 </ion-content>
 
 <!-- FAB -->
-<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="isAdmin">
   <ion-fab-button (click)="startCreate()" color="danger">
     <ion-icon name="add-outline"></ion-icon>
   </ion-fab-button>

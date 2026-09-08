@@ -167,9 +167,14 @@
   <div class="modal-sheet" (click)="$event.stopPropagation()">
     <div class="modal-handle"></div>
 
-    <h3 class="modal-title">
-      {{ editingId ? 'Modifier le bonus' : 'Nouveau bonus' }}
-    </h3>
+    <div class="modal-title-row">
+      <h3 class="modal-title">
+        {{ editingId ? 'Modifier le bonus' : 'Nouveau bonus' }}
+      </h3>
+      <button class="modal-close-btn" type="button" (click)="showForm=false" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
 
     <div class="form-group">
       <label class="form-label">Fournisseur *</label>

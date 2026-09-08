@@ -327,3 +327,36 @@
   span { font-size: 11px; color: #94a3b8; white-space: nowrap; background: #f0f4ff; padding: 0 6px; }
   &::before, &::after { content: ''; flex: 1; border-top: 1px solid #cbd5e1; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .retrait-info,
+  .progress-bar {
+    background: #172033;
+  }
+
+  .detail-row,
+  .montant-row,
+  .depots-detail {
+    border-color: #374151;
+  }
+
+  .client-search-wrap { background: rgba(26,86,219,0.12); }
+
+  .client-selected-chip,
+  .client-searchbar,
+  .client-suggestions {
+    background: #1f2937;
+    --background: #1f2937;
+  }
+  .client-suggestions ion-item { border-bottom-color: #374151; }
+
+  .client-name { color: #f1f5f9; }
+
+  .client-divider {
+    span { background: #111827; }
+    &::before, &::after { border-top-color: #374151; }
+  }
+}

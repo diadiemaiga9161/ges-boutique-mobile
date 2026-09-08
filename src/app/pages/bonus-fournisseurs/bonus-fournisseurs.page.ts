@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import {
   BonusFournisseur,
   BonusFournisseurRequest,
@@ -85,6 +85,13 @@ export class BonusFournisseursPage implements OnInit {
       next: r => this.resultat = r,
       error: () => {}
     });
+  }
+
+  // Fermeture du formulaire (modal custom, pas ion-modal) à la touche Échap, comme
+  // exigé par le standard de design (fermeture par X, clic overlay, ou Échap).
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showForm) this.showForm = false;
   }
 
   startCreate(): void {

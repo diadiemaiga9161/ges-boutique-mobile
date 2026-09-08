@@ -100,6 +100,12 @@ export class BeneficesPage implements OnInit, OnDestroy {
     const ctx = this.chartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    // Mode sombre auto : Chart.js utilise un texte/grille sombres par défaut,
+    // invisibles sur la carte assombrie (--ion-card-background) en dark mode.
+    const isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const tickColor = isDark ? '#cbd5e1' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
     this.chart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -117,7 +123,10 @@ export class BeneficesPage implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        scales: {
+          y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } },
+          x: { ticks: { color: tickColor }, grid: { color: gridColor } }
+        }
       }
     });
   }

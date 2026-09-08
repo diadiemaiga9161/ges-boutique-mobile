@@ -54,6 +54,18 @@ export class BackupService {
     );
   }
 
+  /**
+   * Restaure la base de données à partir d'un fichier de sauvegarde (SUPER ADMIN uniquement).
+   * Opération destructive : écrase les données actuelles. Le backend crée automatiquement
+   * une sauvegarde de sécurité de l'état précédent avant de restaurer (dump + restore mysql
+   * synchrones côté serveur — peut être long, prévoir un état de chargement bloquant).
+   */
+  restaurer(nomFichier: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/restaurer/${encodeURIComponent(nomFichier)}`, {}).pipe(
+      catchError(error => this.handleError(error, 'restaurer la sauvegarde'))
+    );
+  }
+
   /** Télécharge le fichier binaire (.sql.gz) via HttpClient (JWT auto par AuthInterceptor). */
   telecharger(nomFichier: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/telecharger/${encodeURIComponent(nomFichier)}`, { responseType: 'blob' }).pipe(

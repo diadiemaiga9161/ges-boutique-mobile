@@ -240,3 +240,38 @@
   .resultat-montant     { font-size: 3rem; }
   .detail-card, .bars-card { padding: 24px; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .periode-tabs { background: #172033; }
+  .periode-btn {
+    &.active {
+      background: #1f2937;
+      color: #93c5fd;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+  }
+
+  .filter-card,
+  .detail-card,
+  .bars-card {
+    background: #1f2937;
+    box-shadow: none;
+    border: 1px solid #374151;
+  }
+
+  .date-input {
+    background: #172033;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .error-card {
+    background: rgba(220,38,38,0.18);
+    color: #fca5a5;
+  }
+
+  .bar-track { background: #374151; }
+}

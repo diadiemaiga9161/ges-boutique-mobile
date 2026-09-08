@@ -242,9 +242,14 @@
           </div>
         </div>
 
+        <div class="totaux-row" *ngIf="programmeFideliteActif && reductionFidelite > 0">
+          <span>{{ 'FIDELITE.REDUCTION' | translate }}</span>
+          <strong>- {{ money(reductionFidelite) }}</strong>
+        </div>
+
         <div class="totaux-total-line">
           <span class="totaux-total-label">TOTAL À PAYER</span>
-          <strong class="totaux-total-val">{{ money(total()) }}</strong>
+          <strong class="totaux-total-val">{{ money(totalAvecFidelite()) }}</strong>
         </div>
       </div>
 
@@ -291,6 +296,42 @@
               </div>
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Programme de fidélité — visible seulement si actif pour la boutique et un
+           client identifié (pas "client divers") est sélectionné. -->
+      <div class="field-group" *ngIf="programmeFideliteActif && clientId">
+        <label class="field-label">
+          <ion-icon name="star-outline"></ion-icon>
+          {{ 'FIDELITE.TITLE' | translate }}
+        </label>
+
+        <div *ngIf="loadingFidelite" class="avance-alert-info">
+          <ion-spinner name="crescent" style="width:14px;height:14px"></ion-spinner>
+          {{ 'FIDELITE.LOADING' | translate }}
+        </div>
+
+        <div *ngIf="!loadingFidelite && soldeFidelite" class="avance-alert">
+          <p style="margin:0 0 6px">
+            {{ 'FIDELITE.CLIENT_SOLDE' | translate: { points: soldeFidelite.points, valeur: money(soldeFidelite.valeurFcfa) } }}
+          </p>
+          <div class="field-input-wrap" *ngIf="soldeFidelite.points > 0">
+            <ion-icon name="star-outline" class="field-icon"></ion-icon>
+            <ion-input
+              class="field-input"
+              type="number"
+              min="0"
+              [max]="soldeFidelite.points"
+              placeholder="0"
+              [(ngModel)]="pointsAUtiliser"
+              (ionChange)="clampPointsFidelite()">
+            </ion-input>
+            <span class="ci-discount-label">{{ 'FIDELITE.POINTS_LABEL' | translate }}</span>
+          </div>
+          <p class="avance-hint" *ngIf="pointsAUtiliser > 0">
+            {{ 'FIDELITE.REDUCTION_HINT' | translate: { montant: money(reductionFidelite) } }}
+          </p>
         </div>
       </div>
 
@@ -438,12 +479,25 @@
         (click)="submit()">
         <span *ngIf="!submitting">
           <ion-icon name="checkmark-circle-outline"></ion-icon>
-          Valider la vente · {{ money(total()) }}
+          Valider la vente · {{ money(totalAvecFidelite()) }}
         </span>
         <span *ngIf="submitting" class="submit-loading">
           <ion-spinner name="crescent"></ion-spinner>
           Traitement en cours...
         </span>
+      </button>
+
+      <!-- Imprimer le reçu — visible seulement si la fonctionnalité est active pour la
+           boutique (voir BoutiqueService.fonctionnalitesAvancees$) et juste après une vente
+           réussie. Action optionnelle : une erreur d'impression n'affecte jamais la vente déjà
+           enregistrée (voir ImpressionRecuService). -->
+      <button
+        class="submit-btn"
+        style="margin-top:10px;background:#0f172a"
+        *ngIf="impressionTicketActif && derniereVente"
+        (click)="imprimerDernierRecu()">
+        <ion-icon name="bluetooth-outline"></ion-icon>
+        {{ 'IMPRESSION.PRINT_BUTTON' | translate }}
       </button>
 
     </section>
@@ -511,6 +565,69 @@
             </div>
           </div>
           <div class="nv-card__prix">{{ money(n.prixVente) }}</div>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ==================== MODAL SÉLECTION UNITÉ DE VENTE (VENTE_GROS_DETAIL) ==================== -->
+<ion-modal [isOpen]="showUniteVenteModal" (didDismiss)="annulerChoixUniteVente()" [breakpoints]="[0, 0.6, 1]" [initialBreakpoint]="0.6">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>
+          <ion-icon name="swap-horizontal-outline" style="margin-right:6px"></ion-icon>
+          {{ 'UNITE_VENTE.CHOOSE_TITLE' | translate }}
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="annulerChoixUniteVente()">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="nv-content">
+      <div class="nv-produit-nom">{{ produitEnAttente?.nom }}</div>
+
+      <div *ngIf="loadingUniteVente" class="nv-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div *ngIf="!loadingUniteVente" class="nv-list">
+
+        <!-- ── Unité de base du produit ── -->
+        <div class="nv-card nv-card--principal" (click)="choisirUniteBase()">
+          <div class="nv-card__left">
+            <div class="nv-card__nom">{{ produitEnAttente?.uniteBase || ('UNITE_VENTE.DEFAULT_BASE' | translate) }}</div>
+            <div class="nv-card__tag">{{ 'UNITE_VENTE.BASE_UNIT' | translate }}</div>
+            <div class="nv-card__dispo nv-card__dispo--ok">
+              {{ 'PRODUCTS.STOCK' | translate }} : {{ produitEnAttente?.quantite }}
+            </div>
+          </div>
+          <div class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</div>
+        </div>
+
+        <div class="nv-separator">── {{ 'UNITE_VENTE.OR_CHOOSE' | translate }} ──</div>
+
+        <!-- ── Unités de vente (Carton, Cartouche…) ── -->
+        <div *ngFor="let u of uniteVenteDisponibles"
+             class="nv-card"
+             [class.nv-card--epuise]="disponibleUniteVente(u) === 0"
+             (click)="choisirUniteVente(u)">
+          <div class="nv-card__left">
+            <div class="nv-card__nom">{{ u.nom }}</div>
+            <div class="nv-card__tag">
+              1 {{ u.nom }} = {{ u.facteurBase }} {{ produitEnAttente?.uniteBase || ('UNITE_VENTE.DEFAULT_BASE' | translate) }}
+            </div>
+            <div class="nv-card__dispo"
+                 [style.color]="disponibleUniteVente(u) > 0 ? '#16a34a' : '#dc2626'"
+                 style="font-weight:600">
+              {{ 'PRODUCTS.STOCK' | translate }} : {{ disponibleUniteVente(u) }}
+            </div>
+          </div>
+          <div class="nv-card__prix">{{ money(u.prixVente) }}</div>
         </div>
 
       </div>

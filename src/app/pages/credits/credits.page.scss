@@ -107,7 +107,12 @@
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 
-  &--retard {
+  // NB : le template applique la classe "group--retard" (et non "client-group--retard")
+  // via [class.group--retard] — on couvre les deux noms pour que la mise en avant visuelle
+  // des clients en retard fonctionne réellement (bug de nommage pré-existant, corrigé ici
+  // sans toucher au calcul métier group.enRetard).
+  &--retard,
+  &.group--retard {
     border-color: #fca5a5;
     box-shadow: 0 2px 8px rgba(220,38,38,.1);
   }
@@ -883,3 +888,85 @@
 }
 
 .gci-date--regle { color: #16a34a !important; }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .hero-stat,
+  .search-wrap,
+  .retard-btn,
+  .search-bar-inner,
+  .retard-chip,
+  .client-group,
+  .credit-item,
+  .detail-btn,
+  .modal-sheet,
+  .modal-head,
+  .modal-footer,
+  .credit-info-card,
+  .produits-list,
+  .detail-totaux,
+  .field-input,
+  .mode-chip,
+  .groupe-credit-item {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .hero-stat--total { background: rgba(26,86,219,0.15); }
+  .hero-stat--retard { background: rgba(220,38,38,0.12); }
+  .hero-stat--regle { background: rgba(22,163,74,0.12); }
+
+  .hs-val, .group-nom, .credit-num, .credit-montant, .group-total,
+  .gci-num, .gci-montant, .cic-val, .pr-price, .modal-head h3,
+  .field-input, .credit-badge, .produit-row .pr-name {
+    color: #f1f5f9;
+  }
+
+  .search-input, .search-bar-input { color: #f1f5f9; }
+  .group-tel, .credit-date, .cic-label, .pr-qty, .select-hint,
+  .gci-date, .credit-regle-par, .credit-vendeur { color: #94a3b8; }
+
+  .retard-btn--active, .retard-chip--active {
+    background: rgba(220,38,38,0.18);
+    border-color: rgba(220,38,38,0.4);
+  }
+
+  .action-btn--groupe, .cr-count { background: rgba(26,86,219,0.18); }
+  .mode-chip--active, .groupe-credit-item--selected {
+    background: rgba(26,86,219,0.18);
+    border-color: #3b72f6;
+  }
+
+  .btn-cancel, .detail-btn { background: #172033; color: #cbd5e1; }
+  .btn-cancel:active { background: #1f2937; }
+
+  .credit-item--regle, .groupe-credit-item--regle {
+    background: rgba(22,163,74,0.12) !important;
+    border-color: rgba(22,163,74,0.35) !important;
+  }
+
+  .groupe-total { background: rgba(22,163,74,0.12); }
+
+  .statut-tabs { border-bottom-color: #374151; }
+  .progress-bar { background: #374151; }
+
+  .detail-statut.statut--regle  { background: rgba(22,163,74,0.18); }
+  .detail-statut.statut--retard { background: rgba(220,38,38,0.18); }
+  .detail-statut.statut--encours { background: rgba(26,86,219,0.18); }
+
+  .credit-badge.badge--retard  { background: rgba(220,38,38,0.18); }
+  .credit-badge.badge--encours { background: rgba(26,86,219,0.18); }
+  .credit-badge.badge--regle   { background: rgba(22,163,74,0.18); }
+
+  .client-group--retard,
+  .client-group.group--retard {
+    border-color: rgba(220,38,38,0.4);
+    box-shadow: 0 2px 8px rgba(220,38,38,.2);
+  }
+
+  // Classe globale (empty-v2) réutilisée ici — scoping local à Crédits uniquement.
+  .empty-v2__icon { background: #263244; }
+  .empty-v2__title { color: #f1f5f9; }
+}

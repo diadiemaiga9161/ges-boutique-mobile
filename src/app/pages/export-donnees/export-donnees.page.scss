@@ -2,6 +2,12 @@
   --background: var(--ion-color-light, #f4f5f8);
 }
 
+@media (prefers-color-scheme: dark) {
+  .export-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}
+
 // Accès refusé (même mécanisme visuel que la page Paramètres)
 .param-access-denied {
   display: flex;
@@ -51,7 +57,7 @@
   justify-content: center;
   gap: 8px;
   padding: 16px 8px;
-  background: #fff;
+  background: var(--ion-card-background, #fff);
   border: 1.5px solid transparent;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -133,7 +139,7 @@
 
 .preview-scroll {
   overflow-x: auto;
-  background: #fff;
+  background: var(--ion-card-background, #fff);
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -159,7 +165,7 @@
   }
 
   tr:nth-child(even) td {
-    background: #f8fafc;
+    background: rgba(148, 163, 184, 0.08);
   }
 }
 
@@ -168,4 +174,10 @@
   color: var(--ion-color-medium);
   text-align: center;
   margin: 8px 0 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .preview-table td {
+    border-bottom-color: #374151;
+  }
 }

@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
-import { BoutiqueInfo, BoutiqueService } from '../../services/boutique.service';
+import { BoutiqueInfo, BoutiqueService, PermissionVendeur } from '../../services/boutique.service';
 import { FonctionnaliteService } from '../../services/fonctionnalite.service';
+import { FideliteService, ParametresFidelite } from '../../services/fidelite.service';
 
 @Component({
   selector: 'app-boutique-settings',
@@ -16,11 +17,24 @@ export class BoutiqueSettingsPage implements OnInit {
   saving = false;
   uploadingLogo = false;
   conditionnementActif = false;
+  // Permission vendeur "Inventaire en lecture seule" (système générique séparé —
+  // décision d'un admin normal, pas besoin de super admin).
+  inventaireLectureActive = false;
+
+  // Programme de fidélité (CleFonctionnalite.PROGRAMME_FIDELITE) — désactivable par le
+  // super admin (voir BoutiqueService.fonctionnalitesAvancees$, système déjà utilisé pour
+  // Dépôt garde/Comptes bancaires). Les taux eux-mêmes sont modifiables par un admin normal
+  // (PUT /api/fidelite/parametres), pas besoin de super admin.
+  programmeFideliteActif = false;
+  fideliteForm: ParametresFidelite = { montantParPoint: 0, pointValeur: 0 };
+  loadingFidelite = false;
+  savingFidelite = false;
 
   constructor(
     private boutique: BoutiqueService,
     private toastCtrl: ToastController,
-    private fonctionnalite: FonctionnaliteService
+    private fonctionnalite: FonctionnaliteService,
+    private fideliteService: FideliteService
   ) {}
 
   ngOnInit(): void {
@@ -33,6 +47,34 @@ export class BoutiqueSettingsPage implements OnInit {
       this.form = { ...info };
       this.previewLogo = info.logoUrl || info.logoPath || '';
     });
+    this.boutique.chargerPermissionsVendeur().subscribe((liste: PermissionVendeur[]) => {
+      this.inventaireLectureActive = liste.find(p => p.cle === 'INVENTAIRE_LECTURE')?.actif === true;
+    });
+    this.boutique.chargerFonctionnalitesAvancees().subscribe(liste => {
+      this.programmeFideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+      if (this.programmeFideliteActif) {
+        this.loadingFidelite = true;
+        this.fideliteService.getParametres().subscribe({
+          next: params => { this.fideliteForm = params; this.loadingFidelite = false; },
+          error: () => { this.loadingFidelite = false; }
+        });
+      }
+    });
+  }
+
+  enregistrerFidelite(): void {
+    this.savingFidelite = true;
+    this.fideliteService.modifierParametres(this.fideliteForm).subscribe({
+      next: params => {
+        this.fideliteForm = params;
+        this.savingFidelite = false;
+        this.presentToast('Taux de fidélité mis à jour');
+      },
+      error: error => {
+        this.savingFidelite = false;
+        this.presentToast(error.message || 'Mise à jour impossible', 'danger');
+      }
+    });
   }
 
   toggleConditionnement(event: any): void {
@@ -40,6 +82,20 @@ export class BoutiqueSettingsPage implements OnInit {
     this.fonctionnalite.setConditionnement(actif);
     this.conditionnementActif = actif;
     this.presentToast(actif ? 'Conditionnement activé' : 'Conditionnement désactivé');
+  }
+
+  toggleInventaireLecture(event: any): void {
+    const actif = event.detail.checked;
+    this.boutique.definirPermissionVendeur('INVENTAIRE_LECTURE', actif).subscribe({
+      next: () => {
+        this.inventaireLectureActive = actif;
+        this.presentToast(actif ? 'Le vendeur peut désormais consulter l\'inventaire' : 'Accès vendeur à l\'inventaire retiré');
+      },
+      error: error => {
+        this.inventaireLectureActive = !actif;
+        this.presentToast(error.message || 'Mise à jour impossible', 'danger');
+      }
+    });
   }
 
   onLogoFileSelected(event: any): void {

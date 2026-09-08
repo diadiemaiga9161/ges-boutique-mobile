@@ -367,6 +367,12 @@
             <ion-icon name="eye-outline"></ion-icon>
             <span>Voir</span>
           </button>
+          <!-- Impression thermique Bluetooth (SPP/ESC-POS) — distincte de la facture PDF
+               ci-dessus. Visible seulement si la fonctionnalité est active pour la boutique. -->
+          <button class="saction" (click)="imprimerRecuThermique(sale)" *ngIf="impressionTicketActif && !sale.annulee">
+            <ion-icon name="bluetooth-outline"></ion-icon>
+            <span>{{ 'IMPRESSION.PRINT_BUTTON' | translate }}</span>
+          </button>
           <button class="saction saction--qr" (click)="getQrCodeUrlSale(sale)">
             <ion-icon name="qr-code-outline"></ion-icon>
             <span>QR</span>

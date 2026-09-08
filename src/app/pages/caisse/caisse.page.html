@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>{{ 'CAISSE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="openTransfertModal()" *ngIf="caisse?.estOuverte">
+      <ion-button (click)="openTransfertModal()" *ngIf="caisse?.estOuverte && isAdmin">
         <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -83,17 +83,18 @@
           <p class="stat-label">Sorties du jour</p>
           <p class="stat-value danger">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
         </div>
-        <ion-button expand="block" color="success" *ngIf="!caisse?.estOuverte" (click)="openCash()">
+        <ion-button expand="block" color="success" *ngIf="!caisse?.estOuverte && isAdmin" (click)="openCash()">
           <ion-icon name="lock-open-outline" slot="start"></ion-icon>
           Ouvrir la caisse
         </ion-button>
-        <ion-button expand="block" color="danger" *ngIf="caisse?.estOuverte" (click)="confirmCloseCash()">
+        <ion-button expand="block" color="danger" *ngIf="caisse?.estOuverte && isAdmin" (click)="confirmCloseCash()">
           <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
           Fermer la caisse
         </ion-button>
+        <p class="muted" *ngIf="!isAdmin && !caisse?.estOuverte">La caisse n'est pas encore ouverte. Contactez un administrateur.</p>
       </div>
 
-      <div class="form-panel stack">
+      <div class="form-panel stack" *ngIf="isAdmin">
         <h2 class="card-title">Nouvelle opération</h2>
         <ion-segment [(ngModel)]="operationType">
           <ion-segment-button value="entree">Entrée</ion-segment-button>

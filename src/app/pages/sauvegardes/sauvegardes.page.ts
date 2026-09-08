@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class SauvegardesPage {
   isAdmin = false;
+  isSuperAdmin = false;
 
   sauvegardes: BackupInfo[] = [];
   loading = false;
@@ -23,6 +24,9 @@ export class SauvegardesPage {
   /** Nom du fichier en cours de téléchargement/partage (null = aucun). */
   telechargementEnCours: string | null = null;
 
+  /** Nom du fichier en cours de restauration (null = aucun). */
+  restaurationEnCours: string | null = null;
+
   constructor(
     private backupService: BackupService,
     private auth: AuthService,
@@ -33,6 +37,7 @@ export class SauvegardesPage {
 
   ionViewWillEnter(): void {
     this.isAdmin = this.auth.isAdmin();
+    this.isSuperAdmin = this.auth.isSuperAdmin();
     if (this.isAdmin) {
       this.charger();
     }
@@ -102,6 +107,56 @@ export class SauvegardesPage {
     } finally {
       this.telechargementEnCours = null;
     }
+  }
+
+  async confirmerRestaurer(item: BackupInfo): Promise<void> {
+    const titre = await this.translate.get('BACKUP.CONFIRM_RESTORE_TITLE').toPromise();
+    const message = await this.translate.get('BACKUP.CONFIRM_RESTORE_TEXT').toPromise();
+    const oui = await this.translate.get('COMMON.YES').toPromise();
+    const non = await this.translate.get('COMMON.CANCEL').toPromise();
+
+    const alert = await this.alertCtrl.create({
+      header: titre,
+      cssClass: 'alert-pre-line',
+      message: `${item.nomFichier}\n\n${message}`,
+      buttons: [
+        { text: non, role: 'cancel' },
+        { text: oui, role: 'confirm', cssClass: 'alert-btn-danger', handler: () => this.restaurer(item) }
+      ]
+    });
+    await alert.present();
+  }
+
+  private restaurer(item: BackupInfo): void {
+    this.restaurationEnCours = item.nomFichier;
+    this.backupService.restaurer(item.nomFichier).subscribe({
+      next: async res => {
+        this.restaurationEnCours = null;
+        if (res?.success) {
+          await this.alerteResultatRestauration('BACKUP.SUCCESS_RESTORE_TITLE', res.message);
+          this.charger();
+        } else {
+          this.toast(res?.message || 'BACKUP.ERROR_MESSAGE', 'danger', !res?.message);
+        }
+      },
+      error: async err => {
+        this.restaurationEnCours = null;
+        this.toast(err?.message || 'BACKUP.ERROR_MESSAGE', 'danger', !err?.message);
+      }
+    });
+  }
+
+  /** Affiche le message complet renvoyé par le backend (peut être long, ne jamais tronquer). */
+  private async alerteResultatRestauration(titreKey: string, message: string): Promise<void> {
+    const titre = await this.translate.get(titreKey).toPromise();
+    const ok = await this.translate.get('COMMON.CLOSE').toPromise();
+    const alert = await this.alertCtrl.create({
+      header: titre,
+      cssClass: 'alert-pre-line',
+      message,
+      buttons: [{ text: ok, role: 'confirm' }]
+    });
+    await alert.present();
   }
 
   formatTaille(octets: number): string {

@@ -193,3 +193,38 @@
   .product-name { font-size: 1.1rem; }
   .price-value  { font-size: 1.05rem; }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  Cartes "maison" hardcodées en blanc (pas des variables Ionic) : sans ce
+//  bloc leur fond reste blanc figé, ou pire, bascule sombre (héritage
+//  --ion-card-background) alors que le texte enfant reste codé en dur en
+//  couleur foncée -> illisible. Cf. même pattern déjà appliqué à cart.page.scss.
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .product-card,
+  .modal-section,
+  .cat-item {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .product-name,
+  .cat-name {
+    color: #f1f5f9;
+  }
+
+  .product-card-header,
+  .product-card-actions {
+    border-color: #374151;
+  }
+
+  .product-card-actions { border-top-color: #374151; }
+
+  // Textes sombres codés en dur sur les surfaces ci-dessus (modale stats)
+  .stat-row {
+    color: #cbd5e1;
+    border-bottom-color: #374151;
+    strong { color: #f1f5f9; }
+  }
+}

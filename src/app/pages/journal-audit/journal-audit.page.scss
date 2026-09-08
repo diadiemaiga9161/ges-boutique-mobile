@@ -2,6 +2,12 @@
   --background: var(--ion-color-light, #f4f5f8);
 }
 
+@media (prefers-color-scheme: dark) {
+  .ja-content {
+    --background: var(--ion-background-color, #111827);
+  }
+}
+
 // Accès refusé
 .ja-access-denied {
   display: flex;
@@ -152,7 +158,7 @@
 }
 
 .ja-page-btn {
-  background: #fff;
+  background: var(--ion-card-background, #fff);
   color: var(--ion-color-dark);
   border: 1px solid var(--ion-color-light-shade);
   border-radius: 8px;

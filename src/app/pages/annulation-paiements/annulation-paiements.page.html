@@ -112,7 +112,7 @@
         [style.opacity]="p.annule ? '0.6' : '1'">
 
         <div class="lic-header">
-          <div class="lic-avatar" [class.--orange]="!p.annule" [class.--red]="p.annule">
+          <div class="lic-avatar" [class.lic-avatar--orange]="!p.annule" [class.lic-avatar--red]="p.annule">
             <ion-icon [name]="p.annule ? 'close-circle-outline' : 'cash-outline'"></ion-icon>
           </div>
           <div class="lic-info">
@@ -121,7 +121,7 @@
             <div class="lic-sub" *ngIf="getPayerLabel(p)">Par {{ getPayerLabel(p) }}</div>
           </div>
           <div class="lic-right">
-            <span class="status-badge" [class.--success]="!p.annule" [class.--danger]="p.annule">
+            <span class="status-badge" [class.status-badge--success]="!p.annule" [class.status-badge--danger]="p.annule">
               {{ formatMontant(p.montant) }}
             </span>
           </div>
@@ -167,7 +167,7 @@
         [style.opacity]="r.annule ? '0.6' : '1'">
 
         <div class="lic-header">
-          <div class="lic-avatar" [class.--green]="!r.annule" [class.--red]="r.annule">
+          <div class="lic-avatar" [class.lic-avatar--green]="!r.annule" [class.lic-avatar--red]="r.annule">
             <ion-icon [name]="r.annule ? 'close-circle-outline' : 'card-outline'"></ion-icon>
           </div>
           <div class="lic-info">
@@ -175,7 +175,7 @@
             <div class="lic-sub">{{ formatDate(r.dateOperation) }}</div>
           </div>
           <div class="lic-right">
-            <span class="status-badge" [class.--success]="!r.annule" [class.--danger]="r.annule">
+            <span class="status-badge" [class.status-badge--success]="!r.annule" [class.status-badge--danger]="r.annule">
               {{ formatMontant(r.montant) }}
             </span>
           </div>

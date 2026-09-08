@@ -337,3 +337,46 @@
     font-size: 0.68rem;
   }
 }
+
+// ══════════════════════════════════════════════════
+//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
+//  Cette page était figée en clair (fond, cartes contact/à-propos toutes en
+//  #ffffff avec texte codé en dur) : aucune adaptation au thème sombre du
+//  système. Corrigé ici en suivant la palette sombre déjà utilisée partout
+//  ailleurs dans l'app (#111827 fond, #1f2937 cartes, #374151 bordures).
+// ══════════════════════════════════════════════════
+@media (prefers-color-scheme: dark) {
+  .ressources-content { --background: #111827; }
+
+  .section-title { color: #f1f5f9; }
+
+  .feat-card { border-color: #374151; }
+  .feat-title { color: #f1f5f9; }
+  .feat-desc  { color: #94a3b8; }
+
+  .contact-list,
+  .about-list {
+    background: #1f2937;
+    box-shadow: none;
+  }
+
+  .contact-item,
+  .about-item {
+    --background: #1f2937;
+    border-bottom-color: #374151;
+  }
+
+  .contact-value,
+  .about-value { color: #f1f5f9; }
+
+  .contact-label,
+  .about-label { color: #94a3b8; }
+
+  .page-footer p { color: #cbd5e1; }
+  .page-footer .footer-sub { color: #94a3b8; }
+
+  .contact-card {
+    background: #1f2937;
+    color: #f1f5f9;
+  }
+}
