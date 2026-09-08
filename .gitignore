@@ -68,3 +68,6 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Config locale des agents Claude Code — reste en local/prive, jamais sur GitHub.
+.claude/
