@@ -48,7 +48,7 @@ export class CaissePage implements OnDestroy {
   loadingReconciliation = false;
 
   // Filtres opérations
-  opPeriode: 'today' | 'week' | 'month' | 'year' = 'today';
+  opPeriode: 'today' | 'week' | 'month' = 'today';
   opTypeFilter = '';
   opSearch = '';
 
@@ -360,8 +360,7 @@ export class CaissePage implements OnDestroy {
     this.loadingOperations = true;
     const req = this.opPeriode === 'today' ? this.caisseService.getOperationsDuJour()
       : this.opPeriode === 'week' ? this.caisseService.getOperationsDeLaSemaine()
-      : this.opPeriode === 'month' ? this.caisseService.getOperationsDuMois()
-      : this.caisseService.getOperationsDeLAnnee();
+      : this.caisseService.getOperationsDuMois();
 
     req.subscribe({
       next: ops => {
@@ -373,7 +372,7 @@ export class CaissePage implements OnDestroy {
     });
   }
 
-  setPeriodeOp(p: 'today' | 'week' | 'month' | 'year'): void {
+  setPeriodeOp(p: 'today' | 'week' | 'month'): void {
     this.opPeriode = p;
     this.loadOperationsForPeriod();
   }

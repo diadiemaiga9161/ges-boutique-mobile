@@ -7,6 +7,8 @@ import { RapportService, StatistiquesGenerales } from '../services/rapport.servi
 import { WebSocketService } from '../services/websocket.service';
 import { IAService } from '../services/ia.service';
 import { TransfertService } from '../services/transfert.service';
+import { BeneficeService, BeneficeData } from '../services/benefice.service';
+import { CaisseService } from '../services/caisse.service';
 
 @Component({
   selector: 'app-home',
@@ -16,6 +18,8 @@ import { TransfertService } from '../services/transfert.service';
 })
 export class HomePage implements OnDestroy {
   stats?: StatistiquesGenerales;
+  beneficeJour?: BeneficeData;
+  soldeCaisse?: { solde: number; soldeSysteme: number };
   alertesStock: any[] = [];
   nbTransfertsEnAttente: number = 0;
   private wsSub?: Subscription;
@@ -26,12 +30,8 @@ export class HomePage implements OnDestroy {
 
   actions = [
     { title: 'Caisse', subtitle: 'Solde et opérations', icon: 'cash-outline', route: '/tabs/caisse' },
-    { title: 'Ventes', subtitle: 'Historique', icon: 'receipt-outline', route: '/tabs/sales' },
     { title: 'Inventaire', subtitle: 'Entrées et sorties', icon: 'clipboard-outline', route: '/tabs/inventory' },
-    { title: 'Produits', subtitle: 'Stock et prix', icon: 'cube-outline', route: '/tabs/products' },
     { title: 'Rapports', subtitle: 'Chiffres clés', icon: 'bar-chart-outline', route: '/tabs/reports' },
-    { title: 'Nouvelle vente', subtitle: 'Panier mobile', icon: 'cart-outline', route: '/cart' },
-    { title: 'Clients', subtitle: 'Fidélité et crédits', icon: 'people-outline', route: '/clients' },
     { title: 'Commandes', subtitle: 'Bons de commande', icon: 'document-text-outline', route: '/commandes' },
     { title: 'Boutique', subtitle: 'Paramètres', icon: 'storefront-outline', route: '/boutique' },
     { title: 'Mobile Money', subtitle: 'Orange & Moov', icon: 'phone-portrait-outline', route: '/mobile-money' },
@@ -45,7 +45,9 @@ export class HomePage implements OnDestroy {
     private router: Router,
     private ws: WebSocketService,
     private iaService: IAService,
-    private transfertService: TransfertService
+    private transfertService: TransfertService,
+    private beneficeService: BeneficeService,
+    private caisseService: CaisseService
   ) {}
 
   ionViewWillEnter(): void {
@@ -103,6 +105,23 @@ export class HomePage implements OnDestroy {
     });
   }
 
+  private chargerBeneficeJour(): void {
+    const dateJour = new Date().toISOString().split('T')[0];
+    this.beneficeService.journalier(dateJour).pipe(
+      catchError(() => of(undefined))
+    ).subscribe(data => {
+      this.beneficeJour = data;
+    });
+  }
+
+  private chargerSoldeCaisse(): void {
+    this.caisseService.getSolde().pipe(
+      catchError(() => of(undefined))
+    ).subscribe(solde => {
+      this.soldeCaisse = solde;
+    });
+  }
+
   load(event?: any): void {
     this.loading = true;
     this.reports.obtenirStatistiquesGenerales().subscribe({
@@ -116,6 +135,8 @@ export class HomePage implements OnDestroy {
         event?.target?.complete();
       }
     });
+    this.chargerBeneficeJour();
+    this.chargerSoldeCaisse();
   }
 
   go(route: string): void {
@@ -124,6 +145,10 @@ export class HomePage implements OnDestroy {
 
   money(value?: number): string {
     return this.reports.formaterPrixFCFA(value || 0);
+  }
+
+  count(value?: number): string {
+    return String(value || 0);
   }
 
 }

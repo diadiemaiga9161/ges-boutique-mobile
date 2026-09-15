@@ -15,115 +15,109 @@
 <ion-content class="ja-content">
 
   <!-- Accès réservé admin -->
-  <div *ngIf="!isAdmin" class="ja-access-denied">
-    <ion-icon name="lock-closed-outline"></ion-icon>
-    <p>{{ 'JOURNAL_AUDIT.ACCES_REFUSE' | translate }}</p>
+  <div *ngIf="!isAdmin" class="gls-denied">
+    <div class="gls-denied__icon"><ion-icon name="lock-closed-outline"></ion-icon></div>
+    <p class="gls-denied__title">{{ 'JOURNAL_AUDIT.ACCES_REFUSE' | translate }}</p>
   </div>
 
-  <ng-container *ngIf="isAdmin">
+  <div class="ja-page" *ngIf="isAdmin">
 
     <!-- ═══════════ FILTRES ═══════════ -->
-    <ion-card class="ja-filtres-card">
-      <ion-card-content>
+    <section class="filter-zone ja-filtres">
 
-        <!-- Filtre par utilisateur -->
-        <ion-item lines="none" class="ja-filtre-item">
-          <ion-icon name="person-outline" slot="start" color="medium"></ion-icon>
-          <ion-select
-            [(ngModel)]="utilisateurId"
-            (ionChange)="appliquerFiltres()"
-            [placeholder]="'JOURNAL_AUDIT.TOUS_UTILISATEURS' | translate"
-            interface="action-sheet">
-            <ion-select-option [value]="null">{{ 'JOURNAL_AUDIT.TOUS_UTILISATEURS' | translate }}</ion-select-option>
-            <ion-select-option *ngFor="let u of utilisateurs" [value]="u.id">{{ u.nomComplet || u.username }}</ion-select-option>
-          </ion-select>
-        </ion-item>
+      <!-- Filtre par utilisateur (puces : même modèle utilisateurId) -->
+      <div class="fz-chips">
+        <button type="button" class="fz-chip" [class.fz-chip--active]="!utilisateurId" (click)="choisirUtilisateur(null)">
+          <ion-icon name="people-outline"></ion-icon>
+          {{ 'JOURNAL_AUDIT.TOUS_UTILISATEURS' | translate }}
+        </button>
+        <button type="button" class="fz-chip" *ngFor="let u of utilisateurs"
+                [class.fz-chip--active]="utilisateurId === u.id"
+                (click)="choisirUtilisateur(u.id)">
+          <ion-icon name="person-outline"></ion-icon>
+          {{ u.nomComplet || u.username }}
+        </button>
+      </div>
 
-        <!-- Filtre par plage de dates -->
-        <div class="ja-dates-row">
-          <ion-input
-            type="date"
-            [(ngModel)]="dateDebut"
-            (ionChange)="appliquerFiltres()"
-            [label]="'JOURNAL_AUDIT.DATE_FROM' | translate"
-            labelPlacement="stacked"
-            fill="outline">
-          </ion-input>
-          <ion-input
-            type="date"
-            [(ngModel)]="dateFin"
-            (ionChange)="appliquerFiltres()"
-            [label]="'JOURNAL_AUDIT.DATE_TO' | translate"
-            labelPlacement="stacked"
-            fill="outline">
-          </ion-input>
-        </div>
+      <!-- Filtre par plage de dates -->
+      <div class="ja-dates">
+        <label class="gl-field">
+          <span class="gl-field__label">{{ 'JOURNAL_AUDIT.DATE_FROM' | translate }}</span>
+          <input class="gl-date" type="date" [(ngModel)]="dateDebut" (change)="appliquerFiltres()" />
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">{{ 'JOURNAL_AUDIT.DATE_TO' | translate }}</span>
+          <input class="gl-date" type="date" [(ngModel)]="dateFin" (change)="appliquerFiltres()" />
+        </label>
+      </div>
 
-        <ion-button
-          *ngIf="aFiltresActifs"
-          fill="clear"
-          size="small"
-          color="medium"
-          (click)="effacerFiltres()">
-          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-          {{ 'JOURNAL_AUDIT.RESET_FILTERS' | translate }}
-        </ion-button>
+      <button type="button" class="ja-reset" *ngIf="aFiltresActifs" (click)="effacerFiltres()">
+        <ion-icon name="close-circle-outline"></ion-icon>
+        {{ 'JOURNAL_AUDIT.RESET_FILTERS' | translate }}
+      </button>
 
-      </ion-card-content>
-    </ion-card>
+    </section>
 
     <!-- ═══════════ LOADING ═══════════ -->
-    <div class="ja-skeleton-list" *ngIf="loading">
-      <ion-card class="ja-skeleton-card" *ngFor="let i of [1,2,3,4,5]">
-        <ion-card-content>
-          <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
-          <ion-skeleton-text animated style="width: 70%"></ion-skeleton-text>
-          <ion-skeleton-text animated style="width: 55%"></ion-skeleton-text>
-        </ion-card-content>
-      </ion-card>
+    <div class="ja-list" *ngIf="loading">
+      <div class="ja-card ja-card--skeleton" *ngFor="let i of [1,2,3,4,5]">
+        <div class="ja-head">
+          <span class="skeleton ja-sk-icon"></span>
+          <div class="ja-head-text">
+            <span class="skeleton sk-line sk-line--w70"></span>
+            <span class="skeleton sk-line sk-line--sm sk-line--w40"></span>
+          </div>
+        </div>
+        <span class="skeleton sk-line sk-line--w50"></span>
+      </div>
     </div>
 
     <!-- ═══════════ ERREUR ═══════════ -->
-    <div *ngIf="!loading && errorMessage" class="ja-empty">
-      <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
-      <p>{{ errorMessage }}</p>
+    <div *ngIf="!loading && errorMessage" class="empty-v2">
+      <div class="empty-v2__icon ja-icon-bad"><ion-icon name="alert-circle-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ errorMessage }}</p>
     </div>
 
     <!-- ═══════════ VIDE ═══════════ -->
-    <div *ngIf="!loading && !errorMessage && journaux.length === 0" class="ja-empty">
-      <ion-icon name="document-text-outline" color="medium"></ion-icon>
-      <p>{{ 'JOURNAL_AUDIT.AUCUNE_DONNEE' | translate }}</p>
+    <div *ngIf="!loading && !errorMessage && journaux.length === 0" class="empty-v2">
+      <div class="empty-v2__icon"><ion-icon name="document-text-outline"></ion-icon></div>
+      <p class="empty-v2__title">{{ 'JOURNAL_AUDIT.AUCUNE_DONNEE' | translate }}</p>
     </div>
 
-    <!-- ═══════════ LISTE ═══════════ -->
-    <div class="ja-list" *ngIf="!loading && !errorMessage && journaux.length > 0">
+    <!-- ═══════════ LISTE (cartes chronologiques) ═══════════ -->
+    <ng-container *ngIf="!loading && !errorMessage && journaux.length > 0">
 
       <div class="ja-resume">
-        <span>{{ totalElements }} {{ 'JOURNAL_AUDIT.RESULTATS' | translate }}</span>
+        <span><strong>{{ totalElements }}</strong> {{ 'JOURNAL_AUDIT.RESULTATS' | translate }}</span>
         <span *ngIf="totalPages > 1">{{ 'JOURNAL_AUDIT.PAGE' | translate }} {{ pageActuelle + 1 }} {{ 'JOURNAL_AUDIT.SUR' | translate }} {{ totalPages }}</span>
       </div>
 
-      <ion-card class="ja-item" *ngFor="let j of journaux; trackBy: trackById">
-        <ion-card-content>
-          <div class="ja-item-top">
-            <span class="ja-item-date">
-              <ion-icon name="calendar-outline"></ion-icon>
-              {{ formatDate(j.dateAction) }}
-            </span>
+      <div class="ja-list">
+        <article class="ja-card" *ngFor="let j of journaux; trackBy: trackById">
+          <div class="ja-head">
+            <span class="ja-icon"><ion-icon name="document-text-outline"></ion-icon></span>
+            <div class="ja-head-text">
+              <p class="ja-action">{{ libelleAction(j.action) }}</p>
+              <p class="ja-meta">
+                <ion-icon name="time-outline"></ion-icon>
+                {{ formatDate(j.dateAction) }}
+              </p>
+            </div>
           </div>
-          <p class="ja-item-action">{{ libelleAction(j.action) }}</p>
-          <div class="ja-item-user">
+          <p class="ja-user">
             <ion-icon name="person-circle-outline"></ion-icon>
             {{ j.utilisateurNom || '—' }}
-          </div>
-          <p class="ja-item-details" *ngIf="j.details">{{ j.details }}</p>
-        </ion-card-content>
-      </ion-card>
+          </p>
+          <p class="ja-details" *ngIf="j.details">{{ j.details }}</p>
+        </article>
+      </div>
 
       <!-- ═══════════ PAGINATION SERVEUR ═══════════ -->
       <div class="ja-pagination" *ngIf="totalPages > 1">
         <button
+          type="button"
           class="ja-page-btn"
+          aria-label="Précédent"
           (click)="pagePrecedente()"
           [disabled]="pageActuelle === 0">
           <ion-icon name="chevron-back-outline"></ion-icon>
@@ -132,15 +126,17 @@
         <span class="ja-page-label">{{ pageActuelle + 1 }} / {{ totalPages }}</span>
 
         <button
+          type="button"
           class="ja-page-btn"
+          aria-label="Suivant"
           (click)="pageSuivante()"
           [disabled]="pageActuelle >= totalPages - 1">
           <ion-icon name="chevron-forward-outline"></ion-icon>
         </button>
       </div>
 
-    </div>
+    </ng-container>
 
-  </ng-container>
+  </div>
 
 </ion-content>

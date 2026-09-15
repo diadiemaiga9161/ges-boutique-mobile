@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { IaPageRoutingModule } from './ia-routing.module';
 import { IaPage } from './ia.page';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, TranslateModule, IaPageRoutingModule],
+  imports: [CommonModule, FormsModule, IonicModule, TranslateModule, IaPageRoutingModule, SharedComponentsModule],
   declarations: [IaPage]
 })
 export class IaPageModule {}

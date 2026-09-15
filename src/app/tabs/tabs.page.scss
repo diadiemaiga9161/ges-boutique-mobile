@@ -1,157 +1,78 @@
 // ══════════════════════════════════════════════════
-//  BARRE DE NAVIGATION — Ges Lafia
-//  Look "carte flottante" : coins arrondis en haut, léger espace avec les
-//  bords de l'écran, pilule dégradée sur l'onglet actif — même 5 onglets,
-//  même ordre, même emplacement qu'avant, juste plus soignée visuellement.
+//  BARRE DE NAVIGATION — Ges Lafia (design commun Ionic ↔ React Native)
+//  5 onglets fixes : Accueil | Ventes | Produits | Clients | Menu (le
+//  dernier ouvre le tiroir latéral, ce n'est pas une route — voir tabs.page.ts).
+//  Couleurs 100 % tokens --gl-* : correcte en clair, en sombre Auto et en
+//  sombre forcé (avant : la barre restait blanche en sombre).
 // ══════════════════════════════════════════════════
 ion-tabs {
-  --background: #f0f4f8;
+  --background: var(--gl-bg);
 }
 
 ion-tab-bar {
-  // Effet "verre dépoli" (glassmorphism) : fond blanc translucide + flou du
-  // contenu derrière, au lieu d'un blanc opaque plat. Même intention que la
-  // version React Native (BlurView) — ici en CSS pur, natif au web/Ionic.
-  //
-  // BUG FIX (vérifié par capture d'écran réelle) : sans backdrop-filter, un
-  // fond à 68% de blanc est trop transparent — le texte des cartes défile
-  // et devient visible/illisible à travers la barre. backdrop-filter n'est
-  // pas garanti sur tous les appareils/WebViews Android bas de gamme ; le
-  // bloc @supports ci-dessous sert de filet de sécurité : sans flou
-  // disponible, on repasse sur un fond quasi opaque plutôt que translucide,
-  // pour ne jamais laisser du texte se superposer aux icônes.
-  --background: rgba(255, 255, 255, 0.94);
+  // Fond quasi opaque (clair : blanc .94 / sombre : #1f2937 .96) : le texte
+  // des cartes qui défile derrière ne doit jamais se superposer aux icônes.
+  --background: var(--gl-tabbar-bg);
   --border:     none;
-  height:       72px;
-  margin:       0 8px env(safe-area-inset-bottom, 8px);
-  padding:      6px 4px 4px;
-  border-radius: 22px 22px 18px 18px;
-  box-shadow:   0 -6px 28px rgba(8, 22, 72, 0.12), 0 2px 10px rgba(8, 22, 72, 0.06);
-  border:       1px solid rgba(238, 242, 247, 0.8);
-  position:     relative;
+  // ion-tab-bar est en box-sizing content-box : la hauteur exclut le padding
+  // (dont la zone de sécurité basse gérée ici explicitement).
+  height:        64px;
+  padding:       4px 4px calc(4px + var(--ion-safe-area-bottom, 0px));
+  border:        1px solid var(--gl-border);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  box-shadow:    var(--gl-tabbar-shadow);
 }
 
-// Verre dépoli réel seulement là où le flou est effectivement supporté.
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   ion-tab-bar {
-    --background: rgba(255, 255, 255, 0.68);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
   }
 }
 
 // ── Bouton de tab ────────────────────────────────────
 ion-tab-button {
-  --color:          #a3adc2;
-  --color-selected: #1a56db;
+  --color:          var(--gl-muted);
+  --color-selected: var(--gl-link);
   --ripple-color:   transparent;
   --background:     transparent;
+  --padding-start:  2px;
+  --padding-end:    2px;
   flex-direction:   column;
-  position:         relative;
-  padding:          4px 0;
-  transition:       color 0.2s;
+  min-height:       44px;
 
   ion-label {
-    font-size:    10px;
-    font-weight:  700;
-    letter-spacing: 0.2px;
-    margin-top:   5px;
-    transition:   color 0.2s, opacity 0.2s;
+    font-size:      11px;
+    font-weight:    600;
+    line-height:    1.15;
+    letter-spacing: 0;
+    margin-top:     4px;
     text-transform: none;
-    opacity: 0.85;
+    text-align:     center;
+    // Libellés jamais coupés par une ellipse, même dans les langues longues :
+    // retour à la ligne autorisé plutôt que "Produ…".
+    white-space:    normal;
+    overflow:       visible;
+    text-overflow:  clip;
+    max-width:      100%;
   }
 
-  // ── Wrapper d'icône (reçoit la pilule de fond) ──
+  // ── Pastille derrière l'icône (fond seulement sur l'onglet actif) ──
   .tab-icon-wrap {
-    width:         44px;
-    height:        34px;
-    border-radius: 17px;
-    display:       flex;
-    align-items:   center;
+    width:           42px;
+    height:          28px;
+    border-radius:   14px;
+    display:         flex;
+    align-items:     center;
     justify-content: center;
-    transition:    background 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    transition:      background 0.2s;
 
-    ion-icon {
-      font-size:  21px;
-      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), color 0.2s;
-    }
+    ion-icon { font-size: 22px; }
   }
 
-  // ── État sélectionné ────────────────────────────
   &.tab-selected {
-    .tab-icon-wrap {
-      background: linear-gradient(135deg, #1a56db 0%, #3b72f6 100%);
-      box-shadow: 0 6px 16px rgba(26, 86, 219, 0.38);
-      transform:  translateY(-8px);
-
-      ion-icon {
-        transform: scale(1.08);
-        color:     #ffffff;
-      }
-    }
-
-    ion-label {
-      color: #1a56db;
-      opacity: 1;
-      transform: translateY(-2px);
-    }
-
-    // Petit socle discret sous la pilule flottante, pour l'ancrer visuellement
-    // à la barre plutôt que de la laisser "flotter" toute seule.
-    &::before {
-      content:       '';
-      position:      absolute;
-      top:           30px;
-      left:          50%;
-      transform:     translateX(-50%);
-      width:         44px;
-      height:        44px;
-      border-radius: 50%;
-      background:    radial-gradient(circle, rgba(26,86,219,0.10) 0%, rgba(26,86,219,0) 72%);
-      z-index:       -1;
-    }
-  }
-}
-
-// ── Bouton FAB central "Vendre" ──────────────────────
-.tab-btn--fab {
-  --color:          #ffffff;
-  --color-selected: #ffffff;
-
-  // Désactive le comportement tab-selected d'Ionic
-  &.tab-selected::after { display: none; }
-  &.tab-selected .tab-icon-wrap { background: transparent !important; transform: none !important; }
-
-  .tab-icon-wrap { display: none; } // caché, remplacé par .tab-fab-btn
-
-  .tab-fab-btn {
-    width:       52px;
-    height:      52px;
-    border-radius: 16px;
-    background:  linear-gradient(135deg, #1a56db 0%, #0d47a1 100%);
-    display:     flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:  0 6px 20px rgba(26,86,219,0.40);
-    margin-top:  -14px;
-    transition:  transform 0.18s, box-shadow 0.18s;
-
-    ion-icon {
-      font-size: 1.5rem;
-      color:     #ffffff;
-      font-weight: 700;
-    }
-  }
-
-  ion-label {
-    color:     #1a56db !important;
-    font-weight: 800 !important;
-    font-size: 10px !important;
-    margin-top: 4px;
-  }
-
-  &:active .tab-fab-btn {
-    transform:  scale(0.93);
-    box-shadow: 0 3px 10px rgba(26,86,219,0.25);
+    .tab-icon-wrap { background: var(--gl-blue-soft); }
+    ion-label      { color: var(--gl-link); }
   }
 }

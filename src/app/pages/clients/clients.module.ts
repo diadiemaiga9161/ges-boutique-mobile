@@ -6,9 +6,18 @@ import { ClientsPageRoutingModule } from './clients-routing.module';
 import { ClientsPage } from './clients.page';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../directives/montant-input.directive';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, ClientsPageRoutingModule, TranslateModule, MontantInputDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonicModule,
+    ClientsPageRoutingModule,
+    TranslateModule,
+    MontantInputDirective,
+    SharedComponentsModule
+  ],
   declarations: [ClientsPage]
 })
 export class ClientsPageModule {}

@@ -1,0 +1,31 @@
+// Pastille de stock — design commun Ionic ↔ React Native.
+// Ligne unique : nombre 15/800 + « niveau · statut » 12/600, fond *-soft.
+.gl-stock-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  max-width: 100%;
+  border-radius: 8px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.gl-stock-badge__qty {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.gl-stock-badge__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gl-stock-badge--ok  { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+.gl-stock-badge--low { background: var(--gl-warn-soft); color: var(--gl-warn); }
+.gl-stock-badge--out { background: var(--gl-bad-soft);  color: var(--gl-bad); }

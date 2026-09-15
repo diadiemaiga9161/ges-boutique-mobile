@@ -1,76 +1,71 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
+      <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>
-      <ion-icon name="sparkles-outline" class="ai-title-icon"></ion-icon>
-      Assistant IA
-    </ion-title>
+    <ion-title>Assistant IA</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="nouvelleConversation()" title="Nouvelle conversation">
+      <ion-button (click)="nouvelleConversation()" title="Nouvelle conversation" aria-label="Nouvelle conversation">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <div class="ai-chat-page">
+<ion-content [scrollY]="false" class="ai-content">
+  <div class="ai-page">
 
-    <!-- Zone messages -->
-    <div #messagesContainer class="ai-chat-messages">
+    <!-- ═══════════ Conversation ═══════════ -->
+    <div #messagesContainer class="ai-messages">
 
-      <!-- Messages -->
       <div *ngFor="let msg of messages"
-           class="ai-msg-row"
-           [class.ai-msg-row--user]="msg.role === 'user'"
-           [class.ai-msg-row--assistant]="msg.role === 'assistant'">
-        <div class="ai-msg-group">
-          <div class="ai-bubble"
-               [class.ai-bubble--user]="msg.role === 'user'"
-               [class.ai-bubble--assistant]="msg.role === 'assistant'">
-            {{ msg.texte }}
-          </div>
-          <div class="ai-msg-time">{{ msg.heure }}</div>
-        </div>
+           class="ai-row"
+           [class.ai-row--user]="msg.role === 'user'"
+           [class.ai-row--assistant]="msg.role === 'assistant'">
+        <div class="ai-bubble"
+             [class.ai-bubble--user]="msg.role === 'user'"
+             [class.ai-bubble--assistant]="msg.role === 'assistant'">{{ msg.texte }}</div>
+        <span class="ai-time">{{ msg.heure }}</span>
       </div>
 
-      <!-- Typing indicator -->
-      <div *ngIf="loading" class="ai-msg-row ai-msg-row--assistant">
-        <div class="ai-typing-bubble">
+      <!-- L'assistant écrit… -->
+      <div *ngIf="loading" class="ai-row ai-row--assistant" aria-live="polite">
+        <div class="ai-bubble ai-bubble--assistant ai-typing">
           <ion-spinner name="dots"></ion-spinner>
+          <span>L'assistant écrit…</span>
         </div>
       </div>
 
     </div>
 
-    <!-- Questions prédéfinies -->
-    <div *ngIf="afficherQuestions && !loading" class="ai-suggestions">
-      <div class="ai-suggestions__label">Suggestions :</div>
-      <div class="ai-suggestions__list">
-        <ion-chip *ngFor="let q of questionsPredefinies"
-                  (click)="poserQuestionPredefinies(q.id)"
-                  color="primary" outline="true">
-          <ion-icon [name]="q.icone"></ion-icon>
-          {{ q.label }}
-        </ion-chip>
-      </div>
-    </div>
+    <!-- ═══════════ Pied collé en bas : suggestions + saisie ═══════════ -->
+    <div class="ai-footer">
 
-    <!-- Zone saisie -->
-    <div class="ai-input-bar">
-      <div class="ai-input-wrap">
-        <ion-input
+      <!-- Suggestions en puces (conversation vierge) -->
+      <div *ngIf="afficherQuestions && !loading" class="ai-suggestions">
+        <p class="ai-suggestions__label">Suggestions</p>
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" *ngFor="let q of questionsPredefinies" (click)="poserQuestionPredefinies(q.id)">
+            <ion-icon [name]="q.icone"></ion-icon>
+            {{ q.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Zone de saisie -->
+      <div class="ai-input-bar">
+        <input
           class="ai-input"
+          type="text"
           [(ngModel)]="texteLibre"
           placeholder="Posez votre question..."
-          (keyup.enter)="envoyerTexteLibre()">
-        </ion-input>
+          aria-label="Posez votre question"
+          (keyup.enter)="envoyerTexteLibre()" />
+        <button type="button" class="ai-send" [disabled]="!texteLibre.trim() || loading" (click)="envoyerTexteLibre()" aria-label="Envoyer">
+          <ion-icon name="send-outline"></ion-icon>
+        </button>
       </div>
-      <ion-button class="ai-send-btn" shape="round" [disabled]="!texteLibre.trim() || loading" (click)="envoyerTexteLibre()">
-        <ion-icon name="send-outline" slot="icon-only"></ion-icon>
-      </ion-button>
+
     </div>
 
   </div>

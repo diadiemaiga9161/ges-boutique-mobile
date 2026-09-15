@@ -1,197 +1,425 @@
-.profile-card {
-  text-align: center;
-}
+// Profil — design commun Ionic ↔ React Native (ProfilScreen.tsx).
+// Couleurs 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark)
+// local (inopérant en « Sombre » forcé depuis cet écran même) est supprimé.
+// .gl-field / .gl-input / .gl-btn : copie locale de inventory.page.scss (vague 1).
 
-// -------- Champs "Modifier mes informations" : boîtes + icônes --------
-.form-panel ion-input[fill="outline"],
-.form-panel ion-item.phone-item {
-  margin-bottom: 10px;
+.pf-content { --background: var(--gl-bg); }
 
-  ion-icon[slot="start"] {
-    color: #1a56db;
-    margin-inline-end: 8px;
-    font-size: 1.05rem;
-  }
-}
-
-.avatar {
-  align-items: center;
-  background: #e0f2f1;
-  border-radius: 8px;
-  color: #0f766e;
-  display: inline-flex;
-  height: 64px;
-  justify-content: center;
-  width: 64px;
-}
-
-.avatar ion-icon {
-  font-size: 2rem;
-}
-
-h1 {
-  font-size: 1.35rem;
-  margin: 12px 0 4px;
-}
-
-// ─── Photo de profil ───
-.avatar-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.avatar-circle {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: #e0f2fe;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 3px solid #bae6fd;
+// ── Bandeau héros (pleine largeur, sans arrondi, comme Ventes/Crédits) ──
+.pf-hero {
   position: relative;
+  overflow: hidden;
+  padding: 20px 16px 16px;
+  background: var(--gl-hero);
 }
 
-.photo-avatar {
-  border-color: #2563eb;
+.pf-hero__deco {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  top: -80px;
+  right: -60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
 }
 
-.avatar-img {
+.pf-hero__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pf-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-glass);
+  border: 2px solid var(--gl-glass-line);
+  color: #ffffff;
+
+  ion-icon { font-size: 34px; }
+}
+
+.pf-avatar__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
 }
 
-.photo-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.photo-btn {
+.pf-avatar__busy {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: #2563eb;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1rem;
+  background: rgba(8,22,72,0.55);
 
-  &--remove {
-    background: #fee2e2;
-    color: #dc2626;
+  ion-spinner { color: #ffffff; width: 24px; height: 24px; }
+}
+
+.pf-hero__info { flex: 1; min-width: 0; }
+
+.pf-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.pf-username {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.72);
+  overflow-wrap: anywhere;
+}
+
+.pf-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--gl-glass);
+  border: 1px solid var(--gl-glass-line);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  ion-icon { font-size: 13px; }
+}
+
+.pf-photo-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.pf-glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--gl-glass);
+  border: 1px solid var(--gl-glass-line);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; }
+  &:active { background: rgba(255,255,255,0.22); }
+}
+
+// ── Corps ──
+.pf-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px 16px 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+
+.pf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-eyebrow {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pf-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  padding: 16px;
+}
+
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Champ (libellé au-dessus, input 48, radius 12) ──
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
   }
 
-  label & {
-    cursor: pointer;
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-bad);
   }
 }
 
-label.photo-btn {
-  cursor: pointer;
-}
-
-// ── Tablette (720px+) ─────────────────────────────
-@media (min-width: 720px) {
-  .avatar-circle { width: 110px; height: 110px; }
-  .avatar        { width: 80px;  height: 80px; }
-  .avatar ion-icon { font-size: 2.5rem; }
-  h1 { font-size: 1.6rem; }
-  .photo-btn { width: 42px; height: 42px; font-size: 1.1rem; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .avatar-circle { width: 130px; height: 130px; }
-  h1 { font-size: 1.8rem; }
-}
-
-// ── Sélecteur indicatif pays ──────────────────────
-.phone-item {
-  --inner-padding-start: 0;
-}
-
-.country-selector {
+.gl-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding-right: 8px;
-  border-right: 1px solid var(--ion-color-medium, #ccc);
-  margin-right: 8px;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  > ion-icon { font-size: 18px; color: var(--gl-muted); flex-shrink: 0; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
+  }
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+
+  &--error,
+  &--error:focus-within { border-color: var(--gl-bad); }
+
+  &--disabled {
+    background: var(--gl-surface-2);
+    input { color: var(--gl-muted); cursor: not-allowed; }
+  }
+
+  &--eye { padding-right: 2px; }
 }
 
-.country-select {
+.pf-eye {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--gl-muted);
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  &:active { color: var(--gl-action); }
+}
+
+// Téléphone : indicatif pays + séparateur + numéro
+.pf-country {
+  flex-shrink: 0;
+  max-width: 96px;
+  height: 100%;
+  padding: 0 2px;
   border: none;
   background: transparent;
-  font-size: 0.88rem;
+  color: var(--gl-text);
+  color-scheme: var(--gl-color-scheme);
+  font-family: inherit;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--ion-color-dark, #333);
   cursor: pointer;
-  padding: 2px 4px;
-  max-width: 90px;
-  -webkit-appearance: none;
-  appearance: none;
   outline: none;
+
+  option { background: var(--gl-surface); color: var(--gl-text); }
 }
 
-.country-select:focus {
-  outline: none;
+.pf-phone__sep {
+  width: 1px;
+  height: 24px;
+  flex-shrink: 0;
+  background: var(--gl-border);
 }
 
-// ── Réglage "Confirmation vocale du montant" (même style que les
-// autres toggles de préférences, ex: Fonctionnalités avancées) ──
-.settings-toggle-row {
+// ── Boutons ──
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  ion-spinner { width: 18px; height: 18px; color: currentColor; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active:not(:disabled) { background: var(--gl-action-press); }
+  }
+
+  &--danger {
+    background: transparent;
+    color: var(--gl-bad);
+    border: 1.5px solid var(--gl-bad-soft);
+    &:active { background: var(--gl-surface-2); }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// ── Segment thème (styles de base : ion-segment global) ──
+.pf-theme ion-segment-button {
+  min-width: 0;
+
+  ion-icon { font-size: 18px; margin-inline-end: 6px; }
+  ion-label { margin: 0; }
+}
+
+// ── Lignes de préférences ──
+.pf-list { padding: 4px 16px; }
+
+.pf-row {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 0;
+  text-align: left;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: var(--gl-text);
+
+  & + & { border-top: 1px solid var(--gl-border); }
+
+  &--action {
+    cursor: pointer;
+    &:active { opacity: 0.7; }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gl-blue-soft);
+    color: var(--gl-link);
+
+    ion-icon { font-size: 20px; }
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+
+    h3 { margin: 0 0 2px; font-size: 15px; font-weight: 700; color: var(--gl-text); }
+    p  { margin: 0; font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+  }
+
+  &__chevron { flex-shrink: 0; font-size: 18px; color: var(--gl-muted); }
 }
 
-.settings-toggle-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #eff6ff;
+// ── Informations du compte ──
+.pf-info { padding: 4px 16px; }
+
+.pf-info__row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
 
-  ion-icon { font-size: 1.2rem; color: #1a56db; }
-}
+  & + & { border-top: 1px solid var(--gl-border); }
 
-.settings-toggle-text {
-  flex: 1;
-  min-width: 0;
-
-  h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
-  p { font-size: 0.78rem; margin: 0; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  (.mobile-card/.form-panel passent déjà en sombre via
-//  global.scss — ici on corrige textes/icônes/bordures
-//  restés en couleur claire fixe sur la carte assombrie)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .card-title { color: #f1f5f9; }
-
-  .settings-toggle-icon { background: rgba(59,114,246,0.18); }
-
-  .settings-toggle-text h3 { color: #f1f5f9; }
-
-  .country-select { color: #f1f5f9; }
-
-  .stat-row {
-    border-bottom-color: #374151;
-    strong { color: #f1f5f9; }
+  strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gl-text);
+    text-align: right;
+    overflow-wrap: anywhere;
   }
+}
+
+.pf-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok { background: var(--gl-ok-soft); color: var(--gl-ok); }
+}
+
+// ── Tablette (720px+) ──
+@media (min-width: 720px) {
+  .pf-hero { padding: 28px 24px 20px; }
+  .pf-avatar { width: 88px; height: 88px; }
+  .pf-body { max-width: 720px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 }

@@ -1,0 +1,87 @@
+// Feuille de confirmation — design commun Ionic ↔ React Native (ConfirmSheet.tsx).
+// Tokens --gl-* uniquement ; boutons natifs (plus d'ion-button color="medium",
+// gris figé en sombre) : « Annuler » contour, « Confirmer » bleu plein (rouge si danger).
+:host {
+  display: block;
+  height: 100%;
+}
+
+.gl-confirm-sheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4px 0 16px;
+}
+
+.gl-confirm-sheet__icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+
+  ion-icon { font-size: 28px; }
+
+  &--danger {
+    background: var(--gl-bad-soft);
+    color: var(--gl-bad);
+  }
+}
+
+.gl-confirm-sheet__title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+}
+
+.gl-confirm-sheet__message {
+  margin: 0 0 20px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--gl-muted);
+}
+
+.gl-confirm-sheet__actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.gl-confirm-sheet__btn {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 12px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &--cancel {
+    background: transparent;
+    border: 1.5px solid var(--gl-blue-line);
+    color: var(--gl-link);
+    &:active { background: var(--gl-surface-2); }
+  }
+
+  &--confirm {
+    background: var(--gl-action);
+    border: none;
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &--danger {
+    background: var(--gl-bad-solid);
+    &:active { background: var(--gl-bad-solid); opacity: 0.85; }
+  }
+}

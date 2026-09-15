@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ToastController, AlertController } from '@ionic/angular';
@@ -70,6 +70,14 @@ export class FacturesPage {
 
   get boutiqueName(): string {
     return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
+  }
+
+  // Fermeture des modales centrées (plus des ion-modal) à la touche Échap,
+  // comme la croix et le clic sur l'overlay — affichage uniquement.
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showCreateModal) this.showCreateModal = false;
+    if (this.showDetailModal) this.closeDetail();
   }
 
   constructor(

@@ -12,75 +12,67 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="page-pad stack">
+  <div class="page-pad stack sorties-page">
 
-    <!-- Hero stats -->
-    <div class="hero-stat-row">
-      <div class="hsr-item">
-        <span class="hsr-val">{{ sortiesFiltrees.length }}</span>
-        <span class="hsr-lbl">Sorties</span>
+    <!-- KPI (tuiles 2 colonnes, design commun) -->
+    <div class="kpi-grid">
+      <gl-stat-card
+        icon="arrow-up-circle-outline"
+        label="Sorties"
+        [value]="sortiesFiltrees.length + ''"
+        variant="blue">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="cube-outline"
+        label="Unités sorties"
+        [value]="totalQuantite() + ''"
+        variant="red">
+      </gl-stat-card>
+    </div>
+
+    <!-- Carte de filtres : recherche + période + type + dates -->
+    <div class="filter-zone">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" [(ngModel)]="searchTerm" (input)="appliquerFiltres()" placeholder="Produit, motif, utilisateur..." />
+        <button class="fz-clear" *ngIf="searchTerm" (click)="searchTerm = ''; appliquerFiltres()" aria-label="Effacer">
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </button>
       </div>
-      <div class="hsr-item">
-        <span class="hsr-val">{{ totalQuantite() }}</span>
-        <span class="hsr-lbl">Unités sorties</span>
+
+      <div class="fz-chips">
+        <button class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'today'" (click)="filterByPeriod('today')">Aujourd'hui</button>
+        <button class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'week'" (click)="filterByPeriod('week')">Semaine</button>
+        <button class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'month'" (click)="filterByPeriod('month')">Mois</button>
+      </div>
+
+      <div class="fz-chips">
+        <button class="fz-chip" [class.fz-chip--active]="typeSortieFilter === ''" (click)="typeSortieFilter = ''; appliquerFiltres()">
+          <ion-icon name="list-outline"></ion-icon> Tous ({{ sorties.length }})
+        </button>
+        <button class="fz-chip" *ngFor="let t of typesSortie"
+          [class.fz-chip--active]="typeSortieFilter === t.value"
+          (click)="typeSortieFilter = t.value; appliquerFiltres()">
+          <ion-icon [name]="iconeTypeSortie(t.value)"></ion-icon> {{ t.label }} ({{ countByType(t.value) }})
+        </button>
+      </div>
+
+      <div class="fz-dates">
+        <label class="gl-field">
+          <span class="gl-field__label">Du</span>
+          <input type="date" [(ngModel)]="dateDebut" (change)="selectedPeriod = 'custom'; charger()" />
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Au</span>
+          <input type="date" [(ngModel)]="dateFin" (change)="selectedPeriod = 'custom'; charger()" />
+        </label>
       </div>
     </div>
 
-    <!-- Filtres rapides période -->
-    <div class="filter-zone filter-zone--chips">
-      <ion-chip (click)="filterByPeriod('today')"
-        [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'today'">Aujourd'hui</ion-chip>
-      <ion-chip (click)="filterByPeriod('week')"
-        [color]="selectedPeriod === 'week' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'week'">Semaine</ion-chip>
-      <ion-chip (click)="filterByPeriod('month')"
-        [color]="selectedPeriod === 'month' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'month'">Mois</ion-chip>
-      <ion-chip (click)="filterByPeriod('year')"
-        [color]="selectedPeriod === 'year' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'year'">Année</ion-chip>
-      <ion-chip (click)="filterByPeriod('all')"
-        color="medium"
-        [outline]="selectedPeriod !== 'all'">Tout</ion-chip>
-    </div>
-
-    <!-- Filtre par type de sortie -->
-    <div class="section-header">
-      <span class="section-header__title">Type de sortie</span>
-    </div>
-    <div class="filter-zone filter-zone--chips">
-      <ion-chip [color]="typeSortieFilter === '' ? 'primary' : 'medium'"
-                (click)="typeSortieFilter = ''; appliquerFiltres()">
-        Tous ({{ sorties.length }})
-      </ion-chip>
-      <ion-chip *ngFor="let t of typesSortie"
-                [color]="typeSortieFilter === t.value ? t.color : 'medium'"
-                (click)="typeSortieFilter = t.value; appliquerFiltres()">
-        {{ t.label }} ({{ countByType(t.value) }})
-      </ion-chip>
-    </div>
-
-    <!-- Filtre dates -->
-    <div class="two-cols">
-      <ion-item>
-        <ion-input label="Du" labelPlacement="floating" type="date"
-          [(ngModel)]="dateDebut" (ionChange)="selectedPeriod = 'all'; charger()"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-input label="Au" labelPlacement="floating" type="date"
-          [(ngModel)]="dateFin" (ionChange)="selectedPeriod = 'all'; charger()"></ion-input>
-      </ion-item>
-    </div>
-
-    <!-- Recherche -->
-    <ion-searchbar [(ngModel)]="searchTerm" placeholder="Produit, motif, utilisateur..."
-      (ionInput)="appliquerFiltres()"></ion-searchbar>
-
-    <!-- Skeleton loader -->
+    <!-- Chargement -->
     <div class="sk-list" *ngIf="loading">
       <div class="sk-card" *ngFor="let i of [1,2,3,4]">
-        <div class="skeleton sk-avatar --orange"></div>
+        <div class="skeleton sk-avatar"></div>
         <div class="sk-card-body">
           <div class="skeleton sk-line sk-line--w80"></div>
           <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
@@ -89,42 +81,49 @@
       </div>
     </div>
 
-    <!-- Résultats -->
-    <div class="section-header" *ngIf="!loading">
-      <span class="section-header__title">Résultats</span>
-      <span class="section-header__count">{{ sortiesFiltrees.length }}</span>
-    </div>
+    <gl-section-header *ngIf="!loading" [title]="'Résultats · ' + sortiesFiltrees.length"></gl-section-header>
 
-    <section class="stack animate-cards" *ngIf="!loading">
-      <article class="list-item-card" *ngFor="let s of sortiesFiltrees; trackBy: trackById">
-        <div class="lic-header">
-          <div class="lic-avatar lic-avatar--orange">
-            <ion-icon name="arrow-down-outline"></ion-icon>
+    <section class="stack animate-cards" *ngIf="!loading && sortiesFiltrees.length">
+      <article class="gl-list-card" *ngFor="let s of sortiesFiltrees; trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [ngClass]="'glc-icon--' + toneTypeSortie(s.typeSortie || '')">
+              <ion-icon [name]="iconeTypeSortie(s.typeSortie || '')"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ s.produit?.nom || 'Produit' }}</p>
+              <p class="glc-sub">{{ formatDate(s.dateMouvement) }}</p>
+            </div>
+            <div class="glc-right">
+              <p class="glc-amount glc-amount--bad">-{{ s.quantite }}</p>
+              <span class="gl-pill" [ngClass]="'gl-pill--' + toneTypeSortie(s.typeSortie || '')">
+                {{ inventaireService.getTypeSortieLabel(s.typeSortie || 'AUTRE') }}
+              </span>
+            </div>
           </div>
-          <div class="lic-info">
-            <div class="lic-name">{{ s.produit?.nom || 'Produit' }}</div>
-            <div class="lic-sub">{{ formatDate(s.dateMouvement) }}</div>
+
+          <div class="glc-meta">
+            <span class="glc-meta__item">
+              <ion-icon name="swap-horizontal-outline"></ion-icon>
+              {{ s.quantiteAvant }} → {{ s.quantiteApres }}
+            </span>
+            <span class="glc-meta__item" *ngIf="s.utilisateur?.nomComplet">
+              <ion-icon name="person-outline"></ion-icon>
+              {{ s.utilisateur?.nomComplet }}
+            </span>
           </div>
-          <div class="lic-right">
-            <span class="status-badge status-badge--danger">-{{ s.quantite }}</span>
-          </div>
+
+          <p class="glc-note" *ngIf="s.motif">{{ s.motif }}</p>
         </div>
-        <div class="lic-footer">
-          <ion-badge [color]="getTypeSortieColor(s.typeSortie || '')" style="font-size:0.7rem">
-            {{ inventaireService.getTypeSortieLabel(s.typeSortie || 'AUTRE') }}
-          </ion-badge>
-          <span class="muted" style="font-size:0.75rem">{{ s.quantiteAvant }} → {{ s.quantiteApres }}</span>
-          <span class="muted" style="font-size:0.75rem" *ngIf="s.utilisateur?.nomComplet">{{ s.utilisateur?.nomComplet }}</span>
-        </div>
-        <p class="muted" *ngIf="s.motif" style="font-size:0.8rem;margin:4px 0 0 52px">{{ s.motif }}</p>
       </article>
-
-      <div class="empty-v2" *ngIf="!sortiesFiltrees.length">
-        <div class="empty-v2__icon"><ion-icon name="arrow-down-circle-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucune sortie</p>
-        <p class="empty-v2__text">Aucune sortie pour les filtres sélectionnés</p>
-      </div>
     </section>
+
+    <gl-empty-state
+      *ngIf="!loading && !sortiesFiltrees.length"
+      icon="arrow-up-circle-outline"
+      title="Aucune sortie"
+      message="Aucune sortie pour les filtres sélectionnés">
+    </gl-empty-state>
 
   </div>
 </ion-content>

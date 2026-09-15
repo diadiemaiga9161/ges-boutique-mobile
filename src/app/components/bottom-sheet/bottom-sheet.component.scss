@@ -1,0 +1,66 @@
+// Coquille de feuille — design commun Ionic ↔ React Native (BottomSheetHost).
+// Tokens --gl-* uniquement (le fond #ffffff figé restait blanc en sombre forcé).
+:host {
+  display: block;
+  height: 100%;
+}
+
+.gl-sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+}
+
+.gl-sheet__handle {
+  width: 40px;
+  height: 4px;
+  background: var(--gl-border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.gl-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  flex-shrink: 0;
+}
+
+.gl-sheet__title {
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-text);
+}
+
+// Fermeture : zone touchable 44
+.gl-sheet__close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gl-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  ion-icon { font-size: 22px; }
+  &:active { background: var(--gl-surface-2); }
+}
+
+.gl-sheet__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px max(16px, env(safe-area-inset-bottom, 0px));
+}

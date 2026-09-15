@@ -1,0 +1,11 @@
+<div class="gl-empty-state">
+  <div class="gl-empty-state__icon">
+    <ion-icon [name]="icon"></ion-icon>
+  </div>
+  <p class="gl-empty-state__title" *ngIf="title">{{ title }}</p>
+  <p class="gl-empty-state__message" *ngIf="message">{{ message }}</p>
+  <ion-button size="small" *ngIf="ctaLabel" (click)="ctaClick.emit()">
+    <ion-icon name="add-outline" slot="start"></ion-icon>
+    {{ ctaLabel }}
+  </ion-button>
+</div>

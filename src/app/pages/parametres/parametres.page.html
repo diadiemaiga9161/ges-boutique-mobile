@@ -1,5 +1,5 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
@@ -15,142 +15,123 @@
 <ion-content class="param-content">
 
   <!-- Accès réservé admin -->
-  <div *ngIf="!isAdmin" class="param-access-denied">
-    <ion-icon name="lock-closed-outline"></ion-icon>
-    <p>{{ 'PARAMETRES.ACCES_REFUSE' | translate }}</p>
+  <div *ngIf="!isAdmin" class="gls-denied">
+    <div class="gls-denied__icon"><ion-icon name="lock-closed-outline"></ion-icon></div>
+    <p class="gls-denied__title">{{ 'PARAMETRES.ACCES_REFUSE' | translate }}</p>
   </div>
 
-  <ng-container *ngIf="isAdmin">
+  <div *ngIf="isAdmin" class="gls-page">
 
     <!-- Skeleton pendant le chargement -->
-    <div *ngIf="loading" class="param-section">
-      <ion-list lines="none" class="param-card">
-        <ion-item *ngFor="let i of [1,2,3,4]">
-          <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
-          <ion-skeleton-text animated slot="end" style="width: 25%"></ion-skeleton-text>
-        </ion-item>
-      </ion-list>
-    </div>
+    <section *ngIf="loading" class="gls-section">
+      <div class="gls-card">
+        <div class="gls-row gls-row--static" *ngFor="let i of [1,2,3,4]">
+          <span class="skeleton gls-sk-icon"></span>
+          <span class="gls-text"><span class="skeleton sk-line sk-line--w60"></span></span>
+          <span class="skeleton sk-line gls-sk-end"></span>
+        </div>
+      </div>
+    </section>
 
     <!-- Compteurs statut -->
-    <div *ngIf="!loading" class="param-section">
-      <p class="param-section-label">{{ 'PARAMETRES.STATUT' | translate }}</p>
-      <ion-list lines="none" class="param-card">
+    <section *ngIf="!loading" class="gls-section">
+      <gl-section-header [title]="'PARAMETRES.STATUT' | translate"></gl-section-header>
+      <div class="gls-card">
 
-        <ion-item>
-          <ion-icon name="cash-outline" slot="start" color="success"></ion-icon>
-          <ion-label>{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</ion-label>
-          <ion-note slot="end" class="param-stat">{{ formatMontant(statut.soldeCaisseActuel) }}</ion-note>
-        </ion-item>
+        <div class="gls-row gls-row--static">
+          <span class="gls-icon gls-icon--ok"><ion-icon name="cash-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</span></span>
+          <span class="gls-value">{{ formatMontant(statut.soldeCaisseActuel) }}</span>
+        </div>
 
-        <ion-item>
-          <ion-icon name="list-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</ion-label>
-          <ion-badge slot="end" color="primary">{{ statut.nombreOperationsCaisse }}</ion-badge>
-        </ion-item>
+        <div class="gls-row gls-row--static">
+          <span class="gls-icon"><ion-icon name="list-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</span></span>
+          <span class="gl-pill gl-pill--info">{{ statut.nombreOperationsCaisse }}</span>
+        </div>
 
-        <ion-item>
-          <ion-icon name="checkmark-circle-outline" slot="start" color="tertiary"></ion-icon>
-          <ion-label>{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</ion-label>
-          <ion-badge slot="end" color="tertiary">{{ statut.nombreCreditsRegles }}</ion-badge>
-        </ion-item>
+        <div class="gls-row gls-row--static">
+          <span class="gls-icon gls-icon--ok"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</span></span>
+          <span class="gl-pill gl-pill--ok">{{ statut.nombreCreditsRegles }}</span>
+        </div>
 
-        <ion-item>
-          <ion-icon name="close-circle-outline" slot="start" color="danger"></ion-icon>
-          <ion-label>{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</ion-label>
-          <ion-badge slot="end" color="danger">{{ statut.nombreVentesAnnulees }}</ion-badge>
-        </ion-item>
+        <div class="gls-row gls-row--static">
+          <span class="gls-icon gls-icon--bad"><ion-icon name="close-circle-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</span></span>
+          <span class="gl-pill gl-pill--bad">{{ statut.nombreVentesAnnulees }}</span>
+        </div>
 
-      </ion-list>
-    </div>
+      </div>
+    </section>
 
     <!-- Sélection des éléments à traiter -->
-    <div class="param-section">
-      <p class="param-section-label">{{ 'PARAMETRES.SELECTION' | translate }}</p>
-      <ion-list lines="none" class="param-card">
+    <section class="gls-section">
+      <gl-section-header [title]="'PARAMETRES.SELECTION' | translate"></gl-section-header>
+      <div class="gls-card">
 
-        <ion-item>
-          <ion-checkbox
-            slot="start"
-            [(ngModel)]="selection.soldeCaisse"
-            color="warning">
+        <div class="gls-row gls-row--check">
+          <ion-checkbox class="gls-check" [(ngModel)]="selection.soldeCaisse" labelPlacement="end" justify="start">
+            <span class="gls-label">{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</span>
+            <span class="gls-desc">{{ formatMontant(statut.soldeCaisseActuel) }}</span>
           </ion-checkbox>
-          <ion-label>
-            <h3>{{ 'PARAMETRES.SOLDE_CAISSE' | translate }}</h3>
-            <p>{{ formatMontant(statut.soldeCaisseActuel) }}</p>
-          </ion-label>
-        </ion-item>
+        </div>
 
-        <ion-item>
-          <ion-checkbox
-            slot="start"
-            [(ngModel)]="selection.historiqueOperationsCaisse"
-            color="warning">
+        <div class="gls-row gls-row--check">
+          <ion-checkbox class="gls-check" [(ngModel)]="selection.historiqueOperationsCaisse" labelPlacement="end" justify="start">
+            <span class="gls-label">{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</span>
+            <span class="gls-desc">{{ statut.nombreOperationsCaisse }} {{ 'PARAMETRES.OPERATIONS' | translate }}</span>
           </ion-checkbox>
-          <ion-label>
-            <h3>{{ 'PARAMETRES.HISTORIQUE_CAISSE' | translate }}</h3>
-            <p>{{ statut.nombreOperationsCaisse }} {{ 'PARAMETRES.OPERATIONS' | translate }}</p>
-          </ion-label>
-        </ion-item>
+        </div>
 
-        <ion-item>
-          <ion-checkbox
-            slot="start"
-            [(ngModel)]="selection.creditsRegles"
-            color="warning">
+        <div class="gls-row gls-row--check">
+          <ion-checkbox class="gls-check" [(ngModel)]="selection.creditsRegles" labelPlacement="end" justify="start">
+            <span class="gls-label">{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</span>
+            <span class="gls-desc">{{ statut.nombreCreditsRegles }} {{ 'PARAMETRES.CREDITS' | translate }}</span>
           </ion-checkbox>
-          <ion-label>
-            <h3>{{ 'PARAMETRES.CREDITS_REGLES' | translate }}</h3>
-            <p>{{ statut.nombreCreditsRegles }} {{ 'PARAMETRES.CREDITS' | translate }}</p>
-          </ion-label>
-        </ion-item>
+        </div>
 
-        <ion-item>
-          <ion-checkbox
-            slot="start"
-            [(ngModel)]="selection.historiqueVentesAnnulees"
-            color="warning">
+        <div class="gls-row gls-row--check">
+          <ion-checkbox class="gls-check" [(ngModel)]="selection.historiqueVentesAnnulees" labelPlacement="end" justify="start">
+            <span class="gls-label">{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</span>
+            <span class="gls-desc">{{ statut.nombreVentesAnnulees }} {{ 'PARAMETRES.VENTES' | translate }}</span>
           </ion-checkbox>
-          <ion-label>
-            <h3>{{ 'PARAMETRES.VENTES_ANNULEES' | translate }}</h3>
-            <p>{{ statut.nombreVentesAnnulees }} {{ 'PARAMETRES.VENTES' | translate }}</p>
-          </ion-label>
-        </ion-item>
+        </div>
 
-      </ion-list>
-    </div>
+      </div>
+    </section>
 
     <!-- Zone d'avertissement -->
-    <div class="param-warning">
+    <div class="gls-note gls-note--warn">
       <ion-icon name="warning-outline"></ion-icon>
       <p>{{ 'PARAMETRES.AVERTISSEMENT' | translate }}</p>
     </div>
 
-    <!-- Boutons d'action -->
-    <div class="param-actions">
+    <!-- Boutons d'action (destructifs : confirmation AlertController inchangée) -->
+    <div class="gls-actions">
 
-      <ion-button
-        expand="block"
-        color="warning"
+      <button
+        type="button"
+        class="gl-btn gl-btn--danger-outline"
         [disabled]="aucuneSelection || enCours"
         (click)="confirmerReinitialiser()">
-        <ion-icon name="refresh-circle-outline" slot="start"></ion-icon>
-        <ion-spinner *ngIf="enCours" name="crescent" slot="start"></ion-spinner>
+        <ion-spinner *ngIf="enCours" name="crescent"></ion-spinner>
+        <ion-icon *ngIf="!enCours" name="refresh-circle-outline"></ion-icon>
         {{ 'PARAMETRES.REINITIALISER' | translate }}
-      </ion-button>
+      </button>
 
-      <ion-button
-        expand="block"
-        color="danger"
+      <button
+        type="button"
+        class="gl-btn gl-btn--danger"
         [disabled]="aucuneSelection || enCours"
         (click)="confirmerSupprimer()">
-        <ion-icon name="trash-outline" slot="start"></ion-icon>
-        <ion-spinner *ngIf="enCours" name="crescent" slot="start"></ion-spinner>
+        <ion-spinner *ngIf="enCours" name="crescent"></ion-spinner>
+        <ion-icon *ngIf="!enCours" name="trash-outline"></ion-icon>
         {{ 'PARAMETRES.SUPPRIMER' | translate }}
-      </ion-button>
+      </button>
 
     </div>
 
-  </ng-container>
+  </div>
 
 </ion-content>

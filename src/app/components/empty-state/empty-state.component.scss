@@ -1,0 +1,43 @@
+// État vide — design commun Ionic ↔ React Native (même visuel que .empty-v2
+// dans global.scss) : icône dans un cercle 56px surface-2, titre 15/700,
+// sous-titre 13 muted, centré.
+.gl-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.gl-empty-state__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+
+  ion-icon { font-size: 26px; color: var(--gl-muted); }
+}
+
+.gl-empty-state__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gl-text);
+  margin: 0;
+}
+
+.gl-empty-state__message {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+.gl-empty-state ion-button { margin-top: 8px; min-height: 44px; }

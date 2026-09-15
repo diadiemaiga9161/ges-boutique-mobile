@@ -1,110 +1,675 @@
-ion-item { --padding-start: 12px; }
+// ══════════════════════════════════════════════════════════════════
+//  TRANSFERTS — design commun Ionic ↔ React Native (TransfertsScreen.tsx)
+//  Couleurs 100 % tokens --gl-* (clair, sombre Auto, sombre forcé) :
+//  l'ancien bloc local @media (prefers-color-scheme: dark), inopérant en
+//  sombre forcé, est supprimé. gl-list-card / glc-* / gl-pill / gl-btn /
+//  md-* : copies locales des implémentations validées (Commandes,
+//  Crédits) — pas encore de composant partagé.
+// ══════════════════════════════════════════════════════════════════
 
-// ══════════════════════════════════════════════════
-//  ONGLETS Tous / Envoyés / Reçus
-// ══════════════════════════════════════════════════
-.tr-tabs {
-  margin: 12px 16px 0;
+// Contenu défilant : ≥ 96px en bas pour le bouton flottant étendu
+.tr-content {
+  --padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
-.tr-tabs__badge-btn {
+.seg-count { margin-left: 6px; }
+
+// ══════════════ BANDEAU HÉROS (bleu dans les 2 thèmes) ══════════════
+.tr-hero {
   position: relative;
+  overflow: hidden;
+  padding: 20px 16px 16px;
+  background: var(--gl-hero);
+
+  &__deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    &::before {
+      content: '';
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      top: -80px;
+      right: -60px;
+    }
+  }
+
+  &__main { position: relative; z-index: 1; }
+
+  &__eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  &__amount {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  &__minis {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  // Mini-cartes vitrées
+  &__mini {
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--gl-glass-line);
+    background: var(--gl-glass);
+
+    ion-icon {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+  }
 }
 
-.tr-tabs__badge {
-  position: absolute;
-  top: 2px;
-  right: 6px;
-  font-size: 0.6rem;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+.hmc-label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hmc-val {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  &--warn { color: #fcd34d; }
+}
+
+// ══════════════ BOUTONS ══════════════
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; flex-shrink: 0; }
+  ion-spinner { width: 18px; height: 18px; --color: currentColor; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+    &:active { background: var(--gl-blue-soft); }
+  }
+
+  // Danger : texte bad (action destructive non encore confirmée)
+  &--danger {
+    background: transparent;
+    color: var(--gl-bad);
+    border: 1.5px solid var(--gl-bad-soft);
+    &:active { background: var(--gl-bad-soft); }
+  }
+
+  // Danger confirmé : fond bad
+  &--danger-fill {
+    background: var(--gl-bad-solid);
+    color: #ffffff;
+  }
+
+  // Petit bouton d'en-tête de section (zone touchable 44)
+  &--sm {
+    width: auto;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    ion-icon { font-size: 18px; }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// ══════════════ CARTE DE LISTE ══════════════
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+
+  &--tap { cursor: pointer; }
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
 }
 
-// ══════════════════════════════════════════════════
-//  FORMULAIRE nouveau/modifier transfert
-// ══════════════════════════════════════════════════
-.tr-form-card {
-  background: var(--ion-card-background, #fff);
-}
+.glc-info { flex: 1; min-width: 0; }
 
-.tr-ligne-box {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
-}
-
-.tr-ligne-box--edit {
-  border-radius: 10px;
-  background: #f8faff;
-}
-
-// ══════════════════════════════════════════════════
-//  MODALE ACCUSÉ RÉCEPTION — lignes Date / Notes
-//  (classes utilisées dans le template mais jusqu'ici non stylées)
-// ══════════════════════════════════════════════════
-.info-card {
-  --background: #f8faff;
-  --padding-start: 12px;
-  --inner-padding-end: 12px;
-  border-radius: 10px;
-}
-
-.item-label {
-  font-size: 0.68rem;
+.glc-title {
+  font-size: 15px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: #94a3b8;
-  margin: 0 0 2px;
-}
-
-.item-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #0f172a;
+  line-height: 1.35;
+  color: var(--gl-text);
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tr-ligne-box {
-    border-color: #374151;
-  }
-  .tr-ligne-box--edit {
-    background: #172033;
-  }
-  .info-card {
-    --background: #172033;
-  }
-  .item-value {
-    color: #f9fafb;
-  }
-  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
-  // global.scss : sans ce correctif la page (et la modale détail) reste gris
-  // clair même écran sombre.
-  ion-content {
-    --background: var(--ion-background-color, #111827);
+.glc-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+}
+
+.glc-pills {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.glc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  > ion-icon { font-size: 16px; color: var(--gl-muted); margin-top: 1px; flex-shrink: 0; }
+
+  &__main {
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+    overflow-wrap: anywhere;
   }
 }
 
-// ── Tablette (720px+) ─────────────────────────────
-@media (min-width: 720px) {
-  ion-card {
-    margin: 10px 0;
-  }
+.glc-amount {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0 0;
+}
 
-  ion-card-content {
-    font-size: 0.95rem;
+// Pied de carte : actions écrites (icône + libellé), jusqu'à 3 par ligne
+.glc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -1px;
+}
+
+.glc-action {
+  flex: 1 1 33%;
+  min-width: 96px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gl-border);
+  border-right: 1px solid var(--gl-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--gl-text-2);
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  &:active { background: var(--gl-surface-2); }
+
+  &--link { color: var(--gl-link); &:active { background: var(--gl-blue-soft); } }
+  &--ok   { color: var(--gl-ok);   &:active { background: var(--gl-ok-soft); } }
+  &--bad  { color: var(--gl-bad);  &:active { background: var(--gl-bad-soft); } }
+}
+
+// ══════════════ PASTILLE DE STATUT ══════════════
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+  font-variant-numeric: tabular-nums;
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MODALES CENTRÉES (design-premium : fixed + overlay + centrage)
+// ══════════════════════════════════════════════════════════════════
+.md-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.md-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 22, 72, 0.55);
+  animation: md-fade 0.18s ease;
+}
+
+.md-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(8, 22, 72, 0.28);
+  animation: md-zoom 0.2s ease;
+
+  &--sm { width: min(440px, 100%); }
+}
+
+@keyframes md-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes md-zoom { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.md-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--gl-border);
+  flex-shrink: 0;
+}
+
+.md-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 20px; }
+
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+.md-titles { flex: 1; min-width: 0; }
+
+.md-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.md-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+.md-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gl-text-2);
+  flex-shrink: 0;
+
+  ion-icon { font-size: 22px; }
+}
+
+.md-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.md-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  flex-shrink: 0;
+
+  .gl-btn { flex: 1; }
+}
+
+.md-inline-actions {
+  display: flex;
+  gap: 10px;
+  .gl-btn { flex: 1; }
+}
+
+// ── Sections ──────────────────────────────────────────────────────
+.md-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.md-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.md-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+
+  ion-icon { font-size: 14px; color: var(--gl-link); }
+}
+
+.md-muted {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.md-center {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  ion-spinner { --color: var(--gl-link); }
+}
+
+// ── Résumé (lignes libellé / valeur) ──────────────────────────────
+.md-info {
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  padding: 4px 14px;
+  display: flex;
+  flex-direction: column;
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--gl-border);
+
+    &:last-child { border-bottom: none; }
+
+    > span:first-child { font-size: 13px; font-weight: 500; color: var(--gl-muted); flex-shrink: 0; }
+    strong { font-size: 14px; font-weight: 600; color: var(--gl-text); text-align: right; overflow-wrap: anywhere; }
   }
 }
 
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  ion-card-content {
-    font-size: 1rem;
+// ── Liste compacte (stock, produits, historique, paiements) ──────
+.md-box {
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  padding: 4px 12px;
+
+  &__title {
+    margin: 8px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
   }
+}
+
+.md-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gl-border);
+
+  &:last-child { border-bottom: none; }
+  &--top { align-items: flex-start; }
+
+  &__content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  &__name { font-size: 14px; font-weight: 600; color: var(--gl-text); overflow-wrap: anywhere; }
+  &__sub { font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+  &__amount { font-size: 15px; font-weight: 800; color: var(--gl-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+}
+
+// ── Champs ────────────────────────────────────────────────────────
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  > span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+
+  input, textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 12px;
+    background: var(--gl-surface);
+    border: 1.5px solid var(--gl-border);
+    border-radius: 12px;
+    color: var(--gl-text);
+    color-scheme: var(--gl-color-scheme);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
+    &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+  }
+
+  textarea {
+    height: auto;
+    min-height: 88px;
+    padding: 12px;
+    resize: none;
+    line-height: 1.4;
+  }
+
+  &--compact {
+    flex: 1;
+    > span { font-size: 12px; }
+  }
+}
+
+// ion-select présenté comme un champ (48, radius 12, bordure 1.5) : même
+// événement ionChange qu'avant. Sélecteurs .sc-ion-select-*-h pour passer
+// devant les valeurs par défaut d'Ionic (texte gris foncé en sombre sinon).
+.md-select {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 12px;
+  background: var(--gl-surface);
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+
+  ion-select,
+  ion-select.sc-ion-select-md-h,
+  ion-select.sc-ion-select-ios-h {
+    flex: 1;
+    width: 100%;
+    min-height: 44px;
+    --padding-start: 0;
+    --padding-end: 0;
+    --color: var(--gl-text);
+    --placeholder-color: var(--gl-muted);
+    --placeholder-opacity: 1;
+    color: var(--gl-text);
+    font-size: 15px;
+    font-weight: 500;
+  }
+}
+
+.md-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// ── Lignes produits ───────────────────────────────────────────────
+.md-lignes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md-ligne {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.md-ligne-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.md-ligne-del {
+  width: 44px;
+  height: 48px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--gl-bad);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 20px; }
 }

@@ -1,186 +1,259 @@
-.ja-content {
-  --background: var(--ion-color-light, #f4f5f8);
-}
+// Journal d'audit — design commun Ionic ↔ React Native.
+// 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark) local ne
+// suivait pas le « Sombre » forcé du Profil. Filtres = .filter-zone + puces .fz-chips
+// (global.scss) ; ion-select / ion-input (couleurs figées) remplacés par puces et
+// champs date gl-date (mêmes [(ngModel)], même appliquerFiltres).
 
-@media (prefers-color-scheme: dark) {
-  .ja-content {
-    --background: var(--ion-background-color, #111827);
-  }
-}
+.ja-content { --background: var(--gl-bg); }
 
-// Accès refusé
-.ja-access-denied {
+.ja-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
   gap: 16px;
-  color: var(--ion-color-medium);
-
-  ion-icon {
-    font-size: 56px;
-    color: var(--ion-color-danger);
-  }
-
-  p {
-    font-size: 16px;
-    text-align: center;
-    margin: 0;
-  }
 }
 
-// Carte filtres
-.ja-filtres-card {
-  margin: 10px 12px 6px;
-  border-radius: 12px;
+// -------- Filtres --------
+.ja-filtres { margin: 0; }
+
+.ja-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.ja-filtre-item {
-  --padding-start: 0;
-  --inner-padding-end: 0;
-  margin-bottom: 6px;
-}
-
-.ja-dates-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-
-  ion-input {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-// Skeleton
-.ja-skeleton-list {
-  padding: 4px 12px;
-}
-
-.ja-skeleton-card {
-  margin-bottom: 8px;
-  border-radius: 10px;
-}
-
-// Vide / erreur
-.ja-empty {
+.gl-field {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+}
+
+.gl-date {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  color-scheme: var(--gl-color-scheme);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.ja-reset {
+  align-self: flex-start;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  gap: 12px;
-  color: var(--ion-color-medium);
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-bad);
+  cursor: pointer;
 
-  ion-icon {
-    font-size: 48px;
-  }
-
-  p {
-    font-size: 14px;
-    text-align: center;
-    margin: 0;
-  }
+  ion-icon { font-size: 18px; }
 }
 
-// Liste
-.ja-list {
-  padding: 0 12px 24px;
-}
-
+// -------- Résumé --------
 .ja-resume {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 4px 8px;
-  font-size: 0.75rem;
-  color: var(--ion-color-medium);
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+
+  strong { font-weight: 700; color: var(--gl-text); font-variant-numeric: tabular-nums; }
 }
 
-.ja-item {
-  margin: 0 0 8px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.ja-item-top {
+// -------- Cartes chronologiques --------
+.ja-list {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.ja-item-date {
+.ja-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+
+  &--skeleton { gap: 12px; }
+}
+
+.ja-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ja-icon,
+.ja-sk-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ja-icon {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: var(--ion-color-medium);
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
 
-  ion-icon {
-    font-size: 0.9rem;
-  }
+  ion-icon { font-size: 20px; }
 }
 
-.ja-item-action {
+.ja-head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ja-action {
+  margin: 0;
+  font-size: 15px;
   font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--ion-color-dark);
-  margin: 4px 0 6px;
+  line-height: 1.35;
+  color: var(--gl-text);
+  overflow-wrap: anywhere;
 }
 
-.ja-item-user {
+.ja-meta,
+.ja-user {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.82rem;
-  color: var(--ion-color-medium-shade);
-  margin-bottom: 4px;
+  margin: 0;
 
-  ion-icon {
-    font-size: 1rem;
-  }
+  ion-icon { flex-shrink: 0; }
 }
 
-.ja-item-details {
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-  margin: 4px 0 0;
-  line-height: 1.4;
+.ja-meta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+
+  ion-icon { font-size: 14px; }
 }
 
-// Pagination
+.ja-user {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 18px; color: var(--gl-muted); }
+}
+
+.ja-details {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--gl-border);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--gl-text-2);
+  overflow-wrap: anywhere;
+}
+
+// État erreur : icône en rouge
+.ja-icon-bad {
+  background: var(--gl-bad-soft) !important;
+  ion-icon { color: var(--gl-bad) !important; }
+}
+
+// -------- Pagination --------
 .ja-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 14px;
-  padding: 14px 0 10px;
+  gap: 16px;
+  padding: 4px 0;
 }
 
 .ja-page-btn {
-  background: var(--ion-card-background, #fff);
-  color: var(--ion-color-dark);
-  border: 1px solid var(--ion-color-light-shade);
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid var(--gl-border);
+  background: var(--gl-surface);
+  color: var(--gl-link);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  ion-icon {
-    font-size: 1.1rem;
-  }
+  ion-icon { font-size: 20px; }
+  &:active:not(:disabled) { background: var(--gl-blue-soft); }
+  &:disabled { opacity: 0.45; color: var(--gl-muted); cursor: default; }
 }
 
 .ja-page-label {
-  font-size: 0.85rem;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--ion-color-medium-shade);
+  color: var(--gl-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+// -------- Accès refusé (même visuel que gl-empty-state / EmptyState RN) --------
+.gls-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gl-surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon { font-size: 26px; color: var(--gl-muted); }
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gl-text);
+  }
 }

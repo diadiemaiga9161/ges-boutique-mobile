@@ -12,34 +12,53 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<!-- ══════════════════════════════════════════════════════════════════
+     BÉNÉFICES — design commun Ionic ↔ React Native (BeneficesScreen.tsx)
+     Bandeau héros (bénéfice total) → puces de période → filtre →
+     tuiles KPI → export PDF → graphique → détail par période.
+     Aucune logique modifiée : benefices.page.ts garde les mêmes appels,
+     modèles (periodeActive, dateJour, moisSelect, anneeSelect) et handlers.
+═══════════════════════════════════════════════════════════════════ -->
+<ion-content [fullscreen]="true" class="ben-content">
   <ion-refresher slot="fixed" (ionRefresh)="charger(); $event.target.complete()">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- SÉLECTEUR DE PÉRIODE -->
-  <div class="ion-padding-horizontal ion-padding-top">
-    <ion-segment [(ngModel)]="periodeActive" (ionChange)="selectionner(periodeActive)" scrollable>
-      <ion-segment-button value="JOURNALIER">
-        <ion-label>Jour</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="HEBDOMADAIRE">
-        <ion-label>Semaine</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="MENSUEL">
-        <ion-label>Mois</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="ANNUEL">
-        <ion-label>Année</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+  <!-- ══════════ BANDEAU HÉROS : BÉNÉFICE TOTAL ══════════ -->
+  <div class="ben-hero">
+    <div class="ben-hero__deco" aria-hidden="true"></div>
+    <div class="ben-hero__main">
+      <p class="ben-hero__eyebrow">Bénéfice total</p>
+      <div class="ben-hero__sk" *ngIf="isLoading" aria-hidden="true"></div>
+      <ng-container *ngIf="!isLoading">
+        <h1 class="ben-hero__amount" [class.ben-hero__amount--neg]="(data?.beneficeTotal || 0) < 0">
+          {{ data ? fmt(data.beneficeTotal) : '—' }}
+        </h1>
+        <p class="ben-hero__sub" *ngIf="data" [ngClass]="'ben-evo--' + evolutionColor">
+          <ion-icon [name]="evolutionIcon + '-outline'" aria-hidden="true"></ion-icon>
+          {{ evolution >= 0 ? '+' : '' }}{{ evolution.toFixed(1) }} % vs période préc.
+        </p>
+      </ng-container>
+    </div>
   </div>
 
-  <!-- FILTRES SELON PÉRIODE -->
-  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'JOURNALIER'">
-    <ion-item>
+  <div class="ben-page">
+
+    <!-- ══════════ PUCES DE PÉRIODE ══════════
+         Même modèle et même déclenchement que l'ancien ion-segment : ionChange ne
+         partait que sur un changement de valeur, d'où la garde periodeActive !== … -->
+    <div class="fz-chips" role="group" aria-label="Période">
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'JOURNALIER'" (click)="periodeActive !== 'JOURNALIER' && selectionner('JOURNALIER')">Jour</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'HEBDOMADAIRE'" (click)="periodeActive !== 'HEBDOMADAIRE' && selectionner('HEBDOMADAIRE')">Semaine</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'MENSUEL'" (click)="periodeActive !== 'MENSUEL' && selectionner('MENSUEL')">Mois</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'ANNUEL'" (click)="periodeActive !== 'ANNUEL' && selectionner('ANNUEL')">Année</button>
+    </div>
+
+    <!-- ══════════ FILTRES SELON PÉRIODE ══════════ -->
+    <ion-item class="ben-date-item" lines="none" *ngIf="periodeActive === 'JOURNALIER'">
+      <ion-icon name="calendar-outline" slot="start" class="ben-date-item__icon" aria-hidden="true"></ion-icon>
       <ion-label>Date</ion-label>
-      <ion-datetime-button datetime="dtJour"></ion-datetime-button>
+      <ion-datetime-button datetime="dtJour" slot="end"></ion-datetime-button>
       <ion-modal [keepContentsMounted]="true">
         <ng-template>
           <ion-datetime id="dtJour" presentation="date" [(ngModel)]="dateJour"
@@ -47,138 +66,122 @@
         </ng-template>
       </ion-modal>
     </ion-item>
-  </div>
 
-  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'MENSUEL'">
-    <ion-item>
-      <ion-label>Mois</ion-label>
-      <ion-select [(ngModel)]="moisSelect" (ionChange)="charger()" interface="popover">
-        <ion-select-option *ngFor="let m of moisList" [value]="m.v">{{ m.l }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-label>Année</ion-label>
-      <ion-select [(ngModel)]="anneeSelect" (ionChange)="charger()" interface="popover">
-        <ion-select-option *ngFor="let a of annees" [value]="a">{{ a }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-  </div>
-
-  <div class="ion-padding-horizontal ion-padding-top" *ngIf="periodeActive === 'ANNUEL'">
-    <ion-item>
-      <ion-label>Année</ion-label>
-      <ion-select [(ngModel)]="anneeSelect" (ionChange)="charger()" interface="popover">
-        <ion-select-option *ngFor="let a of annees" [value]="a">{{ a }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-  </div>
-
-  <!-- CHARGEMENT -->
-  <div class="page-pad" *ngIf="isLoading">
-    <div class="sk-hero-block">
-      <div class="sk-kpi"></div>
-      <div class="sk-kpi"></div>
-    </div>
-    <div class="sk-list" style="margin-top:12px">
-      <div class="sk-card" *ngFor="let i of [1,2,3]">
-        <div class="sk-card-body">
-          <div class="skeleton sk-line sk-line--w80"></div>
-          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+    <!-- Mois + année : puces (mêmes valeurs et mêmes modèles que les anciennes listes) -->
+    <div class="ben-card" *ngIf="periodeActive === 'MENSUEL'">
+      <div class="ben-group">
+        <span class="ben-label">Mois</span>
+        <div class="fz-chips" role="group" aria-label="Mois">
+          <button type="button" class="fz-chip" *ngFor="let m of moisList"
+            [class.fz-chip--active]="moisSelect === m.v"
+            (click)="moisSelect = m.v; charger()">{{ m.l }}</button>
         </div>
-        <div class="skeleton sk-line sk-line--w30"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- DONNÉES -->
-  <ng-container *ngIf="data && !isLoading">
-
-    <!-- HERO BÉNÉFICE -->
-    <div class="ben-hero">
-      <div class="ben-hero__deco"></div>
-      <p class="ben-hero__label">Bénéfice total</p>
-      <h1 class="ben-hero__val" [class.ben-hero__val--neg]="data.beneficeTotal < 0">
-        {{ fmt(data.beneficeTotal) }}
-      </h1>
-      <div class="ben-hero__sub">
-        <ion-icon [name]="evolutionIcon" [color]="evolutionColor"></ion-icon>
-        <span [class]="'ben-evo ben-evo--' + evolutionColor">
-          {{ evolution >= 0 ? '+' : '' }}{{ evolution.toFixed(1) }} % vs période préc.
-        </span>
-      </div>
-    </div>
-
-    <!-- KPI CARDS -->
-    <div class="ben-kpis ion-padding-horizontal">
-      <div class="ben-kpi ben-kpi--blue">
-        <p class="ben-kpi__label">Chiffre d'affaires</p>
-        <p class="ben-kpi__val">{{ fmt(data.chiffreAffaireTotal) }}</p>
-      </div>
-      <div class="ben-kpi ben-kpi--purple">
-        <p class="ben-kpi__label">Ventes</p>
-        <p class="ben-kpi__val">{{ data.nombreVentes }}</p>
-      </div>
-      <div class="ben-kpi ben-kpi--amber">
-        <p class="ben-kpi__label">Marge moy.</p>
-        <p class="ben-kpi__val">{{ data.margeMoyenne.toFixed(1) }} %</p>
-      </div>
-    </div>
-
-    <!-- GRAPHIQUE -->
-    <ion-card class="ion-margin" *ngIf="data.lignes.length > 0">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="bar-chart-outline" color="success"></ion-icon>
-          Évolution des bénéfices
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="chart-wrap">
-          <canvas #beneficeChart></canvas>
+      <div class="ben-group">
+        <span class="ben-label">Année</span>
+        <div class="fz-chips" role="group" aria-label="Année">
+          <button type="button" class="fz-chip" *ngFor="let a of annees"
+            [class.fz-chip--active]="anneeSelect === a"
+            (click)="anneeSelect = a; charger()">{{ a }}</button>
         </div>
-      </ion-card-content>
-    </ion-card>
+      </div>
+    </div>
 
-    <!-- TABLEAU DÉTAIL -->
-    <ion-card class="ion-margin" *ngIf="data.lignes.length > 0">
-      <ion-card-header>
-        <ion-card-title>Détail par période</ion-card-title>
-      </ion-card-header>
-      <ion-card-content class="ion-no-padding">
-        <ion-list lines="inset">
-          <ion-item *ngFor="let l of data.lignes; trackBy: trackById">
-            <ion-label>
-              <h3>{{ l.label }}</h3>
-              <p>{{ l.nombreVentes }} vente(s)</p>
-            </ion-label>
-            <ion-note slot="end" [color]="l.benefice >= 0 ? 'success' : 'danger'">
-              <strong>{{ fmt(l.benefice) }}</strong>
-            </ion-note>
-          </ion-item>
+    <div class="ben-card" *ngIf="periodeActive === 'ANNUEL'">
+      <div class="ben-group">
+        <span class="ben-label">Année</span>
+        <div class="fz-chips" role="group" aria-label="Année">
+          <button type="button" class="fz-chip" *ngFor="let a of annees"
+            [class.fz-chip--active]="anneeSelect === a"
+            (click)="anneeSelect = a; charger()">{{ a }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CHARGEMENT ══════════ -->
+    <div class="ben-skeleton" *ngIf="isLoading" aria-busy="true">
+      <div class="ben-sk ben-sk--full"></div>
+      <div class="ben-sk-grid">
+        <div class="ben-sk"></div>
+        <div class="ben-sk"></div>
+      </div>
+      <div class="ben-sk ben-sk--chart"></div>
+    </div>
+
+    <!-- ══════════ DONNÉES ══════════ -->
+    <ng-container *ngIf="data && !isLoading">
+
+      <!-- Tuiles KPI (mêmes 3 chiffres qu'avant) -->
+      <div class="ben-kpis">
+        <gl-stat-card
+          class="ben-kpis__full"
+          icon="cash-outline"
+          label="Chiffre d'affaires"
+          [value]="fmt(data.chiffreAffaireTotal)"
+          variant="blue">
+        </gl-stat-card>
+        <gl-stat-card
+          icon="receipt-outline"
+          label="Ventes"
+          [value]="'' + data.nombreVentes"
+          variant="slate">
+        </gl-stat-card>
+        <gl-stat-card
+          icon="pie-chart-outline"
+          label="Marge moy."
+          [value]="data.margeMoyenne.toFixed(1) + ' %'"
+          [variant]="data.margeMoyenne < 0 ? 'red' : 'green'">
+        </gl-stat-card>
+      </div>
+
+      <!-- Action principale unique (remplace l'ancien bouton flottant, même handler) -->
+      <button type="button" class="ben-btn ben-btn--primary" (click)="exporterPDF()" [disabled]="!data || isLoading">
+        <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+        Exporter en PDF
+      </button>
+
+      <!-- Graphique -->
+      <section class="ben-section" *ngIf="data.lignes.length > 0">
+        <p class="ben-overline">Évolution des bénéfices</p>
+        <article class="ben-card">
+          <div class="chart-wrap">
+            <canvas #beneficeChart></canvas>
+          </div>
+          <div class="ben-legend">
+            <span class="ben-legend__item"><span class="ben-legend__dot ben-legend__dot--ok"></span>Bénéfice</span>
+            <span class="ben-legend__item"><span class="ben-legend__dot ben-legend__dot--bad"></span>Perte</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Détail par période -->
+      <section class="ben-section" *ngIf="data.lignes.length > 0">
+        <p class="ben-overline">Détail par période</p>
+        <div class="ben-card ben-list animate-cards">
+          <article class="ben-row" *ngFor="let l of data.lignes; trackBy: trackById">
+            <div class="ben-row__info">
+              <p class="ben-row__title">{{ l.label }}</p>
+              <p class="ben-row__meta">{{ l.nombreVentes }} vente(s)</p>
+            </div>
+            <p class="ben-amount" [class.ben-amount--ok]="l.benefice >= 0" [class.ben-amount--bad]="l.benefice < 0">
+              {{ fmt(l.benefice) }}
+            </p>
+          </article>
           <!-- Total -->
-          <ion-item color="light">
-            <ion-label><strong>TOTAL</strong></ion-label>
-            <ion-note slot="end" color="success">
-              <strong>{{ fmt(data.beneficeTotal) }}</strong>
-            </ion-note>
-          </ion-item>
-        </ion-list>
-      </ion-card-content>
-    </ion-card>
+          <div class="ben-total">
+            <span class="ben-total__label">TOTAL</span>
+            <strong class="ben-amount" [class.ben-amount--ok]="data.beneficeTotal >= 0" [class.ben-amount--bad]="data.beneficeTotal < 0">
+              {{ fmt(data.beneficeTotal) }}
+            </strong>
+          </div>
+        </div>
+      </section>
 
-    <!-- Aucune donnée -->
-    <div class="ion-text-center ion-padding-vertical" *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0">
-      <ion-icon name="trending-up-outline" style="font-size:48px;color:#9ca3af"></ion-icon>
-      <p style="color:#9ca3af">Aucune vente pour cette période</p>
-    </div>
+      <!-- Aucune donnée -->
+      <div class="ben-card ben-empty" *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0">
+        <gl-empty-state icon="trending-up-outline" title="Aucune vente pour cette période"></gl-empty-state>
+      </div>
 
-  </ng-container>
-
-  <!-- FAB PDF -->
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button color="success" (click)="exporterPDF()" [disabled]="!data || isLoading">
-      <ion-icon name="document-text-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
+    </ng-container>
+  </div>
 </ion-content>

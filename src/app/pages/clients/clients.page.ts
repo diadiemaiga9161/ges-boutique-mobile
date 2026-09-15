@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { AvanceClientRequest, Client, ClientReleveLigne, ClientReleveResponse, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AvanceClientRequest, Client, ClientReleveLigne, ClientReleveResponse, ClientReleveVenteReglee, ClientService, HistoriqueAvanceResponse } from '../../services/client.service';
 import { VenteMap, VenteService } from '../../services/vente.service';
 import { AuthService } from '../../services/auth.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
@@ -12,6 +14,15 @@ import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
 import { BoutiqueService } from '../../services/boutique.service';
 import { FideliteService, MouvementFidelite, SoldeFidelite } from '../../services/fidelite.service';
+import { CaisseService, CreditInfo } from '../../services/caisse.service';
+
+/** Résumé crédit non réglé d'un client, agrégé depuis CaisseService.getCreditsNonRegles()
+ *  — même logique de regroupement que credits.page.ts (buildGroups) : un seul appel HTTP
+ *  à plat, regroupé ici par client plutôt que d'appeler un endpoint par client (anti N+1). */
+interface CreditResume {
+  totalRestant: number;
+  enRetard: boolean;
+}
 
 @Component({
   selector: 'app-clients',
@@ -80,12 +91,29 @@ export class ClientsPage {
   ajustementFideliteForm = { delta: 0, motif: '' };
   savingAjustementFidelite = false;
 
+  // Crédits non réglés par client (carte client) — clé `${nom}__${telephone}` normalisée
+  // (trim + lowercase + téléphone chiffres uniquement), alimentée par un seul appel à
+  // CaisseService.getCreditsNonRegles() (voir load()). Ne bloque jamais l'affichage de la
+  // liste clients si l'appel échoue (catchError -> map vide).
+  private creditsParClient = new Map<string, CreditResume>();
+
   get boutiqueName(): string {
     return this.boutiqueConfig.getBoutiqueName() || 'Ma Boutique';
   }
 
   get isAdmin(): boolean {
     return this.auth.isAdmin();
+  }
+
+  /** Tuiles KPI — affichage uniquement (≡ tuiles Total / En crédit / Avec tél RN).
+   *  "En crédit" s'appuie sur le résumé déjà calculé pour la pastille de carte
+   *  (getCreditResume), aucun nouvel appel ni calcul métier. */
+  get nbClientsAvecTelephone(): number {
+    return this.clients.filter(c => !!(c.telephone || c.numeroTelephone)).length;
+  }
+
+  get nbClientsEnCredit(): number {
+    return this.clients.filter(c => !!this.getCreditResume(c)).length;
   }
 
   constructor(
@@ -102,7 +130,8 @@ export class ClientsPage {
     private networkStatus: NetworkStatusService,
     private offlineSync: OfflineSyncService,
     private boutiqueService: BoutiqueService,
-    private fideliteService: FideliteService
+    private fideliteService: FideliteService,
+    private caisseService: CaisseService
   ) {}
 
   ionViewWillEnter(): void {
@@ -128,6 +157,48 @@ export class ClientsPage {
         this.presentToast(error.message || 'Chargement impossible', 'danger');
       }
     });
+    this.loadCreditsParClient();
+  }
+
+  /** Un seul appel HTTP (comme credits.page.ts) pour connaître le solde crédit non réglé
+   *  de chaque client, sans endpoint dédié ni appel N+1. Appelé en parallèle de la liste
+   *  clients : son échec (catchError) ne doit jamais bloquer l'affichage des clients. */
+  private loadCreditsParClient(): void {
+    this.caisseService.getCreditsNonRegles().pipe(
+      catchError(() => of([] as CreditInfo[]))
+    ).subscribe(credits => {
+      const map = new Map<string, CreditResume>();
+      credits.forEach(c => {
+        const key = this.creditMatchKey(c.clientNom, c.clientTelephone);
+        const existing = map.get(key);
+        const restant = c.estReglee ? 0 : (c.montantRestant || 0);
+        if (existing) {
+          existing.totalRestant += restant;
+          existing.enRetard = existing.enRetard || !!c.enRetard;
+        } else {
+          map.set(key, { totalRestant: restant, enRetard: !!c.enRetard });
+        }
+      });
+      this.creditsParClient = map;
+    });
+  }
+
+  /** Clé de correspondance client <-> crédits : même principe que credits.page.ts
+   *  (`${clientNom}__${clientTelephone}`), mais tolérante (trim + lowercase sur le nom,
+   *  chiffres uniquement sur le téléphone) car CreditInfo ne porte pas de clientId — une
+   *  égalité stricte de chaînes ratait des correspondances valides (espace en trop, casse,
+   *  formatage "70 12 34 56" vs "70123456"). */
+  private creditMatchKey(nom?: string, telephone?: string): string {
+    const nomKey = (nom || '').trim().toLowerCase();
+    const telKey = (telephone || '').replace(/\D/g, '');
+    return `${nomKey}__${telKey}`;
+  }
+
+  /** Résumé crédit non réglé pour une carte client, ou undefined si aucun crédit en cours. */
+  getCreditResume(client: Client): CreditResume | undefined {
+    const key = this.creditMatchKey(client.nom, client.telephone || client.numeroTelephone);
+    const resume = this.creditsParClient.get(key);
+    return resume && resume.totalRestant > 0.01 ? resume : undefined;
   }
 
   applyFilter(): void {
@@ -409,6 +480,13 @@ export class ClientsPage {
     return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  /** Produits d'une vente réglée par un versement, ex. "Coca-Cola 1.5L ×8, Eau minérale ×1". */
+  produitsVenteReglee(vente: ClientReleveVenteReglee): string {
+    const produits = (vente.produits || [])
+      .map(p => `${p.produitNom || 'Produit'}${p.quantite != null ? ' ×' + p.quantite : ''}`);
+    return produits.length ? produits.join(', ') : '—';
+  }
+
   // ==================== DÉTAIL VENTE ====================
 
   openVenteDetail(v: VenteMap): void {
@@ -442,9 +520,22 @@ export class ClientsPage {
     });
   }
 
-  telechargerReleve(clientId?: number): void {
+  telechargerReleve(clientId?: number, filtres?: { dateDebut?: string; dateFin?: string; type?: string }): void {
     if (!clientId) return;
-    window.open(`/api/clients/${clientId}/releve-pdf`, '_blank');
+    const params = new URLSearchParams();
+    Object.entries(filtres || {}).forEach(([cle, valeur]) => { if (valeur) params.set(cle, valeur); });
+    const query = params.toString();
+    window.open(`/api/clients/${clientId}/releve-pdf${query ? '?' + query : ''}`, '_blank');
+  }
+
+  /** PDF de la situation affichée dans la modale Relevé (même période, même filtre). */
+  telechargerReleveAffiche(): void {
+    const avecPeriode = this.relevePeriodePreset !== 'tout';
+    this.telechargerReleve(this.selectedClientForReleve?.id, {
+      dateDebut: avecPeriode ? this.releveDateDebut : undefined,
+      dateFin: avecPeriode ? this.releveDateFin : undefined,
+      type: this.releveTypeFilter || undefined
+    });
   }
 
   // ==================== QR CODE CLIENT ====================
@@ -601,6 +692,29 @@ export class ClientsPage {
     if (m.type === 'GAGNE') return 'success';
     if (m.type === 'UTILISE') return 'warning';
     return 'medium';
+  }
+
+  // ==================== ACTIONS RAPIDES (APPELER / WHATSAPP) ====================
+
+  appelerClient(client: Client): void {
+    const numero = client.telephone || client.numeroTelephone;
+    if (!numero) return;
+    window.location.href = 'tel:' + numero;
+  }
+
+  /** Même convention de normalisation que le reste du projet (sales.page.ts,
+   *  depenses.page.ts, commandes.page.ts, rapport-whatsapp.service.ts) : on retire les
+   *  caractères non numériques du numéro déjà stocké et on construit directement
+   *  https://wa.me/<chiffres> — aucun de ces 4 endroits n'ajoute de préfixe pays, les
+   *  numéros sont donc stockés tels qu'attendus par WhatsApp. Réutiliser cette même
+   *  logique ici plutôt qu'inventer un préfixage "223" custom qui serait incohérent avec
+   *  le reste de l'app. */
+  ouvrirWhatsappClient(client: Client): void {
+    const numero = client.telephone || client.numeroTelephone;
+    if (!numero) return;
+    const clean = numero.replace(/\D/g, '');
+    if (!clean) return;
+    window.open(`https://wa.me/${clean}`, '_blank');
   }
 
   // ==================== UTILITAIRES ====================

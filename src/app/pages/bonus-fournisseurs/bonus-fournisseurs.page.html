@@ -4,16 +4,38 @@
       <ion-menu-button menu="main-menu"></ion-menu-button>
     </ion-buttons>
     <ion-title>{{ 'SUPPLIER_BONUS.TITLE' | translate }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="startCreate()">
-        <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
   </ion-toolbar>
+</ion-header>
 
-  <!-- Onglets -->
-  <ion-toolbar>
-    <ion-segment [(ngModel)]="activeTab">
+<!-- ══════════════════════════════════════════════════════════════════
+     BONUS FOURNISSEURS — design commun Ionic ↔ React Native
+     Bandeau héros (bonus du mois) → onglets → liste en cartes (pied d'actions)
+     ou résultat net du mois → bouton flottant étendu « Nouveau bonus » →
+     modale centrée (formulaire). Aucune logique modifiée : mêmes appels,
+     mêmes handlers (startCreate, startEdit, supprimer, save, loadResultat).
+═══════════════════════════════════════════════════════════════════ -->
+<ion-content [fullscreen]="true" class="bf-content">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ══════════ BANDEAU HÉROS : BONUS CE MOIS ══════════ -->
+  <div class="bf-hero">
+    <div class="bf-hero__deco" aria-hidden="true"></div>
+    <div class="bf-hero__main">
+      <p class="bf-hero__eyebrow">Bonus ce mois</p>
+      <h1 class="bf-hero__amount">{{ stats ? money(stats.totalMois) : '—' }}</h1>
+      <p class="bf-hero__sub" *ngIf="stats">
+        <ion-icon name="gift-outline" aria-hidden="true"></ion-icon>
+        {{ stats.nombreMois }} bonus • Année: {{ money(stats.totalAnnee) }}
+      </p>
+    </div>
+  </div>
+
+  <div class="bf-page">
+
+    <!-- Onglets (même modèle activeTab) -->
+    <ion-segment [(ngModel)]="activeTab" class="bf-segment">
       <ion-segment-button value="liste">
         <ion-label>Bonus</ion-label>
       </ion-segment-button>
@@ -21,198 +43,185 @@
         <ion-label>Résultat Net</ion-label>
       </ion-segment-button>
     </ion-segment>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
+    <!-- ======== ONGLET LISTE ======== -->
+    <ng-container *ngIf="activeTab === 'liste'">
 
-  <!-- ======== ONGLET LISTE ======== -->
-  <div *ngIf="activeTab === 'liste'" class="page-pad stack">
-
-    <!-- Résumé du mois -->
-    <div class="total-bonus-card" *ngIf="stats">
-      <div>
-        <p class="tb-label">Bonus ce mois</p>
-        <p class="tb-value">{{ money(stats.totalMois) }}</p>
-        <p class="tb-sub">{{ stats.nombreMois }} bonus • Année: {{ money(stats.totalAnnee) }}</p>
+      <!-- Total liste courante -->
+      <div class="bf-strip" *ngIf="bonus.length > 0">
+        <span class="bf-overline">Total affiché</span>
+        <strong class="bf-amount bf-amount--ok">+ {{ money(totalBonus()) }}</strong>
       </div>
-      <ion-icon name="gift-outline" style="font-size:2.2rem; opacity:0.7; color:#28a745"></ion-icon>
-    </div>
 
-    <!-- Total liste courante -->
-    <div class="filter-card" *ngIf="bonus.length > 0">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:0.85rem;color:#6b7280">Total affiché</span>
-        <strong style="color:#28a745">+ {{ money(totalBonus()) }}</strong>
+      <div class="bf-skeleton" *ngIf="loading" aria-busy="true">
+        <div class="bf-sk" *ngFor="let i of [1,2,3]"></div>
       </div>
-    </div>
 
-    <div class="sk-list" *ngIf="loading">
-      <div class="sk-card" *ngFor="let i of [1,2,3]">
-        <div class="skeleton sk-avatar"></div>
-        <div class="sk-card-body">
-          <div class="skeleton sk-line sk-line--w80"></div>
-          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-        </div>
-        <div class="skeleton sk-line sk-line--w30"></div>
+      <div class="bf-card-empty" *ngIf="!loading && bonus.length === 0">
+        <gl-empty-state
+          icon="gift-outline"
+          [title]="'SUPPLIER_BONUS.EMPTY' | translate"
+          message="Ajoutez votre premier bonus fournisseur"
+          [ctaLabel]="'SUPPLIER_BONUS.NEW' | translate"
+          (ctaClick)="startCreate()">
+        </gl-empty-state>
       </div>
-    </div>
 
-    <div class="empty-v2" *ngIf="!loading && bonus.length === 0">
-      <div class="empty-v2__icon"><ion-icon name="gift-outline"></ion-icon></div>
-      <p class="empty-v2__title">{{ 'SUPPLIER_BONUS.EMPTY' | translate }}</p>
-      <p class="empty-v2__text">Ajoutez votre premier bonus fournisseur</p>
-      <ion-button size="small" (click)="startCreate()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'SUPPLIER_BONUS.NEW' | translate }}
-      </ion-button>
-    </div>
+      <div class="bf-section-head" *ngIf="!loading && bonus.length > 0">
+        <p class="bf-overline">Bonus reçus</p>
+        <span class="bf-count">{{ bonus.length }}</span>
+      </div>
 
-    <div class="section-header" *ngIf="!loading && bonus.length > 0">
-      <p class="section-header__title">Bonus reçus</p>
-      <span class="section-header__count">{{ bonus.length }}</span>
-    </div>
-    <section class="stack animate-cards" *ngIf="!loading && bonus.length > 0">
-      <article class="list-item-card" *ngFor="let b of bonus; trackBy: trackById">
-        <div class="lic-header">
-          <div class="lic-avatar lic-avatar--green">{{ (b.fournisseurNom || '?').charAt(0) }}</div>
-          <div class="lic-info">
-            <p class="lic-name">{{ b.fournisseurNom }}</p>
-            <p class="lic-sub"><ion-icon name="calendar-outline"></ion-icon> {{ b.date }}</p>
+      <section class="bf-list animate-cards" *ngIf="!loading && bonus.length > 0">
+        <article class="gl-list-card" *ngFor="let b of bonus; trackBy: trackById">
+          <div class="glc-body">
+            <div class="glc-head">
+              <div class="bf-avatar" aria-hidden="true">{{ (b.fournisseurNom || '?').charAt(0) }}</div>
+              <div class="glc-info">
+                <p class="glc-title">{{ b.fournisseurNom }}</p>
+                <p class="glc-sub">
+                  <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+                  {{ b.date }}
+                </p>
+              </div>
+              <div class="glc-right">
+                <span class="gl-pill" [ngClass]="'bf-pill--' + typeColorClass(b.type)">{{ b.typeLibelle || b.type }}</span>
+                <p class="bf-amount bf-amount--ok">+ {{ money(b.montant) }}</p>
+              </div>
+            </div>
+            <p class="glc-note" *ngIf="b.description">{{ b.description }}</p>
           </div>
-          <div class="lic-right">
-            <span [class]="'status-badge status-badge--' + typeColorClass(b.type)">{{ b.typeLibelle || b.type }}</span>
-            <p class="lic-amount" style="color:#0e9f6e;font-weight:800">+ {{ money(b.montant) }}</p>
+          <div class="glc-actions">
+            <button type="button" class="glc-action glc-action--link" (click)="startEdit(b)">
+              <ion-icon name="create-outline" aria-hidden="true"></ion-icon> Modifier
+            </button>
+            <button type="button" class="glc-action glc-action--bad" (click)="supprimer(b)">
+              <ion-icon name="trash-outline" aria-hidden="true"></ion-icon> Supprimer
+            </button>
           </div>
-        </div>
-        <p style="padding:0 16px 8px;font-size:0.82rem;color:#64748b" *ngIf="b.description">{{ b.description }}</p>
-        <div class="lic-footer">
-          <button class="lic-action lic-action--primary" (click)="startEdit(b)">
-            <ion-icon name="create-outline"></ion-icon> Modifier
-          </button>
-          <button class="lic-action lic-action--danger" (click)="supprimer(b)">
-            <ion-icon name="trash-outline"></ion-icon> Supprimer
-          </button>
-        </div>
-      </article>
-    </section>
-  </div>
+        </article>
+      </section>
+    </ng-container>
 
-  <!-- ======== ONGLET RÉSULTAT NET ======== -->
-  <div *ngIf="activeTab === 'resultat'" class="page-pad stack">
-    <div *ngIf="resultat">
+    <!-- ======== ONGLET RÉSULTAT NET ======== -->
+    <ng-container *ngIf="activeTab === 'resultat'">
+      <ng-container *ngIf="resultat">
 
-      <!-- Carte résultat principal -->
-      <div class="resultat-main-card" [class.gain]="resultat.etat === 'GAIN'" [class.perte]="resultat.etat === 'PERTE'">
-        <p class="rm-label">Résultat Net du Mois</p>
-        <p class="rm-value">{{ money(resultat.resultatNet) }}</p>
-        <ion-badge [color]="resultat.etat === 'GAIN' ? 'success' : 'danger'" style="font-size:1rem;padding:6px 12px;">
-          {{ resultat.etat === 'GAIN' ? '✓ GAIN' : '✗ PERTE' }}
-        </ion-badge>
-      </div>
-
-      <!-- Détail -->
-      <div class="detail-card">
-        <div class="detail-row">
-          <span class="dr-label">
-            <ion-icon name="trending-up-outline" color="success"></ion-icon>
-            Bénéfices ventes
-          </span>
-          <strong class="dr-value text-success">+ {{ money(resultat.benefices) }}</strong>
-        </div>
-        <div class="detail-row">
-          <span class="dr-label">
-            <ion-icon name="gift-outline" color="primary"></ion-icon>
-            Bonus fournisseurs
-          </span>
-          <strong class="dr-value text-primary">+ {{ money(resultat.bonusFournisseurs) }}</strong>
-        </div>
-        <div class="detail-sep"></div>
-        <div class="detail-row">
-          <span class="dr-label">
-            <ion-icon name="trending-down-outline" color="danger"></ion-icon>
-            Dépenses
-          </span>
-          <strong class="dr-value text-danger">- {{ money(resultat.depenses) }}</strong>
-        </div>
-        <div class="detail-sep total-sep"></div>
-        <div class="detail-row total-row">
-          <span class="dr-label fw-bold">= Résultat Net</span>
-          <strong class="dr-value" [style.color]="resultat.etat === 'GAIN' ? '#28a745' : '#dc3545'">
+        <!-- Carte résultat principal -->
+        <article class="bf-card">
+          <p class="bf-overline">Résultat Net du Mois</p>
+          <p class="bf-result" [class.bf-result--gain]="resultat.etat === 'GAIN'" [class.bf-result--perte]="resultat.etat === 'PERTE'">
             {{ money(resultat.resultatNet) }}
-          </strong>
-        </div>
-      </div>
+          </p>
+          <span class="gl-pill" [class.gl-pill--ok]="resultat.etat === 'GAIN'" [class.gl-pill--bad]="resultat.etat !== 'GAIN'">
+            <ion-icon [name]="resultat.etat === 'GAIN' ? 'checkmark-circle-outline' : 'close-circle-outline'" aria-hidden="true"></ion-icon>
+            {{ resultat.etat === 'GAIN' ? 'GAIN' : 'PERTE' }}
+          </span>
+        </article>
 
-      <div style="text-align:center;margin-top:8px;">
-        <ion-button fill="outline" size="small" (click)="loadResultat()">
-          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        <!-- Détail -->
+        <article class="bf-card bf-detail">
+          <div class="bf-row">
+            <span class="bf-pastille bf-pastille--ok" aria-hidden="true"><ion-icon name="trending-up-outline"></ion-icon></span>
+            <span class="bf-row__label">Bénéfices ventes</span>
+            <strong class="bf-amount bf-amount--ok">+ {{ money(resultat.benefices) }}</strong>
+          </div>
+          <div class="bf-row">
+            <span class="bf-pastille" aria-hidden="true"><ion-icon name="gift-outline"></ion-icon></span>
+            <span class="bf-row__label">Bonus fournisseurs</span>
+            <strong class="bf-amount bf-amount--link">+ {{ money(resultat.bonusFournisseurs) }}</strong>
+          </div>
+          <div class="bf-row">
+            <span class="bf-pastille bf-pastille--bad" aria-hidden="true"><ion-icon name="trending-down-outline"></ion-icon></span>
+            <span class="bf-row__label">Dépenses</span>
+            <strong class="bf-amount bf-amount--bad">- {{ money(resultat.depenses) }}</strong>
+          </div>
+          <div class="bf-total" [class.bf-total--gain]="resultat.etat === 'GAIN'" [class.bf-total--perte]="resultat.etat !== 'GAIN'">
+            <span class="bf-total__label">= Résultat Net</span>
+            <strong class="bf-total__value">{{ money(resultat.resultatNet) }}</strong>
+          </div>
+        </article>
+
+        <button type="button" class="gl-btn gl-btn--secondary" (click)="loadResultat()">
+          <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
           Actualiser
-        </ion-button>
-      </div>
-    </div>
+        </button>
+      </ng-container>
 
-    <div class="sk-list" *ngIf="!resultat">
-      <div class="sk-card" *ngFor="let i of [1,2,3]">
-        <div class="skeleton sk-line sk-line--full sk-line--xl"></div>
+      <div class="bf-skeleton" *ngIf="!resultat" aria-busy="true">
+        <div class="bf-sk bf-sk--lg" *ngFor="let i of [1,2]"></div>
       </div>
-    </div>
+    </ng-container>
   </div>
+
+  <!-- Création : bouton flottant étendu (même handler que l'ancien bouton + de l'en-tête) -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <button type="button" class="gl-fab-extended" (click)="startCreate()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+      {{ 'SUPPLIER_BONUS.NEW' | translate }}
+    </button>
+  </ion-fab>
 </ion-content>
 
-<!-- ======== MODAL FORMULAIRE ======== -->
-<div class="modal-overlay" *ngIf="showForm" (click)="showForm=false">
-  <div class="modal-sheet" (click)="$event.stopPropagation()">
-    <div class="modal-handle"></div>
+<!-- ══════════════════════════════════════════════════════════════════
+     MODALE FORMULAIRE (centrée — design-premium, même rendu que Commandes)
+     Fermeture : X, clic sur l'overlay, Échap (HostListener déjà dans le .ts).
+═══════════════════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="showForm">
+  <div class="md-backdrop" (click)="showForm=false"></div>
+  <div class="md-sheet md-sheet--sm" role="dialog" aria-modal="true" aria-labelledby="bf-form-title">
 
-    <div class="modal-title-row">
-      <h3 class="modal-title">
-        {{ editingId ? 'Modifier le bonus' : 'Nouveau bonus' }}
-      </h3>
-      <button class="modal-close-btn" type="button" (click)="showForm=false" aria-label="Fermer">
+    <div class="md-header">
+      <div class="md-icon md-icon--info">
+        <ion-icon [name]="editingId ? 'create-outline' : 'gift-outline'"></ion-icon>
+      </div>
+      <h2 class="md-title" id="bf-form-title">{{ editingId ? 'Modifier le bonus' : 'Nouveau bonus' }}</h2>
+      <button type="button" class="md-close" (click)="showForm=false" aria-label="Fermer">
         <ion-icon name="close-outline"></ion-icon>
       </button>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Fournisseur *</label>
-      <select class="form-select" [(ngModel)]="form.fournisseurId">
-        <option [value]="0">-- Sélectionner --</option>
-        <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
-      </select>
-    </div>
+    <div class="md-body">
+      <div class="md-fields">
+        <label class="md-field">
+          <span>Fournisseur *</span>
+          <select [(ngModel)]="form.fournisseurId">
+            <option [ngValue]="0">-- Sélectionner --</option>
+            <option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option>
+          </select>
+        </label>
 
-    <div class="form-group">
-      <label class="form-label">Type *</label>
-      <select class="form-select" [(ngModel)]="form.type">
-        <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
-      </select>
-    </div>
+        <label class="md-field">
+          <span>Type *</span>
+          <select [(ngModel)]="form.type">
+            <option *ngFor="let t of types" [ngValue]="t.value">{{ t.label }}</option>
+          </select>
+        </label>
 
-    <div class="form-row">
-      <div class="form-group half">
-        <label class="form-label">Date *</label>
-        <input type="date" class="form-input" [(ngModel)]="form.date">
+        <div class="md-row">
+          <label class="md-field md-field--half">
+            <span>Date *</span>
+            <input type="date" [(ngModel)]="form.date">
+          </label>
+          <label class="md-field md-field--half">
+            <span>Montant (FCFA) *</span>
+            <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montant" placeholder="0">
+          </label>
+        </div>
+
+        <label class="md-field">
+          <span>Description</span>
+          <textarea [(ngModel)]="form.description" rows="2"
+            placeholder="Ex: Ristourne 5% commandes mois..."></textarea>
+        </label>
       </div>
-      <div class="form-group half">
-        <label class="form-label">Montant (FCFA) *</label>
-        <input type="text" inputmode="numeric" appMontantInput class="form-input" [(ngModel)]="form.montant" placeholder="0">
-      </div>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Description</label>
-      <textarea class="form-input" [(ngModel)]="form.description" rows="2"
-        placeholder="Ex: Ristourne 5% commandes mois..."></textarea>
-    </div>
-
-    <div class="modal-actions">
-      <ion-button fill="outline" color="medium" (click)="showForm=false" expand="block">Annuler</ion-button>
-      <ion-button color="success" (click)="save()" expand="block">
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showForm=false">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="save()">
         {{ editingId ? 'Enregistrer' : 'Ajouter' }}
-      </ion-button>
+      </button>
     </div>
   </div>
 </div>

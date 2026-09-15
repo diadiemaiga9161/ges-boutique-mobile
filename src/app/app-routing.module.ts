@@ -26,9 +26,10 @@ const routes: Routes = [
     loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule)
   },
   {
+    // Reste accessible aux appels existants (navigateByUrl('/home'), menu, resources.page.ts)
+    // sans dupliquer le module — la vraie route vit désormais sous le tab "Accueil".
     path: 'home',
-    canActivate: [AuthGuard],
-    loadChildren: () => import('./home/home.module').then(m => m.HomePageModule)
+    redirectTo: 'tabs/home'
   },
   {
     path: 'cart',
@@ -36,9 +37,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/cart/cart.module').then(m => m.CartPageModule)
   },
   {
+    // Idem : reste accessible aux appels existants (navigateByUrl('/clients'), menu latéral)
+    // sans dupliquer le module — la vraie route vit désormais sous le tab "Clients".
     path: 'clients',
-    canActivate: [AuthGuard],
-    loadChildren: () => import('./pages/clients/clients.module').then(m => m.ClientsPageModule)
+    redirectTo: 'tabs/clients'
   },
   {
     path: 'boutique',
@@ -159,6 +161,13 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },
     loadChildren: () => import('./pages/parametres/parametres.module').then(m => m.ParametresPageModule)
+  },
+  {
+    // Table des matières des réglages (Phase 8) — accessible à tous les rôles,
+    // seule sa section "Boutique" est filtrée en interne (*ngIf="auth.isAdmin()").
+    path: 'parametres-hub',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/parametres-hub/parametres-hub.module').then(m => m.ParametresHubPageModule)
   },
   {
     path: 'export-donnees',

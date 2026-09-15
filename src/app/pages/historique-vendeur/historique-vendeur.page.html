@@ -12,74 +12,128 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="page-pad stack">
+<!-- ══════════════════════════════════════════════════════════════════
+     HISTORIQUE VENDEUR — design commun Ionic ↔ React Native
+     Bandeau héros (total période du vendeur choisi) → dates → puces vendeur →
+     tuiles KPI → historique par jour en cartes. Aucune logique modifiée :
+     historique-vendeur.page.ts garde les mêmes appels et handlers.
+═══════════════════════════════════════════════════════════════════ -->
+<ion-content [fullscreen]="true" class="hv-content">
 
-    <div class="two-cols">
-      <ion-input label="Du" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateDebut" (ionChange)="charger()">
-        <ion-icon name="calendar-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Au" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateFin" (ionChange)="charger()">
-        <ion-icon name="calendar-outline" slot="start"></ion-icon>
-      </ion-input>
+  <!-- ══════════ BANDEAU HÉROS : TOTAL PÉRIODE ══════════ -->
+  <div class="hv-hero">
+    <div class="hv-hero__deco" aria-hidden="true"></div>
+    <div class="hv-hero__main">
+      <p class="hv-hero__eyebrow">Total période</p>
+      <div class="hv-hero__sk" *ngIf="isLoading" aria-hidden="true"></div>
+      <ng-container *ngIf="!isLoading">
+        <h1 class="hv-hero__amount">{{ vendeurSelectionne && !errorMessage ? formatPrice(vendeurSelectionne.caTotal) : '—' }}</h1>
+        <p class="hv-hero__sub" *ngIf="vendeurSelectionne && !errorMessage">
+          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+          {{ vendeurSelectionne.vendeurNom }} · {{ vendeurSelectionne.nbVentesTotal }} vente(s)
+        </p>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="hv-page">
+
+    <!-- Période (mêmes modèles dateDebut / dateFin, même charger() au changement) -->
+    <div class="hv-card">
+      <div class="hv-dates">
+        <div class="hv-field">
+          <label class="hv-label" for="hv-du">Du</label>
+          <input id="hv-du" type="date" class="hv-date" [(ngModel)]="dateDebut" (change)="charger()" />
+        </div>
+        <div class="hv-field">
+          <label class="hv-label" for="hv-au">Au</label>
+          <input id="hv-au" type="date" class="hv-date" [(ngModel)]="dateFin" (change)="charger()" />
+        </div>
+      </div>
     </div>
 
-    <div *ngIf="isLoading" style="text-align:center;padding:24px">
-      <ion-spinner></ion-spinner>
+    <!-- Chargement -->
+    <div class="hv-skeleton" *ngIf="isLoading" aria-busy="true">
+      <div class="hv-sk-grid">
+        <div class="hv-sk"></div>
+        <div class="hv-sk"></div>
+      </div>
+      <div class="hv-sk hv-sk--row" *ngFor="let i of [1,2,3]"></div>
     </div>
 
-    <div *ngIf="errorMessage && !isLoading" style="text-align:center;padding:24px;color:var(--ion-color-danger)">
-      {{ errorMessage }}
+    <!-- Erreur -->
+    <div class="hv-card hv-error" *ngIf="errorMessage && !isLoading" role="alert">
+      <span class="hv-pastille hv-pastille--bad" aria-hidden="true">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </span>
+      <p class="hv-error__text">{{ errorMessage }}</p>
     </div>
 
-    <div *ngIf="!isLoading && !errorMessage && !vendeurs.length" style="text-align:center;padding:24px;color:var(--ion-color-medium)">
-      Aucune vente trouvée sur cette période.
+    <!-- Vide -->
+    <div class="hv-card hv-empty" *ngIf="!isLoading && !errorMessage && !vendeurs.length">
+      <gl-empty-state icon="people-outline" title="Aucune vente trouvée sur cette période."></gl-empty-state>
     </div>
 
     <ng-container *ngIf="!isLoading && !errorMessage && vendeurs.length">
 
       <!-- Sélecteur de vendeur -->
-      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
-        <ion-chip *ngFor="let v of vendeurs"
-                  [color]="vendeurSelectionne?.vendeurId === v.vendeurId ? 'primary' : 'medium'"
-                  [outline]="vendeurSelectionne?.vendeurId !== v.vendeurId"
-                  (click)="selectionnerVendeur(v)">
+      <div class="fz-chips" role="group" aria-label="Vendeur">
+        <button type="button" class="fz-chip" *ngFor="let v of vendeurs"
+          [class.fz-chip--active]="vendeurSelectionne?.vendeurId === v.vendeurId"
+          (click)="selectionnerVendeur(v)">
+          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
           {{ v.vendeurNom }}
-        </ion-chip>
+        </button>
       </div>
 
       <ng-container *ngIf="vendeurSelectionne as v">
         <!-- Résumé -->
-        <div class="mobile-card">
-          <div class="row-between">
-            <p class="card-title">Ventes comptant</p>
-            <strong>{{ v.nbVentesComptant }}</strong>
-          </div>
-          <p style="margin:2px 0 10px;font-size:13px;color:var(--ion-color-medium)">{{ formatPrice(v.caComptant) }}</p>
-
-          <div class="row-between">
-            <p class="card-title">Ventes crédit</p>
-            <strong>{{ v.nbVentesCredit }}</strong>
-          </div>
-          <p style="margin:2px 0 10px;font-size:13px;color:var(--ion-color-medium)">{{ formatPrice(v.caCredit) }}</p>
-
-          <div class="row-between" style="border-top:1px solid var(--ion-color-light-shade);padding-top:8px">
-            <p class="card-title">Total période</p>
-            <strong>{{ formatPrice(v.caTotal) }}</strong>
-          </div>
+        <div class="hv-kpis">
+          <gl-stat-card
+            icon="cash-outline"
+            label="Ventes comptant"
+            [value]="'' + v.nbVentesComptant"
+            [sub]="formatPrice(v.caComptant)"
+            variant="green">
+          </gl-stat-card>
+          <gl-stat-card
+            icon="card-outline"
+            label="Ventes crédit"
+            [value]="'' + v.nbVentesCredit"
+            [sub]="formatPrice(v.caCredit)"
+            variant="orange">
+          </gl-stat-card>
         </div>
 
         <!-- Historique par jour -->
-        <div class="mobile-card" *ngFor="let j of v.jours">
-          <div class="row-between">
-            <p class="card-title">{{ formatDate(j.date) }}</p>
-            <strong class="price">{{ formatPrice(j.caTotal) }}</strong>
+        <section class="hv-section">
+          <div class="hv-section__head">
+            <p class="hv-overline">Historique par jour</p>
+            <span class="hv-count">{{ v.jours.length }}</span>
           </div>
-          <p style="margin:4px 0 0;font-size:12px;color:var(--ion-color-medium)">
-            Comptant : {{ j.nbVentesComptant }} ({{ formatPrice(j.caComptant) }})
-            — Crédit : {{ j.nbVentesCredit }} ({{ formatPrice(j.caCredit) }})
-          </p>
-        </div>
+
+          <div class="hv-list animate-cards">
+            <article class="hv-day" *ngFor="let j of v.jours">
+              <div class="hv-day__head">
+                <span class="hv-pastille" aria-hidden="true">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                </span>
+                <p class="hv-day__title">{{ formatDate(j.date) }}</p>
+                <p class="hv-amount">{{ formatPrice(j.caTotal) }}</p>
+              </div>
+              <div class="hv-day__meta">
+                <span class="hv-day__metaItem">
+                  <ion-icon name="cash-outline" aria-hidden="true"></ion-icon>
+                  Comptant : {{ j.nbVentesComptant }} ({{ formatPrice(j.caComptant) }})
+                </span>
+                <span class="hv-day__metaItem">
+                  <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
+                  Crédit : {{ j.nbVentesCredit }} ({{ formatPrice(j.caCredit) }})
+                </span>
+              </div>
+            </article>
+          </div>
+        </section>
       </ng-container>
     </ng-container>
 

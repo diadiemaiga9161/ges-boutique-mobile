@@ -1,141 +1,210 @@
-// Réutilise les styles de login-hero
-.select-content { --background: #f0f4f8; }
+// ══════════════════════════════════════════════════
+//  CHOIX DE BOUTIQUE — design commun Ionic ↔ React Native (BoutiqueSelectScreen)
+//  Même langage visuel que login.page.scss (bandeau dégradé + vague + carte
+//  surface radius 22). Couleurs 100 % tokens --gl-* : l'ancien bloc
+//  @media (prefers-color-scheme: dark) local (inopérant en sombre forcé) est supprimé.
+// ══════════════════════════════════════════════════
+.select-content { --background: var(--gl-bg); }
 
-.select-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
-
-.select-hero {
-  position: relative;
-  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 60%, #0a3d91 100%);
-  padding: 48px 24px 0;
-  overflow: hidden;
-
-  .lh-deco {
-    position: absolute; border-radius: 50%; opacity: 0.08;
-    background: #fff;
-    &--1 { width: 200px; height: 200px; top: -60px; right: -60px; }
-    &--2 { width: 120px; height: 120px; bottom: 20px; left: -30px; }
-  }
-
-  .lh-body { position: relative; text-align: center; padding-bottom: 24px; }
-
-  .lh-logo {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 64px; height: 64px; border-radius: 18px;
-    background: rgba(255,255,255,0.15);
-    margin-bottom: 12px;
-    .lh-logo__m { font-size: 1.6rem; font-weight: 800; color: #fff; }
-    .lh-logo__c { font-size: 1.6rem; font-weight: 800; color: #ffd54f; }
-  }
-
-  .lh-app-name { font-size: 1.6rem; font-weight: 700; color: #fff; margin: 0 0 4px; }
-  .lh-tagline   { font-size: 0.8rem; color: rgba(255,255,255,0.75); margin: 0; }
-
-  .lh-wave { line-height: 0; margin-top: 16px;
-    svg { width: 100%; height: 40px; display: block; }
-  }
+.select-wrapper {
+  min-height:     100vh;
+  display:        flex;
+  flex-direction: column;
 }
 
+// ── Bandeau (bleu dans les 2 thèmes) ──────────────
+.select-hero {
+  position:    relative;
+  overflow:    hidden;
+  flex-shrink: 0;
+  background:  var(--gl-hero);
+}
+
+.sh-deco {
+  position:       absolute;
+  border-radius:  50%;
+  background:     rgba(255,255,255,0.05);
+  pointer-events: none;
+
+  &--1 { width: 280px; height: 280px; top: -100px; right: -80px; }
+  &--2 { width: 160px; height: 160px; top: 30px; left: -60px; }
+}
+
+.sh-body {
+  position:       relative;
+  z-index:        1;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  padding:        56px 24px 28px;
+  padding-top:    max(56px, calc(env(safe-area-inset-top) + 32px));
+  text-align:     center;
+}
+
+.sh-logo {
+  width:           80px;
+  height:          80px;
+  margin-bottom:   16px;
+  border-radius:   22px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      var(--gl-glass);
+  border:          1px solid var(--gl-glass-line);
+  box-shadow:      0 8px 32px rgba(0,0,0,0.25);
+}
+
+.sh-logo__img {
+  display:       block;
+  width:         64px;
+  height:        64px;
+  border-radius: 16px;
+  object-fit:    contain;
+}
+
+.sh-app-name {
+  margin:         0 0 6px;
+  font-size:      32px;
+  font-weight:    800;
+  line-height:    1.1;
+  letter-spacing: -0.01em;
+  color:          #ffffff;
+}
+
+.sh-tagline {
+  margin:      0;
+  font-size:   13px;
+  font-weight: 500;
+  color:       rgba(255,255,255,0.72);
+}
+
+.sh-wave {
+  margin-bottom: -2px;
+  svg { display: block; width: 100%; height: 56px; }
+}
+
+.sh-wave-path { fill: var(--gl-bg); }
+
+// ── Carte ─────────────────────────────────────────
 .select-zone {
-  flex: 1; padding: 16px;
-  display: flex; align-items: flex-start; justify-content: center;
+  flex:           1;
+  padding:        4px 16px 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
 }
 
 .select-card {
-  width: 100%; max-width: 420px;
-  background: #fff; border-radius: 20px;
-  padding: 24px 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-sizing:    border-box;
+  width:         100%;
+  max-width:     440px;
+  margin:        0 auto;
+  padding:       24px;
+  background:    var(--gl-surface);
+  border:        1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow:    var(--gl-card-shadow);
 
-  &__title { font-size: 1.15rem; font-weight: 700; color: #1565c0; margin: 0 0 4px; text-align: center; }
-  &__sub    { font-size: 0.8rem; color: #78909c; text-align: center; margin: 0 0 20px; }
-}
-
-.boutique-list { display: flex; flex-direction: column; gap: 10px; }
-
-.boutique-item {
-  display: flex; align-items: center; gap: 12px;
-  background: #f5f7fa; border: 2px solid transparent; border-radius: 14px;
-  padding: 14px 16px; cursor: pointer; transition: all 0.2s ease;
-  width: 100%; text-align: left;
-
-  &:active, &:hover { border-color: #1565c0; background: #e8f0fe; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  &__icon {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, #1565c0, #1976d2);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    ion-icon { font-size: 1.4rem; color: #fff; }
+  &__title {
+    margin:      0 0 4px;
+    font-size:   22px;
+    font-weight: 800;
+    line-height: 1.25;
+    color:       var(--gl-text);
   }
 
-  &__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  &__nom   { font-size: 0.95rem; font-weight: 600; color: #1a237e; }
-  &__url   { font-size: 0.72rem; color: #78909c; }
+  &__sub {
+    margin:      0 0 20px;
+    font-size:   15px;
+    font-weight: 500;
+    color:       var(--gl-muted);
+  }
+}
 
-  &__arrow { font-size: 1rem; color: #1565c0; flex-shrink: 0; }
+// ── Liste en cartes ───────────────────────────────
+.boutique-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+}
+
+.boutique-item {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  width:         100%;
+  min-height:    72px;
+  padding:       14px 16px;
+  text-align:    left;
+  font-family:   inherit;
+  background:    var(--gl-surface);
+  border:        1px solid var(--gl-border);
+  border-radius: 16px;
+  cursor:        pointer;
+  transition:    border-color 0.15s, background 0.15s;
+
+  &:active:not(:disabled),
+  &:hover:not(:disabled) { border-color: var(--gl-action); background: var(--gl-blue-soft); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  &__icon {
+    flex-shrink:     0;
+    width:           44px;
+    height:          44px;
+    border-radius:   12px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    background:      var(--gl-blue-soft);
+    color:           var(--gl-link);
+
+    ion-icon { font-size: 22px; }
+  }
+
+  &__info {
+    flex:           1;
+    min-width:      0;
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+  }
+
+  &__nom {
+    font-size:     15px;
+    font-weight:   700;
+    color:         var(--gl-text);
+    overflow-wrap: anywhere;
+  }
+
+  &__url {
+    font-size:     12px;
+    font-weight:   500;
+    color:         var(--gl-muted);
+    overflow-wrap: anywhere;
+  }
+
+  &__arrow { flex-shrink: 0; font-size: 18px; color: var(--gl-muted); }
 }
 
 .select-version {
-  text-align: center; font-size: 0.72rem; color: #b0bec5; margin: 20px 0 0;
+  margin:      20px 0 0;
+  text-align:  center;
+  font-size:   12px;
+  font-weight: 500;
+  color:       var(--gl-muted);
 }
 
 // ── Très petit écran (≤360px) ─────────────────────
 @media (max-width: 360px) {
-  .select-hero { padding: 32px 16px 0; }
-  .select-hero .lh-app-name { font-size: 1.3rem; }
-  .boutique-item { padding: 10px 12px; gap: 10px; }
-  .boutique-item__icon { width: 38px; height: 38px; }
-  .boutique-item__icon ion-icon { font-size: 1.1rem; }
+  .sh-body { padding: 48px 16px 24px; }
+  .sh-app-name { font-size: 26px; }
+  .select-zone { padding: 2px 12px 24px; }
+  .select-card { padding: 20px 16px; }
 }
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  .select-hero .lh-body { padding-bottom: 32px; }
-  .select-hero .lh-logo { width: 80px; height: 80px; }
-  .select-hero .lh-logo .lh-logo__m,
-  .select-hero .lh-logo .lh-logo__c { font-size: 2rem; }
-  .select-hero .lh-app-name { font-size: 2rem; }
-  .select-hero .lh-tagline  { font-size: 0.9rem; }
-  .select-card {
-    max-width: 520px;
-    padding: 32px 28px;
-    border-radius: 24px;
-  }
-  .boutique-item { padding: 16px 20px; }
-  .boutique-item__icon { width: 52px; height: 52px; ion-icon { font-size: 1.6rem; } }
-  .boutique-item__nom { font-size: 1.05rem; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .select-card { max-width: 640px; }
-  .boutique-list { gap: 14px; }
-  .boutique-item { padding: 18px 22px; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .select-content { --background: #111827; }
-
-  .select-card {
-    background: #1f2937;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-
-    &__title { color: #60a5fa; }
-    &__sub   { color: #94a3b8; }
-  }
-
-  .boutique-item {
-    background: #263244;
-
-    &:active, &:hover { border-color: #3b72f6; background: rgba(59,114,246,0.18); }
-
-    &__nom  { color: #f1f5f9; }
-    &__url  { color: #94a3b8; }
-    &__arrow { color: #60a5fa; }
-  }
-
-  .select-version { color: #64748b; }
+  .sh-body { padding: 64px 28px 40px; }
+  .sh-logo { width: 96px; height: 96px; }
+  .sh-logo__img { width: 76px; height: 76px; border-radius: 18px; }
+  .sh-app-name { font-size: 40px; }
+  .select-card { max-width: 520px; padding: 32px 28px; }
 }

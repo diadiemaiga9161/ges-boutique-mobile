@@ -5,32 +5,41 @@
     </ion-buttons>
     <ion-title>{{ 'CLIENTS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="startCreate()">
+      <ion-button (click)="startCreate()" [attr.aria-label]="'CLIENTS.ADD' | translate">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="clients-content">
   <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
   <div class="page-pad stack">
 
+    <!-- ═══ Tuiles KPI (≡ StatCard RN : Total / En crédit / Avec tél) ═══ -->
+    <div class="kpi-grid kpi-grid--3">
+      <gl-stat-card icon="people-outline" label="Total" [value]="'' + clients.length" variant="blue"></gl-stat-card>
+      <gl-stat-card icon="wallet-outline" label="En crédit" [value]="'' + nbClientsEnCredit" variant="orange"></gl-stat-card>
+      <gl-stat-card icon="call-outline" label="Avec tél" [value]="'' + nbClientsAvecTelephone" variant="green"></gl-stat-card>
+    </div>
+
+    <!-- ═══ Recherche ═══ -->
     <div class="filter-zone">
       <div class="fz-search">
         <ion-icon name="search-outline" class="fz-icon"></ion-icon>
         <input class="fz-input" [(ngModel)]="query" (input)="applyFilter()" placeholder="Nom, téléphone, email..." />
-        <button class="fz-clear" *ngIf="query" (click)="query=''; applyFilter()">
+        <button type="button" class="fz-clear" *ngIf="query" (click)="query=''; applyFilter()" [attr.aria-label]="'COMMON.CLOSE' | translate">
           <ion-icon name="close-circle-outline"></ion-icon>
         </button>
       </div>
-      <p class="fz-count">
-        <strong>{{ filtered.length }}</strong> client{{ filtered.length > 1 ? 's' : '' }} trouvé{{ filtered.length > 1 ? 's' : '' }}
-      </p>
     </div>
+
+    <p class="gl-overline list-count">
+      {{ filtered.length }} client{{ filtered.length > 1 ? 's' : '' }} trouvé{{ filtered.length > 1 ? 's' : '' }}
+    </p>
 
     <div class="sk-list" *ngIf="loading">
       <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
@@ -43,68 +52,93 @@
       </div>
     </div>
 
-    <section class="stack animate-cards" *ngIf="filtered.length; else empty">
-      <article class="client-card" *ngFor="let client of filtered; trackBy: trackById">
+    <!-- ═══ Liste des clients ═══ -->
+    <section class="client-list animate-cards" *ngIf="filtered.length; else empty">
+      <article class="gl-card client-card" *ngFor="let client of filtered; trackBy: trackById">
 
-        <!-- En-tête -->
-        <div class="client-header">
-          <div class="client-avatar">
-            {{ (client.prenom || client.nom || '?')[0].toUpperCase() }}
+        <div class="gl-card__body">
+          <div class="client-head">
+            <div class="client-avatar">
+              {{ (client.prenom || client.nom || '?')[0].toUpperCase() }}
+            </div>
+            <div class="client-info">
+              <h2 class="client-name">{{ clientService.getFullName(client) }}</h2>
+              <p class="client-meta">
+                <ion-icon name="call-outline"></ion-icon>
+                <span>{{ client.telephone || client.numeroTelephone || 'Pas de téléphone' }}</span>
+              </p>
+              <p class="client-meta client-meta--sm" *ngIf="client.email">
+                <ion-icon name="mail-outline"></ion-icon>
+                <span>{{ client.email }}</span>
+              </p>
+            </div>
+            <!-- Solde crédit non réglé : montant + pastille de statut -->
+            <div class="client-credit" *ngIf="getCreditResume(client) as credit">
+              <span class="client-credit__amount">{{ money(credit.totalRestant) }}</span>
+              <span class="gl-pill" [class.gl-pill--bad]="credit.enRetard" [class.gl-pill--warn]="!credit.enRetard">
+                {{ credit.enRetard ? 'En retard' : 'En cours' }}
+              </span>
+            </div>
           </div>
-          <div class="client-info">
-            <h2 class="client-name">{{ clientService.getFullName(client) }}</h2>
-            <p class="client-phone">
+
+          <!-- Appeler / WhatsApp -->
+          <div class="client-contact" *ngIf="client.telephone || client.numeroTelephone">
+            <button type="button" class="contact-btn contact-btn--call" (click)="appelerClient(client)">
               <ion-icon name="call-outline"></ion-icon>
-              {{ client.telephone || client.numeroTelephone || 'Pas de téléphone' }}
-            </p>
-            <p class="client-email" *ngIf="client.email">
-              <ion-icon name="mail-outline"></ion-icon>
-              {{ client.email }}
-            </p>
-          </div>
-          <div class="client-edit-btns">
-            <ion-button fill="clear" size="small" (click)="startEdit(client)">
-              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-            <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(client)">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-            </ion-button>
+              <span>Appeler</span>
+            </button>
+            <button type="button" class="contact-btn contact-btn--wa" (click)="ouvrirWhatsappClient(client)">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+              <span>WhatsApp</span>
+            </button>
           </div>
         </div>
 
-        <!-- Actions principales -->
-        <div class="client-actions">
-          <button class="client-action-btn" (click)="openVentesModal(client)">
+        <!-- Actions : activité -->
+        <div class="gl-card__foot">
+          <button type="button" class="gl-act gl-act--stacked" (click)="openVentesModal(client)">
             <ion-icon name="receipt-outline"></ion-icon>
             <span>Ventes</span>
           </button>
-          <button class="client-action-btn accent" (click)="openAvanceModal(client)">
+          <button type="button" class="gl-act gl-act--stacked" (click)="openAvanceModal(client)">
             <ion-icon name="wallet-outline"></ion-icon>
             <span>Avance</span>
           </button>
-          <button class="client-action-btn" (click)="openHistoriqueAvancesModal(client)">
+          <button type="button" class="gl-act gl-act--stacked" (click)="openHistoriqueAvancesModal(client)">
             <ion-icon name="time-outline"></ion-icon>
             <span>Historique</span>
           </button>
-          <button class="client-action-btn" *ngIf="programmeFideliteActif && client.id" (click)="openFideliteModal(client)">
+          <button type="button" class="gl-act gl-act--stacked" *ngIf="programmeFideliteActif && client.id" (click)="openFideliteModal(client)">
             <ion-icon name="star-outline"></ion-icon>
             <span>{{ 'FIDELITE.TITLE' | translate }}</span>
           </button>
         </div>
 
-        <!-- Actions PDF / QR / Relevé -->
-        <div class="client-doc-actions">
-          <button class="doc-btn" (click)="openReleveModal(client)" *ngIf="client.id">
+        <!-- Actions : documents -->
+        <div class="gl-card__foot">
+          <button type="button" class="gl-act gl-act--stacked" (click)="openReleveModal(client)" *ngIf="client.id">
             <ion-icon name="reader-outline"></ion-icon>
             <span>{{ 'RELEVE.BUTTON' | translate }}</span>
           </button>
-          <button class="doc-btn" (click)="telechargerReleve(client.id)">
+          <button type="button" class="gl-act gl-act--stacked" (click)="telechargerReleve(client.id)">
             <ion-icon name="document-text-outline"></ion-icon>
             <span>PDF Relevé</span>
           </button>
-          <button class="doc-btn doc-btn--qr" (click)="showQrCode(client)" *ngIf="client.id">
+          <button type="button" class="gl-act gl-act--stacked" (click)="showQrCode(client)" *ngIf="client.id">
             <ion-icon name="qr-code-outline"></ion-icon>
             <span>QR Code</span>
+          </button>
+        </div>
+
+        <!-- Actions : gestion -->
+        <div class="gl-card__foot">
+          <button type="button" class="gl-act" (click)="startEdit(client)">
+            <ion-icon name="create-outline"></ion-icon>
+            <span>{{ 'COMMON.EDIT' | translate }}</span>
+          </button>
+          <button type="button" class="gl-act gl-act--danger" (click)="confirmDelete(client)">
+            <ion-icon name="trash-outline"></ion-icon>
+            <span>{{ 'COMMON.DELETE' | translate }}</span>
           </button>
         </div>
 
@@ -112,725 +146,743 @@
     </section>
 
     <ng-template #empty>
-      <div class="empty-v2" *ngIf="!loading">
-        <div class="empty-v2__icon"><ion-icon name="people-outline"></ion-icon></div>
-        <p class="empty-v2__title">{{ 'CLIENTS.EMPTY' | translate }}</p>
-        <p class="empty-v2__text">{{ 'CLIENTS.ADD' | translate }}</p>
-        <ion-button size="small" (click)="startCreate()">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          {{ 'CLIENTS.ADD' | translate }}
-        </ion-button>
-      </div>
+      <gl-empty-state
+        *ngIf="!loading"
+        icon="people-outline"
+        [title]="'CLIENTS.EMPTY' | translate"
+        [message]="'CLIENTS.ADD' | translate"
+        [ctaLabel]="'CLIENTS.ADD' | translate"
+        (ctaClick)="startCreate()">
+      </gl-empty-state>
     </ng-template>
   </div>
+
+  <!-- Bouton flottant étendu « Nouveau client » (même action que le + de l'en-tête).
+       Le contenu réserve 96px en bas (.clients-content). -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <button type="button" class="gl-fab-extended" (click)="startCreate()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+      {{ 'CLIENTS.ADD' | translate }}
+    </button>
+  </ion-fab>
 </ion-content>
 
-<!-- ==================== MODAL AJOUT / MODIFICATION CLIENT ==================== -->
-<ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+<!-- ==================== MODALE AJOUT / MODIFICATION CLIENT ==================== -->
+<ion-modal class="gl-dlg" [isOpen]="showForm" (didDismiss)="showForm = false">
   <ng-template>
-    <ion-header>
-      <ion-toolbar [color]="editing ? 'warning' : 'primary'">
-        <ion-title>{{ editing ? 'Modifier le client' : 'Nouveau client' }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showForm = false">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div class="stack">
-        <div class="modal-section">
-          <p class="modal-section-title">Identité</p>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon [name]="editing ? 'create-outline' : 'person-add-outline'"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">{{ editing ? 'Modifier le client' : 'Nouveau client' }}</h2>
+        </div>
+        <button type="button" class="dlg-close" (click)="showForm = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <div class="dlg-body">
+        <section class="gl-section">
+          <p class="gl-overline gl-overline--link">Identité</p>
           <div class="two-cols">
-            <ion-item>
-              <ion-input label="Nom *" labelPlacement="floating" [(ngModel)]="form.nom"></ion-input>
-            </ion-item>
-            <ion-item>
-              <ion-input label="Prénom" labelPlacement="floating" [(ngModel)]="form.prenom"></ion-input>
-            </ion-item>
+            <label class="gl-field">
+              <span class="gl-label">Nom *</span>
+              <input class="gl-input" [(ngModel)]="form.nom" />
+            </label>
+            <label class="gl-field">
+              <span class="gl-label">Prénom</span>
+              <input class="gl-input" [(ngModel)]="form.prenom" />
+            </label>
           </div>
-          <ion-item>
-            <ion-input label="Téléphone" labelPlacement="floating" type="tel" [(ngModel)]="form.numeroTelephone"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Email" labelPlacement="floating" type="email" [(ngModel)]="form.email"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-textarea label="Adresse" labelPlacement="floating" [(ngModel)]="form.adresse" rows="2"></ion-textarea>
-          </ion-item>
-        </div>
-        <ion-button expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'">
-          <ion-icon name="save-outline" slot="start"></ion-icon>
+          <label class="gl-field">
+            <span class="gl-label">Téléphone</span>
+            <input class="gl-input" type="tel" inputmode="tel" [(ngModel)]="form.numeroTelephone" />
+          </label>
+          <label class="gl-field">
+            <span class="gl-label">Email</span>
+            <input class="gl-input" type="email" [(ngModel)]="form.email" />
+          </label>
+          <label class="gl-field">
+            <span class="gl-label">Adresse</span>
+            <textarea class="gl-input gl-textarea" rows="2" [(ngModel)]="form.adresse"></textarea>
+          </label>
+        </section>
+      </div>
+
+      <footer class="dlg-foot">
+        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="save()">
+          <ion-icon name="save-outline"></ion-icon>
           {{ editing ? 'Enregistrer' : 'Créer le client' }}
-        </ion-button>
-      </div>
-    </ion-content>
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL QR CODE CLIENT ==================== -->
-<ion-modal [isOpen]="showQrModal" (didDismiss)="closeQrModal()" [breakpoints]="[0, 0.55]" [initialBreakpoint]="0.55">
+<!-- ==================== MODALE QR CODE CLIENT ==================== -->
+<ion-modal class="gl-dlg" [isOpen]="showQrModal" (didDismiss)="closeQrModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>QR Code · {{ selectedClientForQr?.nom }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeQrModal()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding" *ngIf="selectedClientForQr">
-      <div style="text-align:center;padding:16px">
-        <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px">
-          Le client scanne ce QR code pour télécharger son relevé de compte PDF
-        </p>
-        <div *ngIf="!qrCodeDataUrl" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:2px solid #e2e8f0;border-radius:12px;margin:0 auto">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon name="qr-code-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">QR Code</h2>
+          <p class="dlg-sub">{{ selectedClientForQr?.nom }}</p>
         </div>
-        <img *ngIf="qrCodeDataUrl" [src]="qrCodeDataUrl"
-             alt="QR Code"
-             style="width:200px;height:200px;border:2px solid #e2e8f0;border-radius:12px;padding:8px" />
-        <p style="font-size:0.8rem;color:#94a3b8;margin-top:12px">{{ selectedClientForQr.nom }}</p>
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
-          <ion-button size="small" fill="outline" (click)="telechargerQrCode(selectedClientForQr)">
-            <ion-icon name="download-outline" slot="start"></ion-icon>
-            Télécharger
-          </ion-button>
-          <ion-button size="small" (click)="telechargerReleve(selectedClientForQr.id)">
-            <ion-icon name="document-text-outline" slot="start"></ion-icon>
-            Voir PDF
-          </ion-button>
+        <button type="button" class="dlg-close" (click)="closeQrModal()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <div class="dlg-body qr-body" *ngIf="selectedClientForQr">
+        <p class="qr-hint">Le client scanne ce QR code pour télécharger son relevé de compte PDF</p>
+        <div class="qr-frame" *ngIf="!qrCodeDataUrl">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
+        <img class="qr-frame qr-img" *ngIf="qrCodeDataUrl" [src]="qrCodeDataUrl" alt="QR Code" />
+        <p class="qr-name">{{ selectedClientForQr.nom }}</p>
       </div>
-    </ion-content>
+
+      <footer class="dlg-foot" *ngIf="selectedClientForQr">
+        <button type="button" class="gl-btn gl-btn--secondary" (click)="telechargerQrCode(selectedClientForQr)">
+          <ion-icon name="download-outline"></ion-icon>
+          Télécharger
+        </button>
+        <button type="button" class="gl-btn gl-btn--primary" (click)="telechargerReleve(selectedClientForQr.id)">
+          <ion-icon name="document-text-outline"></ion-icon>
+          Voir PDF
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL VENTES DU CLIENT ==================== -->
-<ion-modal [isOpen]="showVentesModal" (didDismiss)="closeVentesModal()">
+<!-- ==================== MODALE VENTES DU CLIENT ==================== -->
+<ion-modal class="gl-dlg gl-dlg--lg" [isOpen]="showVentesModal" (didDismiss)="closeVentesModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ selectedClientForVentes?.nom }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="telechargerReleve(selectedClientForVentes?.id)" fill="clear" title="PDF Relevé">
-            <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-          <ion-button (click)="closeVentesModal()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-
-      <!-- Résumé crédits en cours -->
-      <div class="credits-summary-banner" *ngIf="creditsEnCours.length && !loadingVentes">
-        <div class="csb-header">
-          <ion-icon name="alert-circle-outline"></ion-icon>
-          <span>{{ creditsEnCours.length }} crédit(s) en cours</span>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon name="receipt-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">{{ selectedClientForVentes?.nom }}</h2>
         </div>
-        <div class="csb-stats">
-          <div class="csb-stat">
-            <span class="csb-label">Total crédits</span>
-            <span class="csb-val">{{ money(getTotalCreditsTotal()) }}</span>
-          </div>
-          <div class="csb-stat">
-            <span class="csb-label">Versé</span>
-            <span class="csb-val csb-val--green">{{ money(getTotalCreditsVerse()) }}</span>
-          </div>
-          <div class="csb-stat">
-            <span class="csb-label">Restant dû</span>
-            <span class="csb-val csb-val--red">{{ money(getTotalCreditsRestant()) }}</span>
+        <button type="button" class="dlg-close dlg-close--link" (click)="telechargerReleve(selectedClientForVentes?.id)" title="PDF Relevé" aria-label="PDF Relevé">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </button>
+        <button type="button" class="dlg-close" (click)="closeVentesModal()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <div class="dlg-body">
+        <!-- Résumé crédits en cours -->
+        <div class="csb" *ngIf="creditsEnCours.length && !loadingVentes">
+          <p class="csb-head">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>{{ creditsEnCours.length }} crédit(s) en cours</span>
+          </p>
+          <div class="csb-stats">
+            <div class="csb-stat">
+              <span class="csb-label">Total crédits</span>
+              <span class="csb-val">{{ money(getTotalCreditsTotal()) }}</span>
+            </div>
+            <div class="csb-stat">
+              <span class="csb-label">Versé</span>
+              <span class="csb-val csb-val--ok">{{ money(getTotalCreditsVerse()) }}</span>
+            </div>
+            <div class="csb-stat">
+              <span class="csb-label">Restant dû</span>
+              <span class="csb-val csb-val--bad">{{ money(getTotalCreditsRestant()) }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div style="padding:12px">
         <ion-segment [(ngModel)]="filterVenteType" (ionChange)="applyVentesFilter()">
           <ion-segment-button value="">Toutes</ion-segment-button>
           <ion-segment-button value="COMPTANT">Comptant</ion-segment-button>
           <ion-segment-button value="CREDIT">Crédit</ion-segment-button>
           <ion-segment-button value="CREDIT_REGLE">Réglé</ion-segment-button>
         </ion-segment>
-      </div>
 
-      <ion-spinner *ngIf="loadingVentes" style="display:block;margin:20px auto"></ion-spinner>
-
-      <div class="page-pad stack" *ngIf="!loadingVentes">
-        <div *ngIf="ventesFiltered.length === 0" class="empty-state">Aucune vente</div>
-
-        <article class="vente-detail-card" *ngFor="let vente of ventesFiltered"
-                 [class.vdc--credit]="vente.estCredit && !vente.creditRegle"
-                 [class.vdc--retard]="isCreditEnRetard(vente)">
-
-          <!-- En-tête vente -->
-          <div class="vdc-header" (click)="openVenteDetail(vente)">
-            <div class="vdc-info">
-              <h3 class="vdc-num">{{ vente.numeroVente }}</h3>
-              <p class="vdc-date">{{ formatDate(vente.dateVente) }}</p>
-            </div>
-            <div class="vdc-right">
-              <p class="vdc-amount">{{ money(vente.montantTotal) }}</p>
-              <ion-badge [color]="getVenteBadgeColor(vente)">{{ getVenteBadgeLabel(vente) }}</ion-badge>
-            </div>
-          </div>
-
-          <!-- Barre de progression crédit -->
-          <div class="vdc-credit-bar" *ngIf="vente.estCredit && !vente.creditRegle">
-            <div class="vcb-track">
-              <div class="vcb-fill" [style.width.%]="getPourcentagePaiement(vente)"
-                   [class.vcb-fill--late]="isCreditEnRetard(vente)"></div>
-            </div>
-            <div class="vcb-labels">
-              <span class="vcb-versed">Versé {{ money(vente.montantVerse || 0) }}</span>
-              <span class="vcb-pct">{{ getPourcentagePaiement(vente) }}%</span>
-              <span class="vcb-reste" [class.vcb-reste--late]="isCreditEnRetard(vente)">
-                Reste {{ money(getMontantRestant(vente)) }}
-              </span>
-            </div>
-            <p class="vcb-echeance" *ngIf="vente.dateEcheance">
-              <ion-icon name="calendar-outline"></ion-icon>
-              Échéance: {{ vente.dateEcheance | date:'dd/MM/yyyy' }}
-            </p>
-          </div>
-
-          <!-- Produits (aperçu) -->
-          <div class="vdc-products" *ngIf="vente.produits?.length">
-            <div class="vdc-prod-line" *ngFor="let p of (vente.produits | slice:0:2)">
-              <span class="vdp-qty">×{{ p.quantite }}</span>
-              <span class="vdp-name">{{ p.produitNom }}</span>
-              <span class="vdp-total">{{ money(p.sousTotal) }}</span>
-            </div>
-            <p class="vdc-more" *ngIf="vente.produits && vente.produits.length > 2">
-              + {{ vente.produits.length - 2 }} article(s)...
-              <span (click)="openVenteDetail(vente)" style="color:#3b82f6;cursor:pointer">Voir tout</span>
-            </p>
-          </div>
-
-          <!-- Actions par vente -->
-          <div class="vdc-actions">
-            <button class="vda-btn" (click)="openVenteDetail(vente)">
-              <ion-icon name="list-outline"></ion-icon>
-              <span>Détails</span>
-            </button>
-            <button class="vda-btn vda-btn--pdf" (click)="telechargerFacturePdf(vente.id)">
-              <ion-icon name="document-text-outline"></ion-icon>
-              <span>Facture PDF</span>
-            </button>
-          </div>
-        </article>
-
-        <div class="form-panel row-between" *ngIf="ventesFiltered.length">
-          <span class="muted">Total ({{ ventesFiltered.length }} ventes)</span>
-          <strong class="price">{{ money(getTotalVentes()) }}</strong>
+        <div class="dlg-loading" *ngIf="loadingVentes">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
-      </div>
-    </ion-content>
 
-    <ion-footer class="ion-no-border" *ngIf="!loadingVentes && ventesFiltered.length">
-      <div style="padding:8px 16px">
-        <ion-button expand="block" fill="outline" (click)="telechargerReleve(selectedClientForVentes?.id)">
-          <ion-icon name="document-text-outline" slot="start"></ion-icon>
+        <ng-container *ngIf="!loadingVentes">
+          <gl-empty-state *ngIf="ventesFiltered.length === 0" icon="receipt-outline" title="Aucune vente"></gl-empty-state>
+
+          <article class="sub-card vente-card" *ngFor="let vente of ventesFiltered"
+                   [class.vente-card--credit]="vente.estCredit && !vente.creditRegle"
+                   [class.vente-card--retard]="isCreditEnRetard(vente)">
+
+            <div class="sub-card__body vente-top" (click)="openVenteDetail(vente)">
+              <div class="vente-info">
+                <h3 class="vente-num">{{ vente.numeroVente }}</h3>
+                <p class="vente-date">{{ formatDate(vente.dateVente) }}</p>
+              </div>
+              <div class="vente-right">
+                <p class="vente-amount">{{ money(vente.montantTotal) }}</p>
+                <span class="gl-pill" [ngClass]="'gl-pill--' + getVenteBadgeColor(vente)">{{ getVenteBadgeLabel(vente) }}</span>
+              </div>
+            </div>
+
+            <!-- Barre de progression crédit -->
+            <div class="vente-credit" *ngIf="vente.estCredit && !vente.creditRegle">
+              <div class="gl-progress">
+                <div class="gl-progress__fill" [style.width.%]="getPourcentagePaiement(vente)"
+                     [class.gl-progress__fill--bad]="isCreditEnRetard(vente)"></div>
+              </div>
+              <div class="progress-labels">
+                <span class="progress-ok">Versé {{ money(vente.montantVerse || 0) }}</span>
+                <span>{{ getPourcentagePaiement(vente) }}%</span>
+                <span class="progress-rest" [class.progress-rest--bad]="isCreditEnRetard(vente)">
+                  Reste {{ money(getMontantRestant(vente)) }}
+                </span>
+              </div>
+              <p class="vente-echeance" *ngIf="vente.dateEcheance">
+                <ion-icon name="calendar-outline"></ion-icon>
+                Échéance: {{ vente.dateEcheance | date:'dd/MM/yyyy' }}
+              </p>
+            </div>
+
+            <!-- Produits (aperçu) -->
+            <div class="vente-products" *ngIf="vente.produits?.length">
+              <div class="prod-line" *ngFor="let p of (vente.produits | slice:0:2)">
+                <span class="prod-qty">×{{ p.quantite }}</span>
+                <span class="prod-name">{{ p.produitNom }}</span>
+                <span class="prod-total">{{ money(p.sousTotal) }}</span>
+              </div>
+              <p class="vente-more" *ngIf="vente.produits && vente.produits.length > 2">
+                + {{ vente.produits.length - 2 }} article(s)...
+                <button type="button" class="link-btn" (click)="openVenteDetail(vente)">Voir tout</button>
+              </p>
+            </div>
+
+            <!-- Actions par vente -->
+            <div class="gl-card__foot">
+              <button type="button" class="gl-act" (click)="openVenteDetail(vente)">
+                <ion-icon name="list-outline"></ion-icon>
+                <span>Détails</span>
+              </button>
+              <button type="button" class="gl-act" (click)="telechargerFacturePdf(vente.id)">
+                <ion-icon name="document-text-outline"></ion-icon>
+                <span>Facture PDF</span>
+              </button>
+            </div>
+          </article>
+
+          <div class="total-band" *ngIf="ventesFiltered.length">
+            <span>Total ({{ ventesFiltered.length }} ventes)</span>
+            <strong>{{ money(getTotalVentes()) }}</strong>
+          </div>
+        </ng-container>
+      </div>
+
+      <footer class="dlg-foot" *ngIf="!loadingVentes && ventesFiltered.length">
+        <button type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="telechargerReleve(selectedClientForVentes?.id)">
+          <ion-icon name="document-text-outline"></ion-icon>
           Télécharger le relevé complet PDF
-        </ion-button>
-      </div>
-    </ion-footer>
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL RELEVÉ CLIENT (situation client, JSON paginé) ==================== -->
-<ion-modal [isOpen]="showReleveModal" (didDismiss)="closeReleveModal()">
+<!-- ==================== MODALE RELEVÉ CLIENT (situation client, JSON paginé) ==================== -->
+<ion-modal class="gl-dlg gl-dlg--lg" [isOpen]="showReleveModal" (didDismiss)="closeReleveModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ 'RELEVE.TITLE' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeReleveModal()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-
-      <!-- En-tête client -->
-      <div class="releve-header" *ngIf="selectedClientForReleve">
-        <h2 class="releve-client-name">{{ clientService.getFullName(selectedClientForReleve) }}</h2>
-        <p class="releve-client-meta" *ngIf="releveData?.client?.telephone">
-          <ion-icon name="call-outline"></ion-icon> {{ releveData?.client?.telephone }}
-        </p>
-        <p class="releve-client-meta" *ngIf="releveData?.client?.adresse">
-          <ion-icon name="location-outline"></ion-icon> {{ releveData?.client?.adresse }}
-        </p>
-
-        <div class="releve-stats" *ngIf="releveData">
-          <div class="releve-stat">
-            <span class="releve-stat-label">{{ 'RELEVE.TOTAL_SALES' | translate }}</span>
-            <span class="releve-stat-value">{{ money(releveData.totalVentes) }}</span>
-          </div>
-          <div class="releve-stat">
-            <span class="releve-stat-label">{{ 'RELEVE.TOTAL_PAYMENTS' | translate }}</span>
-            <span class="releve-stat-value releve-stat-value--green">{{ money(releveData.totalVersements) }}</span>
-          </div>
-          <div class="releve-stat releve-stat--balance">
-            <span class="releve-stat-label">{{ 'RELEVE.BALANCE' | translate }}</span>
-            <span class="releve-stat-value" [class.releve-stat-value--red]="releveData.soldeActuel > 0">{{ money(releveData.soldeActuel) }}</span>
-          </div>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon name="reader-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">{{ 'RELEVE.TITLE' | translate }}</h2>
+          <p class="dlg-sub" *ngIf="selectedClientForReleve">{{ clientService.getFullName(selectedClientForReleve) }}</p>
         </div>
-      </div>
+        <button type="button" class="dlg-close dlg-close--link" *ngIf="selectedClientForReleve?.id" (click)="telechargerReleveAffiche()" title="PDF de la situation" aria-label="PDF de la situation">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </button>
+        <button type="button" class="dlg-close" (click)="closeReleveModal()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
 
-      <!-- Filtre période -->
-      <div class="periode-filter">
-        <div class="period-chips-static">
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'jour'" (click)="appliquerRelevePreset('jour')">{{ 'RELEVE.PERIOD_TODAY' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'hier'" (click)="appliquerRelevePreset('hier')">{{ 'RELEVE.PERIOD_YESTERDAY' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'semaine'" (click)="appliquerRelevePreset('semaine')">{{ 'RELEVE.PERIOD_WEEK' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'mois'" (click)="appliquerRelevePreset('mois')">{{ 'RELEVE.PERIOD_MONTH' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'annee'" (click)="appliquerRelevePreset('annee')">{{ 'RELEVE.PERIOD_YEAR' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'personnalise'" (click)="appliquerRelevePreset('personnalise')">{{ 'RELEVE.PERIOD_CUSTOM' | translate }}</button>
-          <button class="pchip2" [class.pchip2--active]="relevePeriodePreset === 'tout'" (click)="appliquerRelevePreset('tout')">{{ 'RELEVE.PERIOD_ALL' | translate }}</button>
-        </div>
-        <div class="periode-custom-row" *ngIf="relevePeriodePreset === 'personnalise'">
-          <input type="date" class="periode-date-input" [(ngModel)]="releveDateDebut" [attr.aria-label]="'RELEVE.FROM_DATE' | translate" />
-          <input type="date" class="periode-date-input" [(ngModel)]="releveDateFin" [attr.aria-label]="'RELEVE.TO_DATE' | translate" />
-          <ion-button size="small" (click)="appliquerRelevePeriodePersonnalisee()">{{ 'RELEVE.APPLY' | translate }}</ion-button>
-        </div>
-      </div>
-
-      <!-- Filtre type -->
-      <div style="padding:0 12px 12px">
-        <ion-segment [value]="releveTypeFilter" (ionChange)="changerReleveType($any($event.detail.value))">
-          <ion-segment-button value="">{{ 'RELEVE.TYPE_ALL' | translate }}</ion-segment-button>
-          <ion-segment-button value="VENTE">{{ 'RELEVE.TYPE_SALES' | translate }}</ion-segment-button>
-          <ion-segment-button value="VERSEMENT">{{ 'RELEVE.TYPE_PAYMENTS' | translate }}</ion-segment-button>
-        </ion-segment>
-      </div>
-
-      <ion-spinner *ngIf="loadingReleve" style="display:block;margin:20px auto"></ion-spinner>
-
-      <div class="page-pad stack" *ngIf="!loadingReleve && releveData">
-        <div *ngIf="releveData.lignes.length === 0" class="empty-state">{{ 'RELEVE.EMPTY' | translate }}</div>
-
-        <article class="releve-ligne-card" *ngFor="let ligne of releveData.lignes">
-          <div class="rlc-header">
-            <div class="rlc-date">
-              <span>{{ formatDate(ligne.date) }}</span>
-              <span class="rlc-heure">{{ formatHeure(ligne.date) }}</span>
-            </div>
-            <ion-badge [color]="releveLigneBadgeColor(ligne)">{{ releveLigneBadgeLabel(ligne) }}</ion-badge>
-          </div>
-
-          <p class="rlc-ref" *ngIf="ligne.referenceVente || ligne.referenceReglement">
-            <ion-icon name="pricetag-outline"></ion-icon>
-            {{ ligne.referenceReglement || ligne.referenceVente }}
+      <div class="dlg-body">
+        <!-- En-tête client -->
+        <div class="releve-client" *ngIf="selectedClientForReleve && (releveData?.client?.telephone || releveData?.client?.adresse)">
+          <p class="client-meta" *ngIf="releveData?.client?.telephone">
+            <ion-icon name="call-outline"></ion-icon><span>{{ releveData?.client?.telephone }}</span>
           </p>
-
-          <!-- Ligne VENTE : produit -->
-          <div class="rlc-produit" *ngIf="ligne.type === 'VENTE'">
-            <span class="rlc-prod-qty">×{{ ligne.quantite }}</span>
-            <span class="rlc-prod-name">{{ ligne.produitNom }}</span>
-            <span class="rlc-prod-pu" *ngIf="ligne.prixUnitaire != null">{{ money(ligne.prixUnitaire) }}</span>
-          </div>
-
-          <div class="rlc-montants">
-            <div class="rlc-montant" *ngIf="ligne.montantVente != null">
-              <span class="rlc-montant-label">{{ 'RELEVE.SALE_AMOUNT' | translate }}</span>
-              <span class="rlc-montant-value">{{ money(ligne.montantVente) }}</span>
-            </div>
-            <div class="rlc-montant" *ngIf="ligne.montantVersement != null">
-              <span class="rlc-montant-label">{{ 'RELEVE.PAYMENT_AMOUNT' | translate }}</span>
-              <span class="rlc-montant-value rlc-montant-value--green">{{ money(ligne.montantVersement) }}</span>
-            </div>
-            <div class="rlc-montant" *ngIf="ligne.resteAPayerApres != null">
-              <span class="rlc-montant-label">{{ 'RELEVE.BALANCE_AFTER' | translate }}</span>
-              <span class="rlc-montant-value" [class.rlc-montant-value--red]="ligne.resteAPayerApres > 0">{{ money(ligne.resteAPayerApres) }}</span>
-            </div>
-          </div>
-
-          <p class="rlc-footer" *ngIf="ligne.modePaiement || ligne.utilisateurNom">
-            <span *ngIf="ligne.modePaiement">{{ ligne.modePaiement }}</span>
-            <span *ngIf="ligne.utilisateurNom">
-              <ion-icon name="person-outline"></ion-icon> {{ ligne.utilisateurNom }}
-            </span>
+          <p class="client-meta" *ngIf="releveData?.client?.adresse">
+            <ion-icon name="location-outline"></ion-icon><span>{{ releveData?.client?.adresse }}</span>
           </p>
-        </article>
-
-        <!-- Pagination serveur -->
-        <div class="releve-pagination" *ngIf="releveData.lignes.length">
-          <ion-button size="small" fill="outline" [disabled]="relevePage <= 0" (click)="relevePagePrecedente()">
-            <ion-icon name="chevron-back-outline" slot="start"></ion-icon>
-            {{ 'RELEVE.PREVIOUS' | translate }}
-          </ion-button>
-          <span class="releve-page-info">
-            {{ 'RELEVE.PAGE' | translate }} {{ relevePage + 1 }} {{ 'RELEVE.OF' | translate }} {{ releveData.totalPages || 1 }}
-          </span>
-          <ion-button size="small" fill="outline" [disabled]="relevePage >= releveData.totalPages - 1" (click)="relevePageSuivante()">
-            {{ 'RELEVE.NEXT' | translate }}
-            <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
-          </ion-button>
         </div>
+
+        <div class="kpi-grid" *ngIf="releveData">
+          <gl-stat-card icon="receipt-outline" [label]="'RELEVE.TOTAL_SALES' | translate" [value]="money(releveData.totalVentes)" variant="blue"></gl-stat-card>
+          <gl-stat-card icon="cash-outline" [label]="'RELEVE.TOTAL_PAYMENTS' | translate" [value]="money(releveData.totalVersements)" variant="green"></gl-stat-card>
+          <div class="kpi-span">
+            <gl-stat-card icon="wallet-outline" [label]="'RELEVE.BALANCE' | translate" [value]="money(releveData.soldeActuel)" [variant]="releveData.soldeActuel > 0 ? 'red' : 'slate'"></gl-stat-card>
+          </div>
+        </div>
+
+        <!-- Filtre période -->
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'jour'" (click)="appliquerRelevePreset('jour')">{{ 'RELEVE.PERIOD_TODAY' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'hier'" (click)="appliquerRelevePreset('hier')">{{ 'RELEVE.PERIOD_YESTERDAY' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'semaine'" (click)="appliquerRelevePreset('semaine')">{{ 'RELEVE.PERIOD_WEEK' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'mois'" (click)="appliquerRelevePreset('mois')">{{ 'RELEVE.PERIOD_MONTH' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'annee'" (click)="appliquerRelevePreset('annee')">{{ 'RELEVE.PERIOD_YEAR' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'personnalise'" (click)="appliquerRelevePreset('personnalise')">{{ 'RELEVE.PERIOD_CUSTOM' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="relevePeriodePreset === 'tout'" (click)="appliquerRelevePreset('tout')">{{ 'RELEVE.PERIOD_ALL' | translate }}</button>
+        </div>
+
+        <div class="filter-dates" *ngIf="relevePeriodePreset === 'personnalise'">
+          <input type="date" class="gl-input" [(ngModel)]="releveDateDebut" [attr.aria-label]="'RELEVE.FROM_DATE' | translate" />
+          <input type="date" class="gl-input" [(ngModel)]="releveDateFin" [attr.aria-label]="'RELEVE.TO_DATE' | translate" />
+          <button type="button" class="gl-btn gl-btn--primary gl-btn--sm" (click)="appliquerRelevePeriodePersonnalisee()">{{ 'RELEVE.APPLY' | translate }}</button>
+        </div>
+
+        <!-- Filtre type (mêmes valeurs que l'ancien segment) -->
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="releveTypeFilter === ''" (click)="changerReleveType('')">{{ 'RELEVE.TYPE_ALL' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="releveTypeFilter === 'VENTE'" (click)="changerReleveType('VENTE')">{{ 'RELEVE.TYPE_SALES' | translate }}</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="releveTypeFilter === 'VERSEMENT'" (click)="changerReleveType('VERSEMENT')">{{ 'RELEVE.TYPE_PAYMENTS' | translate }}</button>
+        </div>
+
+        <div class="dlg-loading" *ngIf="loadingReleve">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+
+        <ng-container *ngIf="!loadingReleve && releveData">
+          <gl-empty-state *ngIf="releveData.lignes.length === 0" icon="reader-outline" [title]="'RELEVE.EMPTY' | translate"></gl-empty-state>
+
+          <article class="sub-card releve-line" *ngFor="let ligne of releveData.lignes">
+            <div class="sub-card__body">
+              <div class="rl-head">
+                <div class="rl-date">
+                  <span>{{ formatDate(ligne.date) }}</span>
+                  <span class="rl-heure">{{ formatHeure(ligne.date) }}</span>
+                </div>
+                <span class="gl-pill" [ngClass]="'gl-pill--' + releveLigneBadgeColor(ligne)">{{ releveLigneBadgeLabel(ligne) }}</span>
+              </div>
+
+              <p class="rl-ref" *ngIf="ligne.referenceVente || ligne.referenceReglement">
+                <ion-icon name="pricetag-outline"></ion-icon>
+                {{ ligne.referenceReglement || ligne.referenceVente }}
+              </p>
+
+              <!-- Ligne VENTE : produit -->
+              <div class="prod-line rl-produit" *ngIf="ligne.type === 'VENTE'">
+                <span class="prod-qty">×{{ ligne.quantite }}</span>
+                <span class="prod-name">{{ ligne.produitNom }}</span>
+                <span class="rl-pu" *ngIf="ligne.prixUnitaire != null">{{ money(ligne.prixUnitaire) }}</span>
+              </div>
+
+              <!-- Ligne VERSEMENT : ventes réglées (un paiement groupé reste une seule ligne, avec le détail) -->
+              <div class="rl-reglees" *ngIf="ligne.type === 'VERSEMENT' && ligne.ventesReglees?.length">
+                <div class="rl-reglee" *ngFor="let v of ligne.ventesReglees">
+                  <div class="rl-reglee-head" *ngIf="(ligne.ventesReglees?.length || 0) > 1">
+                    <span class="rl-reglee-num">{{ v.numeroVente || '—' }}</span>
+                    <span class="rl-reglee-montant">{{ money(v.montantApplique) }}</span>
+                  </div>
+                  <p class="rl-reglee-produits">{{ produitsVenteReglee(v) }}</p>
+                </div>
+              </div>
+
+              <div class="rl-montants">
+                <div class="rl-montant" *ngIf="ligne.montantVente != null">
+                  <span class="rl-montant-label">{{ 'RELEVE.SALE_AMOUNT' | translate }}</span>
+                  <span class="rl-montant-value">{{ money(ligne.montantVente) }}</span>
+                </div>
+                <div class="rl-montant" *ngIf="ligne.montantVersement != null">
+                  <span class="rl-montant-label">{{ 'RELEVE.PAYMENT_AMOUNT' | translate }}</span>
+                  <span class="rl-montant-value rl-montant-value--ok">{{ money(ligne.montantVersement) }}</span>
+                </div>
+                <div class="rl-montant" *ngIf="ligne.resteAPayerApres != null">
+                  <span class="rl-montant-label">{{ 'RELEVE.BALANCE_AFTER' | translate }}</span>
+                  <span class="rl-montant-value" [class.rl-montant-value--bad]="ligne.resteAPayerApres > 0">{{ money(ligne.resteAPayerApres) }}</span>
+                </div>
+              </div>
+
+              <p class="rl-foot" *ngIf="ligne.modePaiement || ligne.utilisateurNom">
+                <span *ngIf="ligne.modePaiement">{{ ligne.modePaiement }}</span>
+                <span *ngIf="ligne.utilisateurNom">
+                  <ion-icon name="person-outline"></ion-icon> {{ ligne.utilisateurNom }}
+                </span>
+              </p>
+            </div>
+          </article>
+        </ng-container>
       </div>
-    </ion-content>
+
+      <!-- Pagination serveur (pied collant) -->
+      <footer class="dlg-foot dlg-foot--pager" *ngIf="!loadingReleve && releveData && releveData.lignes.length">
+        <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" [disabled]="relevePage <= 0" (click)="relevePagePrecedente()">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+          {{ 'RELEVE.PREVIOUS' | translate }}
+        </button>
+        <span class="pager-info">
+          {{ 'RELEVE.PAGE' | translate }} {{ relevePage + 1 }} {{ 'RELEVE.OF' | translate }} {{ releveData.totalPages || 1 }}
+        </span>
+        <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" [disabled]="relevePage >= releveData.totalPages - 1" (click)="relevePageSuivante()">
+          {{ 'RELEVE.NEXT' | translate }}
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL DÉTAIL VENTE (produits) ==================== -->
-<ion-modal [isOpen]="showVenteDetailModal" (didDismiss)="closeVenteDetail()" [breakpoints]="[0, 0.92]" [initialBreakpoint]="0.92">
+<!-- ==================== MODALE DÉTAIL VENTE (reçu) ==================== -->
+<ion-modal class="gl-dlg gl-dlg--lg" [isOpen]="showVenteDetailModal" (didDismiss)="closeVenteDetail()">
   <ng-template>
-    <ion-header class="ion-no-border">
-      <ion-toolbar [color]="design === 2 ? 'dark' : 'primary'">
-        <ion-title>Reçu · {{ selectedVenteDetail?.numeroVente }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeVenteDetail()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content *ngIf="selectedVenteDetail">
-
-      <!-- ══ DESIGN 1 — CLASSIQUE ══ -->
-      <ng-container *ngIf="design === 1">
-        <div class="facture-doc facture-doc--classic">
-          <div class="fd-header--blue">
-            <div>
-              <div class="fd-boutique-name">{{ boutiqueName }}</div>
-              <div class="fd-num">{{ selectedVenteDetail.numeroVente }}</div>
-            </div>
-            <div style="text-align:right;font-size:12px;opacity:.85">
-              {{ formatDate(selectedVenteDetail.dateVente) }}
-            </div>
-          </div>
-          <div class="fd-meta--blue">
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Statut</span>
-              <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Paiement</span>
-              <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
-            </div>
-          </div>
-          <div class="fd-credit-block" *ngIf="selectedVenteDetail.estCredit">
-            <div class="fd-credit-row">
-              <span class="fd-credit-label">Versé</span>
-              <span class="fd-credit-val">{{ money(selectedVenteDetail.montantVerse || 0) }}</span>
-            </div>
-            <div class="fd-credit-row" *ngIf="!selectedVenteDetail.creditRegle">
-              <span class="fd-credit-label">Reste dû</span>
-              <span class="fd-credit-val">{{ money(getMontantRestant(selectedVenteDetail)) }}</span>
-            </div>
-          </div>
-          <table class="fd-table">
-            <thead><tr class="fd-thead--blue">
-              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
-            </tr></thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
-                <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-total--blue">
-            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
-            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
-          </div>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon name="receipt-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">Reçu · {{ selectedVenteDetail?.numeroVente }}</h2>
         </div>
-      </ng-container>
+        <button type="button" class="dlg-close" (click)="closeVenteDetail()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
 
-      <!-- ══ DESIGN 2 — MODERNE ══ -->
-      <ng-container *ngIf="design === 2">
-        <div class="facture-doc facture-doc--modern">
-          <div class="fd-header--dark">
-            <div>
-              <div class="fd-boutique--gold">{{ boutiqueName }}</div>
-              <div class="fd-tagline">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
-            </div>
-            <div class="fd-num--gold">{{ selectedVenteDetail.numeroVente }}</div>
-          </div>
-          <div class="fd-gold-stripe"></div>
-          <div class="fd-meta--modern">
-            <div class="fd-meta-block">
-              <div class="fd-meta-block-title">STATUT</div>
-              <div class="fd-meta-block-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</div>
-            </div>
-            <div class="fd-meta-block fd-meta-block--right">
-              <div class="fd-meta-block-title">PAIEMENT</div>
-              <div class="fd-meta-block-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
-            </div>
-          </div>
-          <div class="fd-notes--modern" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
-            <ion-icon name="alert-circle-outline" style="color:#f59e0b"></ion-icon>
-            <span>Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}</span>
-          </div>
-          <table class="fd-table">
-            <thead><tr class="fd-thead--dark">
-              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
-            </tr></thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
-                <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-total--dark" style="color:#f59e0b">
-            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0" style="font-size:12px;color:#94a3b8">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
-            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
-          </div>
-        </div>
-      </ng-container>
+      <!-- Aperçu du document (mêmes 3 designs que la facture PDF : papier blanc volontaire) -->
+      <div class="dlg-body" *ngIf="selectedVenteDetail">
 
-      <!-- ══ DESIGN 3 — MINIMALISTE ══ -->
-      <ng-container *ngIf="design === 3">
-        <div class="facture-doc facture-doc--minimal">
-          <div class="fd-header--minimal">
-            <div>
-              <div class="fd-boutique--black">{{ boutiqueName }}</div>
-              <div style="font-size:12px;color:#71717a">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
+        <!-- ══ DESIGN 1 — CLASSIQUE ══ -->
+        <ng-container *ngIf="design === 1">
+          <div class="facture-doc facture-doc--classic">
+            <div class="fd-header--blue">
+              <div>
+                <div class="fd-boutique-name">{{ boutiqueName }}</div>
+                <div class="fd-num">{{ selectedVenteDetail.numeroVente }}</div>
+              </div>
+              <div style="text-align:right;font-size:12px;opacity:.85">
+                {{ formatDate(selectedVenteDetail.dateVente) }}
+              </div>
             </div>
-            <div class="fd-num--minimal">{{ selectedVenteDetail.numeroVente }}</div>
-          </div>
-          <div class="fd-divider--black"></div>
-          <div class="fd-divider--gray"></div>
-          <div class="fd-meta--minimal">
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Statut</span>
-              <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
+            <div class="fd-meta--blue">
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Statut</span>
+                <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Paiement</span>
+                <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+              </div>
             </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Paiement</span>
-              <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+            <div class="fd-credit-block" *ngIf="selectedVenteDetail.estCredit">
+              <div class="fd-credit-row">
+                <span class="fd-credit-label">Versé</span>
+                <span class="fd-credit-val">{{ money(selectedVenteDetail.montantVerse || 0) }}</span>
+              </div>
+              <div class="fd-credit-row" *ngIf="!selectedVenteDetail.creditRegle">
+                <span class="fd-credit-label">Reste dû</span>
+                <span class="fd-credit-val">{{ money(getMontantRestant(selectedVenteDetail)) }}</span>
+              </div>
+            </div>
+            <table class="fd-table">
+              <thead><tr class="fd-thead--blue">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                  <td>{{ p.produitNom }}</td>
+                  <td class="fd-center">{{ p.quantite }}</td>
+                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-total--blue">
+              <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+              <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
             </div>
           </div>
-          <div class="fd-notes--minimal" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
-            Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}
-          </div>
-          <div class="fd-divider--gray"></div>
-          <table class="fd-table fd-table--minimal">
-            <thead><tr>
-              <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
-            </tr></thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits">
-                <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-divider--black"></div>
-          <div class="fd-total--minimal">
-            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
-            <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
-          </div>
-        </div>
-      </ng-container>
+        </ng-container>
 
-      <div style="height:16px"></div>
-    </ion-content>
+        <!-- ══ DESIGN 2 — MODERNE ══ -->
+        <ng-container *ngIf="design === 2">
+          <div class="facture-doc facture-doc--modern">
+            <div class="fd-header--dark">
+              <div>
+                <div class="fd-boutique--gold">{{ boutiqueName }}</div>
+                <div class="fd-tagline">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
+              </div>
+              <div class="fd-num--gold">{{ selectedVenteDetail.numeroVente }}</div>
+            </div>
+            <div class="fd-gold-stripe"></div>
+            <div class="fd-meta--modern">
+              <div class="fd-meta-block">
+                <div class="fd-meta-block-title">STATUT</div>
+                <div class="fd-meta-block-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</div>
+              </div>
+              <div class="fd-meta-block fd-meta-block--right">
+                <div class="fd-meta-block-title">PAIEMENT</div>
+                <div class="fd-meta-block-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
+              </div>
+            </div>
+            <div class="fd-notes--modern" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
+              <ion-icon name="alert-circle-outline" style="color:#f59e0b"></ion-icon>
+              <span>Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}</span>
+            </div>
+            <table class="fd-table">
+              <thead><tr class="fd-thead--dark">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                  <td>{{ p.produitNom }}</td>
+                  <td class="fd-center">{{ p.quantite }}</td>
+                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-total--dark" style="color:#f59e0b">
+              <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0" style="font-size:12px;color:#94a3b8">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
+              <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
+            </div>
+          </div>
+        </ng-container>
 
-    <ion-footer class="ion-no-border">
-      <div style="padding:8px 16px">
-        <ion-button expand="block" (click)="telechargerFacturePdf(selectedVenteDetail!.id)">
-          <ion-icon name="document-text-outline" slot="start"></ion-icon>
+        <!-- ══ DESIGN 3 — MINIMALISTE ══ -->
+        <ng-container *ngIf="design === 3">
+          <div class="facture-doc facture-doc--minimal">
+            <div class="fd-header--minimal">
+              <div>
+                <div class="fd-boutique--black">{{ boutiqueName }}</div>
+                <div style="font-size:12px;color:#71717a">{{ formatDate(selectedVenteDetail.dateVente) }}</div>
+              </div>
+              <div class="fd-num--minimal">{{ selectedVenteDetail.numeroVente }}</div>
+            </div>
+            <div class="fd-divider--black"></div>
+            <div class="fd-divider--gray"></div>
+            <div class="fd-meta--minimal">
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Statut</span>
+                <span class="fd-meta-val">{{ getVenteBadgeLabel(selectedVenteDetail) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Paiement</span>
+                <span class="fd-meta-val">{{ venteService.getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+              </div>
+            </div>
+            <div class="fd-notes--minimal" *ngIf="selectedVenteDetail.estCredit && !selectedVenteDetail.creditRegle">
+              Reste dû: {{ money(getMontantRestant(selectedVenteDetail)) }}
+            </div>
+            <div class="fd-divider--gray"></div>
+            <table class="fd-table fd-table--minimal">
+              <thead><tr>
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVenteDetail.produits">
+                  <td>{{ p.produitNom }}</td>
+                  <td class="fd-center">{{ p.quantite }}</td>
+                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-divider--black"></div>
+            <div class="fd-total--minimal">
+              <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ money(selectedVenteDetail.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+              <span class="fd-total-val">{{ money(selectedVenteDetail.montantTotal) }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <footer class="dlg-foot">
+        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="telechargerFacturePdf(selectedVenteDetail!.id)">
+          <ion-icon name="document-text-outline"></ion-icon>
           Télécharger la facture PDF
-        </ion-button>
-      </div>
-    </ion-footer>
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL AVANCE CLIENT ==================== -->
-<ion-modal [isOpen]="showAvanceModal" (didDismiss)="showAvanceModal = false" [breakpoints]="[0, 0.75]" [initialBreakpoint]="0.75">
+<!-- ==================== MODALE AVANCE CLIENT ==================== -->
+<ion-modal class="gl-dlg" [isOpen]="showAvanceModal" (didDismiss)="showAvanceModal = false">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>Avance · {{ selectedClientForAvance?.nom }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showAvanceModal = false">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div class="stack">
-        <div class="modal-section">
-          <p class="modal-section-title">Informations avance</p>
-          <ion-item>
-            <ion-input label="Montant *" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="avanceForm.montant"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-select label="Mode de paiement" labelPlacement="stacked" [(ngModel)]="avanceForm.modePaiement">
-              <ion-select-option value="ESPECES">Espèces</ion-select-option>
-              <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
-              <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
-              <ion-select-option value="CARTE_BANCAIRE">Carte bancaire</ion-select-option>
-              <ion-select-option value="VIREMENT">Virement</ion-select-option>
-            </ion-select>
-          </ion-item>
-          <ion-item *ngIf="avanceForm.modePaiement !== 'ESPECES'">
-            <ion-input label="Référence" labelPlacement="floating" [(ngModel)]="avanceForm.referencePaiement"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-textarea label="Motif (optionnel)" labelPlacement="floating" [(ngModel)]="avanceForm.motif" rows="2"></ion-textarea>
-          </ion-item>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon dlg-icon--ok"><ion-icon name="wallet-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">Avance</h2>
+          <p class="dlg-sub">{{ selectedClientForAvance?.nom }}</p>
         </div>
-        <ion-button expand="block" color="secondary" (click)="enregistrerAvance()" [disabled]="loadingAvance">
-          <ion-spinner *ngIf="loadingAvance" slot="start" name="crescent"></ion-spinner>
-          <ion-icon *ngIf="!loadingAvance" name="wallet-outline" slot="start"></ion-icon>
+        <button type="button" class="dlg-close" (click)="showAvanceModal = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <div class="dlg-body">
+        <section class="gl-section">
+          <p class="gl-overline gl-overline--link">Informations avance</p>
+          <label class="gl-field">
+            <span class="gl-label">Montant *</span>
+            <input class="gl-input gl-input--amount" type="text" inputmode="numeric" appMontantInput [(ngModel)]="avanceForm.montant" />
+          </label>
+          <div class="gl-field">
+            <span class="gl-label">Mode de paiement</span>
+            <!-- Puces : mêmes valeurs / même modèle que l'ancienne liste déroulante -->
+            <div class="fz-chips">
+              <button type="button" class="fz-chip" [class.fz-chip--active]="avanceForm.modePaiement === 'ESPECES'" (click)="avanceForm.modePaiement = 'ESPECES'">Espèces</button>
+              <button type="button" class="fz-chip" [class.fz-chip--active]="avanceForm.modePaiement === 'ORANGE_MONEY'" (click)="avanceForm.modePaiement = 'ORANGE_MONEY'">Orange Money</button>
+              <button type="button" class="fz-chip" [class.fz-chip--active]="avanceForm.modePaiement === 'MOOV_MONEY'" (click)="avanceForm.modePaiement = 'MOOV_MONEY'">Moov Money</button>
+              <button type="button" class="fz-chip" [class.fz-chip--active]="avanceForm.modePaiement === 'CARTE_BANCAIRE'" (click)="avanceForm.modePaiement = 'CARTE_BANCAIRE'">Carte bancaire</button>
+              <button type="button" class="fz-chip" [class.fz-chip--active]="avanceForm.modePaiement === 'VIREMENT'" (click)="avanceForm.modePaiement = 'VIREMENT'">Virement</button>
+            </div>
+          </div>
+          <label class="gl-field" *ngIf="avanceForm.modePaiement !== 'ESPECES'">
+            <span class="gl-label">Référence</span>
+            <input class="gl-input" [(ngModel)]="avanceForm.referencePaiement" />
+          </label>
+          <label class="gl-field">
+            <span class="gl-label">Motif (optionnel)</span>
+            <textarea class="gl-input gl-textarea" rows="2" [(ngModel)]="avanceForm.motif"></textarea>
+          </label>
+        </section>
+      </div>
+
+      <footer class="dlg-foot">
+        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="enregistrerAvance()" [disabled]="loadingAvance">
+          <ion-spinner *ngIf="loadingAvance" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!loadingAvance" name="wallet-outline"></ion-icon>
           Enregistrer l'avance
-        </ion-button>
-      </div>
-    </ion-content>
+        </button>
+      </footer>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL HISTORIQUE AVANCES ==================== -->
-<ion-modal [isOpen]="showHistoriqueAvancesModal" (didDismiss)="closeHistoriqueAvancesModal()">
+<!-- ==================== MODALE HISTORIQUE AVANCES ==================== -->
+<ion-modal class="gl-dlg gl-dlg--lg" [isOpen]="showHistoriqueAvancesModal" (didDismiss)="closeHistoriqueAvancesModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Avances · {{ selectedClientForAvance?.nom }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeHistoriqueAvancesModal()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-      <ion-spinner *ngIf="loadingAvance" style="display:block;margin:20px auto"></ion-spinner>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon"><ion-icon name="time-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">Avances</h2>
+          <p class="dlg-sub">{{ selectedClientForAvance?.nom }}</p>
+        </div>
+        <button type="button" class="dlg-close" (click)="closeHistoriqueAvancesModal()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
 
-      <div class="page-pad stack" *ngIf="!loadingAvance && historiqueAvances">
-
-        <div class="color-cards">
-          <div class="color-card cc-green">
-            <ion-icon name="wallet-outline"></ion-icon>
-            <p class="cc-label">Solde disponible</p>
-            <p class="cc-value">{{ money(historiqueAvances.soldeDisponible) }}</p>
-          </div>
-          <div class="color-card cc-blue">
-            <ion-icon name="arrow-up-circle-outline"></ion-icon>
-            <p class="cc-label">Total déposé</p>
-            <p class="cc-value">{{ money(historiqueAvances.totalDepose) }}</p>
-          </div>
-          <div class="color-card cc-orange">
-            <ion-icon name="arrow-down-circle-outline"></ion-icon>
-            <p class="cc-label">Total utilisé</p>
-            <p class="cc-value">{{ money(historiqueAvances.totalUtilise) }}</p>
-          </div>
+      <div class="dlg-body">
+        <div class="dlg-loading" *ngIf="loadingAvance">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
 
-        <h3 class="section-label">Détail des avances</h3>
-
-        <article class="mobile-card" *ngFor="let avance of historiqueAvances.historique">
-          <div class="row-between">
-            <div>
-              <h2 class="card-title">{{ money(avance.montant) }}</h2>
-              <p class="card-subtitle">{{ formatDate(avance.dateDepot) }}</p>
+        <ng-container *ngIf="!loadingAvance && historiqueAvances">
+          <div class="kpi-grid">
+            <div class="kpi-span">
+              <gl-stat-card icon="wallet-outline" label="Solde disponible" [value]="money(historiqueAvances.soldeDisponible)" variant="green"></gl-stat-card>
             </div>
-            <ion-badge [color]="getStatutAvanceBadge(avance.statut)">{{ avance.statut }}</ion-badge>
+            <gl-stat-card icon="arrow-up-circle-outline" label="Total déposé" [value]="money(historiqueAvances.totalDepose)" variant="blue"></gl-stat-card>
+            <gl-stat-card icon="arrow-down-circle-outline" label="Total utilisé" [value]="money(historiqueAvances.totalUtilise)" variant="orange"></gl-stat-card>
           </div>
-          <div class="mini-stats" style="margin-top:8px">
-            <div class="stat-row">
-              <span>Disponible</span>
-              <strong class="success">{{ money(avance.montantDisponible) }}</strong>
-            </div>
-            <div class="stat-row">
-              <span>Utilisé</span>
-              <strong class="warning">{{ money(avance.montantUtilise) }}</strong>
-            </div>
-          </div>
-        </article>
 
-        <div class="empty-state" *ngIf="historiqueAvances.historique.length === 0">
-          Aucune avance enregistrée
-        </div>
+          <p class="gl-overline">Détail des avances</p>
+
+          <article class="sub-card" *ngFor="let avance of historiqueAvances.historique">
+            <div class="sub-card__body">
+              <div class="row-head">
+                <div>
+                  <p class="row-amount">{{ money(avance.montant) }}</p>
+                  <p class="row-sub">{{ formatDate(avance.dateDepot) }}</p>
+                </div>
+                <span class="gl-pill" [ngClass]="'gl-pill--' + getStatutAvanceBadge(avance.statut)">{{ avance.statut }}</span>
+              </div>
+              <div class="kv-row">
+                <span>Disponible</span>
+                <strong class="kv-ok">{{ money(avance.montantDisponible) }}</strong>
+              </div>
+              <div class="kv-row">
+                <span>Utilisé</span>
+                <strong class="kv-warn">{{ money(avance.montantUtilise) }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <gl-empty-state *ngIf="historiqueAvances.historique.length === 0" icon="wallet-outline" title="Aucune avance enregistrée"></gl-empty-state>
+        </ng-container>
       </div>
-    </ion-content>
+    </div>
   </ng-template>
 </ion-modal>
 
-<!-- ==================== MODAL FIDÉLITÉ CLIENT ==================== -->
-<ion-modal [isOpen]="showFideliteModal" (didDismiss)="closeFideliteModal()">
+<!-- ==================== MODALE FIDÉLITÉ CLIENT ==================== -->
+<ion-modal class="gl-dlg gl-dlg--lg" [isOpen]="showFideliteModal" (didDismiss)="closeFideliteModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ 'FIDELITE.TITLE' | translate }} · {{ selectedClientForFidelite?.nom }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeFideliteModal()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-      <ion-spinner *ngIf="loadingFidelite" style="display:block;margin:20px auto"></ion-spinner>
+    <div class="dlg">
+      <header class="dlg-head">
+        <span class="dlg-icon dlg-icon--warn"><ion-icon name="star-outline"></ion-icon></span>
+        <div class="dlg-titles">
+          <h2 class="dlg-title">{{ 'FIDELITE.TITLE' | translate }}</h2>
+          <p class="dlg-sub">{{ selectedClientForFidelite?.nom }}</p>
+        </div>
+        <button type="button" class="dlg-close" (click)="closeFideliteModal()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
 
-      <div class="page-pad stack" *ngIf="!loadingFidelite && soldeFidelite">
-
-        <div class="color-cards">
-          <div class="color-card cc-green">
-            <ion-icon name="star-outline"></ion-icon>
-            <p class="cc-label">{{ 'FIDELITE.CLIENT_BALANCE' | translate }}</p>
-            <p class="cc-value">{{ soldeFidelite.points }}</p>
-          </div>
-          <div class="color-card cc-blue">
-            <ion-icon name="cash-outline"></ion-icon>
-            <p class="cc-label">{{ 'FIDELITE.CLIENT_BALANCE_VALUE' | translate }}</p>
-            <p class="cc-value">{{ money(soldeFidelite.valeurFcfa) }}</p>
-          </div>
+      <div class="dlg-body">
+        <div class="dlg-loading" *ngIf="loadingFidelite">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
 
-        <!-- Ajustement manuel — admin uniquement -->
-        <div class="modal-section" *ngIf="isAdmin">
-          <p class="modal-section-title">{{ 'FIDELITE.ADJUST_TITLE' | translate }}</p>
-          <ion-item>
-            <ion-input [label]="'FIDELITE.ADJUST_DELTA' | translate" labelPlacement="floating" type="number" [(ngModel)]="ajustementFideliteForm.delta"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input [label]="'FIDELITE.ADJUST_MOTIF' | translate" labelPlacement="floating" [(ngModel)]="ajustementFideliteForm.motif"></ion-input>
-          </ion-item>
-          <ion-button expand="block" fill="outline" (click)="enregistrerAjustementFidelite()" [disabled]="savingAjustementFidelite">
-            <ion-spinner *ngIf="savingAjustementFidelite" slot="start" name="crescent"></ion-spinner>
-            <ion-icon *ngIf="!savingAjustementFidelite" name="create-outline" slot="start"></ion-icon>
-            {{ 'FIDELITE.ADJUST_BUTTON' | translate }}
-          </ion-button>
-        </div>
+        <ng-container *ngIf="!loadingFidelite && soldeFidelite">
+          <div class="kpi-grid">
+            <gl-stat-card icon="star-outline" [label]="'FIDELITE.CLIENT_BALANCE' | translate" [value]="'' + soldeFidelite.points" variant="orange"></gl-stat-card>
+            <gl-stat-card icon="cash-outline" [label]="'FIDELITE.CLIENT_BALANCE_VALUE' | translate" [value]="money(soldeFidelite.valeurFcfa)" variant="blue"></gl-stat-card>
+          </div>
 
-        <h3 class="section-label">{{ 'FIDELITE.HISTORY_TITLE' | translate }}</h3>
+          <!-- Ajustement manuel — admin uniquement -->
+          <section class="gl-section form-block" *ngIf="isAdmin">
+            <p class="gl-overline gl-overline--link">{{ 'FIDELITE.ADJUST_TITLE' | translate }}</p>
+            <label class="gl-field">
+              <span class="gl-label">{{ 'FIDELITE.ADJUST_DELTA' | translate }}</span>
+              <input class="gl-input" type="number" [(ngModel)]="ajustementFideliteForm.delta" />
+            </label>
+            <label class="gl-field">
+              <span class="gl-label">{{ 'FIDELITE.ADJUST_MOTIF' | translate }}</span>
+              <input class="gl-input" [(ngModel)]="ajustementFideliteForm.motif" />
+            </label>
+            <button type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="enregistrerAjustementFidelite()" [disabled]="savingAjustementFidelite">
+              <ion-spinner *ngIf="savingAjustementFidelite" name="crescent"></ion-spinner>
+              <ion-icon *ngIf="!savingAjustementFidelite" name="create-outline"></ion-icon>
+              {{ 'FIDELITE.ADJUST_BUTTON' | translate }}
+            </button>
+          </section>
 
-        <article class="mobile-card" *ngFor="let m of mouvementsFidelite">
-          <div class="row-between">
-            <div>
-              <h2 class="card-title">{{ m.points > 0 ? '+' : '' }}{{ m.points }} pts</h2>
-              <p class="card-subtitle">{{ formatDate(m.date) }}<span *ngIf="m.venteId"> · {{ 'FIDELITE.VENTE_REF' | translate }} #{{ m.venteId }}</span></p>
+          <p class="gl-overline">{{ 'FIDELITE.HISTORY_TITLE' | translate }}</p>
+
+          <article class="sub-card" *ngFor="let m of mouvementsFidelite">
+            <div class="sub-card__body">
+              <div class="row-head">
+                <div>
+                  <p class="row-amount">{{ m.points > 0 ? '+' : '' }}{{ m.points }} pts</p>
+                  <p class="row-sub">{{ formatDate(m.date) }}<span *ngIf="m.venteId"> · {{ 'FIDELITE.VENTE_REF' | translate }} #{{ m.venteId }}</span></p>
+                </div>
+                <span class="gl-pill" [ngClass]="'gl-pill--' + getMouvementFideliteColor(m)">{{ getMouvementFideliteLabel(m) }}</span>
+              </div>
+              <p class="row-sub" *ngIf="m.motif">{{ m.motif }}</p>
             </div>
-            <ion-badge [color]="getMouvementFideliteColor(m)">{{ getMouvementFideliteLabel(m) }}</ion-badge>
-          </div>
-          <p class="card-subtitle" *ngIf="m.motif">{{ m.motif }}</p>
-        </article>
+          </article>
 
-        <div class="empty-state" *ngIf="mouvementsFidelite.length === 0">
-          {{ 'FIDELITE.HISTORY_EMPTY' | translate }}
-        </div>
+          <gl-empty-state *ngIf="mouvementsFidelite.length === 0" icon="star-outline" [title]="'FIDELITE.HISTORY_EMPTY' | translate"></gl-empty-state>
+        </ng-container>
       </div>
-    </ion-content>
+    </div>
   </ng-template>
 </ion-modal>

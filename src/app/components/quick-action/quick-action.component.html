@@ -1,0 +1,7 @@
+<button type="button" class="gl-quick-action" (click)="actionClick.emit()">
+  <span class="gl-quick-action__circle" [ngClass]="'gl-quick-action__circle--' + variant">
+    <ion-icon [name]="icon"></ion-icon>
+  </span>
+  <span class="gl-quick-action__label">{{ label }}</span>
+  <ion-icon class="gl-quick-action__arrow" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+</button>

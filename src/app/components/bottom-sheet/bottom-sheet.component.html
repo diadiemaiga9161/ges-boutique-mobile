@@ -1,0 +1,14 @@
+<div class="gl-sheet">
+  <div class="gl-sheet__handle"></div>
+
+  <div class="gl-sheet__header" *ngIf="title || showClose">
+    <h2 class="gl-sheet__title">{{ title }}</h2>
+    <button class="gl-sheet__close" *ngIf="showClose" (click)="closeSheet.emit()" aria-label="Fermer">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+  </div>
+
+  <div class="gl-sheet__body">
+    <ng-content></ng-content>
+  </div>
+</div>

@@ -1,68 +1,70 @@
-// ══════════════════════════════════════════════════
-//  ASSISTANT IA — Chat conversationnel
-// ══════════════════════════════════════════════════
-.ai-title-icon {
-  margin-right: 6px;
-  vertical-align: middle;
-}
+// ══════════════════════════════════════════════════════════════════
+//  ASSISTANT IA (chat) — design commun Ionic ↔ React Native
+//  (AssistantIAScreen.tsx). Couleurs 100 % tokens --gl-* (clair, sombre
+//  Auto, sombre forcé) : l'ancien bloc local @media (prefers-color-scheme:
+//  dark), inopérant en sombre forcé, est supprimé.
+//  Bulle utilisateur = fond action / texte blanc à droite ; réponse = fond
+//  surface + bordure à gauche ; radius 16 ; saisie collée en bas.
+// ══════════════════════════════════════════════════════════════════
 
-.ai-chat-page {
+.ai-page {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--gl-bg);
 }
 
-// ── Zone messages ─────────────────────────────────
-.ai-chat-messages {
+// ── Conversation (conteneur défilant : #messagesContainer) ──────────
+.ai-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 14px 12px;
-}
-
-.ai-msg-row {
-  display: flex;
-  margin-bottom: 12px;
-
-  &--user      { justify-content: flex-end; }
-  &--assistant { justify-content: flex-start; }
-}
-
-.ai-msg-group {
-  max-width: 80%;
+  padding: 16px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-.ai-msg-row--user .ai-msg-group { align-items: flex-end; }
+.ai-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 82%;
+
+  &--user      { align-self: flex-end;   align-items: flex-end; }
+  &--assistant { align-self: flex-start; align-items: flex-start; }
+}
 
 .ai-bubble {
-  padding:        10px 14px;
-  border-radius:  18px;
-  font-size:      14px;
-  line-height:    1.5;
-  white-space:    pre-wrap;
-  text-align:     left;
-  box-shadow:     0 1px 4px rgba(8,22,72,0.06);
-  animation:      aiMsgIn 0.22s ease;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+  animation: aiMsgIn 0.22s ease;
 
   &--user {
-    background: linear-gradient(135deg, #1a56db, #081648);
-    color:      #ffffff;
-    border-bottom-right-radius: 6px;
+    background: var(--gl-action);
+    color: #ffffff;
   }
 
   &--assistant {
-    background: #f1f5f9;
-    color:      #0f172a;
-    border-bottom-left-radius: 6px;
+    background: var(--gl-surface);
+    color: var(--gl-text);
+    border: 1px solid var(--gl-border);
+    box-shadow: var(--gl-card-shadow);
   }
 }
 
-.ai-msg-time {
-  font-size:  10px;
-  color:      #94a3b8;
-  margin-top: 3px;
-  padding:    0 4px;
+.ai-time {
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes aiMsgIn {
@@ -70,114 +72,92 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-// ── Indicateur "en train d'écrire" ────────────────
-.ai-typing-bubble {
-  display:        inline-flex;
-  align-items:    center;
-  background:     #f1f5f9;
-  padding:        10px 16px;
-  border-radius:  18px;
-  border-bottom-left-radius: 6px;
-
-  ion-spinner { width: 24px; height: 16px; }
-}
-
-// ── Suggestions ────────────────────────────────────
-.ai-suggestions {
-  padding:     10px 12px;
-  border-top:  1px solid #e8eef8;
-  background:  #ffffff;
-}
-
-.ai-suggestions__label {
-  font-size:      11px;
-  font-weight:    700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color:          #94a3b8;
-  margin-bottom:  6px;
-}
-
-.ai-suggestions__list {
-  display:   flex;
-  flex-wrap: wrap;
-  gap:       6px;
-
-  ion-chip { font-size: 12px; cursor: pointer; }
-  ion-icon { margin-right: 4px; }
-}
-
-// ── Zone de saisie ─────────────────────────────────
-.ai-input-bar {
-  padding:     10px 12px;
-  border-top:  1px solid #e8eef8;
-  background:  #ffffff;
-  display:     flex;
+// ── L'assistant écrit… ──────────────────────────────────────────────
+.ai-typing {
+  display: inline-flex;
   align-items: center;
-  gap:         8px;
+  gap: 8px;
+  color: var(--gl-muted);
+  font-size: 13px;
+  font-weight: 600;
+
+  ion-spinner { width: 24px; height: 16px; --color: var(--gl-link); }
 }
 
-.ai-input-wrap {
-  flex:          1;
-  display:       flex;
-  align-items:   center;
-  background:    #f8fafc;
-  border:        1.5px solid #e2e8f0;
-  border-radius: 22px;
-  padding:       2px 14px;
-  transition:    border-color 0.2s, background 0.2s;
+// ── Pied collé en bas ───────────────────────────────────────────────
+.ai-footer {
+  flex-shrink: 0;
+  background: var(--gl-surface);
+  border-top: 1px solid var(--gl-border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-  &:focus-within {
-    border-color: #1a56db;
-    background:   #eff6ff;
+.ai-suggestions {
+  padding: 12px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gl-muted);
   }
+
+  .fz-chips { margin-right: -16px; }
+}
+
+.ai-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
 }
 
 .ai-input {
-  flex:                1;
-  --background:        transparent;
-  --color:             #0f172a;
-  --placeholder-color: #94a3b8;
-  --padding-start:     0;
-  --padding-end:       0;
-  font-size: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  color: var(--gl-text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &::placeholder { color: var(--gl-muted); opacity: 1; }
+  &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
 }
 
-.ai-send-btn { flex-shrink: 0; }
+.ai-send {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--gl-action);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
 
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
+  ion-icon { font-size: 20px; }
+  &:active:not(:disabled) { background: var(--gl-action-press); }
+  &:disabled { opacity: 0.45; cursor: default; }
+}
 
-  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
-  // global.scss (cf. transferts.page.scss) : sans ce correctif la page reste
-  // gris clair même écran sombre.
-  ion-content {
-    --background: var(--ion-background-color, #111827);
-  }
-
-  .ai-bubble--assistant { background: #1f2937; color: #f1f5f9; }
-  .ai-typing-bubble     { background: #1f2937; }
-
-  .ai-suggestions,
-  .ai-input-bar {
-    background:      #111827;
-    border-top-color: #1f2937;
-  }
-
-  .ai-input-wrap {
-    background:   #1f2937;
-    border-color: #374151;
-
-    &:focus-within {
-      background:   #172033;
-      border-color: #1a56db;
-    }
-  }
-
-  .ai-input {
-    --color:             #f1f5f9;
-    --placeholder-color: #9ca3af;
-  }
+// ── Tablette (720px+) : colonne de lecture centrée ─────────────────
+@media (min-width: 720px) {
+  .ai-messages { padding: 24px max(24px, calc((100% - 760px) / 2)); }
+  .ai-suggestions, .ai-input-bar { padding-left: max(16px, calc((100% - 760px) / 2)); padding-right: max(16px, calc((100% - 760px) / 2)); }
 }

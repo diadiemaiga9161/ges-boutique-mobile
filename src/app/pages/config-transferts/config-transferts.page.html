@@ -4,83 +4,134 @@
       <ion-back-button defaultHref="/tabs/sales" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>Boutiques partenaires</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="nouveau()" class="header-icon-btn header-icon-btn--add">
-        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="ct-content">
+  <div class="page-pad stack">
 
-  <!-- Formulaire ajout/modification -->
-  <div class="form-card" *ngIf="afficherForm">
-    <p class="form-title">{{ editing ? 'Modifier partenaire' : 'Nouveau partenaire' }}</p>
-
-    <ion-item class="form-item">
-      <ion-label position="stacked">Nom de la boutique</ion-label>
-      <ion-input [(ngModel)]="form.nom" placeholder="Ex: Boutique Centre-ville" clearInput></ion-input>
-    </ion-item>
-
-    <ion-item class="form-item">
-      <ion-label position="stacked">URL de l'API (ex: http://192.168.1.10:8082)</ion-label>
-      <ion-input [(ngModel)]="form.url" placeholder="http://..." clearInput type="url"></ion-input>
-    </ion-item>
-
-    <ion-item class="form-item" lines="none">
-      <ion-label>Boutique active</ion-label>
-      <ion-toggle [(ngModel)]="form.actif" slot="end"></ion-toggle>
-    </ion-item>
-
-    <div class="form-actions">
-      <ion-button fill="outline" color="medium" (click)="annuler()">Annuler</ion-button>
-      <ion-button (click)="sauvegarder()" [disabled]="!form.nom || !form.url">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        {{ editing ? 'Modifier' : 'Ajouter' }}
-      </ion-button>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  <div class="loading-wrap" *ngIf="isLoading">
-    <ion-spinner name="crescent"></ion-spinner>
-  </div>
-
-  <!-- Liste vide -->
-  <div class="empty-state" *ngIf="!isLoading && partenaires.length === 0 && !afficherForm">
-    <ion-icon name="business-outline"></ion-icon>
-    <p>Aucune boutique partenaire</p>
-    <ion-button size="small" (click)="nouveau()">Ajouter une boutique</ion-button>
-  </div>
-
-  <!-- Liste des partenaires -->
-  <ion-list class="partenaires-list" *ngIf="!isLoading && partenaires.length > 0">
-    <ion-item-sliding *ngFor="let p of partenaires">
-      <ion-item class="partenaire-item">
-        <div class="partenaire-icon" slot="start"
-          [class.partenaire-icon--actif]="p.actif"
-          [class.partenaire-icon--inactif]="!p.actif">
-          <ion-icon [name]="p.actif ? 'storefront-outline' : 'storefront'"></ion-icon>
+    <!-- Chargement -->
+    <div class="sk-list" *ngIf="isLoading">
+      <div class="sk-card" *ngFor="let i of [1,2,3]">
+        <div class="skeleton sk-square"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w60"></div>
+          <div class="skeleton sk-line sk-line--w80 sk-line--sm"></div>
         </div>
-        <ion-label>
-          <h2>{{ p.nom }}</h2>
-          <p class="partenaire-url">{{ p.url }}</p>
-          <ion-badge [color]="p.actif ? 'success' : 'medium'" class="status-badge">
-            {{ p.actif ? 'Actif' : 'Inactif' }}
-          </ion-badge>
-        </ion-label>
-      </ion-item>
+        <div class="skeleton sk-line sk-line--w20"></div>
+      </div>
+    </div>
 
-      <ion-item-options side="end">
-        <ion-item-option color="primary" (click)="editer(p)">
-          <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
-        </ion-item-option>
-        <ion-item-option color="danger" (click)="confirmerSuppression(p)">
-          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-        </ion-item-option>
-      </ion-item-options>
-    </ion-item-sliding>
-  </ion-list>
+    <!-- Liste vide -->
+    <gl-empty-state
+      *ngIf="!isLoading && partenaires.length === 0 && !afficherForm"
+      icon="business-outline"
+      title="Aucune boutique partenaire"
+      ctaLabel="Ajouter une boutique"
+      (ctaClick)="nouveau()">
+    </gl-empty-state>
 
+    <!-- Liste des partenaires -->
+    <section class="stack animate-cards" *ngIf="!isLoading && partenaires.length > 0">
+      <article class="gl-list-card" *ngFor="let p of partenaires">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [class.glc-icon--info]="p.actif" [class.glc-icon--neutral]="!p.actif">
+              <ion-icon name="storefront-outline"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ p.nom }}</p>
+              <p class="glc-sub glc-sub--url">
+                <ion-icon name="link-outline"></ion-icon>
+                <span>{{ p.url }}</span>
+              </p>
+            </div>
+            <span class="gl-pill" [class.gl-pill--ok]="p.actif" [class.gl-pill--neutral]="!p.actif">
+              {{ p.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions écrites en pied de carte (anciennes options de glissement, mêmes handlers) -->
+        <div class="glc-actions">
+          <button type="button" class="glc-action glc-action--link" (click)="editer(p)">
+            <ion-icon name="create-outline"></ion-icon>
+            <span>Modifier</span>
+          </button>
+          <button type="button" class="glc-action glc-action--bad" (click)="confirmerSuppression(p)">
+            <ion-icon name="trash-outline"></ion-icon>
+            <span>Supprimer</span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+  </div>
 </ion-content>
+
+<!-- Bouton flottant étendu : ajout (même action que l'ancien bouton « + » de l'en-tête) -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <button type="button" class="gl-fab-extended" (click)="nouveau()">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    Ajouter une boutique
+  </button>
+</ion-fab>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODALE AJOUT / MODIFICATION (centrée)
+══════════════════════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="afficherForm">
+  <div class="md-backdrop" (click)="annuler()"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+
+    <div class="md-header">
+      <div class="md-icon md-icon--info">
+        <ion-icon [name]="editing ? 'create-outline' : 'storefront-outline'"></ion-icon>
+      </div>
+      <h2 class="md-title">{{ editing ? 'Modifier partenaire' : 'Nouveau partenaire' }}</h2>
+      <button type="button" class="md-close" (click)="annuler()" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="md-body">
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="storefront-outline"></ion-icon> Boutique</p>
+
+        <label class="md-field">
+          <span>Nom de la boutique</span>
+          <div class="md-input">
+            <input [(ngModel)]="form.nom" placeholder="Ex: Boutique Centre-ville" />
+            <button type="button" class="md-input__clear" *ngIf="form.nom" (click)="form.nom = ''" aria-label="Effacer">
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          </div>
+        </label>
+
+        <label class="md-field">
+          <span>URL de l'API (ex: http://192.168.1.10:8082)</span>
+          <div class="md-input">
+            <input [(ngModel)]="form.url" placeholder="http://..." type="url" autocapitalize="off" autocomplete="off" />
+            <button type="button" class="md-input__clear" *ngIf="form.url" (click)="form.url = ''" aria-label="Effacer">
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          </div>
+        </label>
+
+        <div class="md-toggle-row">
+          <span>Boutique active</span>
+          <ion-toggle [(ngModel)]="form.actif" aria-label="Boutique active"></ion-toggle>
+        </div>
+      </section>
+    </div>
+
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="annuler()">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="sauvegarder()" [disabled]="!form.nom || !form.url">
+        <ion-icon name="checkmark-outline"></ion-icon>
+        {{ editing ? 'Modifier' : 'Ajouter' }}
+      </button>
+    </div>
+
+  </div>
+</div>

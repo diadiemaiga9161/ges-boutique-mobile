@@ -2,33 +2,15 @@
 <ion-tabs>
   <ion-tab-bar slot="bottom">
 
-    <!-- Caisse — ADMIN seulement -->
-    <ion-tab-button tab="caisse" *ngIf="auth.isAdmin()" class="tab-btn">
+    <!-- Accueil — tous -->
+    <ion-tab-button tab="home" class="tab-btn">
       <div class="tab-icon-wrap">
-        <ion-icon name="cash-outline"></ion-icon>
+        <ion-icon name="home-outline"></ion-icon>
       </div>
-      <ion-label>{{ 'NAV.CAISSE' | translate }}</ion-label>
+      <ion-label>{{ 'NAV.HOME' | translate }}</ion-label>
     </ion-tab-button>
 
-    <!-- Produits — tous (échangé avec Ventes) -->
-    <ion-tab-button tab="products" class="tab-btn">
-      <div class="tab-icon-wrap">
-        <ion-icon name="cube-outline"></ion-icon>
-      </div>
-      <ion-label>{{ 'NAV.PRODUCTS' | translate }}</ion-label>
-    </ion-tab-button>
-
-    <!-- Bouton central flottant "Vente" — style déjà prêt dans le SCSS
-         (.tab-btn--fab) mais jamais branché. Pas un vrai onglet (pas de
-         routage tab-bar), juste une navigation directe vers /cart. -->
-    <ion-tab-button class="tab-btn tab-btn--fab" (click)="newSale()">
-      <div class="tab-fab-btn">
-        <ion-icon name="add"></ion-icon>
-      </div>
-      <ion-label>Vente</ion-label>
-    </ion-tab-button>
-
-    <!-- Historique vente — tous -->
+    <!-- Ventes (historique) — tous -->
     <ion-tab-button tab="sales" class="tab-btn">
       <div class="tab-icon-wrap">
         <ion-icon name="receipt-outline"></ion-icon>
@@ -36,12 +18,28 @@
       <ion-label>{{ 'NAV.SALES' | translate }}</ion-label>
     </ion-tab-button>
 
-    <!-- Inventaire — tous -->
-    <ion-tab-button tab="inventory" class="tab-btn">
+    <!-- Produits — tous -->
+    <ion-tab-button tab="products" class="tab-btn">
       <div class="tab-icon-wrap">
-        <ion-icon name="clipboard-outline"></ion-icon>
+        <ion-icon name="cube-outline"></ion-icon>
       </div>
-      <ion-label>{{ 'NAV.INVENTORY' | translate }}</ion-label>
+      <ion-label>{{ 'NAV.PRODUCTS' | translate }}</ion-label>
+    </ion-tab-button>
+
+    <!-- Clients — tous -->
+    <ion-tab-button tab="clients" class="tab-btn">
+      <div class="tab-icon-wrap">
+        <ion-icon name="people-outline"></ion-icon>
+      </div>
+      <ion-label>{{ 'NAV.CLIENTS' | translate }}</ion-label>
+    </ion-tab-button>
+
+    <!-- Menu — pas une route, ouvre le tiroir latéral (main-menu) -->
+    <ion-tab-button class="tab-btn" (click)="openMenu()">
+      <div class="tab-icon-wrap">
+        <ion-icon name="menu-outline"></ion-icon>
+      </div>
+      <ion-label>{{ 'NAV.MENU' | translate }}</ion-label>
     </ion-tab-button>
 
   </ion-tab-bar>

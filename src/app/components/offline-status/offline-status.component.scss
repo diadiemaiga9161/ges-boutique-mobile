@@ -1,6 +1,9 @@
 // Petit point fixe, coin haut-droit, au-dessus de tout (y compris le
 // ion-header de la page courante) — visible sur chaque écran sans jamais
 // pousser le contenu ni afficher de texte/carte.
+// Design commun (≡ NetworkStatusDot RN) : posé sur la barre bleu nuit, identique
+// dans les 2 thèmes → valeurs « sombres » des tokens ok (#34d399) / warn (#fbbf24),
+// lisibles sur --gl-navy.
 .net-dot {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 10px);
@@ -8,17 +11,17 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(8, 22, 72, 0.12);
   z-index: 99999;
   pointer-events: none;
   transition: background-color 0.2s ease;
 
   &--online {
-    background: #22c55e;
+    background: #34d399;
   }
 
   &--offline {
-    background: #f97316;
+    background: #fbbf24;
   }
 }

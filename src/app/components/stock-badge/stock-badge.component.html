@@ -1,0 +1,4 @@
+<span class="gl-stock-badge" [ngClass]="'gl-stock-badge--' + status">
+  <span class="gl-stock-badge__qty">{{ stock }}</span>
+  <span class="gl-stock-badge__label">{{ uniteNom || ('PRODUCTS.TYPE_UNITE' | translate) }} · {{ statusKey | translate }}</span>
+</span>

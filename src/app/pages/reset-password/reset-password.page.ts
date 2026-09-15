@@ -14,6 +14,9 @@ export class ResetPasswordPage implements OnInit {
   password = '';
   confirm = '';
   isLoading = false;
+  // Affichage uniquement : bouton œil des 2 champs (parité ResetPasswordScreen RN)
+  showPassword = false;
+  showConfirm = false;
   successMessage = '';
   errorMessage = '';
 

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import {
@@ -64,9 +64,19 @@ export class FournisseursPage {
   loadingAchatsNonPayes = false;
 
   // Filtre par période (Achats / Paiements / Situation)
-  periodePreset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout' = 'tout';
+  periodePreset: 'jour' | 'semaine' | 'mois' | 'personnalise' = 'jour';
   filtreDateDebut = '';
   filtreDateFin = '';
+
+  // Modales centrées (design commun) : fermeture à la touche Échap, en plus du X et
+  // de l'overlay — même effet que l'ancien (didDismiss)="showXxxModal = false".
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showFournisseurModal) this.showFournisseurModal = false;
+    if (this.showAchatModal) this.showAchatModal = false;
+    if (this.showPaiementModal) this.showPaiementModal = false;
+    if (this.showAvanceModal) this.showAvanceModal = false;
+  }
 
   constructor(
     private productService: ProductService,
@@ -123,9 +133,10 @@ export class FournisseursPage {
     this.achatForm.fournisseurId = f.id;
     this.paiementForm.fournisseurId = f.id;
     this.avanceForm.fournisseurId = f.id;
-    this.periodePreset = 'tout';
-    this.filtreDateDebut = '';
-    this.filtreDateFin = '';
+    this.periodePreset = 'jour';
+    const todayIso = new Date().toISOString().slice(0, 10);
+    this.filtreDateDebut = todayIso;
+    this.filtreDateFin = todayIso;
     this.loadDetails(f.id);
     this.segment = 'achats';
   }
@@ -137,9 +148,8 @@ export class FournisseursPage {
     this.loadingSituation = true;
     this.loadingAchatsNonPayes = true;
 
-    const filtreActif = this.periodePreset !== 'tout' && !!this.filtreDateDebut && !!this.filtreDateFin;
-    const dd = filtreActif ? this.filtreDateDebut : undefined;
-    const df = filtreActif ? this.filtreDateFin : undefined;
+    const dd = this.filtreDateDebut || undefined;
+    const df = this.filtreDateFin || undefined;
 
     this.productService.getHistoriqueAchats(id, dd, df).subscribe({
       next: a => { this.achats = a; this.loadingAchats = false; },
@@ -172,7 +182,7 @@ export class FournisseursPage {
   // ======= Filtre par période =======
 
   /** Applique un préréglage de période (jour/semaine/mois/tout) et recharge les données du fournisseur sélectionné. */
-  appliquerPreset(preset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout'): void {
+  appliquerPreset(preset: 'jour' | 'semaine' | 'mois' | 'personnalise'): void {
     this.periodePreset = preset;
     const toIso = (d: Date) => d.toISOString().slice(0, 10);
     const today = new Date();
@@ -189,9 +199,6 @@ export class FournisseursPage {
       const debut = new Date(today.getFullYear(), today.getMonth(), 1);
       this.filtreDateDebut = toIso(debut);
       this.filtreDateFin = toIso(today);
-    } else if (preset === 'tout') {
-      this.filtreDateDebut = '';
-      this.filtreDateFin = '';
     }
     // 'personnalise' : les dates sont saisies manuellement, rien à calculer ici
 

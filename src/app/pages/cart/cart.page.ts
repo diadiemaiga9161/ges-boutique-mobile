@@ -891,6 +891,14 @@ export class CartPage implements OnInit {
     return this.productService.formatPrice(value);
   }
 
+  /** Fait défiler la page jusqu'à la section 3 (Paiement) — utilisé par le bouton "Payer"
+   *  du résumé sticky en bas d'écran (voir cart.page.html). Même pattern déjà utilisé pour
+   *  un scroll-to-element dans le projet (voir CreditsPage.allerPage()). */
+  scrollToPayment(): void {
+    const el = document.querySelector('.cart-section--paiement');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   getPaymentIcon(mode: ModePaiement): string {
     const icons: Record<string, string> = {
       ESPECES:        'cash-outline',

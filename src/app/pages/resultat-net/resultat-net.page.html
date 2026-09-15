@@ -12,155 +12,176 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<!-- ══════════════════════════════════════════════════════════════════
+     RÉSULTAT NET — design commun Ionic ↔ React Native (ResultatNetScreen.tsx)
+     Bandeau héros (résultat net + état GAIN/PERTE) → puces de période →
+     filtre → décomposition (+ / − / =) → répartition. Aucune logique modifiée :
+     resultat-net.page.ts garde les mêmes appels, modèles et handlers.
+═══════════════════════════════════════════════════════════════════ -->
+<ion-content [fullscreen]="true" class="rn-content">
   <ion-refresher slot="fixed" (ionRefresh)="charger(); $event.target.complete()">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="page-pad stack">
+  <!-- ══════════ BANDEAU HÉROS : RÉSULTAT NET ══════════ -->
+  <div class="rn-hero">
+    <div class="rn-hero__deco" aria-hidden="true"></div>
+    <div class="rn-hero__main">
+      <p class="rn-hero__eyebrow">Résultat Net</p>
+      <div class="rn-hero__sk" *ngIf="loading" aria-hidden="true"></div>
+      <ng-container *ngIf="!loading">
+        <h1 class="rn-hero__amount" [class.rn-hero__amount--neg]="data?.etat === 'PERTE'">
+          {{ data ? money(data.resultatNet) : '—' }}
+        </h1>
+        <div class="rn-hero__meta" *ngIf="data">
+          <span class="rn-etat" [class.rn-etat--gain]="data.etat === 'GAIN'" [class.rn-etat--perte]="data.etat === 'PERTE'">
+            <ion-icon [name]="data.etat === 'GAIN' ? 'trending-up-outline' : 'trending-down-outline'" aria-hidden="true"></ion-icon>
+            {{ data.etat }}
+          </span>
+          <span class="rn-hero__periode">{{ data.periode }} · {{ data.dateDebut }} → {{ data.dateFin }}</span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
 
-    <!-- Onglets période -->
-    <div class="periode-tabs">
-      <button class="periode-btn" [class.active]="periodeActive === 'JOURNALIER'" (click)="selectionner('JOURNALIER')">Jour</button>
-      <button class="periode-btn" [class.active]="periodeActive === 'MENSUEL'" (click)="selectionner('MENSUEL')">Mois</button>
-      <button class="periode-btn" [class.active]="periodeActive === 'ANNUEL'" (click)="selectionner('ANNUEL')">Année</button>
+  <div class="rn-page">
+
+    <!-- ══════════ PUCES DE PÉRIODE (mêmes valeurs, même selectionner) ══════════ -->
+    <div class="fz-chips" role="group" aria-label="Période">
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'JOURNALIER'" (click)="selectionner('JOURNALIER')">Jour</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'MENSUEL'" (click)="selectionner('MENSUEL')">Mois</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periodeActive === 'ANNUEL'" (click)="selectionner('ANNUEL')">Année</button>
     </div>
 
-    <!-- Filtres -->
-    <div class="filter-card">
+    <!-- ══════════ FILTRES ══════════ -->
+    <div class="rn-card">
       <ng-container *ngIf="periodeActive === 'JOURNALIER'">
-        <div class="filter-row">
-          <label>Date</label>
-          <input type="date" class="date-input" [(ngModel)]="dateJour" (change)="charger()" />
+        <div class="rn-group">
+          <label class="rn-label" for="rn-date-jour">Date</label>
+          <input id="rn-date-jour" type="date" class="rn-date" [(ngModel)]="dateJour" (change)="charger()" />
         </div>
       </ng-container>
+
+      <!-- Mois + année : puces (mêmes valeurs et mêmes modèles que les anciennes listes) -->
       <ng-container *ngIf="periodeActive === 'MENSUEL'">
-        <div class="filter-row">
-          <select class="date-input" [(ngModel)]="moisSelect" (change)="charger()">
-            <option *ngFor="let m of mois" [value]="m.v">{{ m.l }}</option>
-          </select>
-          <select class="date-input" [(ngModel)]="anneeSelect" (change)="charger()">
-            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
-          </select>
-        </div>
-      </ng-container>
-      <ng-container *ngIf="periodeActive === 'ANNUEL'">
-        <div class="filter-row">
-          <select class="date-input" [(ngModel)]="anneeSelect" (change)="charger()">
-            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
-          </select>
-        </div>
-      </ng-container>
-    </div>
-
-    <!-- Loader -->
-    <div class="page-pad" *ngIf="loading">
-      <div class="sk-hero-block">
-        <div class="sk-kpi"></div>
-        <div class="sk-kpi"></div>
-        <div class="sk-kpi"></div>
-      </div>
-      <div class="sk-list" style="margin-top:12px">
-        <div class="sk-card" *ngFor="let i of [1,2,3]">
-          <div class="sk-card-body">
-            <div class="skeleton sk-line sk-line--w80"></div>
-            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        <div class="rn-group">
+          <span class="rn-label">Mois</span>
+          <div class="fz-chips" role="group" aria-label="Mois">
+            <button type="button" class="fz-chip" *ngFor="let m of mois"
+              [class.fz-chip--active]="moisSelect === m.v"
+              (click)="moisSelect = m.v; charger()">{{ m.l }}</button>
           </div>
-          <div class="skeleton sk-line sk-line--w30"></div>
         </div>
-      </div>
+        <div class="rn-group">
+          <span class="rn-label">Année</span>
+          <div class="fz-chips" role="group" aria-label="Année">
+            <button type="button" class="fz-chip" *ngFor="let a of annees"
+              [class.fz-chip--active]="anneeSelect === a"
+              (click)="anneeSelect = a; charger()">{{ a }}</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="periodeActive === 'ANNUEL'">
+        <div class="rn-group">
+          <span class="rn-label">Année</span>
+          <div class="fz-chips" role="group" aria-label="Année">
+            <button type="button" class="fz-chip" *ngFor="let a of annees"
+              [class.fz-chip--active]="anneeSelect === a"
+              (click)="anneeSelect = a; charger()">{{ a }}</button>
+          </div>
+        </div>
+      </ng-container>
     </div>
 
-    <!-- Erreur -->
-    <div class="error-card" *ngIf="erreur && !loading">
-      <ion-icon name="alert-circle-outline"></ion-icon>
-      <p>{{ erreur }}</p>
+    <!-- ══════════ CHARGEMENT ══════════ -->
+    <div class="rn-skeleton" *ngIf="loading" aria-busy="true">
+      <div class="rn-sk rn-sk--detail"></div>
+      <div class="rn-sk rn-sk--bars"></div>
+    </div>
+
+    <!-- ══════════ ERREUR ══════════ -->
+    <div class="rn-card rn-error" *ngIf="erreur && !loading" role="alert">
+      <span class="rn-pastille rn-pastille--bad" aria-hidden="true">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </span>
+      <p class="rn-error__text">{{ erreur }}</p>
     </div>
 
     <ng-container *ngIf="data && !loading">
 
-      <!-- Carte principale GAIN/PERTE -->
-      <div class="resultat-card" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
-        <div class="resultat-badge" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
-          <ion-icon [name]="data.etat === 'GAIN' ? 'trending-up-outline' : 'trending-down-outline'"></ion-icon>
-          {{ data.etat }}
-        </div>
-        <div class="resultat-montant" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
-          {{ money(data.resultatNet) }}
-        </div>
-        <p class="resultat-periode">{{ data.periode }} · {{ data.dateDebut }} → {{ data.dateFin }}</p>
-      </div>
-
-      <!-- Détail décomposition -->
-      <div class="detail-card">
-        <div class="detail-row">
-          <div class="detail-icon success">
-            <ion-icon name="trending-up-outline"></ion-icon>
+      <!-- ══════════ DÉCOMPOSITION ══════════ -->
+      <section class="rn-section">
+        <p class="rn-overline">Décomposition</p>
+        <article class="rn-card rn-detail">
+          <div class="rn-row">
+            <span class="rn-pastille rn-pastille--ok" aria-hidden="true">
+              <ion-icon name="trending-up-outline"></ion-icon>
+            </span>
+            <span class="rn-row__label">Bénéfices ventes</span>
+            <span class="rn-amount rn-amount--ok">{{ money(data.benefices) }}</span>
           </div>
-          <div class="detail-info">
-            <span class="detail-label">Bénéfices ventes</span>
-            <span class="detail-value success">{{ money(data.benefices) }}</span>
-          </div>
-        </div>
 
-        <div class="detail-sep">+</div>
+          <div class="rn-op" aria-hidden="true">+</div>
 
-        <div class="detail-row">
-          <div class="detail-icon primary">
-            <ion-icon name="gift-outline"></ion-icon>
-          </div>
-          <div class="detail-info">
-            <span class="detail-label">Bonus fournisseurs</span>
-            <span class="detail-value primary">{{ money(data.bonusFournisseurs) }}
-              <small class="detail-pct">({{ pctBonus }}%)</small>
+          <div class="rn-row">
+            <span class="rn-pastille" aria-hidden="true">
+              <ion-icon name="gift-outline"></ion-icon>
+            </span>
+            <span class="rn-row__label">Bonus fournisseurs</span>
+            <span class="rn-row__right">
+              <span class="rn-amount rn-amount--link">{{ money(data.bonusFournisseurs) }}</span>
+              <span class="rn-pct">({{ pctBonus }}%)</span>
             </span>
           </div>
-        </div>
 
-        <div class="detail-sep">−</div>
+          <div class="rn-op" aria-hidden="true">−</div>
 
-        <div class="detail-row">
-          <div class="detail-icon danger">
-            <ion-icon name="trending-down-outline"></ion-icon>
-          </div>
-          <div class="detail-info">
-            <span class="detail-label">Dépenses</span>
-            <span class="detail-value danger">{{ money(data.depenses) }}
-              <small class="detail-pct">({{ pctDepenses }}%)</small>
+          <div class="rn-row">
+            <span class="rn-pastille rn-pastille--bad" aria-hidden="true">
+              <ion-icon name="trending-down-outline"></ion-icon>
+            </span>
+            <span class="rn-row__label">Dépenses</span>
+            <span class="rn-row__right">
+              <span class="rn-amount rn-amount--bad">{{ money(data.depenses) }}</span>
+              <span class="rn-pct">({{ pctDepenses }}%)</span>
             </span>
           </div>
-        </div>
 
-        <div class="detail-total" [class.gain]="data.etat === 'GAIN'" [class.perte]="data.etat === 'PERTE'">
-          <span>=</span>
-          <span class="detail-total-label">Résultat Net</span>
-          <span class="detail-total-value">{{ money(data.resultatNet) }}</span>
-        </div>
-      </div>
+          <div class="rn-total" [class.rn-total--gain]="data.etat === 'GAIN'" [class.rn-total--perte]="data.etat === 'PERTE'">
+            <span class="rn-total__eq" aria-hidden="true">=</span>
+            <span class="rn-total__label">Résultat Net</span>
+            <span class="rn-total__value">{{ money(data.resultatNet) }}</span>
+          </div>
+        </article>
+      </section>
 
-      <!-- Barres de progression -->
-      <div class="bars-card">
-        <div class="bar-row">
-          <span class="bar-label success">Bénéfices</span>
-          <div class="bar-track">
-            <div class="bar-fill success"
-              [style.width.%]="data.benefices + data.bonusFournisseurs > 0 ? (data.benefices / (data.benefices + data.bonusFournisseurs)) * 100 : 0">
+      <!-- ══════════ RÉPARTITION (barres de progression) ══════════ -->
+      <section class="rn-section">
+        <p class="rn-overline">Répartition</p>
+        <article class="rn-card rn-bars">
+          <div class="rn-bar-row">
+            <span class="rn-bar-row__label">Bénéfices</span>
+            <div class="rn-bar">
+              <div class="rn-bar__fill rn-bar__fill--ok"
+                [style.width.%]="data.benefices + data.bonusFournisseurs > 0 ? (data.benefices / (data.benefices + data.bonusFournisseurs)) * 100 : 0">
+              </div>
             </div>
           </div>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label primary">Bonus</span>
-          <div class="bar-track">
-            <div class="bar-fill primary" [style.width.%]="pctBonus"></div>
+          <div class="rn-bar-row">
+            <span class="rn-bar-row__label">Bonus</span>
+            <div class="rn-bar">
+              <div class="rn-bar__fill" [style.width.%]="pctBonus"></div>
+            </div>
           </div>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label danger">Dépenses</span>
-          <div class="bar-track">
-            <div class="bar-fill danger" [style.width.%]="pctDepenses"></div>
+          <div class="rn-bar-row">
+            <span class="rn-bar-row__label">Dépenses</span>
+            <div class="rn-bar">
+              <div class="rn-bar__fill rn-bar__fill--bad" [style.width.%]="pctDepenses"></div>
+            </div>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
     </ng-container>
 

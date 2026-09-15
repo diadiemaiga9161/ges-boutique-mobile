@@ -35,7 +35,10 @@ export class SuperAdminFonctionnalitesPage implements OnInit {
     OBJECTIFS_VENDEUR: 'cash-outline',
     RAPPORTS: 'stats-chart-outline',
     IA: 'sparkles-outline',
-    RESULTAT_NET: 'analytics-outline'
+    RESULTAT_NET: 'analytics-outline',
+    // Affichage uniquement — mêmes clés que SuperAdminFonctionnalitesScreen (RN)
+    PROGRAMME_FIDELITE: 'star-outline',
+    VENTE_GROS_DETAIL: 'scale-outline'
   };
 
   private readonly descriptions: Record<string, string> = {
@@ -49,7 +52,10 @@ export class SuperAdminFonctionnalitesPage implements OnInit {
     OBJECTIFS_VENDEUR: 'Primes des vendeurs selon leurs objectifs.',
     RAPPORTS: 'Page de rapports et statistiques analytiques.',
     IA: 'Assistant et recommandations intelligentes.',
-    RESULTAT_NET: 'Calcul du résultat net (bénéfice/perte).'
+    RESULTAT_NET: 'Calcul du résultat net (bénéfice/perte).',
+    // Affichage uniquement — textes repris tels quels de SuperAdminFonctionnalitesScreen (RN)
+    PROGRAMME_FIDELITE: "Points de fidélité gagnés automatiquement à chaque vente, utilisables comme réduction (réglages des taux dans Boutique > Paramètres boutique).",
+    VENTE_GROS_DETAIL: "Vente en gros/détail simplifiée : unités de vente (Carton, Cartouche...) sur un produit, sans stock séparé (réglages dans la fiche de chaque produit)."
   };
 
   getIcone(cle: string): string {

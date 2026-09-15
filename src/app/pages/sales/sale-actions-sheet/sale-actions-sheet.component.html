@@ -1,0 +1,41 @@
+<gl-bottom-sheet title="Actions" (closeSheet)="close()">
+  <div class="sas-list">
+
+    <button class="sas-item" (click)="choose('voir')">
+      <span class="sas-item__icon sas-item__icon--blue"><ion-icon name="eye-outline"></ion-icon></span>
+      <span class="sas-item__label">Voir la facture</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+    <button class="sas-item" (click)="choose('modifier')" *ngIf="!sale.annulee">
+      <span class="sas-item__icon sas-item__icon--orange"><ion-icon name="create-outline"></ion-icon></span>
+      <span class="sas-item__label">Modifier</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+    <button class="sas-item" (click)="choose('annuler')" *ngIf="!sale.annulee">
+      <span class="sas-item__icon sas-item__icon--red"><ion-icon name="ban-outline"></ion-icon></span>
+      <span class="sas-item__label">Annuler la vente</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+    <button class="sas-item" (click)="choose('retour')" *ngIf="!sale.annulee">
+      <span class="sas-item__icon sas-item__icon--teal"><ion-icon name="return-down-back-outline"></ion-icon></span>
+      <span class="sas-item__label">Retour produit</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+    <button class="sas-item" (click)="choose('pdf')">
+      <span class="sas-item__icon sas-item__icon--indigo"><ion-icon name="download-outline"></ion-icon></span>
+      <span class="sas-item__label">Télécharger le PDF</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+    <button class="sas-item" (click)="choose('qr')">
+      <span class="sas-item__icon sas-item__icon--purple"><ion-icon name="qr-code-outline"></ion-icon></span>
+      <span class="sas-item__label">QR code</span>
+      <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
+    </button>
+
+  </div>
+</gl-bottom-sheet>

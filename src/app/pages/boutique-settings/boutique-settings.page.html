@@ -8,153 +8,179 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <div class="page-pad stack">
+  <div class="gls-page">
 
     <!-- Logo -->
-    <section class="mobile-card" style="text-align:center">
-      <div style="margin-bottom:12px">
-        <img *ngIf="getLogoSrc()" [src]="getLogoSrc()" alt="Logo boutique"
-          style="max-width:120px; max-height:120px; border-radius:8px; object-fit:contain">
-        <ion-icon *ngIf="!getLogoSrc()" name="storefront-outline" style="font-size:80px; color: var(--ion-color-medium)"></ion-icon>
+    <section class="gls-card gls-logo">
+      <div class="gls-logo__img">
+        <img *ngIf="getLogoSrc()" [src]="getLogoSrc()" alt="Logo boutique">
+        <ion-icon *ngIf="!getLogoSrc()" name="storefront-outline"></ion-icon>
       </div>
-      <h2>{{ form.nom || 'Boutique' }}</h2>
-      <p class="muted">{{ form.ville || form.adresse || 'Adresse non renseignée' }}</p>
+      <p class="gls-logo__name">{{ form.nom || 'Boutique' }}</p>
+      <p class="gls-logo__sub">{{ form.ville || form.adresse || 'Adresse non renseignée' }}</p>
 
-      <div style="margin-top:12px">
-        <input type="file" id="logoInput" accept="image/*" style="display:none"
-          (change)="onLogoFileSelected($event)">
-        <ion-button fill="outline" size="small" onclick="document.getElementById('logoInput').click()">
-          <ion-icon name="image-outline" slot="start"></ion-icon>
+      <input type="file" id="logoInput" accept="image/*" class="gls-file-input"
+        (change)="onLogoFileSelected($event)">
+      <div class="gls-logo__actions">
+        <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" onclick="document.getElementById('logoInput').click()">
+          <ion-icon name="image-outline"></ion-icon>
           Choisir un logo
-        </ion-button>
-        <ion-button fill="solid" size="small" color="success"
+        </button>
+        <button type="button" class="gl-btn gl-btn--primary gl-btn--sm"
           *ngIf="selectedLogoFile"
           (click)="uploadLogo()"
           [disabled]="uploadingLogo">
-          <ion-spinner *ngIf="uploadingLogo" slot="start" name="crescent"></ion-spinner>
-          <ion-icon *ngIf="!uploadingLogo" name="cloud-upload-outline" slot="start"></ion-icon>
+          <ion-spinner *ngIf="uploadingLogo" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!uploadingLogo" name="cloud-upload-outline"></ion-icon>
           Envoyer
-        </ion-button>
+        </button>
       </div>
     </section>
 
     <!-- Informations générales -->
-    <section class="form-panel stack">
-      <h2 class="card-title settings-section-hdr"><ion-icon name="storefront-outline"></ion-icon> Informations générales</h2>
-      <ion-input label="Nom de la boutique *" labelPlacement="floating" fill="outline" [(ngModel)]="form.nom">
-        <ion-icon name="business-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Téléphone" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone">
-        <ion-icon name="call-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Téléphone 2 (rapport)" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone2">
-        <ion-icon name="call-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Téléphone 3 (rapport)" labelPlacement="floating" type="tel" fill="outline" [(ngModel)]="form.telephone3">
-        <ion-icon name="call-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Email" labelPlacement="floating" type="email" fill="outline" [(ngModel)]="form.email">
-        <ion-icon name="mail-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-textarea label="Adresse" labelPlacement="floating" fill="outline" [(ngModel)]="form.adresse"></ion-textarea>
-      <div class="two-cols">
-        <ion-input label="Ville" labelPlacement="floating" fill="outline" [(ngModel)]="form.ville">
-          <ion-icon name="location-outline" slot="start"></ion-icon>
-        </ion-input>
-        <ion-input label="Pays" labelPlacement="floating" fill="outline" [(ngModel)]="form.pays">
-          <ion-icon name="flag-outline" slot="start"></ion-icon>
-        </ion-input>
+    <section class="gls-section">
+      <gl-section-header title="Informations générales"></gl-section-header>
+      <div class="gls-card gls-form">
+        <label class="gl-field">
+          <span class="gl-field__label">Nom de la boutique *</span>
+          <span class="gl-input"><ion-icon name="business-outline"></ion-icon><input [(ngModel)]="form.nom"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Téléphone</span>
+          <span class="gl-input"><ion-icon name="call-outline"></ion-icon><input type="tel" [(ngModel)]="form.telephone"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Téléphone 2 (rapport)</span>
+          <span class="gl-input"><ion-icon name="call-outline"></ion-icon><input type="tel" [(ngModel)]="form.telephone2"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Téléphone 3 (rapport)</span>
+          <span class="gl-input"><ion-icon name="call-outline"></ion-icon><input type="tel" [(ngModel)]="form.telephone3"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Email</span>
+          <span class="gl-input"><ion-icon name="mail-outline"></ion-icon><input type="email" [(ngModel)]="form.email"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Adresse</span>
+          <textarea class="gl-textarea" rows="3" [(ngModel)]="form.adresse"></textarea>
+        </label>
+        <div class="gls-2col">
+          <label class="gl-field">
+            <span class="gl-field__label">Ville</span>
+            <span class="gl-input"><ion-icon name="location-outline"></ion-icon><input [(ngModel)]="form.ville"></span>
+          </label>
+          <label class="gl-field">
+            <span class="gl-field__label">Pays</span>
+            <span class="gl-input"><ion-icon name="flag-outline"></ion-icon><input [(ngModel)]="form.pays"></span>
+          </label>
+        </div>
+        <label class="gl-field">
+          <span class="gl-field__label">Devise</span>
+          <span class="gl-input"><ion-icon name="cash-outline"></ion-icon><input [(ngModel)]="form.devise" placeholder="FCFA"></span>
+        </label>
       </div>
-      <ion-input label="Devise" labelPlacement="floating" fill="outline" [(ngModel)]="form.devise" placeholder="FCFA">
-        <ion-icon name="cash-outline" slot="start"></ion-icon>
-      </ion-input>
     </section>
 
     <!-- Informations légales -->
-    <section class="form-panel stack">
-      <h2 class="card-title settings-section-hdr"><ion-icon name="document-text-outline"></ion-icon> Informations légales</h2>
-      <ion-input label="Numéro RC (Registre du commerce)" labelPlacement="floating" fill="outline" [(ngModel)]="form.numeroRc">
-        <ion-icon name="ribbon-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Numéro IFU (Identifiant fiscal)" labelPlacement="floating" fill="outline" [(ngModel)]="form.numeroIfu">
-        <ion-icon name="finger-print-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-textarea label="Description" labelPlacement="floating" fill="outline" [(ngModel)]="form.description"></ion-textarea>
+    <section class="gls-section">
+      <gl-section-header title="Informations légales"></gl-section-header>
+      <div class="gls-card gls-form">
+        <label class="gl-field">
+          <span class="gl-field__label">Numéro RC (Registre du commerce)</span>
+          <span class="gl-input"><ion-icon name="ribbon-outline"></ion-icon><input [(ngModel)]="form.numeroRc"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Numéro IFU (Identifiant fiscal)</span>
+          <span class="gl-input"><ion-icon name="finger-print-outline"></ion-icon><input [(ngModel)]="form.numeroIfu"></span>
+        </label>
+        <label class="gl-field">
+          <span class="gl-field__label">Description</span>
+          <textarea class="gl-textarea" rows="3" [(ngModel)]="form.description"></textarea>
+        </label>
+      </div>
     </section>
 
     <!-- Fonctionnalités avancées -->
-    <section class="form-panel stack">
-      <h2 class="card-title settings-section-hdr"><ion-icon name="options-outline"></ion-icon> Fonctionnalités avancées</h2>
-
-      <div class="settings-toggle-row">
-        <div class="settings-toggle-icon"><ion-icon name="cube-outline"></ion-icon></div>
-        <div class="settings-toggle-text">
-          <h3>Gestion par conditionnement</h3>
-          <p class="muted">Vendre par Carton, Cartouche, Pièce... avec prix différents</p>
+    <section class="gls-section">
+      <gl-section-header title="Fonctionnalités avancées"></gl-section-header>
+      <div class="gls-card">
+        <div class="gls-row">
+          <span class="gls-icon"><ion-icon name="cube-outline"></ion-icon></span>
+          <span class="gls-text">
+            <span class="gls-label">Gestion par conditionnement</span>
+            <span class="gls-desc">Vendre par Carton, Cartouche, Pièce... avec prix différents</span>
+          </span>
+          <ion-toggle
+            aria-label="Gestion par conditionnement"
+            [checked]="conditionnementActif"
+            (ionChange)="toggleConditionnement($event)">
+          </ion-toggle>
         </div>
-        <ion-toggle
-          [checked]="conditionnementActif"
-          (ionChange)="toggleConditionnement($event)">
-        </ion-toggle>
       </div>
     </section>
 
     <!-- Programme de fidélité (taux) — visible seulement si activé par le super admin -->
-    <section class="form-panel stack" *ngIf="programmeFideliteActif">
-      <h2 class="card-title settings-section-hdr"><ion-icon name="star-outline"></ion-icon> {{ 'FIDELITE.SETTINGS_TITLE' | translate }}</h2>
-      <p class="muted">{{ 'FIDELITE.SETTINGS_DESC' | translate }}</p>
+    <section class="gls-section" *ngIf="programmeFideliteActif">
+      <gl-section-header [title]="'FIDELITE.SETTINGS_TITLE' | translate"></gl-section-header>
+      <p class="gls-hint">{{ 'FIDELITE.SETTINGS_DESC' | translate }}</p>
+      <div class="gls-card gls-form">
+        <div class="gls-spinner" *ngIf="loadingFidelite"><ion-spinner name="crescent"></ion-spinner></div>
 
-      <ion-spinner *ngIf="loadingFidelite" name="crescent"></ion-spinner>
+        <div class="gls-2col" *ngIf="!loadingFidelite">
+          <label class="gl-field">
+            <span class="gl-field__label">{{ 'FIDELITE.AMOUNT_PER_POINT' | translate }}</span>
+            <span class="gl-input"><ion-icon name="cash-outline"></ion-icon><input type="number" min="0" inputmode="decimal" [(ngModel)]="fideliteForm.montantParPoint"></span>
+          </label>
+          <label class="gl-field">
+            <span class="gl-field__label">{{ 'FIDELITE.POINT_VALUE' | translate }}</span>
+            <span class="gl-input"><ion-icon name="star-outline"></ion-icon><input type="number" min="0" inputmode="decimal" [(ngModel)]="fideliteForm.pointValeur"></span>
+          </label>
+        </div>
 
-      <div class="two-cols" *ngIf="!loadingFidelite">
-        <ion-input
-          [label]="'FIDELITE.AMOUNT_PER_POINT' | translate"
-          labelPlacement="floating" fill="outline" type="number" min="0"
-          [(ngModel)]="fideliteForm.montantParPoint">
-          <ion-icon name="cash-outline" slot="start"></ion-icon>
-        </ion-input>
-        <ion-input
-          [label]="'FIDELITE.POINT_VALUE' | translate"
-          labelPlacement="floating" fill="outline" type="number" min="0"
-          [(ngModel)]="fideliteForm.pointValeur">
-          <ion-icon name="star-outline" slot="start"></ion-icon>
-        </ion-input>
+        <button type="button" class="gl-btn gl-btn--secondary" (click)="enregistrerFidelite()" [disabled]="savingFidelite || loadingFidelite">
+          <ion-spinner *ngIf="savingFidelite" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!savingFidelite" name="save-outline"></ion-icon>
+          {{ 'COMMON.SAVE' | translate }}
+        </button>
       </div>
-
-      <ion-button expand="block" fill="outline" (click)="enregistrerFidelite()" [disabled]="savingFidelite || loadingFidelite">
-        <ion-spinner *ngIf="savingFidelite" slot="start" name="crescent"></ion-spinner>
-        <ion-icon *ngIf="!savingFidelite" name="save-outline" slot="start"></ion-icon>
-        {{ 'COMMON.SAVE' | translate }}
-      </ion-button>
     </section>
 
     <!-- Permissions vendeur -->
-    <section class="form-panel stack">
-      <h2 class="card-title settings-section-hdr"><ion-icon name="key-outline"></ion-icon> Permissions vendeur</h2>
-      <p class="muted">Donner au vendeur un accès en lecture seule à certaines pages</p>
-
-      <div class="settings-toggle-row">
-        <div class="settings-toggle-icon"><ion-icon name="clipboard-outline"></ion-icon></div>
-        <div class="settings-toggle-text">
-          <h3>Le vendeur peut consulter l'inventaire</h3>
-          <p class="muted">Accès en lecture seule : stock faible, historique et statistiques. Les mouvements de stock restent réservés à l'admin</p>
+    <section class="gls-section">
+      <gl-section-header title="Permissions vendeur"></gl-section-header>
+      <p class="gls-hint">Donner au vendeur un accès en lecture seule à certaines pages</p>
+      <div class="gls-card">
+        <div class="gls-row">
+          <span class="gls-icon"><ion-icon name="clipboard-outline"></ion-icon></span>
+          <span class="gls-text">
+            <span class="gls-label">Le vendeur peut consulter l'inventaire</span>
+            <span class="gls-desc">Accès en lecture seule : stock faible, historique et statistiques. Les mouvements de stock restent réservés à l'admin</span>
+          </span>
+          <ion-toggle
+            aria-label="Le vendeur peut consulter l'inventaire"
+            [checked]="inventaireLectureActive"
+            (ionChange)="toggleInventaireLecture($event)">
+          </ion-toggle>
         </div>
-        <ion-toggle
-          [checked]="inventaireLectureActive"
-          (ionChange)="toggleInventaireLecture($event)">
-        </ion-toggle>
       </div>
     </section>
 
-    <!-- Actions -->
-    <ion-button expand="block" (click)="save()" [disabled]="saving">
-      <ion-spinner *ngIf="saving" slot="start" name="crescent"></ion-spinner>
-      <ion-icon *ngIf="!saving" name="save-outline" slot="start"></ion-icon>
-      Enregistrer
-    </ion-button>
-    <ion-button expand="block" fill="outline" color="medium" (click)="reset()">
-      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+    <!-- Action secondaire -->
+    <button type="button" class="gl-btn gl-btn--secondary" (click)="reset()">
+      <ion-icon name="refresh-outline"></ion-icon>
       Réinitialiser
-    </ion-button>
+    </button>
   </div>
 </ion-content>
+
+<!-- Action principale collée en bas -->
+<ion-footer class="ion-no-border">
+  <div class="gls-footer">
+    <button type="button" class="gl-btn gl-btn--primary" (click)="save()" [disabled]="saving">
+      <ion-spinner *ngIf="saving" name="crescent"></ion-spinner>
+      <ion-icon *ngIf="!saving" name="save-outline"></ion-icon>
+      Enregistrer
+    </button>
+  </div>
+</ion-footer>

@@ -97,14 +97,31 @@ export class BeneficesPage implements OnInit, OnDestroy {
   private dessinerChart(): void {
     if (!this.data?.lignes?.length || !this.chartRef) return;
     this.chart?.destroy();
-    const ctx = this.chartRef.nativeElement.getContext('2d');
+    const canvas = this.chartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Mode sombre auto : Chart.js utilise un texte/grille sombres par défaut,
-    // invisibles sur la carte assombrie (--ion-card-background) en dark mode.
-    const isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-    const tickColor = isDark ? '#cbd5e1' : '#64748b';
-    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    // responsive:true (ResizeObserver interne à Chart.js) peut entrer en boucle infinie
+    // et geler l'onglet quand le canvas est dans un conteneur dont la hauteur dépend du
+    // breakpoint (.chart-wrap ici : 220/280/340px selon la largeur) — même bug identifié
+    // et corrigé sur reports.page.ts (accordéon qui anime sa taille à l'ouverture). On
+    // fixe donc la taille du canvas nous-mêmes (dimensions natives, pas juste CSS) une
+    // seule fois et on désactive complètement le suivi automatique de Chart.js.
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(rect.width, 1) * dpr;
+    canvas.height = Math.max(rect.height, 1) * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Couleurs lues depuis les tokens --gl-* au moment du dessin : correctes en
+    // clair, sombre Auto ET sombre forcé (body.theme-dark), contrairement à
+    // l'ancien test prefers-color-scheme. Données et calculs inchangés.
+    const css = getComputedStyle(document.body);
+    const token = (nom: string, repli: string) => css.getPropertyValue(nom).trim() || repli;
+    const tickColor = token('--gl-muted', '#64748b');
+    const gridColor = token('--gl-border', '#e2e8f0');
+    const okColor = token('--gl-ok', '#047857');
+    const badColor = token('--gl-bad', '#dc2626');
 
     this.chart = new Chart(ctx, {
       type: 'bar',
@@ -113,15 +130,14 @@ export class BeneficesPage implements OnInit, OnDestroy {
         datasets: [{
           label: 'Bénéfice',
           data: this.data.lignes.map(l => l.benefice),
-          backgroundColor: this.data.lignes.map(l => l.benefice >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'),
-          borderColor:      this.data.lignes.map(l => l.benefice >= 0 ? '#10b981' : '#ef4444'),
-          borderWidth: 1,
+          backgroundColor: this.data.lignes.map(l => l.benefice >= 0 ? okColor : badColor),
+          borderColor:      this.data.lignes.map(l => l.benefice >= 0 ? okColor : badColor),
+          borderWidth: 0,
           borderRadius: 4
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: false,
         plugins: { legend: { display: false } },
         scales: {
           y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } },

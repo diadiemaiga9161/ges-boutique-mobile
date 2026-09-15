@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { ToastController, AlertController } from '@ionic/angular';
 import { TransfertService, BoutiquePartenaire } from '../../services/transfert.service';
 
@@ -16,6 +16,12 @@ export class ConfigTransfertsPage implements OnInit {
 
   form: BoutiquePartenaire = { nom: '', url: '', actif: true };
   editing: BoutiquePartenaire | null = null;
+
+  // Modale centrée (design commun) : Échap = même action que la croix / le fond.
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.afficherForm) this.annuler();
+  }
 
   constructor(
     private transfertService: TransfertService,

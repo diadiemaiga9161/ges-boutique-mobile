@@ -1,2 +1,541 @@
-// Styles specifiques a la page annulation-paiements
-// Le design global suffit (global.scss)
+// ══════════════════════════════════════════════════════════════════
+//  ANNULATION PAIEMENTS — design commun Ionic ↔ React Native
+//  100 % tokens --gl-* : lisible en clair, sombre Auto ET sombre forcé
+//  (body.theme-dark). Remplace les anciennes classes globales (list-item-card,
+//  status-badge, ion-chip colorés) et les styles en ligne figés.
+//  gl-list-card / glc-* / gl-pill / gl-btn / md-* : copies locales identiques à
+//  Commandes / Inventaire (pas encore de composant partagé).
+// ══════════════════════════════════════════════════════════════════
+
+.ap-content {
+  --background: var(--gl-bg);
+}
+
+// ══════════════════════════════════════════════════
+//  STRUCTURE
+// ══════════════════════════════════════════════════
+.ap-page {
+  padding: 16px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Tuiles KPI (gl-stat-card) : grille 2 colonnes
+.ap-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ap-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+.ap-filters { padding: 12px; }
+
+.ap-search { margin: 0; }
+
+.ap-chip-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .fz-chips { flex: 1; min-width: 0; }
+}
+
+.ap-chip-row__icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--gl-muted);
+}
+
+.ap-overline {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ap-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+  margin-bottom: -4px;
+}
+
+.ap-count {
+  min-width: 24px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ap-empty {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+// ══════════════════════════════════════════════════
+//  ONGLETS (même rendu que le segment du design commun / SegmentTabs RN)
+// ══════════════════════════════════════════════════
+.ap-seg {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+}
+
+.ap-seg__btn {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gl-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &--active {
+    background: var(--gl-blue-soft);
+    color: var(--gl-link);
+  }
+
+  &:focus-visible { outline: 2px solid var(--gl-action); outline-offset: 2px; }
+}
+
+// ══════════════════════════════════════════════════
+//  CHARGEMENT
+// ══════════════════════════════════════════════════
+.ap-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ap-sk {
+  position: relative;
+  overflow: hidden;
+  height: 132px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  animation: apPulse 1.1s ease-in-out infinite alternate;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 68px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--gl-surface-2);
+    box-shadow: inset 0 0 0 1px var(--gl-border);
+  }
+
+  &::before { top: 20px; width: 45%; }
+  &::after  { top: 44px; width: 28%; }
+}
+
+@keyframes apPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
+}
+
+// ══════════════════════════════════════════════════
+//  CARTE DE LISTE (identique Commandes / Inventaire)
+// ══════════════════════════════════════════════════
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+
+  // Opération annulée : atténuée (sur le corps, pour ne pas lutter avec
+  // l'animation d'entrée .animate-cards qui anime l'opacité de la carte)
+  &--muted .glc-body { opacity: 0.6; }
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad  { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+}
+
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.glc-amount {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gl-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+
+  &--ok  { color: var(--gl-ok); }
+  &--bad { color: var(--gl-bad); }
+}
+
+.glc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+    overflow-wrap: anywhere;
+
+    ion-icon { font-size: 14px; flex-shrink: 0; }
+  }
+}
+
+.glc-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-text-2);
+  margin: 0;
+
+  &--bad { color: var(--gl-bad); }
+}
+
+// Pied de carte : action écrite (icône + libellé)
+.glc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -1px;
+}
+
+.glc-action {
+  flex: 1 1 33%;
+  min-width: 96px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gl-border);
+  border-right: 1px solid var(--gl-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--gl-text-2);
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  &:active { background: var(--gl-surface-2); }
+
+  &--bad { color: var(--gl-bad); &:active { background: var(--gl-bad-soft); } }
+}
+
+// Pastille de statut
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 13px; }
+
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+// ══════════════════════════════════════════════════
+//  BOUTONS
+// ══════════════════════════════════════════════════
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; flex-shrink: 0; }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+    &:active { background: var(--gl-blue-soft); }
+  }
+
+  // Annulation confirmée : fond rouge plein (action destructive)
+  &--danger {
+    background: var(--gl-bad-solid);
+    color: #ffffff;
+    &:active { opacity: 0.85; }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MODALE CENTRÉE (design-premium : fixed + overlay + centrage) — Commandes
+// ══════════════════════════════════════════════════════════════════
+.md-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.md-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 22, 72, 0.55);
+  animation: md-fade 0.18s ease;
+}
+
+.md-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(8, 22, 72, 0.28);
+  animation: md-zoom 0.2s ease;
+
+  &--sm { width: min(440px, 100%); }
+}
+
+@keyframes md-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes md-zoom { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.md-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--gl-border);
+  flex-shrink: 0;
+}
+
+.md-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 20px; }
+
+  &--bad { background: var(--gl-bad-soft); color: var(--gl-bad); }
+}
+
+.md-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-text);
+  margin: 0;
+}
+
+.md-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gl-text-2);
+  flex-shrink: 0;
+
+  ion-icon { font-size: 22px; }
+}
+
+.md-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  flex-shrink: 0;
+
+  .gl-btn { flex: 1; }
+}
+
+// Résumé de l'opération dans la confirmation
+.ap-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+}
+
+.ap-confirm-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--gl-text);
+}
+
+.ap-confirm-note {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--gl-muted);
+
+  ion-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+}
+
+// ══════════════════════════════════════════════════
+//  ACCESSIBILITÉ / RESPONSIVE
+// ══════════════════════════════════════════════════
+@media (prefers-reduced-motion: reduce) {
+  .ap-sk,
+  .md-backdrop,
+  .md-sheet { animation: none; }
+}
+
+@media (min-width: 720px) {
+  .ap-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -3,6 +3,7 @@ import { ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { IAService, AnalyseIAResult, RecommandationIA, ProfilIA } from '../../services/ia.service';
 import { catchError, of } from 'rxjs';
+import { GlStatCardVariant } from '../../components/stat-card/stat-card.component';
 
 interface RecoAvecEtat extends RecommandationIA {
   traitee?: boolean;
@@ -63,13 +64,15 @@ export class IaPage {
   readonly delaiOptions = [7, 15, 30, 45, 60];
 
   // ── Segments clients ───────────────────────────
-  readonly segmentsMeta: { key: string; labelKey: string; desc: string; cssClass: string; icon: string }[] = [
-    { key: 'CHAMPIONS',  labelKey: 'IA.SEGMENT_CHAMPIONS', desc: 'IA.SEGMENT_CHAMPIONS_DESC', cssClass: 'seg-gold',    icon: 'trophy-outline' },
-    { key: 'LOYAUX',     labelKey: 'IA.SEGMENT_LOYAUX',    desc: 'IA.SEGMENT_LOYAUX_DESC',    cssClass: 'seg-green',   icon: 'heart-outline' },
-    { key: 'POTENTIELS', labelKey: 'IA.SEGMENT_POTENTIELS',desc: 'IA.SEGMENT_POTENTIELS_DESC',cssClass: 'seg-blue',   icon: 'trending-up-outline' },
-    { key: 'A_RISQUE',   labelKey: 'IA.SEGMENT_A_RISQUE',  desc: 'IA.SEGMENT_A_RISQUE_DESC',  cssClass: 'seg-orange', icon: 'warning-outline' },
-    { key: 'ENDORMIS',   labelKey: 'IA.SEGMENT_ENDORMIS',  desc: 'IA.SEGMENT_ENDORMIS_DESC',  cssClass: 'seg-red',    icon: 'moon-outline' },
-    { key: 'NOUVEAUX',   labelKey: 'IA.SEGMENT_NOUVEAUX',  desc: 'IA.SEGMENT_NOUVEAUX_DESC',  cssClass: 'seg-purple', icon: 'sparkles-outline' }
+  // variant : teinte de la tuile gl-stat-card (affichage uniquement, design commun
+  // Ionic ↔ RN) — positif = vert, à développer = bleu, risque = orange, perdu = rouge.
+  readonly segmentsMeta: { key: string; labelKey: string; desc: string; cssClass: string; icon: string; variant: GlStatCardVariant }[] = [
+    { key: 'CHAMPIONS',  labelKey: 'IA.SEGMENT_CHAMPIONS', desc: 'IA.SEGMENT_CHAMPIONS_DESC', cssClass: 'seg-gold',    icon: 'trophy-outline',      variant: 'green' },
+    { key: 'LOYAUX',     labelKey: 'IA.SEGMENT_LOYAUX',    desc: 'IA.SEGMENT_LOYAUX_DESC',    cssClass: 'seg-green',   icon: 'heart-outline',       variant: 'green' },
+    { key: 'POTENTIELS', labelKey: 'IA.SEGMENT_POTENTIELS',desc: 'IA.SEGMENT_POTENTIELS_DESC',cssClass: 'seg-blue',   icon: 'trending-up-outline', variant: 'blue' },
+    { key: 'A_RISQUE',   labelKey: 'IA.SEGMENT_A_RISQUE',  desc: 'IA.SEGMENT_A_RISQUE_DESC',  cssClass: 'seg-orange', icon: 'warning-outline',     variant: 'orange' },
+    { key: 'ENDORMIS',   labelKey: 'IA.SEGMENT_ENDORMIS',  desc: 'IA.SEGMENT_ENDORMIS_DESC',  cssClass: 'seg-red',    icon: 'moon-outline',        variant: 'red' },
+    { key: 'NOUVEAUX',   labelKey: 'IA.SEGMENT_NOUVEAUX',  desc: 'IA.SEGMENT_NOUVEAUX_DESC',  cssClass: 'seg-purple', icon: 'sparkles-outline',    variant: 'blue' }
   ];
 
   constructor(
@@ -254,6 +257,16 @@ export class IaPage {
       case 'HAUTE':    return 'warning';
       case 'MOYENNE':  return 'primary';
       default:         return 'medium';
+    }
+  }
+
+  /** Teinte de la pastille de priorité (affichage uniquement, classes .gl-pill--*). */
+  prioriteTone(p: string): 'bad' | 'warn' | 'info' | 'neutral' {
+    switch (p) {
+      case 'CRITIQUE': return 'bad';
+      case 'HAUTE':    return 'warn';
+      case 'MOYENNE':  return 'info';
+      default:         return 'neutral';
     }
   }
 

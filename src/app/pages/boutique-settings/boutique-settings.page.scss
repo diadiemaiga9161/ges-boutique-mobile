@@ -1,98 +1,278 @@
-h1 {
-  font-size: 1.4rem;
-  margin: 0 0 6px;
+// Paramètres boutique — design commun Ionic ↔ React Native.
+// 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark) local ne
+// suivait pas le « Sombre » forcé du Profil. Les ion-input / ion-textarea (couleurs
+// figées dans variables.scss) sont remplacés par les champs gl-field / gl-input
+// validés sur Inventaire (mêmes [(ngModel)]). Classes gls-* identiques aux autres
+// pages Paramètres.
+
+.gls-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-// -------- En-tête de section (icône + titre) --------
-.settings-section-hdr {
+.gls-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  margin: 0 0 4px;
-
-  ion-icon { font-size: 1.15rem; color: #1a56db; flex-shrink: 0; }
 }
 
-// -------- Champs de formulaire : espace entre les inputs "outline" --------
-.form-panel {
-  ion-input, ion-textarea {
-    margin-bottom: 10px;
-    --border-radius: 10px;
-    --border-color: #dde5f0;
-    --highlight-color-focused: #1a56db;
-
-    ion-icon[slot="start"] {
-      color: #1a56db;
-      margin-inline-end: 8px;
-      font-size: 1.05rem;
-    }
-  }
-
-  ion-input:last-child, ion-textarea:last-child { margin-bottom: 0; }
-
-  .two-cols {
-    ion-input { margin-bottom: 0; }
-  }
+.gls-hint {
+  margin: -4px 4px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
 }
 
-// -------- Ligne "toggle" (fonctionnalité on/off) --------
-.settings-toggle-row {
+// -------- Carte --------
+.gls-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.gls-form {
+  padding: 16px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gls-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.settings-toggle-icon {
+.gls-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  ion-spinner { color: var(--gl-action); }
+}
+
+// -------- Ligne de réglage (pastille + libellé + interrupteur) --------
+.gls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+
+  & + & { border-top: 1px solid var(--gl-border); }
+
+  ion-toggle { flex-shrink: 0; }
+}
+
+.gls-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
 
-  ion-icon { font-size: 1.2rem; color: #1a56db; }
+  ion-icon { font-size: 20px; }
 }
 
-.settings-toggle-text {
+.gls-text {
   flex: 1;
   min-width: 0;
-
-  h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
-  p { font-size: 0.78rem; margin: 0; }
+  display: flex;
+  flex-direction: column;
 }
 
-// ── Tablette (720px+) ─────────────────────────────
-@media (min-width: 720px) {
-  h1 { font-size: 1.7rem; }
-
-  ion-list { max-width: 720px; margin: 0 auto; }
+.gls-label {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--gl-text);
 }
 
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  h1 { font-size: 2rem; }
-  ion-list { max-width: 900px; }
+.gls-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--gl-muted);
 }
 
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  (.form-panel/.mobile-card passent déjà en sombre via
-//  global.scss — ici on corrige textes/icônes/bordures
-//  restés en couleur claire fixe sur la carte assombrie)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .card-title { color: #f1f5f9; }
+// -------- Logo --------
+.gls-logo {
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 
-  .form-panel {
-    ion-input, ion-textarea {
-      --border-color: #374151;
-      --highlight-color-focused: #3b72f6;
-    }
+  &__img {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    background: var(--gl-surface-2);
+    border: 1px solid var(--gl-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 12px;
+
+    img { width: 100%; height: 100%; object-fit: contain; }
+    ion-icon { font-size: 44px; color: var(--gl-muted); }
   }
 
-  .settings-toggle-icon { background: rgba(59,114,246,0.18); }
+  &__name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gl-text);
+    overflow-wrap: anywhere;
+  }
 
-  .settings-toggle-text h3 { color: #f1f5f9; }
+  &__sub {
+    margin: 2px 0 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+  }
+
+  .gls-file-input { display: none; }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+}
+
+// -------- Champ (libellé au-dessus, input 48, radius 12) — identique à Inventaire --------
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+}
+
+.gl-input,
+.gl-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.gl-input {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+
+  ion-icon { font-size: 18px; color: var(--gl-muted); flex-shrink: 0; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
+  }
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.gl-textarea {
+  display: block;
+  min-height: 96px;
+  padding: 12px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  outline: none;
+
+  &::placeholder { color: var(--gl-muted); opacity: 1; }
+  &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+// -------- Boutons --------
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  ion-spinner { width: 20px; height: 20px; color: currentColor; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+    &:active { background: var(--gl-surface-2); }
+  }
+
+  &--sm {
+    width: auto;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 13px;
+    ion-icon { font-size: 18px; }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// -------- Barre d'action collée en bas --------
+.gls-footer {
+  background: var(--gl-surface);
+  border-top: 1px solid var(--gl-border);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+
+  .gl-btn { display: flex; max-width: 688px; margin: 0 auto; }
 }

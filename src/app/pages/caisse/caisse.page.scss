@@ -1,351 +1,842 @@
-.form-panel h2 { margin: 0; }
+// ══════════════════════════════════════════════════════════════════
+//  CAISSE — design commun Ionic ↔ React Native (CaisseScreen.tsx)
+//  100 % tokens --gl-* : lisible en clair, sombre Auto ET sombre forcé.
+//  L'ancien bloc local @media (prefers-color-scheme: dark), inopérant en
+//  sombre forcé (body.theme-dark), est supprimé.
+// ══════════════════════════════════════════════════════════════════
 
-// -------- Période bar --------
-.period-bar {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 2px 0;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+.caisse-content {
+  --background: var(--gl-bg);
 }
 
-.period-btn {
-  flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid #e2e8f0;
-  background: #ffffff;
-  color: #64748b;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  &.active { background: #1a56db; border-color: #1a56db; color: #ffffff; }
-}
-
-// -------- Filtres opérations --------
-.op-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.op-search {
-  --background: #ffffff;
-  --border-radius: 10px;
-  --box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  padding: 0;
-}
-
-.op-type-select {
-  --background: #ffffff;
-  --border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-}
-
-.op-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.82rem;
-  padding: 2px 0;
-}
-
-// -------- Carte opération --------
-.op-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e8eef8;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  display: flex;
-  align-items: stretch;
+// ══════════════════════════════════════════════════
+//  BANDEAU HÉROS (reste bleu dans les 2 thèmes)
+// ══════════════════════════════════════════════════
+.caisse-hero {
+  position: relative;
   overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.15s;
-
-  &:active { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  &.op-annulee { opacity: 0.55; text-decoration: line-through; }
+  padding: 20px 16px;
+  background: var(--gl-hero);
 }
 
-.op-indicator {
-  width: 4px;
-  flex-shrink: 0;
-  &.ind-entree { background: #0e9f6e; }
-  &.ind-sortie { background: #dc2626; }
-  &.ind-credit { background: #d97706; }
-  &.ind-other  { background: #94a3b8; }
+.caisse-hero__deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
-.op-content {
-  flex: 1;
-  padding: 10px 12px;
+.caisse-hero__content {
+  position: relative;
+  z-index: 1;
+}
+
+.caisse-hero__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.caisse-hero__amount {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.caisse-hero__sub {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+  font-variant-numeric: tabular-nums;
+
+  ion-icon { font-size: 14px; flex-shrink: 0; }
+}
+
+// ══════════════════════════════════════════════════
+//  STRUCTURE
+// ══════════════════════════════════════════════════
+.caisse-page {
+  padding: 16px 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
+}
+
+.caisse-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   min-width: 0;
 }
 
-.op-row-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+.caisse-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.op-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.caisse-kpis__full { grid-column: 1 / -1; }
 
-.op-type-badge {
-  font-size: 0.7rem !important;
-  padding: 3px 7px !important;
-}
+.caisse-segment { width: 100%; }
 
-.op-annulee-badge {
-  font-size: 0.62rem;
-  background: #dc2626;
-  color: #fff;
-  border-radius: 4px;
-  padding: 1px 5px;
+.caisse-overline {
+  font-size: 11px;
   font-weight: 700;
-}
-
-.op-amount-col {
-  font-size: 0.95rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.op-entree-text { color: #0e9f6e; }
-.op-sortie-text { color: #dc2626; }
-.op-credit-text { color: #d97706; }
-
-.op-motif-row {
-  font-size: 0.82rem;
-  color: #334155;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.op-soldes {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-}
-
-.op-meta-row {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.op-chevron {
-  color: #cbd5e1;
-  font-size: 0.9rem;
-  align-self: center;
-  padding-right: 8px;
-  flex-shrink: 0;
-}
-
-// -------- Réconciliation caisse par vendeur (lecture seule) --------
-.reconciliation-date-item {
-  --background: #ffffff;
-  --border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-}
-
-.reconciliation-highlight {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: linear-gradient(135deg, #0e9f6e 0%, #065f46 100%);
-  border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 4px 14px rgba(14,159,110,0.28);
-}
-
-.reconciliation-highlight__label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #ffffff;
+  color: var(--gl-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
+  letter-spacing: 0.06em;
 }
 
-.reconciliation-highlight__value {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #ffffff;
-}
+.caisse-muted { color: var(--gl-muted); }
 
-// -------- Info crédit sélectionné --------
-.credit-selected-info {
-  background: #eff6ff;
-  border-radius: 10px;
-  padding: 10px 12px;
-  border: 1px solid #bfdbfe;
-}
-
-// -------- Règlement groupe --------
-.group-bar {
+// ══════════════════════════════════════════════════
+//  CARTES
+// ══════════════════════════════════════════════════
+.caisse-card {
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #eff6ff;
-  border-radius: 10px;
-  padding: 8px 12px;
-  border: 1px solid #bfdbfe;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
 }
 
-.group-bar-left {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.credit-selected {
-  border: 2px solid #1a56db !important;
-  background: #f0f7ff !important;
-}
-
-// -------- Carte d'opération --------
-.op-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e8eef8;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+.caisse-card__head {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
 }
 
-.op-icon {
+.caisse-card__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.caisse-card__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gl-text);
+  overflow-wrap: anywhere;
+}
+
+.caisse-card__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+.caisse-note {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+// Pastille d'icône colorée
+.caisse-pastille {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 
-  ion-icon { font-size: 1.4rem; }
+  ion-icon { font-size: 20px; }
 
-  &.op-entree { background: #f0fdf4; ion-icon { color: #0e9f6e; } }
-  &.op-sortie { background: #fef2f2; ion-icon { color: #dc2626; } }
+  &--ok    { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--bad   { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--warn  { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--muted { background: var(--gl-surface-2); color: var(--gl-muted); box-shadow: inset 0 0 0 1px var(--gl-border); }
 }
 
-.op-body { flex: 1; min-width: 0; }
-
-.op-title {
-  font-size: 0.88rem;
+// Pastille de statut (radius 8)
+.caisse-pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 2px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-muted);
+  box-shadow: inset 0 0 0 1px var(--gl-border);
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok);   box-shadow: none; }
+  &--bad  { background: var(--gl-bad-soft);  color: var(--gl-bad);  box-shadow: none; }
+  &--warn { background: var(--gl-warn-soft); color: var(--gl-warn); box-shadow: none; }
 }
 
-.op-meta {
-  font-size: 0.75rem;
-  color: #94a3b8;
+// Compteur (pastille rouge pleine)
+.caisse-count {
+  min-width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--gl-bad-solid);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.op-motif {
-  font-size: 0.78rem;
-  color: #64748b;
-  margin-top: 2px;
+// Mini-tuiles chiffrées (dans une carte)
+.caisse-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.caisse-tile {
+  min-width: 0;
+  padding: 12px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+
+  &--full { grid-column: 1 / -1; }
+}
+
+.caisse-tile__label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.caisse-tile__value {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+
+  &--ok   { color: var(--gl-ok); }
+  &--bad  { color: var(--gl-bad); }
+  &--warn { color: var(--gl-warn); }
+}
+
+// ══════════════════════════════════════════════════
+//  BOUTONS
+// ══════════════════════════════════════════════════
+.caisse-btn {
+  width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s, opacity 0.15s;
+
+  ion-icon { flex-shrink: 0; font-size: 20px; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+
+    &:active:not([disabled]) { background: var(--gl-action-press); transform: translateY(1px); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+
+    &:active { background: var(--gl-surface-2); }
+  }
+
+  &--danger {
+    background: transparent;
+    color: var(--gl-bad);
+    border: 1.5px solid var(--gl-bad-soft);
+
+    &:active { background: var(--gl-bad-soft); }
+  }
+
+  &--compact {
+    width: auto;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+
+    ion-icon { font-size: 18px; }
+  }
+
+  &--grow { flex: 2; }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.caisse-actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// ══════════════════════════════════════════════════
+//  FORMULAIRES (libellé 13/600, champ 48, radius 12)
+// ══════════════════════════════════════════════════
+.caisse-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.caisse-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.caisse-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
+}
+
+.caisse-field {
+  height: 48px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--gl-surface);
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: var(--gl-action);
+    box-shadow: 0 0 0 4px var(--gl-ring);
+  }
+}
+
+// ion-input / ion-select : valeurs globales figées en clair → tokens
+.caisse-field__input,
+.caisse-select {
+  --color: var(--gl-text);
+  --placeholder-color: var(--gl-muted);
+  --placeholder-opacity: 1;
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --highlight-height: 0;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  color: var(--gl-text);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.caisse-field__input::part(native) { color: var(--gl-text); }
+
+.caisse-select {
+  width: 100%;
+
+  &::part(text)        { color: var(--gl-text); }
+  &::part(placeholder) { color: var(--gl-muted); opacity: 1; }
+  &::part(icon)        { color: var(--gl-muted); opacity: 1; }
+}
+
+.caisse-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+
+  strong {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--gl-text);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  LISTES (crédits, opérations, réconciliation)
+// ══════════════════════════════════════════════════
+.caisse-alert-row {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.caisse-alert-row__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gl-text);
+}
+
+.caisse-item--tap {
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:active { border-color: var(--gl-action); }
+  &:focus-visible { outline: 2px solid var(--gl-action); outline-offset: 2px; }
+}
+
+.caisse-item__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.caisse-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.caisse-item__title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gl-text);
+  overflow-wrap: anywhere;
+}
+
+.caisse-item__text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  strong { font-weight: 700; color: var(--gl-text); }
 }
 
-.op-amount {
-  font-size: 0.95rem;
-  font-weight: 800;
+.caisse-item__meta {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.caisse-item__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.caisse-chevron {
   flex-shrink: 0;
-
-  &.op-entree { color: #0e9f6e; }
-  &.op-sortie { color: #dc2626; }
+  font-size: 18px;
+  color: var(--gl-muted);
 }
 
-// ── Tablette (720px+) ─────────────────────────────
+.caisse-amount {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gl-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+
+  &--ok   { color: var(--gl-ok); }
+  &--bad  { color: var(--gl-bad); }
+  &--warn { color: var(--gl-warn); }
+}
+
+// ── Opérations ──
+.caisse-filters {
+  padding: 12px;
+}
+
+.caisse-search { margin: 0; }
+
+.caisse-chip-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .fz-chips { flex: 1; min-width: 0; }
+}
+
+.caisse-chip-row__icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--gl-muted);
+}
+
+.caisse-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.caisse-op { gap: 10px; }
+
+.caisse-op--annulee {
+  opacity: 0.6;
+
+  .caisse-amount { text-decoration: line-through; }
+}
+
+.caisse-op__soldes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--gl-surface-2);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+
+  strong {
+    font-weight: 700;
+    color: var(--gl-text-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ion-icon { font-size: 13px; color: var(--gl-muted); }
+}
+
+// ── Réconciliation ──
+.caisse-date-item {
+  --background: var(--gl-surface);
+  --background-focused: var(--gl-surface);
+  --color: var(--gl-text);
+  --min-height: 56px;
+  --padding-start: 16px;
+  --inner-padding-end: 12px;
+  margin: 0;
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+
+  &.item-has-focus {
+    --background: var(--gl-surface);
+    border-color: var(--gl-action) !important;
+  }
+
+  ion-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gl-text);
+  }
+
+  ion-datetime-button::part(native) {
+    min-height: 36px;
+    border-radius: 8px;
+    background: var(--gl-surface-2);
+    color: var(--gl-text);
+    font-weight: 600;
+  }
+}
+
+.caisse-date-item__icon {
+  margin-inline-end: 12px;
+  font-size: 20px;
+  color: var(--gl-link);
+}
+
+.caisse-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--gl-blue-soft);
+  border: 1px solid var(--gl-blue-line);
+  border-radius: 12px;
+}
+
+.caisse-highlight__label { color: var(--gl-link); }
+
+.caisse-highlight__value {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gl-link);
+  font-variant-numeric: tabular-nums;
+}
+
+// ══════════════════════════════════════════════════
+//  MODALES CENTRÉES (design-premium)
+// ══════════════════════════════════════════════════
+.gl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 15, 35, 0.55);
+  animation: caisseFadeIn 0.18s ease;
+}
+
+.gl-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  border: 1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow: var(--gl-card-shadow);
+  animation: caisseZoomIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gl-modal__head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--gl-border);
+}
+
+.gl-modal__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.gl-modal__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gl-text);
+  overflow-wrap: anywhere;
+}
+
+.gl-modal__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+.gl-modal__close {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-right: -8px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gl-muted);
+  cursor: pointer;
+
+  ion-icon { font-size: 24px; }
+  &:active { background: var(--gl-surface-2); }
+}
+
+.gl-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.gl-modal__foot {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--gl-surface);
+  border-top: 1px solid var(--gl-border);
+
+  .caisse-btn {
+    flex: 1;
+    padding: 0 10px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+  .caisse-btn--grow { flex: 2; }
+}
+
+.caisse-subcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+
+  .caisse-tile { background: var(--gl-surface); }
+}
+
+.caisse-detail-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: var(--gl-surface-2);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+}
+
+.caisse-detail-amount__val {
+  font-size: 30px;
+  line-height: 1.1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.caisse-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.caisse-rows__row {
+  min-height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gl-border);
+
+  &:last-child { border-bottom: none; }
+
+  > span:first-child {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gl-muted);
+  }
+
+  strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+
+@keyframes caisseFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes caisseZoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-modal-overlay,
+  .gl-modal { animation: none; }
+}
+
+// ══════════════════════════════════════════════════
+//  RESPONSIVE
+// ══════════════════════════════════════════════════
+@media (max-width: 360px) {
+  .caisse-hero__amount { font-size: 25px; }
+  .caisse-tiles { grid-template-columns: 1fr; }
+}
+
 @media (min-width: 720px) {
-  .period-bar   { gap: 8px; }
-  .period-btn   { font-size: 0.88rem; padding: 8px 18px; }
-
-  .op-card      { border-radius: 14px; }
-  .op-content   { padding: 12px 16px; }
-  .op-amount-col, .op-amount { font-size: 1.05rem; }
-  .op-motif-row { font-size: 0.88rem; }
-  .op-meta-row  { font-size: 0.78rem; }
-
-  .group-bar    { padding: 10px 16px; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .op-amount-col, .op-amount { font-size: 1.1rem; }
-  .op-motif-row { font-size: 0.92rem; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .period-btn,
-  .op-search,
-  .op-type-select,
-  .op-card,
-  .reconciliation-date-item {
-    --background: #1f2937;
-    background: #1f2937;
-    border-color: #374151;
-    color: #e5e7eb;
+  .caisse-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
   }
 
-  .period-btn.active {
-    background: #1a56db;
-    border-color: #1a56db;
-    color: #fff;
-  }
-
-  .credit-selected-info,
-  .group-bar {
-    background: rgba(26,86,219,0.15);
-    border-color: rgba(59,114,246,0.4);
-  }
-
-  .credit-selected {
-    border-color: #3b72f6 !important;
-    background: rgba(26,86,219,0.15) !important;
-  }
-
-  .op-motif-row { color: #cbd5e1; }
-  .op-title { color: #f1f5f9; }
-
-  .reconciliation-highlight { box-shadow: 0 4px 14px rgba(6,95,70,0.4); }
-
-  // Classes globales (card-title, stat-card, empty-v2) réutilisées dans cette page —
-  // scoping local à Caisse uniquement (Angular emulated encapsulation, aucun impact
-  // sur les autres pages qui utilisent les mêmes noms de classe globale).
-  .card-title { color: #f1f5f9; }
-  .stat-card {
-    background: #172033;
-    border-color: #374151;
-    .stat-value { color: #f1f5f9; }
-  }
-  .empty-v2__icon { background: #263244; }
-  .empty-v2__title { color: #f1f5f9; }
+  .caisse-hero { padding: 24px max(16px, calc((100% - 800px) / 2 + 20px)); }
+  .caisse-hero__amount { font-size: 36px; }
+  .caisse-kpis { grid-template-columns: repeat(3, 1fr); }
+  .caisse-kpis__full { grid-column: auto; }
 }

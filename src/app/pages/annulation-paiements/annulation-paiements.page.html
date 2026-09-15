@@ -7,206 +7,223 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<!-- ══════════════════════════════════════════════════════════════════
+     ANNULATION PAIEMENTS — design commun Ionic ↔ React Native
+     Tuiles KPI → onglets → filtres (recherche + période) → liste en cartes
+     avec action écrite en pied → confirmation en modale centrée.
+     Aucune logique modifiée : mêmes appels, mêmes filtres, même annulation
+     (annulerPaiementFournisseur / annulerReglement) après confirmation.
+═══════════════════════════════════════════════════════════════════ -->
+<ion-content [fullscreen]="true" class="ap-content">
   <ion-refresher slot="fixed" (ionRefresh)="charger()">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="page-pad stack">
+  <div class="ap-page">
 
-    <!-- Hero stats -->
-    <div class="hero-stat-row">
-      <div class="hsr-item">
-        <span class="hsr-val">{{ (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length }}</span>
-        <span class="hsr-lbl">Operations</span>
-      </div>
-      <div class="hsr-item">
-        <span class="hsr-val">{{ countAnnules() }}</span>
-        <span class="hsr-lbl">Annules</span>
-      </div>
+    <!-- Tuiles KPI (mêmes 2 chiffres qu'avant) -->
+    <div class="ap-kpis">
+      <gl-stat-card
+        icon="swap-horizontal-outline"
+        label="Operations"
+        [value]="'' + (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length"
+        variant="blue">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="close-circle-outline"
+        label="Annules"
+        [value]="'' + countAnnules()"
+        variant="red">
+      </gl-stat-card>
     </div>
 
-    <!-- Onglets -->
-    <div class="filter-zone filter-zone--chips">
-      <ion-chip
-        [color]="onglet === 'fournisseur' ? 'primary' : 'medium'"
-        [outline]="onglet !== 'fournisseur'"
+    <!-- Onglets (même déclenchement : onglet = …; charger()) -->
+    <div class="ap-seg" role="tablist" aria-label="Type d'opération">
+      <button type="button" role="tab" class="ap-seg__btn"
+        [class.ap-seg__btn--active]="onglet === 'fournisseur'"
+        [attr.aria-selected]="onglet === 'fournisseur'"
         (click)="onglet = 'fournisseur'; charger()">
         Paiements fournisseur
-      </ion-chip>
-      <ion-chip
-        [color]="onglet === 'credit' ? 'primary' : 'medium'"
-        [outline]="onglet !== 'credit'"
+      </button>
+      <button type="button" role="tab" class="ap-seg__btn"
+        [class.ap-seg__btn--active]="onglet === 'credit'"
+        [attr.aria-selected]="onglet === 'credit'"
         (click)="onglet = 'credit'; charger()">
         Reglements credit
-      </ion-chip>
+      </button>
     </div>
 
-    <!-- Filtres periode -->
-    <div class="filter-zone filter-zone--chips">
-      <ion-chip
-        (click)="filterByPeriod('today')"
-        [color]="selectedPeriod === 'today' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'today'">
-        Aujourd'hui
-      </ion-chip>
-      <ion-chip
-        (click)="filterByPeriod('week')"
-        [color]="selectedPeriod === 'week' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'week'">
-        Semaine
-      </ion-chip>
-      <ion-chip
-        (click)="filterByPeriod('month')"
-        [color]="selectedPeriod === 'month' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'month'">
-        Mois
-      </ion-chip>
-      <ion-chip
-        (click)="filterByPeriod('year')"
-        [color]="selectedPeriod === 'year' ? 'primary' : 'medium'"
-        [outline]="selectedPeriod !== 'year'">
-        Annee
-      </ion-chip>
-      <ion-chip
-        (click)="filterByPeriod('all')"
-        color="medium"
-        [outline]="selectedPeriod !== 'all'">
-        Tout
-      </ion-chip>
-    </div>
+    <!-- Filtres : recherche + période -->
+    <div class="ap-card ap-filters">
+      <ion-searchbar
+        class="ap-search"
+        [(ngModel)]="searchTerm"
+        placeholder="Rechercher..."
+        (ionInput)="appliquerFiltres()">
+      </ion-searchbar>
 
-    <!-- Recherche -->
-    <ion-searchbar
-      [(ngModel)]="searchTerm"
-      placeholder="Rechercher..."
-      (ionInput)="appliquerFiltres()">
-    </ion-searchbar>
-
-    <!-- Skeleton loader -->
-    <div class="sk-list" *ngIf="loading">
-      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
-        <div class="skeleton sk-avatar"></div>
-        <div class="sk-card-body">
-          <div class="skeleton sk-line sk-line--w80"></div>
-          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      <div class="ap-chip-row">
+        <ion-icon name="calendar-outline" class="ap-chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips" role="group" aria-label="Période">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'today'" (click)="filterByPeriod('today')">Aujourd'hui</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'week'" (click)="filterByPeriod('week')">Semaine</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'month'" (click)="filterByPeriod('month')">Mois</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'year'" (click)="filterByPeriod('year')">Annee</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="selectedPeriod === 'all'" (click)="filterByPeriod('all')">Tout</button>
         </div>
-        <div class="skeleton sk-line sk-line--w30"></div>
       </div>
     </div>
 
-    <!-- Section header -->
-    <div class="section-header" *ngIf="!loading">
-      <span class="section-header__title">Resultats</span>
-      <span class="section-header__count">
-        {{ (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length }}
-      </span>
+    <!-- Chargement -->
+    <div class="ap-skeleton" *ngIf="loading" aria-busy="true">
+      <div class="ap-sk" *ngFor="let i of [1,2,3,4]"></div>
     </div>
 
-    <!-- Paiements fournisseur -->
-    <section class="stack animate-cards" *ngIf="!loading && onglet === 'fournisseur'">
+    <!-- En-tête de section -->
+    <div class="ap-section-head" *ngIf="!loading">
+      <p class="ap-overline">Resultats</p>
+      <span class="ap-count">{{ (onglet === 'fournisseur' ? paiementsFiltres : reglementsFiltres).length }}</span>
+    </div>
 
-      <article
-        class="list-item-card"
-        *ngFor="let p of paiementsFiltres; trackBy: trackById"
-        [style.opacity]="p.annule ? '0.6' : '1'">
+    <!-- ══════════ PAIEMENTS FOURNISSEUR ══════════ -->
+    <section class="ap-list animate-cards" *ngIf="!loading && onglet === 'fournisseur'">
 
-        <div class="lic-header">
-          <div class="lic-avatar" [class.lic-avatar--orange]="!p.annule" [class.lic-avatar--red]="p.annule">
-            <ion-icon [name]="p.annule ? 'close-circle-outline' : 'cash-outline'"></ion-icon>
-          </div>
-          <div class="lic-info">
-            <div class="lic-name">{{ p.fournisseur?.nom || 'Fournisseur' }}</div>
-            <div class="lic-sub">{{ formatDate(p.datePaiement) }}</div>
-            <div class="lic-sub" *ngIf="getPayerLabel(p)">Par {{ getPayerLabel(p) }}</div>
-          </div>
-          <div class="lic-right">
-            <span class="status-badge" [class.status-badge--success]="!p.annule" [class.status-badge--danger]="p.annule">
+      <article class="gl-list-card" [class.gl-list-card--muted]="p.annule" *ngFor="let p of paiementsFiltres; trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [class.glc-icon--warn]="!p.annule" [class.glc-icon--bad]="p.annule">
+              <ion-icon [name]="p.annule ? 'close-circle-outline' : 'cash-outline'"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ p.fournisseur?.nom || 'Fournisseur' }}</p>
+              <p class="glc-sub">{{ formatDate(p.datePaiement) }}</p>
+              <p class="glc-sub" *ngIf="getPayerLabel(p)">Par {{ getPayerLabel(p) }}</p>
+            </div>
+            <p class="glc-amount" [class.glc-amount--ok]="!p.annule" [class.glc-amount--bad]="p.annule">
               {{ formatMontant(p.montant) }}
-            </span>
+            </p>
           </div>
+
+          <div class="glc-meta">
+            <span class="gl-pill" [class.gl-pill--info]="p.modePaiement === 'ESPECES'" [class.gl-pill--neutral]="p.modePaiement !== 'ESPECES'">
+              <ion-icon [name]="p.modePaiement === 'ESPECES' ? 'cash-outline' : 'business-outline'" aria-hidden="true"></ion-icon>
+              {{ p.modePaiement === 'ESPECES' ? 'Especes' : 'Banque' }}
+            </span>
+            <span class="glc-meta__item" *ngIf="p.reference">
+              <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+              {{ p.reference }}
+            </span>
+            <span class="gl-pill gl-pill--bad" *ngIf="p.annule">Annule</span>
+          </div>
+
+          <p class="glc-note glc-note--bad" *ngIf="p.annule && p.dateAnnulation">Annule le {{ formatDate(p.dateAnnulation) }}</p>
         </div>
 
-        <div class="lic-footer">
-          <ion-badge
-            [color]="p.modePaiement === 'ESPECES' ? 'primary' : 'tertiary'"
-            style="font-size:0.7rem">
-            {{ p.modePaiement === 'ESPECES' ? 'Especes' : 'Banque' }}
-          </ion-badge>
-          <span class="muted" *ngIf="p.reference" style="font-size:0.75rem">{{ p.reference }}</span>
-          <ion-badge color="danger" *ngIf="p.annule" style="font-size:0.65rem">Annule</ion-badge>
-        </div>
-
-        <div style="padding: 8px 16px 12px; display:flex; justify-content:flex-end" *ngIf="!p.annule">
-          <ion-button size="small" color="danger" fill="outline" (click)="confirmerAnnulation(p, 'fournisseur')">
-            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+        <div class="glc-actions" *ngIf="!p.annule">
+          <button type="button" class="glc-action glc-action--bad" (click)="confirmerAnnulation(p, 'fournisseur')">
+            <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
             Annuler ce paiement
-          </ion-button>
+          </button>
         </div>
-
-        <div style="padding: 4px 16px 10px" *ngIf="p.annule && p.dateAnnulation">
-          <p class="muted" style="font-size:0.75rem">Annule le {{ formatDate(p.dateAnnulation) }}</p>
-        </div>
-
       </article>
 
-      <div class="empty-v2" *ngIf="!paiementsFiltres.length">
-        <div class="empty-v2__icon"><ion-icon name="cash-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucun paiement</p>
-        <p class="empty-v2__text">Aucun paiement pour la periode selectionnee</p>
+      <div class="ap-empty" *ngIf="!paiementsFiltres.length">
+        <gl-empty-state icon="cash-outline" title="Aucun paiement" message="Aucun paiement pour la periode selectionnee"></gl-empty-state>
       </div>
-
     </section>
 
-    <!-- Reglements credit -->
-    <section class="stack animate-cards" *ngIf="!loading && onglet === 'credit'">
+    <!-- ══════════ RÈGLEMENTS CRÉDIT ══════════ -->
+    <section class="ap-list animate-cards" *ngIf="!loading && onglet === 'credit'">
 
-      <article
-        class="list-item-card"
-        *ngFor="let r of reglementsFiltres; trackBy: trackById"
-        [style.opacity]="r.annule ? '0.6' : '1'">
-
-        <div class="lic-header">
-          <div class="lic-avatar" [class.lic-avatar--green]="!r.annule" [class.lic-avatar--red]="r.annule">
-            <ion-icon [name]="r.annule ? 'close-circle-outline' : 'card-outline'"></ion-icon>
-          </div>
-          <div class="lic-info">
-            <div class="lic-name">{{ r.clientNom || 'Client' }}</div>
-            <div class="lic-sub">{{ formatDate(r.dateOperation) }}</div>
-          </div>
-          <div class="lic-right">
-            <span class="status-badge" [class.status-badge--success]="!r.annule" [class.status-badge--danger]="r.annule">
+      <article class="gl-list-card" [class.gl-list-card--muted]="r.annule" *ngFor="let r of reglementsFiltres; trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [class.glc-icon--ok]="!r.annule" [class.glc-icon--bad]="r.annule">
+              <ion-icon [name]="r.annule ? 'close-circle-outline' : 'card-outline'"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ r.clientNom || 'Client' }}</p>
+              <p class="glc-sub">{{ formatDate(r.dateOperation) }}</p>
+            </div>
+            <p class="glc-amount" [class.glc-amount--ok]="!r.annule" [class.glc-amount--bad]="r.annule">
               {{ formatMontant(r.montant) }}
-            </span>
+            </p>
           </div>
+
+          <div class="glc-meta" *ngIf="r.clientTelephone || r.motif || r.annule">
+            <span class="glc-meta__item" *ngIf="r.clientTelephone">
+              <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+              {{ r.clientTelephone }}
+            </span>
+            <span class="glc-meta__item" *ngIf="r.motif">
+              <ion-icon name="chatbox-ellipses-outline" aria-hidden="true"></ion-icon>
+              {{ r.motif }}
+            </span>
+            <span class="gl-pill gl-pill--bad" *ngIf="r.annule">Annule</span>
+          </div>
+
+          <p class="glc-note glc-note--bad" *ngIf="r.annule && r.dateAnnulationReglement">Annule le {{ formatDate(r.dateAnnulationReglement) }}</p>
         </div>
 
-        <div class="lic-footer">
-          <span class="muted" *ngIf="r.clientTelephone" style="font-size:0.75rem">{{ r.clientTelephone }}</span>
-          <span class="muted" *ngIf="r.motif" style="font-size:0.75rem">{{ r.motif }}</span>
-          <ion-badge color="danger" *ngIf="r.annule" style="font-size:0.65rem">Annule</ion-badge>
-        </div>
-
-        <div style="padding: 8px 16px 12px; display:flex; justify-content:flex-end" *ngIf="!r.annule">
-          <ion-button size="small" color="danger" fill="outline" (click)="confirmerAnnulation(r, 'credit')">
-            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+        <div class="glc-actions" *ngIf="!r.annule">
+          <button type="button" class="glc-action glc-action--bad" (click)="confirmerAnnulation(r, 'credit')">
+            <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
             Annuler ce reglement
-          </ion-button>
+          </button>
         </div>
-
-        <div style="padding: 4px 16px 10px" *ngIf="r.annule && r.dateAnnulationReglement">
-          <p class="muted" style="font-size:0.75rem">Annule le {{ formatDate(r.dateAnnulationReglement) }}</p>
-        </div>
-
       </article>
 
-      <div class="empty-v2" *ngIf="!reglementsFiltres.length">
-        <div class="empty-v2__icon"><ion-icon name="card-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucun reglement</p>
-        <p class="empty-v2__text">Aucun reglement pour la periode selectionnee</p>
+      <div class="ap-empty" *ngIf="!reglementsFiltres.length">
+        <gl-empty-state icon="card-outline" title="Aucun reglement" message="Aucun reglement pour la periode selectionnee"></gl-empty-state>
       </div>
-
     </section>
 
   </div>
 </ion-content>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CONFIRMATION D'ANNULATION (modale centrée — même rendu que Commandes)
+     Mêmes textes que l'ancienne alerte. Fermeture : X, overlay, Échap, « Non ».
+═══════════════════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="confirmation" (document:keydown.escape)="fermerConfirmation()">
+  <div class="md-backdrop" (click)="fermerConfirmation()"></div>
+  <div class="md-sheet md-sheet--sm" role="alertdialog" aria-modal="true" aria-labelledby="ap-confirm-title">
+
+    <div class="md-header">
+      <div class="md-icon md-icon--bad">
+        <ion-icon name="close-circle-outline"></ion-icon>
+      </div>
+      <h2 class="md-title" id="ap-confirm-title">Annuler ce paiement ?</h2>
+      <button type="button" class="md-close" (click)="fermerConfirmation()" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="md-body">
+      <!-- Résumé de l'opération visée -->
+      <div class="ap-summary">
+        <div class="glc-info">
+          <p class="glc-title">
+            {{ confirmation.type === 'fournisseur' ? (confirmation.item.fournisseur?.nom || 'Fournisseur') : (confirmation.item.clientNom || 'Client') }}
+          </p>
+          <p class="glc-sub">{{ formatDate(confirmation.type === 'fournisseur' ? confirmation.item.datePaiement : confirmation.item.dateOperation) }}</p>
+        </div>
+        <p class="glc-amount">{{ formatMontant(confirmation.item.montant) }}</p>
+      </div>
+
+      <p class="ap-confirm-text">{{ confirmation.label }}</p>
+      <p class="ap-confirm-note">
+        <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+        L'argent sera remis a sa source (caisse ou banque).
+      </p>
+    </div>
+
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerConfirmation()">Non</button>
+      <button type="button" class="gl-btn gl-btn--danger" (click)="validerAnnulation()">
+        <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
+        Oui, annuler
+      </button>
+    </div>
+  </div>
+</div>

@@ -8,6 +8,14 @@ const routes: Routes = [
     component: TabsPage,
     children: [
       {
+        path: 'home',
+        loadChildren: () => import('../home/home.module').then(m => m.HomePageModule)
+      },
+      {
+        path: 'clients',
+        loadChildren: () => import('../pages/clients/clients.module').then(m => m.ClientsPageModule)
+      },
+      {
         path: 'caisse',
         data: { roles: ['ADMIN'] },
         loadChildren: () => import('../pages/caisse/caisse.module').then(m => m.CaissePageModule)
@@ -50,7 +58,7 @@ const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'caisse',
+        redirectTo: 'home',
         pathMatch: 'full'
       }
     ]

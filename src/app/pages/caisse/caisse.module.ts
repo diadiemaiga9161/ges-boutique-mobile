@@ -6,9 +6,10 @@ import { CaissePageRoutingModule } from './caisse-routing.module';
 import { CaissePage } from './caisse.page';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../directives/montant-input.directive';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, CaissePageRoutingModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, IonicModule, CaissePageRoutingModule, TranslateModule, MontantInputDirective, SharedComponentsModule],
   declarations: [CaissePage]
 })
 export class CaissePageModule {}

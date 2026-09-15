@@ -1,124 +1,141 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/tab1" [text]="'COMMON.BACK' | translate"></ion-back-button>
+      <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ 'MOBILE_MONEY.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="exportCsv()" title="Télécharger tout">
+      <ion-button (click)="exportCsv()" title="Télécharger tout" aria-label="Télécharger tout">
         <ion-icon name="download-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="mm-content">
 
   <!-- Onglets -->
-  <ion-segment [(ngModel)]="activeTab" style="margin-bottom:12px">
-    <ion-segment-button value="operations"><ion-label>{{ 'MOBILE_MONEY.OPERATIONS' | translate }}</ion-label></ion-segment-button>
-    <ion-segment-button value="resume"><ion-label>{{ 'MOBILE_MONEY.SUMMARY' | translate }}</ion-label></ion-segment-button>
-    <ion-segment-button value="telecharger"><ion-label>{{ 'MOBILE_MONEY.DOWNLOAD' | translate }}</ion-label></ion-segment-button>
-  </ion-segment>
-
-  <!-- ===== ONGLET OPÉRATIONS ===== -->
-  <div *ngIf="activeTab === 'operations'">
-
-    <!-- Filtre opérateur -->
-    <ion-segment [(ngModel)]="type" (ionChange)="onTypeChange($any($event).detail.value)" style="margin-bottom:8px">
-      <ion-segment-button value="TOUS"><ion-label>{{ 'MOBILE_MONEY.ALL' | translate }}</ion-label></ion-segment-button>
-      <ion-segment-button value="ORANGE_MONEY"><ion-label>🟠 Orange</ion-label></ion-segment-button>
-      <ion-segment-button value="MOOV_MONEY"><ion-label>🔵 Moov</ion-label></ion-segment-button>
-      <ion-segment-button value="WAVE_MONEY"><ion-label>🌊 Wave</ion-label></ion-segment-button>
+  <div class="tab-segment-wrap">
+    <ion-segment [(ngModel)]="activeTab">
+      <ion-segment-button value="operations"><ion-label>{{ 'MOBILE_MONEY.OPERATIONS' | translate }}</ion-label></ion-segment-button>
+      <ion-segment-button value="resume"><ion-label>{{ 'MOBILE_MONEY.SUMMARY' | translate }}</ion-label></ion-segment-button>
+      <ion-segment-button value="telecharger"><ion-label>{{ 'MOBILE_MONEY.DOWNLOAD' | translate }}</ion-label></ion-segment-button>
     </ion-segment>
-
-    <!-- Filtre période -->
-    <ion-segment [(ngModel)]="periode" (ionChange)="onPeriodeChange($any($event).detail.value)" style="margin-bottom:12px">
-      <ion-segment-button value="JOUR"><ion-label>Jour</ion-label></ion-segment-button>
-      <ion-segment-button value="SEMAINE"><ion-label>Semaine</ion-label></ion-segment-button>
-      <ion-segment-button value="MOIS"><ion-label>Mois</ion-label></ion-segment-button>
-      <ion-segment-button value="ANNEE"><ion-label>Année</ion-label></ion-segment-button>
-    </ion-segment>
-
-    <!-- Totaux par opérateur -->
-    <div class="color-cards" style="padding:8px 12px 0">
-      <div class="color-card cc-orange">
-        <ion-icon name="phone-portrait-outline"></ion-icon>
-        <p class="cc-label">Orange</p>
-        <p class="cc-value">{{ formatMontant(totalOrange) }}</p>
-      </div>
-      <div class="color-card cc-blue">
-        <ion-icon name="phone-portrait-outline"></ion-icon>
-        <p class="cc-label">Moov</p>
-        <p class="cc-value">{{ formatMontant(totalMoov) }}</p>
-      </div>
-      <div class="color-card cc-purple">
-        <ion-icon name="phone-portrait-outline"></ion-icon>
-        <p class="cc-label">Wave</p>
-        <p class="cc-value">{{ formatMontant(totalWave) }}</p>
-      </div>
-      <div class="color-card cc-green">
-        <ion-icon name="cash-outline"></ion-icon>
-        <p class="cc-label">Total {{ periodeLabel() }}</p>
-        <p class="cc-value">{{ formatMontant(totalGlobal) }}</p>
-        <p class="cc-sub">{{ nombreOperations }} opération(s)</p>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div class="sk-list" *ngIf="loading">
-      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
-        <div class="skeleton sk-avatar"></div>
-        <div class="sk-card-body">
-          <div class="skeleton sk-line sk-line--w80"></div>
-          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-        </div>
-        <div class="skeleton sk-line sk-line--w30"></div>
-      </div>
-    </div>
-
-    <!-- Liste opérations -->
-    <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!loading">
-      <article class="list-item-card" *ngFor="let op of operations; trackBy: trackById">
-        <div class="lic-header">
-          <div class="lic-avatar" [ngClass]="{
-            'lic-avatar--orange': op.modePaiement === 'ORANGE_MONEY',
-            'lic-avatar--purple': op.modePaiement === 'WAVE_MONEY'
-          }">
-            <ion-icon name="phone-portrait-outline" style="font-size:1rem;color:#fff"></ion-icon>
-          </div>
-          <div class="lic-info">
-            <p class="lic-name">{{ modeIcon(op.modePaiement) }} {{ op.numeroVente }}</p>
-            <p class="lic-sub">
-              <ion-icon name="person-outline"></ion-icon>
-              {{ op.clientNom || 'Client' }}
-              <span *ngIf="op.vendeurNom"> · {{ op.vendeurNom }}</span>
-            </p>
-          </div>
-          <div class="lic-right">
-            <span class="status-badge" [ngClass]="{
-              'status-badge--warning': op.modePaiement === 'ORANGE_MONEY',
-              'status-badge--info': op.modePaiement === 'MOOV_MONEY',
-              'status-badge--purple': op.modePaiement === 'WAVE_MONEY'
-            }">{{ operateurLabel(op.modePaiement) }}</span>
-            <p class="lic-amount">{{ formatMontant(op.montantTotal) }}</p>
-            <p style="font-size:0.68rem;color:#94a3b8;margin:0">{{ op.dateVente | date:'dd/MM HH:mm' }}</p>
-          </div>
-        </div>
-      </article>
-      <div class="empty-v2" *ngIf="operations.length === 0">
-        <div class="empty-v2__icon"><ion-icon name="phone-portrait-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucune opération</p>
-        <p class="empty-v2__text">Aucune opération pour cette période</p>
-      </div>
-    </section>
   </div>
 
+  <!-- ===== ONGLET OPÉRATIONS ===== -->
+  <ng-container *ngIf="activeTab === 'operations'">
+
+    <!-- Bandeau héros : total de la période + totaux par opérateur vitrés -->
+    <div class="mm-hero">
+      <div class="hero-bg-deco"></div>
+      <div class="hero-main">
+        <p class="hero-eyebrow">Total {{ periodeLabel() }}</p>
+        <h1 class="hero-amount">{{ formatMontant(totalGlobal) }}</h1>
+        <p class="hero-sub">{{ nombreOperations }} opération(s)</p>
+      </div>
+      <div class="hero-minis">
+        <div class="hero-mini">
+          <span class="hero-dot hero-dot--orange"></span>
+          <p class="hmc-label">Orange</p>
+          <p class="hmc-val">{{ formatMontant(totalOrange) }}</p>
+        </div>
+        <div class="hero-mini">
+          <span class="hero-dot hero-dot--moov"></span>
+          <p class="hmc-label">Moov</p>
+          <p class="hmc-val">{{ formatMontant(totalMoov) }}</p>
+        </div>
+        <div class="hero-mini">
+          <span class="hero-dot hero-dot--wave"></span>
+          <p class="hmc-label">Wave</p>
+          <p class="hmc-val">{{ formatMontant(totalWave) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-pad stack">
+
+      <!-- Filtres opérateur + période (mêmes valeurs, déclenchés seulement si la valeur change, comme les anciens segments) -->
+      <div class="filter-zone">
+        <div class="chip-row">
+          <ion-icon name="phone-portrait-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+          <div class="fz-chips">
+            <button type="button" class="fz-chip" [class.fz-chip--active]="type === 'TOUS'" (click)="type !== 'TOUS' && onTypeChange('TOUS')">{{ 'MOBILE_MONEY.ALL' | translate }}</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="type === 'ORANGE_MONEY'" (click)="type !== 'ORANGE_MONEY' && onTypeChange('ORANGE_MONEY')">Orange</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="type === 'MOOV_MONEY'" (click)="type !== 'MOOV_MONEY' && onTypeChange('MOOV_MONEY')">Moov</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="type === 'WAVE_MONEY'" (click)="type !== 'WAVE_MONEY' && onTypeChange('WAVE_MONEY')">Wave</button>
+          </div>
+        </div>
+        <div class="chip-row">
+          <ion-icon name="calendar-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+          <div class="fz-chips">
+            <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'JOUR'" (click)="periode !== 'JOUR' && onPeriodeChange('JOUR')">Jour</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'SEMAINE'" (click)="periode !== 'SEMAINE' && onPeriodeChange('SEMAINE')">Semaine</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'MOIS'" (click)="periode !== 'MOIS' && onPeriodeChange('MOIS')">Mois</button>
+            <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'ANNEE'" (click)="periode !== 'ANNEE' && onPeriodeChange('ANNEE')">Année</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="sk-list sk-list--flush" *ngIf="loading">
+        <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+          <div class="skeleton sk-avatar"></div>
+          <div class="sk-card-body">
+            <div class="skeleton sk-line sk-line--w80"></div>
+            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+          </div>
+          <div class="skeleton sk-line sk-line--w30"></div>
+        </div>
+      </div>
+
+      <!-- Liste opérations -->
+      <ng-container *ngIf="!loading">
+        <gl-empty-state *ngIf="operations.length === 0"
+                        icon="phone-portrait-outline"
+                        title="Aucune opération"
+                        message="Aucune opération pour cette période">
+        </gl-empty-state>
+
+        <section class="mm-list animate-cards" *ngIf="operations.length > 0">
+          <article class="gl-list-card" *ngFor="let op of operations; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-icon"
+                     [class.glc-icon--warn]="op.modePaiement === 'ORANGE_MONEY'"
+                     [class.glc-icon--info]="op.modePaiement === 'MOOV_MONEY'"
+                     [class.glc-icon--ok]="op.modePaiement === 'WAVE_MONEY'">
+                  <ion-icon name="phone-portrait-outline"></ion-icon>
+                </div>
+                <div class="glc-info">
+                  <p class="glc-title">{{ op.numeroVente }}</p>
+                  <p class="glc-sub">
+                    <ion-icon name="person-outline"></ion-icon>
+                    {{ op.clientNom || 'Client' }}
+                    <span *ngIf="op.vendeurNom"> · {{ op.vendeurNom }}</span>
+                  </p>
+                </div>
+                <div class="glc-right">
+                  <span class="gl-pill"
+                        [class.gl-pill--warn]="op.modePaiement === 'ORANGE_MONEY'"
+                        [class.gl-pill--blue]="op.modePaiement === 'MOOV_MONEY'"
+                        [class.gl-pill--ok]="op.modePaiement === 'WAVE_MONEY'">{{ operateurLabel(op.modePaiement) }}</span>
+                  <p class="glc-amount">{{ formatMontant(op.montantTotal) }}</p>
+                  <p class="glc-date">{{ op.dateVente | date:'dd/MM HH:mm' }}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </ng-container>
+    </div>
+  </ng-container>
+
   <!-- ===== ONGLET RÉSUMÉ ===== -->
-  <div *ngIf="activeTab === 'resume'">
+  <div class="page-pad stack" *ngIf="activeTab === 'resume'">
 
     <!-- Loading -->
-    <div class="sk-list" *ngIf="!resume">
+    <div class="sk-list sk-list--flush" *ngIf="!resume">
       <div class="sk-card" *ngFor="let i of [1,2,3,4]">
         <div class="skeleton sk-square"></div>
         <div class="sk-card-body">
@@ -128,30 +145,30 @@
       </div>
     </div>
 
-    <section class="mm-resume" *ngIf="resume">
-      <article class="mm-resume-card" *ngFor="let p of [
+    <section class="mm-list" *ngIf="resume">
+      <article class="gl-card mm-resume-card" *ngFor="let p of [
         {label: 'Aujourd\'hui', key: 'jour'},
         {label: 'Cette semaine', key: 'semaine'},
         {label: 'Ce mois', key: 'mois'},
         {label: 'Cette année', key: 'annee'}
       ]">
         <div class="mm-resume-head">
-          <span class="mm-resume-icon">📅</span>
+          <span class="mm-resume-icon"><ion-icon name="calendar-outline"></ion-icon></span>
           <p class="mm-resume-title">{{ p.label }}</p>
         </div>
         <div class="mm-resume-grid">
-          <div class="mm-resume-op mm-resume-op--orange">
-            <p class="mm-resume-op-label">🟠 Orange</p>
+          <div class="mm-resume-op">
+            <p class="mm-resume-op-label"><span class="op-dot op-dot--orange"></span>Orange</p>
             <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.orangeMoney || 0) }}</p>
             <p class="mm-resume-op-count">{{ resume[p.key]?.nombreOrange || 0 }} op.</p>
           </div>
-          <div class="mm-resume-op mm-resume-op--moov">
-            <p class="mm-resume-op-label">🔵 Moov</p>
+          <div class="mm-resume-op">
+            <p class="mm-resume-op-label"><span class="op-dot op-dot--moov"></span>Moov</p>
             <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.moovMoney || 0) }}</p>
             <p class="mm-resume-op-count">{{ resume[p.key]?.nombreMoov || 0 }} op.</p>
           </div>
-          <div class="mm-resume-op mm-resume-op--wave">
-            <p class="mm-resume-op-label">🌊 Wave</p>
+          <div class="mm-resume-op">
+            <p class="mm-resume-op-label"><span class="op-dot op-dot--wave"></span>Wave</p>
             <p class="mm-resume-op-value">{{ formatMontant(resume[p.key]?.waveMoney || 0) }}</p>
             <p class="mm-resume-op-count">{{ resume[p.key]?.nombreWave || 0 }} op.</p>
           </div>
@@ -165,61 +182,65 @@
   </div>
 
   <!-- ===== ONGLET TÉLÉCHARGEMENT ===== -->
-  <div *ngIf="activeTab === 'telecharger'">
+  <div class="page-pad stack" *ngIf="activeTab === 'telecharger'">
 
     <!-- Filtre période -->
-    <ion-segment [(ngModel)]="periode" (ionChange)="onPeriodeChange($any($event).detail.value)" style="margin-bottom:16px">
-      <ion-segment-button value="JOUR"><ion-label>Jour</ion-label></ion-segment-button>
-      <ion-segment-button value="SEMAINE"><ion-label>Semaine</ion-label></ion-segment-button>
-      <ion-segment-button value="MOIS"><ion-label>Mois</ion-label></ion-segment-button>
-      <ion-segment-button value="ANNEE"><ion-label>Année</ion-label></ion-segment-button>
-    </ion-segment>
+    <div class="filter-zone">
+      <div class="chip-row">
+        <ion-icon name="calendar-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'JOUR'" (click)="periode !== 'JOUR' && onPeriodeChange('JOUR')">Jour</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'SEMAINE'" (click)="periode !== 'SEMAINE' && onPeriodeChange('SEMAINE')">Semaine</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'MOIS'" (click)="periode !== 'MOIS' && onPeriodeChange('MOIS')">Mois</button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'ANNEE'" (click)="periode !== 'ANNEE' && onPeriodeChange('ANNEE')">Année</button>
+        </div>
+      </div>
+    </div>
 
-    <ion-list>
+    <div class="gl-card mm-export">
       <!-- Tous -->
-      <ion-item button (click)="exportCsv('TOUS')" lines="full">
-        <ion-icon name="download-outline" slot="start" color="success"></ion-icon>
-        <ion-label>
-          <h3>Tous les opérateurs</h3>
-          <p>Orange + Moov + Wave — {{ periodeLabel() }}</p>
-        </ion-label>
-        <ion-badge slot="end" color="success">CSV</ion-badge>
-      </ion-item>
+      <button type="button" class="mm-export-row" (click)="exportCsv('TOUS')">
+        <span class="glc-icon glc-icon--info"><ion-icon name="download-outline"></ion-icon></span>
+        <span class="mm-export-text">
+          <span class="mm-export-title">Tous les opérateurs</span>
+          <span class="mm-export-sub">Orange + Moov + Wave — {{ periodeLabel() }}</span>
+        </span>
+        <span class="gl-pill gl-pill--blue">CSV</span>
+      </button>
 
       <!-- Orange -->
-      <ion-item button (click)="exportCsv('ORANGE_MONEY')" lines="full">
-        <span slot="start" style="font-size:24px">🟠</span>
-        <ion-label>
-          <h3>Orange Money</h3>
-          <p>Mouvements Orange — {{ periodeLabel() }}</p>
-          <p style="font-weight:700;color:#f97316">{{ formatMontant(totalOrange) }}</p>
-        </ion-label>
-        <ion-badge slot="end" color="warning">CSV</ion-badge>
-      </ion-item>
+      <button type="button" class="mm-export-row" (click)="exportCsv('ORANGE_MONEY')">
+        <span class="glc-icon glc-icon--warn"><ion-icon name="phone-portrait-outline"></ion-icon></span>
+        <span class="mm-export-text">
+          <span class="mm-export-title">Orange Money</span>
+          <span class="mm-export-sub">Mouvements Orange — {{ periodeLabel() }}</span>
+          <span class="mm-export-amount">{{ formatMontant(totalOrange) }}</span>
+        </span>
+        <span class="gl-pill gl-pill--warn">CSV</span>
+      </button>
 
       <!-- Moov -->
-      <ion-item button (click)="exportCsv('MOOV_MONEY')" lines="full">
-        <span slot="start" style="font-size:24px">🔵</span>
-        <ion-label>
-          <h3>Moov Money</h3>
-          <p>Mouvements Moov — {{ periodeLabel() }}</p>
-          <p style="font-weight:700;color:#3b82f6">{{ formatMontant(totalMoov) }}</p>
-        </ion-label>
-        <ion-badge slot="end" color="primary">CSV</ion-badge>
-      </ion-item>
+      <button type="button" class="mm-export-row" (click)="exportCsv('MOOV_MONEY')">
+        <span class="glc-icon glc-icon--info"><ion-icon name="phone-portrait-outline"></ion-icon></span>
+        <span class="mm-export-text">
+          <span class="mm-export-title">Moov Money</span>
+          <span class="mm-export-sub">Mouvements Moov — {{ periodeLabel() }}</span>
+          <span class="mm-export-amount">{{ formatMontant(totalMoov) }}</span>
+        </span>
+        <span class="gl-pill gl-pill--blue">CSV</span>
+      </button>
 
       <!-- Wave -->
-      <ion-item button (click)="exportCsv('WAVE_MONEY')" lines="full">
-        <span slot="start" style="font-size:24px">🌊</span>
-        <ion-label>
-          <h3>Wave</h3>
-          <p>Mouvements Wave — {{ periodeLabel() }}</p>
-          <p style="font-weight:700;color:#8b5cf6">{{ formatMontant(totalWave) }}</p>
-        </ion-label>
-        <ion-badge slot="end" color="tertiary">CSV</ion-badge>
-      </ion-item>
-    </ion-list>
-
+      <button type="button" class="mm-export-row" (click)="exportCsv('WAVE_MONEY')">
+        <span class="glc-icon glc-icon--ok"><ion-icon name="phone-portrait-outline"></ion-icon></span>
+        <span class="mm-export-text">
+          <span class="mm-export-title">Wave</span>
+          <span class="mm-export-sub">Mouvements Wave — {{ periodeLabel() }}</span>
+          <span class="mm-export-amount">{{ formatMontant(totalWave) }}</span>
+        </span>
+        <span class="gl-pill gl-pill--ok">CSV</span>
+      </button>
+    </div>
   </div>
 
 </ion-content>

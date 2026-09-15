@@ -1,0 +1,36 @@
+<article class="gl-product-card" (click)="cardClick.emit()">
+  <div class="gl-product-card__body">
+    <div class="gl-product-card__header">
+      <div class="gl-product-card__info">
+        <div class="gl-product-card__name">
+          {{ nom }}
+          <ion-badge color="success" *ngIf="badgeBio" class="gl-product-card__bio">Bio</ion-badge>
+        </div>
+        <div class="gl-product-card__cat" *ngIf="categorie">{{ categorie }}</div>
+      </div>
+      <gl-stock-badge [stock]="stock" [seuil]="seuil" [unite]="unite"></gl-stock-badge>
+    </div>
+
+    <div class="gl-product-card__price-row">
+      <div>
+        <p class="gl-product-card__price-label">Prix vente</p>
+        <p class="gl-product-card__price-value gl-product-card__price-value--sell">{{ prixVente }}</p>
+      </div>
+      <div *ngIf="prixAchat">
+        <p class="gl-product-card__price-label">Prix achat</p>
+        <p class="gl-product-card__price-value">{{ prixAchat }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="gl-product-card__actions">
+    <button type="button" class="gl-product-card__action" (click)="onEdit($event)">
+      <ion-icon name="create-outline"></ion-icon>
+      Modifier
+    </button>
+    <button type="button" class="gl-product-card__action gl-product-card__action--danger" (click)="onDelete($event)">
+      <ion-icon name="trash-outline"></ion-icon>
+      Supprimer
+    </button>
+  </div>
+</article>

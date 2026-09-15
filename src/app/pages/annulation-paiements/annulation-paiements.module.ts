@@ -5,9 +5,10 @@ import { IonicModule } from '@ionic/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { AnnulationPaiementsPageRoutingModule } from './annulation-paiements-routing.module';
 import { AnnulationPaiementsPage } from './annulation-paiements.page';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, AnnulationPaiementsPageRoutingModule, TranslateModule],
+  imports: [CommonModule, FormsModule, IonicModule, AnnulationPaiementsPageRoutingModule, TranslateModule, SharedComponentsModule],
   declarations: [AnnulationPaiementsPage]
 })
 export class AnnulationPaiementsPageModule {}

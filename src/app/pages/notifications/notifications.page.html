@@ -1,81 +1,70 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>Notifications</ion-title>
     <ion-buttons slot="end">
-      <ion-button *ngIf="notifications.length > 0" (click)="toutLire()" fill="clear" color="light">
+      <ion-button *ngIf="notifications.length > 0" (click)="toutLire()" fill="clear">
         <ion-icon name="checkmark-done-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="nt-content">
+
+  <!-- Bandeau héros : compteur non lues (≡ NotificationsScreen RN) -->
+  <div class="nt-hero" *ngIf="!isLoading && notifications.length > 0">
+    <div class="nt-hero__deco"></div>
+    <p class="nt-hero__eyebrow">Non lues</p>
+    <p class="nt-hero__value">{{ notifications.length }}</p>
+  </div>
 
   <!-- Skeleton pendant le chargement -->
-  <div class="sk-list" *ngIf="isLoading">
+  <div class="sk-list nt-body" *ngIf="isLoading">
     <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
-      <div class="skeleton sk-avatar"></div>
+      <div class="skeleton sk-square"></div>
       <div class="sk-card-body">
         <div class="skeleton sk-line sk-line--w80"></div>
         <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
       </div>
-      <div class="skeleton sk-line sk-line--w30"></div>
-    </div>
-  </div>
-
-  <!-- Hero stat (quand il y a des notifs) -->
-  <div class="hero-stat-row" *ngIf="!isLoading && notifications.length > 0">
-    <div class="hsr-item">
-      <p class="hsr-val">{{ notifications.length }}</p>
-      <p class="hsr-lbl">Non lues</p>
     </div>
   </div>
 
   <!-- Liste des notifications -->
-  <section class="stack animate-cards" style="padding:12px 16px" *ngIf="!isLoading && notifications.length > 0">
-    <article class="list-item-card"
-             *ngFor="let n of notifications; trackBy: trackById"
-             (click)="cliquer(n)"
-             style="cursor:pointer">
-      <div class="lic-header">
-        <div class="lic-avatar"
-             [ngClass]="{
-               'lic-avatar--orange': couleur(n.type) === 'warning',
-               'lic-avatar--red':    couleur(n.type) === 'danger',
-               'lic-avatar--green':  couleur(n.type) === 'success'
-             }">
-          <ion-icon [name]="icone(n.type)" style="font-size:1.1rem;color:#fff"></ion-icon>
-        </div>
-        <div class="lic-info">
-          <p class="lic-name">{{ n.titre }}</p>
-          <p class="lic-sub">{{ n.message }}</p>
-        </div>
-        <div class="lic-right">
-          <span class="status-badge"
-                [ngClass]="{
-                  'status-badge--warning': couleur(n.type) === 'warning',
-                  'status-badge--danger':  couleur(n.type) === 'danger',
-                  'status-badge--success': couleur(n.type) === 'success',
-                  'status-badge--info':    couleur(n.type) === 'primary'
-                }">
-            {{ n.type.replace('_', ' ') }}
-          </span>
-          <p style="font-size:0.68rem;color:#94a3b8;margin:4px 0 0;text-align:right">
-            {{ n.dateCreation | date:'dd/MM HH:mm' }}
-          </p>
+  <section class="nt-body" *ngIf="!isLoading && notifications.length > 0">
+    <div class="nt-toolbar">
+      <button type="button" class="nt-read-all" (click)="toutLire()">
+        <ion-icon name="checkmark-done-outline"></ion-icon>
+        Tout marquer comme lu
+      </button>
+    </div>
+
+    <button type="button" class="nt-card nt-card--unread"
+            *ngFor="let n of notifications; trackBy: trackById"
+            (click)="cliquer(n)">
+      <div class="nt-icon" [ngClass]="'nt-icon--' + couleur(n.type)">
+        <ion-icon [name]="icone(n.type)"></ion-icon>
+      </div>
+      <div class="nt-info">
+        <p class="nt-title">{{ n.titre }}</p>
+        <p class="nt-message">{{ n.message }}</p>
+        <div class="nt-meta">
+          <span class="nt-pill" [ngClass]="'nt-pill--' + couleur(n.type)">{{ n.type.replace('_', ' ') }}</span>
+          <span class="nt-date">{{ n.dateCreation | date:'dd/MM HH:mm' }}</span>
         </div>
       </div>
-    </article>
+      <span class="nt-dot" aria-hidden="true"></span>
+    </button>
   </section>
 
   <!-- État vide -->
-  <div class="empty-v2" *ngIf="!isLoading && notifications.length === 0">
-    <div class="empty-v2__icon"><ion-icon name="notifications-off-outline"></ion-icon></div>
-    <p class="empty-v2__title">Aucune notification</p>
-    <p class="empty-v2__text">Vous êtes à jour, aucune notification non lue</p>
-  </div>
+  <gl-empty-state
+    *ngIf="!isLoading && notifications.length === 0"
+    icon="notifications-off-outline"
+    title="Aucune notification"
+    message="Vous êtes à jour, aucune notification non lue">
+  </gl-empty-state>
 
 </ion-content>

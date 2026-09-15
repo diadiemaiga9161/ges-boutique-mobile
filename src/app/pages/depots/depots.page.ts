@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import {
   DepotGarde,
@@ -54,6 +54,15 @@ export class DepotsPage {
   showRetraitGlobalModal = false;
   clientRetraitGlobal?: ClientDepotGroupe;
   retraitGlobalForm: RetraitGlobalRequest = { numero: '', montant: 0, observation: '' };
+
+  // Fermeture des modales centrées (plus des ion-modal) à la touche Échap.
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showRetraitModal) { this.showRetraitModal = false; return; }
+    if (this.showRetraitGlobalModal) { this.showRetraitGlobalModal = false; return; }
+    if (this.showDetailModal) { this.showDetailModal = false; return; }
+    if (this.showDepotModal) this.showDepotModal = false;
+  }
 
   constructor(
     private depotService: DepotGardeService,

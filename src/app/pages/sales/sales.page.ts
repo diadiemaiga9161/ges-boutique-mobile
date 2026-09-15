@@ -12,6 +12,8 @@ import { Produit, ProductService } from '../../services/product.service';
 import { RemiseType, RetourVenteRequest, Statistiques, VenteMap, VenteService, VentesDuJourResponse } from '../../services/vente.service';
 import { WebSocketService } from '../../services/websocket.service';
 import { ImpressionRecuService } from '../../services/impression-recu.service';
+import { BottomSheetService } from '../../services/bottom-sheet.service';
+import { SaleActionKey, SaleActionsSheetComponent } from './sale-actions-sheet/sale-actions-sheet.component';
 
 @Component({
   selector: 'app-sales',
@@ -29,7 +31,27 @@ export class SalesPage implements OnDestroy {
   modeFilter = '';
   dateDebut = '';
   dateFin = '';
-  activePeriod: 'today' | 'week' | 'month' | 'all' = 'today';
+  activePeriod: 'today' | 'week' | 'month' = 'today';
+
+  /** Puces « Type » et « Mode de paiement » (affichage uniquement) : exactement les
+   *  mêmes valeurs et libellés que les anciens <ion-select-option>. Elles écrivent
+   *  dans typeFilter/modeFilter puis appellent applyFilter(), comme l'ionChange des
+   *  anciennes listes déroulantes — aucune logique de filtrage ici. */
+  readonly typeOptions: { value: string; label: string }[] = [
+    { value: '', label: 'Tous types' },
+    { value: 'COMPTANT', label: 'Comptant' },
+    { value: 'CREDIT', label: 'Crédit' },
+    { value: 'CREDIT_EN_RETARD', label: 'En retard' },
+  ];
+  readonly modeOptions: { value: string; label: string }[] = [
+    { value: '', label: 'Tous modes' },
+    { value: 'ESPECES', label: 'Espèces' },
+    { value: 'ORANGE_MONEY', label: 'Orange Money' },
+    { value: 'MOOV_MONEY', label: 'Moov Money' },
+    { value: 'CARTE_BANCAIRE', label: 'Carte' },
+    { value: 'VIREMENT', label: 'Virement' },
+  ];
+
   loading = false;
   selected?: VenteMap;
 
@@ -87,7 +109,8 @@ export class SalesPage implements OnDestroy {
     private designService: FactureDesignService,
     private boutiqueConfig: BoutiqueConfigService,
     private boutiqueService: BoutiqueService,
-    private impressionRecuService: ImpressionRecuService
+    private impressionRecuService: ImpressionRecuService,
+    private bottomSheetService: BottomSheetService
   ) {}
 
   ionViewWillEnter(): void {
@@ -230,13 +253,6 @@ export class SalesPage implements OnDestroy {
     this.execLoadPeriode();
   }
 
-  filterAll(): void {
-    this.activePeriod = 'all';
-    this.dateDebut = '';
-    this.dateFin = '';
-    this.execLoadPeriode();
-  }
-
   private toLocalDateStr(d: Date): string {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -308,6 +324,21 @@ export class SalesPage implements OnDestroy {
   openQrSaleModal(sale: VenteMap): void {
     this.selectedSaleForQr = sale;
     this.showQrSaleModal = true;
+  }
+
+  /** Ouvre le tiroir "···" de la carte (actions secondaires : Voir/Modifier/
+   *  Annuler/Retour/PDF/QR — toutes déjà existantes, aucune logique dupliquée
+   *  ici, on se contente de router vers la méthode existante correspondante). */
+  async openActionsSheet(sale: VenteMap): Promise<void> {
+    const action = await this.bottomSheetService.open<SaleActionKey>(SaleActionsSheetComponent, { sale });
+    switch (action) {
+      case 'voir': this.voirFactureVente(sale); break;
+      case 'modifier': this.confirmModify(sale); break;
+      case 'annuler': this.confirmCancel(sale); break;
+      case 'retour': this.openRetourModal(sale); break;
+      case 'pdf': this.telechargerFactureVente(sale); break;
+      case 'qr': this.getQrCodeUrlSale(sale); break;
+    }
   }
 
   closeQrSaleModal(): void {

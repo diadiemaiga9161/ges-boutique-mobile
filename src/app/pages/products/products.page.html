@@ -26,31 +26,35 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- KPI Cards -->
-  <div class="color-cards" style="padding:14px 14px 0" *ngIf="stats">
-    <div class="color-card cc-blue">
-      <ion-icon name="cube-outline"></ion-icon>
-      <p class="cc-label">{{ 'PRODUCTS.TOTAL_COUNT' | translate }}</p>
-      <p class="cc-value">{{ stats.totalProduits }}</p>
-    </div>
-    <div class="color-card cc-green">
-      <ion-icon name="trending-up-outline"></ion-icon>
-      <p class="cc-label">{{ 'PRODUCTS.STOCK_VALUE' | translate }}</p>
-      <p class="cc-value">{{ money(stats.valeurTotale || 0) }}</p>
-    </div>
-    <div class="color-card cc-orange">
-      <ion-icon name="alert-circle-outline"></ion-icon>
-      <p class="cc-label">{{ 'PRODUCTS.LOW_STOCK' | translate }}</p>
-      <p class="cc-value">{{ stats.produitsStockFaible }}</p>
-    </div>
-    <div class="color-card cc-red">
-      <ion-icon name="close-circle-outline"></ion-icon>
-      <p class="cc-label">{{ 'PRODUCTS.OUT_OF_STOCK' | translate }}</p>
-      <p class="cc-value">{{ stats.produitsRupture }}</p>
-    </div>
-  </div>
-
   <div class="page-pad stack">
+
+    <!-- KPI (tuiles 2×2) -->
+    <div class="kpi-grid" *ngIf="stats">
+      <gl-stat-card
+        icon="cube-outline"
+        [label]="'PRODUCTS.TOTAL_COUNT' | translate"
+        [value]="stats.totalProduits + ''"
+        variant="blue">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="trending-up-outline"
+        [label]="'PRODUCTS.STOCK_VALUE' | translate"
+        [value]="money(stats.valeurTotale || 0)"
+        variant="green">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="alert-circle-outline"
+        [label]="'PRODUCTS.LOW_STOCK' | translate"
+        [value]="stats.produitsStockFaible + ''"
+        variant="orange">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="close-circle-outline"
+        [label]="'PRODUCTS.OUT_OF_STOCK' | translate"
+        [value]="stats.produitsRupture + ''"
+        variant="red">
+      </gl-stat-card>
+    </div>
 
     <div class="filter-zone">
       <div class="fz-search">
@@ -89,7 +93,7 @@
       </div>
     </div>
 
-    <p class="section-label">{{ filtered.length }} {{ 'PRODUCTS.ITEMS' | translate }}</p>
+    <gl-section-header [title]="filtered.length + ' ' + ('PRODUCTS.ITEMS' | translate)"></gl-section-header>
 
     <div class="sk-list" *ngIf="loading">
       <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
@@ -104,81 +108,84 @@
 
     <section class="stack animate-cards" *ngIf="!loading && filtered.length; else empty">
       <article class="product-card" *ngFor="let product of filtered; trackBy: trackById">
-        <div class="product-card-header">
-          <div class="product-info">
-            <div class="product-name">
-              {{ product.nom }}
-              <ion-badge color="success" *ngIf="product.bio" class="bio-badge">Bio</ion-badge>
-            </div>
-            <div class="product-cat">
-              {{ product.categorieNom || product.categorie?.nom || ('PRODUCTS.NO_CATEGORY' | translate) }}
-              <span *ngIf="product.fournisseur"> · {{ product.fournisseur.nom }}</span>
-            </div>
-          </div>
-          <div class="product-stock-badge" [class]="'stock-' + getStockClass(product)">
-            <span class="stock-qty">{{ product.quantite }}</span>
-            <span class="stock-label">{{ getStockText(product) }}</span>
-          </div>
-        </div>
-
         <div class="product-card-body">
+          <div class="product-card-header">
+            <div class="product-info">
+              <div class="product-name">
+                {{ product.nom }}
+                <ion-badge color="success" *ngIf="product.bio" class="bio-badge">Bio</ion-badge>
+              </div>
+              <div class="product-cat">
+                {{ product.categorieNom || product.categorie?.nom || ('PRODUCTS.NO_CATEGORY' | translate) }}
+                <span *ngIf="product.fournisseur"> · {{ product.fournisseur.nom }}</span>
+              </div>
+            </div>
+            <!-- Pastille : nom réel du niveau défini par le produit (uniteBase) -->
+            <gl-stock-badge [stock]="product.quantite" [seuil]="product.seuilAlerte" [unite]="product.uniteBase"></gl-stock-badge>
+          </div>
+
           <div class="price-row">
             <div>
               <p class="price-label">{{ 'PRODUCTS.PRICE_SELL' | translate }}</p>
-              <p class="price-value">{{ money(product.prixVente) }}</p>
+              <p class="price-value price-value--sell">{{ money(product.prixVente) }}</p>
             </div>
             <div *ngIf="auth.isAdmin()">
               <p class="price-label">{{ 'PRODUCTS.PRICE_BUY' | translate }}</p>
-              <p class="price-value muted">{{ money(product.prixAchat) }}</p>
+              <p class="price-value">{{ money(product.prixAchat) }}</p>
             </div>
             <div>
               <p class="price-label">{{ 'PRODUCTS.ALERT_THRESHOLD' | translate }}</p>
-              <p class="price-value muted">{{ product.seuilAlerte }}</p>
+              <p class="price-value">{{ product.seuilAlerte }}</p>
             </div>
           </div>
+
           <div *ngIf="product.perime || product.prochePeremption" class="peremption-badge"
             [class.danger]="product.perime" [class.warning]="!product.perime && product.prochePeremption">
             <ion-icon name="time-outline"></ion-icon>
             {{ product.perime ? ('PRODUCTS.EXPIRED' | translate) : ('PRODUCTS.NEAR_EXPIRY' | translate) }} · {{ product.datePeremption }}
           </div>
-          <p class="muted" *ngIf="product.codeBarre" style="font-size:0.75rem">Code: {{ product.codeBarre }}</p>
+          <p class="product-code" *ngIf="product.codeBarre">Code: {{ product.codeBarre }}</p>
           <p class="alerte-msg" *ngIf="productsService.getProduitAlerteMessage(product)">
             <ion-icon name="warning-outline"></ion-icon>
             {{ productsService.getProduitAlerteMessage(product) }}
           </p>
         </div>
 
-        <div class="product-card-actions">
-          <ion-button fill="clear" size="small" (click)="startEdit(product)">
-            <ion-icon name="create-outline" slot="start"></ion-icon>
-            {{ 'COMMON.EDIT' | translate }}
-          </ion-button>
-          <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(product)">
-            <ion-icon name="trash-outline" slot="start"></ion-icon>
-            {{ 'COMMON.DELETE' | translate }}
-          </ion-button>
-          <ion-button *ngIf="conditionnementActif" fill="clear" size="small" color="tertiary" (click)="ouvrirNiveaux(product)">
-            <ion-icon name="layers-outline" slot="start"></ion-icon>
+        <!-- Actions liées aux fonctionnalités activables (inchangées) -->
+        <div class="product-card-actions" *ngIf="conditionnementActif || venteGrosDetailActif">
+          <button type="button" class="pc-action" *ngIf="conditionnementActif" (click)="ouvrirNiveaux(product)">
+            <ion-icon name="layers-outline"></ion-icon>
             {{ 'PRODUCTS.LEVELS' | translate }}
-          </ion-button>
-          <ion-button *ngIf="venteGrosDetailActif" fill="clear" size="small" color="tertiary" (click)="ouvrirUnitesVente(product)">
-            <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+          </button>
+          <button type="button" class="pc-action" *ngIf="venteGrosDetailActif" (click)="ouvrirUnitesVente(product)">
+            <ion-icon name="swap-horizontal-outline"></ion-icon>
             {{ 'UNITE_VENTE.MANAGE_BTN' | translate }}
-          </ion-button>
+          </button>
+        </div>
+
+        <!-- Pied : Modifier | Supprimer -->
+        <div class="product-card-actions">
+          <button type="button" class="pc-action" (click)="startEdit(product)">
+            <ion-icon name="create-outline"></ion-icon>
+            {{ 'COMMON.EDIT' | translate }}
+          </button>
+          <button type="button" class="pc-action pc-action--danger" (click)="confirmDelete(product)">
+            <ion-icon name="trash-outline"></ion-icon>
+            {{ 'COMMON.DELETE' | translate }}
+          </button>
         </div>
       </article>
     </section>
 
     <ng-template #empty>
-      <div class="empty-v2" *ngIf="!loading">
-        <div class="empty-v2__icon"><ion-icon name="cube-outline"></ion-icon></div>
-        <p class="empty-v2__title">{{ 'PRODUCTS.EMPTY' | translate }}</p>
-        <p class="empty-v2__text">{{ 'PRODUCTS.ADD' | translate }}</p>
-        <ion-button size="small" (click)="startCreate()">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          {{ 'PRODUCTS.ADD' | translate }}
-        </ion-button>
-      </div>
+      <gl-empty-state
+        *ngIf="!loading"
+        icon="cube-outline"
+        [title]="'PRODUCTS.EMPTY' | translate"
+        [message]="'PRODUCTS.ADD' | translate"
+        [ctaLabel]="'PRODUCTS.ADD' | translate"
+        (ctaClick)="startCreate()">
+      </gl-empty-state>
     </ng-template>
 
   </div>

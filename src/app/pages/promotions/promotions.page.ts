@@ -243,11 +243,13 @@ export class PromotionsPage implements OnInit {
     this.envoiEnCours = false;
   }
 
-  // Modale WhatsApp maison (pas un ion-modal) : fermeture au clavier avec
-  // Échap, comme demandé par le standard modales (X / clic overlay / Échap).
+  // Modales maison (pas des ion-modal) : fermeture au clavier avec Échap,
+  // comme demandé par le standard modales (X / clic overlay / Échap).
+  // Le formulaire est désormais aussi une modale centrée : Échap = Annuler.
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
-    if (this.showWAModal) this.fermerWhatsApp();
+    if (this.showWAModal) { this.fermerWhatsApp(); return; }
+    if (this.showForm) this.cancel();
   }
 
   get liensFiltered(): WhatsAppLien[] {
@@ -301,6 +303,18 @@ export class PromotionsPage implements OnInit {
 
     this.envoiEnCours = false;
     this.showToast(`${liens.length} message(s) envoyé(s) !`, 'success');
+  }
+
+  // Tuiles KPI (affichage uniquement, mêmes calculs que PromotionsScreen RN)
+  get nbPromosActives(): number {
+    return this.promotions.filter(p => p.active).length;
+  }
+
+  get remiseMoyenne(): number {
+    const pct = this.promotions.filter(p => p.typeReduction === 'POURCENTAGE');
+    return pct.length > 0
+      ? Math.round(pct.reduce((s, p) => s + (p.valeurReduction || 0), 0) / pct.length)
+      : 0;
   }
 
   getStatut(promo: Promotion): { label: string; color: string } {

@@ -1,0 +1,27 @@
+// Pastille de statut crédit — design commun : Réglé = succès, En retard = danger,
+// En cours = attention (orange), comme les écrans Clients / Crédits refaits et le
+// CreditBadge React Native. Tokens --gl-* : lisible en clair comme en sombre
+// (les anciennes teintes --gl-*-50 / #16a34a restaient pastel clair la nuit).
+.gl-credit-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  padding: 1px 8px;
+  border-radius: 8px;
+}
+
+.gl-credit-badge--en-retard {
+  background: var(--gl-bad-soft);
+  color: var(--gl-bad);
+}
+
+.gl-credit-badge--a-jour {
+  background: var(--gl-warn-soft);
+  color: var(--gl-warn);
+}
+
+.gl-credit-badge--solde {
+  background: var(--gl-ok-soft);
+  color: var(--gl-ok);
+}

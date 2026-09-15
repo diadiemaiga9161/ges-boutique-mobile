@@ -1,0 +1,83 @@
+// Hub des réglages — design commun Ionic ↔ React Native.
+// 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark) local ne
+// suivait pas le « Sombre » forcé du Profil (body.theme-dark).
+// Classes gls-* (liste de réglages) identiques sur toutes les pages Paramètres
+// (pas encore de composant partagé).
+
+.gls-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// -------- Carte de réglages --------
+.gls-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+// -------- Ligne (pastille + libellé + contrôle) --------
+.gls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  & + & { border-top: 1px solid var(--gl-border); }
+  &:active { background: var(--gl-surface-2); }
+}
+
+.gls-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+
+  ion-icon { font-size: 20px; }
+
+  &--bad { background: var(--gl-bad-soft); color: var(--gl-bad); }
+}
+
+.gls-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gls-label {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--gl-text);
+}
+
+.gls-chevron {
+  font-size: 18px;
+  color: var(--gl-muted);
+  flex-shrink: 0;
+}
+
+.gls-row--danger .gls-label { color: var(--gl-bad); }

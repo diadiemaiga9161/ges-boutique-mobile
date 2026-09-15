@@ -1,0 +1,12 @@
+<div
+  class="gl-stat-card"
+  [ngClass]="'gl-stat-card--' + variant"
+  [class.gl-stat-card--tappable]="tappable"
+  (click)="onClick()">
+  <div class="gl-stat-card__icon">
+    <ion-icon [name]="icon"></ion-icon>
+  </div>
+  <p class="gl-stat-card__label">{{ label }}</p>
+  <p class="gl-stat-card__value">{{ value }}</p>
+  <p class="gl-stat-card__sub" *ngIf="sub">{{ sub }}</p>
+</div>

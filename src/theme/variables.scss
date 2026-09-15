@@ -36,6 +36,42 @@
   --gl-slate-100: #f1f5f9;
   --gl-slate-50:  #f8fafc;
 
+  // ── Tokens sémantiques (design commun Ionic ↔ React Native) ──
+  // Valeurs CLAIRES ici ; valeurs SOMBRES dans src/theme/_dark-theme.mixin.scss
+  // (appliqué en sombre Auto ET en sombre forcé). Toujours préférer ces
+  // variables aux couleurs codées en dur : c'est ce qui garantit le mode sombre.
+  --gl-bg:           #f0f4f8;
+  --gl-surface:      #ffffff;
+  --gl-surface-2:    #f8fafc;
+  --gl-border:       #e2e8f0;
+  --gl-text:         #0f172a;
+  --gl-text-2:       #334155;
+  --gl-muted:        #64748b;
+  --gl-navy:         #081648;
+  --gl-action:       #1a56db;
+  --gl-action-press: #1447c0;
+  --gl-link:         #1a56db;
+  --gl-blue-soft:    #eff6ff;
+  --gl-blue-line:    #bfdbfe;
+  --gl-ring:         rgba(26,86,219,.14);
+  --gl-ok:           #047857;
+  --gl-ok-soft:      #d1fae5;
+  --gl-warn:         #b45309;
+  --gl-warn-soft:    #fef3c7;
+  --gl-bad:          #dc2626;
+  --gl-bad-soft:     #fee2e2;
+  --gl-bad-solid:    #dc2626;
+  --gl-hero:         linear-gradient(150deg,#081648 0%,#0d2b85 45%,#1a56db 100%);
+  --gl-card-shadow:  0 2px 12px rgba(8,22,72,.07);
+  --gl-fab-shadow:   0 6px 20px rgba(26,86,219,.35);
+  // Barre d'onglets (tabs.page.scss) + éléments vitrés posés sur --gl-hero
+  --gl-tabbar-bg:     rgba(255,255,255,.94);
+  --gl-tabbar-shadow: 0 -4px 20px rgba(8,22,72,.08);
+  --gl-glass:         rgba(255,255,255,.12);
+  --gl-glass-line:    rgba(255,255,255,.22);
+  // color-scheme des contrôles natifs (input date : icône calendrier, popup)
+  --gl-color-scheme:  light;
+
   // ── Ionic variables ─────────────────────────────────────
   --ion-color-primary:          #1a56db;
   --ion-color-primary-rgb:      26, 86, 219;
@@ -94,13 +130,36 @@
   // ── Items ───────────────────────────────────────────────
   --ion-item-background:      #ffffff;
   --ion-item-color:           #0f172a;
+
+  // ── Espacement (échelle 4/8/12/16/24/32 — déjà la progression la plus
+  //    utilisée en dur dans les pages : gap/padding des cartes kpi-tile,
+  //    quick-tile, product-card, modal-section, etc.) ────────────────
+  --gl-space-1: 4px;
+  --gl-space-2: 8px;
+  --gl-space-3: 12px;
+  --gl-space-4: 16px;
+  --gl-space-5: 24px;
+  --gl-space-6: 32px;
+
+  // ── Rayons : 8 pastilles/badges · 12 champs/puces/segment · 14 boutons ·
+  //    16 cartes · 22 carte de connexion/feuilles/modales/barre d'onglets ─
+  --gl-radius-sm:  8px;
+  --gl-radius-md:  12px;
+  --gl-radius-btn: 14px;
+  --gl-radius-lg:  16px;
+  --gl-radius-xl:  22px;
+
+  // ── Ombres (mêmes valeurs que .kpi-tile / .quick-tile / .mobile-card
+  //    / .metric-card dans home.page.scss et global.scss) ─────────────
+  --gl-shadow-sm: 0 2px 8px rgba(8,22,72,0.05);
+  --gl-shadow-md: 0 2px 12px rgba(8,22,72,0.07);
 }
 
 // ══════════════════════════════════════════════════
-//  TOOLBAR
+//  TOOLBAR — bleu nuit dans les 2 thèmes, titre blanc
 // ══════════════════════════════════════════════════
 ion-toolbar {
-  --background:   #081648;
+  --background:   var(--gl-navy);
   --color:        #ffffff;
   --border-width: 0;
   --min-height:   54px;
@@ -126,96 +185,128 @@ ion-header {
 }
 
 ion-content {
-  --background: #f0f4f8;
+  --background: var(--gl-bg);
 }
 
 // ══════════════════════════════════════════════════
-//  SEGMENT
+//  SEGMENT (onglets type Ventes / Annulées)
+//  Tokens uniquement : lisible en clair, sombre Auto et sombre forcé.
+//  --background-checked + indicateur masqué = même rendu en mode md et ios.
 // ══════════════════════════════════════════════════
 ion-segment {
-  --background:  #e8eef8;
+  --background:  var(--gl-surface);
+  border:        1px solid var(--gl-border);
   border-radius: 12px;
   padding:       3px;
 }
 
 ion-segment-button {
-  --border-radius:         10px;
-  --color:                 #64748b;
-  --color-checked:         #1a56db;
-  --indicator-color:       #ffffff;
-  --indicator-box-shadow:  0 2px 8px rgba(26,86,219,0.15);
-  min-height: 36px;
-  font-size:  0.82rem;
-  font-weight: 700;
+  --border-radius:         9px;
+  --color:                 var(--gl-muted);
+  --color-checked:         var(--gl-link);
+  --background-checked:    var(--gl-blue-soft);
+  --indicator-color:       transparent;
+  --indicator-box-shadow:  none;
+  --indicator-height:      0;
+  min-height:     40px;
+  font-size:      13px;
+  font-weight:    600;
+  text-transform: none;
+  letter-spacing: 0;
+
+  // Compteur (ex. nombre de ventes annulées)
+  ion-badge {
+    --background:   var(--gl-bad-solid);
+    --color:        #ffffff;
+    font-size:      11px;
+    font-weight:    700;
+    border-radius:  8px;
+    padding:        2px 6px;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
 }
 
 // ══════════════════════════════════════════════════
 //  ION-ITEM — conteneur champs de saisie
 // ══════════════════════════════════════════════════
-ion-item {
-  --background:              #ffffff;
-  --background-focused:      #eff6ff;
-  --background-activated:    #f8fafc;
-  --border-color:            #e2e8f0;
+// Couleurs via tokens (--gl-*) : l'ancien fond #fff figé restait blanc en mode sombre.
+// Sélecteurs .sc-ion-item-*-h : mêmes raisons que ion-searchbar plus bas (valeurs par
+// défaut d'Ionic posées sur cette classe, plus spécifique qu'un simple `ion-item`).
+ion-item,
+ion-item.sc-ion-item-md-h,
+ion-item.sc-ion-item-ios-h {
+  --background:              var(--gl-surface);
+  --background-focused:      var(--gl-blue-soft);
+  --background-activated:    var(--gl-surface-2);
+  --border-color:            var(--gl-border);
   --border-width:            0;
-  --highlight-color-focused: #1a56db;
+  --highlight-color-focused: var(--gl-action);
   --highlight-height:        2px;
-  --color:                   #0f172a;
+  --color:                   var(--gl-text);
   --padding-start:           14px;
   --inner-padding-end:       14px;
   --min-height:              54px;
   border-radius:             12px;
-  border:                    1.5px solid #e2e8f0;
+  border:                    1.5px solid var(--gl-border);
   margin-bottom:             6px;
   overflow:                  visible;
   transition:                border-color 0.2s, box-shadow 0.2s;
 
   &.item-has-focus {
-    border-color: #1a56db !important;
-    box-shadow:   0 0 0 3px rgba(26,86,219,0.12);
-    --background: #eff6ff;
+    border-color: var(--gl-action) !important;
+    box-shadow:   0 0 0 3px var(--gl-ring);
+    --background: var(--gl-blue-soft);
   }
 
   &.ion-invalid.ion-touched {
-    border-color: #dc2626;
+    border-color: var(--gl-bad);
   }
 }
 
 // ══════════════════════════════════════════════════
 //  ION-INPUT
 // ══════════════════════════════════════════════════
-ion-input {
-  --color:             #0f172a;
-  --placeholder-color: #94a3b8;
+// Champs Ionic en tokens --gl-* (l'ancien texte #0f172a figé était illisible en sombre) ;
+// sélecteurs .sc-ion-*-h pour passer devant les valeurs par défaut d'Ionic.
+ion-input,
+ion-input.sc-ion-input-md-h,
+ion-input.sc-ion-input-ios-h {
+  --color:             var(--gl-text);
+  --placeholder-color: var(--gl-muted);
+  --placeholder-opacity: 1;
   --background:        transparent;
-  color:               #0f172a;
+  color:               var(--gl-text);
   font-size:           0.93rem;
   font-weight:         500;
 }
 
 ion-input::part(label) {
-  color:        #475569;
+  color:        var(--gl-text-2);
   font-size:    0.78rem;
   font-weight:  600;
 }
 
 ion-input::part(native) {
-  color: #0f172a;
+  color: var(--gl-text);
 }
 
 // ══════════════════════════════════════════════════
 //  ION-SELECT
 // ══════════════════════════════════════════════════
-ion-select {
-  --color:             #0f172a;
-  --placeholder-color: #94a3b8;
-  color:               #0f172a;
+ion-select,
+ion-select.sc-ion-select-md-h,
+ion-select.sc-ion-select-ios-h {
+  --color:             var(--gl-text);
+  --placeholder-color: var(--gl-muted);
+  --placeholder-opacity: 1;
+  color:               var(--gl-text);
   font-size:           0.93rem;
   font-weight:         500;
 }
 
 ion-select::part(label) {
-  color:       #475569;
+  color:       var(--gl-text-2);
   font-size:   0.78rem;
   font-weight: 600;
 }
@@ -223,53 +314,70 @@ ion-select::part(label) {
 // ══════════════════════════════════════════════════
 //  ION-TEXTAREA
 // ══════════════════════════════════════════════════
-ion-textarea {
-  --color:             #0f172a;
-  --placeholder-color: #94a3b8;
+ion-textarea,
+ion-textarea.sc-ion-textarea-md-h,
+ion-textarea.sc-ion-textarea-ios-h {
+  --color:             var(--gl-text);
+  --placeholder-color: var(--gl-muted);
+  --placeholder-opacity: 1;
   --background:        transparent;
-  color:               #0f172a;
+  color:               var(--gl-text);
   font-size:           0.93rem;
 }
 
 // ══════════════════════════════════════════════════
-//  ION-SEARCHBAR
+//  ION-SEARCHBAR — jamais blanc en sombre
+//  Sélecteurs .sc-ion-searchbar-*-h : les valeurs par défaut d'Ionic sont posées sur
+//  cette classe (spécificité 0,1,0) et écrasaient un simple `ion-searchbar` (0,0,1) —
+//  d'où un texte/placeholder gris foncé (#262626) sur fond sombre.
 // ══════════════════════════════════════════════════
-ion-searchbar {
-  --color:              #0f172a;
-  --placeholder-color:  #94a3b8;
-  --background:         #f1f5f9;
-  --border-radius:      12px;
-  --box-shadow:         none;
-  --icon-color:         #64748b;
-  --clear-button-color: #94a3b8;
+ion-searchbar,
+ion-searchbar.sc-ion-searchbar-md-h,
+ion-searchbar.sc-ion-searchbar-ios-h {
+  --color:               var(--gl-text);
+  --placeholder-color:   var(--gl-muted);
+  --placeholder-opacity: 1;
+  --background:          var(--gl-surface-2);
+  --border-radius:       12px;
+  --box-shadow:          inset 0 0 0 1.5px var(--gl-border);
+  --icon-color:          var(--gl-muted);
+  --clear-button-color:  var(--gl-muted);
   padding: 0 !important;
 
+  .searchbar-input {
+    min-height:  44px;
+    font-weight: 500;
+  }
+
   &.searchbar-has-focus {
-    --background:   #eff6ff;
-    --icon-color:   #1a56db;
-    --border-color: #1a56db;
+    --icon-color: var(--gl-action);
+    --box-shadow: inset 0 0 0 1.5px var(--gl-action), 0 0 0 4px var(--gl-ring);
   }
 }
 
 // ══════════════════════════════════════════════════
 //  ION-TOGGLE
 // ══════════════════════════════════════════════════
-ion-toggle {
-  --track-background:           #e2e8f0;
-  --track-background-checked:   #bfdbfe;
+// Tokens --gl-* (l'ancienne piste #e2e8f0 figée restait claire en mode sombre) ;
+// sélecteurs .sc-ion-toggle-*-h pour passer devant les valeurs par défaut d'Ionic.
+ion-toggle,
+ion-toggle.sc-ion-toggle-md-h,
+ion-toggle.sc-ion-toggle-ios-h {
+  --track-background:           var(--gl-border);
+  --track-background-checked:   var(--gl-blue-line);
   --handle-background:          #ffffff;
-  --handle-background-checked:  #1a56db;
+  --handle-background-checked:  var(--gl-action);
   --handle-box-shadow:          0 2px 8px rgba(0,0,0,0.15);
   padding-inline-end: 0;
 }
 
 // ══════════════════════════════════════════════════
-//  ION-BADGE
+//  ION-BADGE — jamais sous 11px
 // ══════════════════════════════════════════════════
 ion-badge {
   border-radius:  8px;
   font-weight:    700;
-  font-size:      0.68rem;
+  font-size:      11px;
   padding:        4px 10px;
   letter-spacing: 0.3px;
 }
@@ -278,19 +386,18 @@ ion-badge {
 //  ION-CHIP
 // ══════════════════════════════════════════════════
 ion-chip {
-  --background:    #eff6ff;
-  --color:         #1a56db;
-  border:          1.5px solid #bfdbfe;
-  border-radius:   10px;
+  --background:    var(--gl-blue-soft);
+  --color:         var(--gl-link);
+  border:          1.5px solid var(--gl-blue-line);
+  border-radius:   12px;
   font-weight:     600;
   font-size:       0.8rem;
   height:          36px;
   transition:      all 0.15s;
 
-  ion-icon { color: #1a56db; }
+  ion-icon { color: var(--gl-link); }
 
   &:active {
-    --background: #dbeafe;
     transform:    scale(0.97);
   }
 }
@@ -354,7 +461,7 @@ ion-fab-button {
 
   ion-segment-button {
     min-height: 42px;
-    font-size:  0.88rem;
+    font-size:  14px;
   }
 
   ion-searchbar {

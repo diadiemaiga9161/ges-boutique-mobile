@@ -9,8 +9,11 @@ import { BoutiqueService } from './services/boutique.service';
 import { CommandeService } from './services/commande.service';
 import { SyncService } from './services/sync.service';
 import { AppUpdateService } from './services/app-update.service';
+import { ThemeService } from './services/theme.service';
 import { environment } from '../environments/environment';
 import { Subscription } from 'rxjs';
+import { MENU_SECTIONS, MenuSection } from './config/menu-items.config';
+import { canShowMenuItem, MenuVisibilityContext } from './config/menu-visibility.util';
 
 @Component({
   selector: 'app-root',
@@ -42,25 +45,6 @@ export class AppComponent implements OnInit, OnDestroy {
   // Ne pas mélanger avec fonctionnalitesDesactivees ci-dessus.
   permissionInventaireLectureActive = false;
 
-  menuPages = [
-    { title: 'Tableau de bord', icon: 'home-outline', route: '/home' },
-    { title: 'Clients', icon: 'people-outline', route: '/clients' },
-    { title: 'Nouvelle vente', icon: 'cart-outline', route: '/cart' },
-    { title: 'Factures', icon: 'document-text-outline', route: '/resources/factures' },
-    { title: 'Comptes bancaires', icon: 'card-outline', route: '/resources/comptes' },
-    { title: 'Dettes', icon: 'alert-circle-outline', route: '/resources/dettes' },
-    { title: 'Employés', icon: 'person-add-outline', route: '/resources/employes' },
-    { title: 'Paiements employés', icon: 'wallet-outline', route: '/resources/paiement-employe' },
-    { title: 'Objectifs Fournisseurs', icon: 'trophy-outline', route: '/resources/objectifs-fournisseur' },
-    { title: 'Primes Vendeurs', icon: 'cash-outline', route: '/resources/objectifs-vendeur' },
-    { title: 'Crédits clients', icon: 'time-outline', route: '/credits' },
-    { title: 'Fournisseurs', icon: 'business-outline', route: '/fournisseurs' },
-    { title: 'Dépôts Garde', icon: 'lock-closed-outline', route: '/depots' },
-    { title: 'Vendeurs', icon: 'people-circle-outline', route: '/resources/vendeurs' },
-    { title: 'Boutique', icon: 'storefront-outline', route: '/boutique' },
-    { title: 'Mon profil', icon: 'person-circle-outline', route: '/profile' },
-  ];
-
   constructor(
     private router: Router,
     private menu: MenuController,
@@ -73,9 +57,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private alertCtrl: AlertController,
     private syncService: SyncService,
     private appUpdateService: AppUpdateService,
+    private themeService: ThemeService,
   ) {}
 
   ngOnInit(): void {
+    // Applique dès le démarrage le thème choisi dans le Profil (Clair / Sombre / Auto).
+    // Sans cet appel, le choix n'était relu qu'en ouvrant la page Profil : un mode
+    // sombre forcé repassait en automatique à chaque lancement de l'appli.
+    this.themeService.init();
     this.hideSplash();
     this.syncService.startAutoSync();
     // Détecte les nouvelles versions déployées et propose de recharger
@@ -210,5 +199,31 @@ export class AppComponent implements OnInit, OnDestroy {
 
   getRole(): string {
     return this.auth.getFormattedRole() || '';
+  }
+
+  /** Sections du tiroir latéral déjà filtrées par permission/flag (canShowMenuItem),
+   *  sections devenues vides retirées entièrement (ex: "Transferts" quand
+   *  featureTransfertsActif=false) — voir app.component.html. */
+  get visibleMenuSections(): MenuSection[] {
+    const ctx: MenuVisibilityContext = {
+      isAdmin: this.auth.isAdmin(),
+      isSuperAdmin: this.auth.isSuperAdmin(),
+      fonctionnalitesDesactivees: this.fonctionnalitesDesactivees,
+      permissionInventaireLectureActive: this.permissionInventaireLectureActive,
+      featureTransfertsActif: this.featureTransfertsActif,
+    };
+    return MENU_SECTIONS
+      .map(section => ({ ...section, items: section.items.filter(item => canShowMenuItem(item, ctx)) }))
+      .filter(section => section.items.length > 0);
+  }
+
+  // Identité stable des sections / entrées du menu (voir app.component.html) :
+  // évite de recréer les lignes à chaque détection de changements.
+  trackMenuSection(index: number, section: MenuSection): string {
+    return section.labelKey || `section-${index}`;
+  }
+
+  trackMenuItem(_index: number, item: { route: string }): string {
+    return item.route;
   }
 }

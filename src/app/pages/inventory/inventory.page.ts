@@ -269,6 +269,43 @@ export class InventoryPage {
     return this.inventory.getTypeMouvementClass(type as TypeMouvement);
   }
 
+  // ── Affichage uniquement (design commun) ──────────────────────────────
+  // Valeurs de l'ancienne liste déroulante "Type" de l'historique, rendues en puces
+  // (même modèle typeMouvFilter, même déclenchement applyFilters()).
+  readonly typesMouvementFiltre = [
+    { value: '', label: 'Tous les mouvements' },
+    { value: 'ENTREE', label: 'Entrée stock' },
+    { value: 'SORTIE', label: 'Sortie stock' },
+    { value: 'VENTE', label: 'Vente' },
+    { value: 'CREDIT', label: 'Crédit' },
+    { value: 'ANNULATION_VENTE', label: 'Annulation vente' },
+    { value: 'ANNULATION_CREDIT', label: 'Annulation crédit' },
+    { value: 'RETOUR', label: 'Retour fournisseur' },
+    { value: 'AJUSTEMENT', label: 'Ajustement' },
+    { value: 'BONUS_FOURNISSEUR', label: 'Bonus Fournisseur' },
+    { value: 'DECOMPOSITION', label: 'Décomposition' }
+  ];
+
+  /** Teinte de pastille dérivée de getTypeMouvementClass (service inchangé). */
+  toneMouvement(type: string): 'ok' | 'warn' | 'bad' | 'info' | 'neutral' {
+    const cls = this.getTypeClass(type);
+    if (cls === 'text-success') return 'ok';
+    if (cls === 'text-danger') return 'bad';
+    if (cls === 'text-warning') return 'warn';
+    if (cls === 'text-info' || cls === 'text-primary') return 'info';
+    return 'neutral';
+  }
+
+  iconeMouvement(type: string): string {
+    if (type === 'ENTREE' || type === 'BONUS_FOURNISSEUR') return 'arrow-down-circle-outline';
+    if (type === 'SORTIE') return 'arrow-up-circle-outline';
+    if (type === 'VENTE' || type === 'CREDIT') return 'cart-outline';
+    if (type === 'ANNULATION_VENTE' || type === 'ANNULATION_CREDIT') return 'close-circle-outline';
+    if (type === 'RETOUR') return 'return-down-back-outline';
+    if (type === 'DECOMPOSITION' || type === 'RECOMPOSITION') return 'layers-outline';
+    return 'swap-horizontal-outline';
+  }
+
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await toast.present();

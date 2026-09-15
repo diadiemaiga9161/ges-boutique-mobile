@@ -3,13 +3,14 @@
 
     <!-- ══════════ SÉLECTEUR DE LANGUE ══════════ -->
     <div class="lang-selector">
-      <button class="lang-btn" (click)="showLangMenu = !showLangMenu">
+      <button type="button" class="lang-btn" (click)="showLangMenu = !showLangMenu">
         <span>{{ langService.getCurrentLang().flag }}</span>
         <span class="lang-code">{{ langService.getCurrentLang().code | uppercase }}</span>
         <ion-icon name="chevron-down-outline"></ion-icon>
       </button>
       <div class="lang-dropdown" *ngIf="showLangMenu">
         <button
+          type="button"
           *ngFor="let lang of languages"
           class="lang-option"
           [class.active]="lang.code === langService.getCurrent()"
@@ -27,9 +28,9 @@
       <div class="lh-deco lh-deco--3"></div>
 
       <div class="lh-body">
+        <!-- Vrai logo de l'application (même fichier que l'icône PWA/Android) -->
         <div class="lh-logo">
-          <span class="lh-logo__m">M</span>
-          <span class="lh-logo__c">C</span>
+          <img class="lh-logo__img" src="assets/icons/icon-192x192.png" alt="Ges Lafia" width="64" height="64" />
         </div>
         <h1 class="lh-app-name">Ges Lafia</h1>
         <p class="lh-tagline">Maïga Consulting · Gestion de boutique</p>
@@ -83,9 +84,13 @@
                 [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
                 autocomplete="current-password">
               </ion-input>
-              <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
+              <button type="button" class="eye-toggle" (click)="showPassword = !showPassword" [attr.aria-label]="'LOGIN.PASSWORD_LABEL' | translate">
                 <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
               </button>
+            </div>
+            <!-- « Mot de passe oublié ? » juste sous le champ, aligné à droite -->
+            <div class="login-forgot-row">
+              <a routerLink="/forgot-password" class="login-forgot">{{ 'LOGIN.FORGOT' | translate }}</a>
             </div>
           </div>
 
@@ -102,12 +107,6 @@
           </button>
 
         </form>
-
-        <div class="ion-text-center" style="margin-bottom:8px">
-          <a routerLink="/forgot-password" style="font-size:0.82rem;color:var(--ion-color-medium);text-decoration:underline">
-            {{ 'LOGIN.FORGOT' | translate }}
-          </a>
-        </div>
 
         <p class="login-version">Ges Lafia · v{{ version }} · Maïga Consulting</p>
       </div>

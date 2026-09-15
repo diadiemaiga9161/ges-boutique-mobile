@@ -1,112 +1,165 @@
-// -------- Product Card --------
+// Produits — design commun Ionic ↔ React Native. Couleurs 100 % tokens --gl-* :
+// l'ancien bloc @media (prefers-color-scheme: dark) local (qui ne marchait pas en
+// sombre forcé) est remplacé par ces variables.
+
+// -------- KPI 2×2 --------
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+// La zone de filtres est déjà dans .page-pad : pas de marge latérale en plus
+.filter-zone { margin: 0; }
+
+// -------- Carte produit --------
 .product-card {
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e8eef8;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
   overflow: hidden;
+}
+
+.product-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .product-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 14px 10px;
   gap: 12px;
 }
 
 .product-info { flex: 1; min-width: 0; }
 
 .product-name {
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 3px;
+  line-height: 1.35;
+  color: var(--gl-text);
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  overflow-wrap: anywhere;
 }
 
 .bio-badge {
-  font-size: 0.65rem !important;
+  font-size: 11px !important;
   padding: 2px 6px !important;
 }
 
-.product-cat { font-size: 0.78rem; color: #94a3b8; }
-
-// Stock badge coloré
-.product-stock-badge {
-  flex-shrink: 0;
-  border-radius: 10px;
-  padding: 8px 10px;
-  text-align: center;
-  min-width: 56px;
+.product-cat {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin-top: 2px;
 }
 
-.stock-qty   { display: block; font-size: 1.1rem; font-weight: 800; }
-.stock-label { display: block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+gl-stock-badge { flex-shrink: 0; max-width: 55%; }
 
-.stock-success { background: #f0fdf4; .stock-qty, .stock-label { color: #0e9f6e; } }
-.stock-warning  { background: #fffbeb; .stock-qty, .stock-label { color: #d97706; } }
-.stock-danger   { background: #fef2f2; .stock-qty, .stock-label { color: #dc2626; } }
-
-// Card body
-.product-card-body { padding: 0 14px 10px; }
-
+// Ligne de 3 valeurs (prix de vente en couleur lien)
 .price-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 6px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 
 .price-label {
-  font-size: 0.68rem;
-  color: #94a3b8;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .price-value {
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 700;
-  color: #1a56db;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
   margin: 0;
 
-  &.muted { color: #64748b; }
+  &--sell { color: var(--gl-link); }
 }
 
 .peremption-badge {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  margin-bottom: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
 
-  &.danger  { background: #fef2f2; color: #dc2626; }
-  &.warning { background: #fffbeb; color: #d97706; }
+  // !important : les utilitaires globaux .danger/.warning forcent déjà une couleur fixe
+  &.danger  { background: var(--gl-bad-soft);  color: var(--gl-bad) !important; }
+  &.warning { background: var(--gl-warn-soft); color: var(--gl-warn) !important; }
+}
+
+.product-code {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 0;
 }
 
 .alerte-msg {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
-  color: #d97706;
-  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gl-warn);
+  margin: 0;
 }
 
-// Card actions
+// Pied : boutons égaux côte à côte, séparés par une bordure 1px
 .product-card-actions {
   display: flex;
-  border-top: 1px solid #f1f5f9;
-  padding: 4px 6px;
+  border-top: 1px solid var(--gl-border);
+}
 
-  ion-button { font-size: 0.76rem; --padding-start: 8px; --padding-end: 8px; }
+.pc-action {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--gl-link);
+  cursor: pointer;
+
+  & + & { border-left: 1px solid var(--gl-border); }
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+
+  &:active { background: var(--gl-blue-soft); }
+
+  &--danger {
+    color: var(--gl-bad);
+    &:active { background: var(--gl-bad-soft); }
+  }
 }
 
 // -------- Modal Form --------
@@ -122,19 +175,19 @@
 }
 
 .modal-section {
-  background: #f8fafc;
+  background: var(--gl-surface-2);
   border-radius: 12px;
   padding: 12px;
-  border: 1px solid #e8eef8;
+  border: 1px solid var(--gl-border);
   margin-bottom: 12px;
 }
 
 .modal-section-title {
-  font-size: 0.7rem;
+  font-size: 11px;
   font-weight: 700;
-  color: #1a56db;
+  color: var(--gl-link);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.06em;
   margin: 0 0 10px;
 }
 
@@ -146,19 +199,20 @@
   align-items: center;
   gap: 8px;
   padding: 6px 8px 6px 12px;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e8eef8;
+  background: var(--gl-surface);
+  border-radius: 12px;
+  border: 1px solid var(--gl-border);
 }
 
 .cat-info { flex: 1; min-width: 0; }
-.cat-name { font-size: 0.9rem; font-weight: 600; color: #0f172a; display: block; }
-.cat-count { font-size: 0.75rem; }
+.cat-name { font-size: 0.9rem; font-weight: 600; color: var(--gl-text); display: block; }
+.cat-count { font-size: 12px; }
 .cat-actions { display: flex; align-items: center; flex-shrink: 0; }
 .cat-edit-input {
   flex: 1;
-  --background: #f8fafc;
-  border: 1.5px solid #1a56db;
+  --background: var(--gl-surface-2);
+  --color: var(--gl-text);
+  border: 1.5px solid var(--gl-action);
   border-radius: 8px;
   --padding-start: 8px;
   font-size: 0.88rem;
@@ -172,59 +226,14 @@
   align-items: center;
 }
 
+// -------- Modale statistiques --------
+.stat-row {
+  color: var(--gl-text-2);
+  border-bottom-color: var(--gl-border);
+  strong { color: var(--gl-text); }
+}
+
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  .product-name     { font-size: 1.05rem; }
-  .stock-qty        { font-size: 1.2rem; }
-  .product-stock-badge { min-width: 64px; padding: 10px 12px; }
-
-  .price-row        { gap: 24px; }
-  .price-value      { font-size: 1rem; }
-
-  .product-card-actions ion-button {
-    font-size: 0.82rem;
-    --padding-start: 12px;
-    --padding-end:   12px;
-  }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .product-name { font-size: 1.1rem; }
-  .price-value  { font-size: 1.05rem; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  Cartes "maison" hardcodées en blanc (pas des variables Ionic) : sans ce
-//  bloc leur fond reste blanc figé, ou pire, bascule sombre (héritage
-//  --ion-card-background) alors que le texte enfant reste codé en dur en
-//  couleur foncée -> illisible. Cf. même pattern déjà appliqué à cart.page.scss.
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .product-card,
-  .modal-section,
-  .cat-item {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .product-name,
-  .cat-name {
-    color: #f1f5f9;
-  }
-
-  .product-card-header,
-  .product-card-actions {
-    border-color: #374151;
-  }
-
-  .product-card-actions { border-top-color: #374151; }
-
-  // Textes sombres codés en dur sur les surfaces ci-dessus (modale stats)
-  .stat-row {
-    color: #cbd5e1;
-    border-bottom-color: #374151;
-    strong { color: #f1f5f9; }
-  }
+  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

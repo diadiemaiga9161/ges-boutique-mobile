@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -46,6 +46,9 @@ export class ResourcesPage {
   query = '';
   showForm = false;
   selected?: any;
+  /** Affichage uniquement : squelette de chargement pendant load(). */
+  loading = false;
+  trackById = (_: number, item: any) => item.id;
 
   factureForm = {
     id: 0,
@@ -152,6 +155,18 @@ export class ResourcesPage {
     private toastCtrl: ToastController
   ) {}
 
+  // Modales centrées (design commun) : fermeture à la touche Échap, en plus du X et
+  // de l'overlay — même effet que l'ancien bouton X / (didDismiss)="showXxx = false".
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showForm) this.showForm = false;
+    if (this.showFournisseurFormModal) this.showFournisseurFormModal = false;
+    if (this.showAchatModal) this.showAchatModal = false;
+    if (this.showPaiementModal) this.showPaiementModal = false;
+    if (this.showDepotRetraitModal) this.showDepotRetraitModal = false;
+    if (this.showDepotDetailModal) this.showDepotDetailModal = false;
+  }
+
   ionViewWillEnter(): void {
     const type = this.route.snapshot.paramMap.get('type') as ResourceType | null;
     const config = this.resourceMeta.getConfig(type);
@@ -166,7 +181,8 @@ export class ResourcesPage {
   }
 
   load(event?: any): void {
-    const done = () => event?.target?.complete();
+    this.loading = true;
+    const done = () => { this.loading = false; event?.target?.complete(); };
     const fail = (error: any) => {
       done();
       this.presentToast(error?.error?.message || error.message || 'Chargement impossible', 'danger');
@@ -435,6 +451,107 @@ export class ResourcesPage {
     }
   }
 
+  // ==================== AFFICHAGE (design commun) ====================
+  // Calculs d'affichage uniquement, sur la liste déjà chargée (bandeau héros,
+  // tuiles, libellés) : aucune donnée envoyée, aucune règle métier modifiée.
+
+  readonly anneeCourante = new Date().getFullYear();
+  readonly moisIndexes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  /** Mêmes 5 valeurs / libellés que l'ancien <ion-select> « Type » de l'opération compte. */
+  readonly typesOperationCompte: { value: TypeOperationCompte; label: string }[] = [
+    { value: 'VERSEMENT', label: 'Versement' },
+    { value: 'RETRAIT', label: 'Retrait' },
+    { value: 'CHEQUE', label: 'Chèque' },
+    { value: 'FRAIS', label: 'Frais' },
+    { value: 'BON_CAISSE', label: 'Bon caisse' }
+  ];
+
+  money(value: number): string {
+    return this.amount({ montant: value || 0 });
+  }
+
+  private sumItems(pick: (item: any) => number, keep: (item: any) => boolean = () => true): number {
+    return this.items.filter(keep).reduce((total, item) => total + (Number(pick(item)) || 0), 0);
+  }
+
+  private countItems(keep: (item: any) => boolean): number {
+    return this.items.filter(keep).length;
+  }
+
+  get totalSoldeComptes(): number { return this.sumItems(c => c.soldeActuel); }
+
+  get compteMaxNom(): string {
+    const max = this.items.reduce((best: any, c: any) => (!best || (c.soldeActuel || 0) > (best.soldeActuel || 0) ? c : best), null);
+    return max ? (max.nomBanque || max.nom || '') : '';
+  }
+
+  get totalDettesRestant(): number { return this.sumItems(d => d.montantRestant); }
+  get totalDettesInitial(): number { return this.sumItems(d => d.montantInitial); }
+  get totalDettesPaye(): number { return this.sumItems(d => d.montantPaye); }
+
+  pctDetteReglee(d: any): number {
+    return d.montantInitial > 0 ? Math.min(100, Math.round(((d.montantPaye || 0) / d.montantInitial) * 100)) : 0;
+  }
+
+  isEmployeActif(e: any): boolean { return !!e.actif || e.statut === 'ACTIF'; }
+  get masseSalariale(): number { return this.sumItems(e => e.salaireMensuel, e => this.isEmployeActif(e)); }
+  get nbEmployesActifs(): number { return this.countItems(e => this.isEmployeActif(e)); }
+
+  get totalVerseAnnee(): number {
+    return this.sumItems(p => p.montant, p => p.statut !== 'ANNULE' && String(p.datePaiement || '').startsWith(String(this.anneeCourante)));
+  }
+  get nbPaiementsAnnules(): number { return this.countItems(p => p.statut === 'ANNULE'); }
+
+  /** Aperçu « Montant à verser » (salaire mensuel × nombre de mois), comme React Native. */
+  montantAVerser(): number {
+    const employe = this.employees.find(e => e.id === Number(this.paiementForm.employeId));
+    return (employe?.salaireMensuel || 0) * (Number(this.paiementForm.nombreMois) || 0);
+  }
+
+  get nbAdmins(): number { return this.countItems(u => u.role === 'ADMIN'); }
+  get nbVendeursActifs(): number { return this.countItems(u => u.role === 'VENDEUR' && u.actif); }
+
+  get totalBonusFournisseur(): number { return this.sumItems(o => o.bonusCalcule); }
+  get totalPrimesValidees(): number { return this.sumItems(o => o.bonusMontant, o => o.bonusValide); }
+  get nbObjectifsEnCours(): number { return this.countItems(o => o.statut === 'NON_ATTEINT'); }
+  get nbObjectifsAtteints(): number { return this.countItems(o => o.statut === 'ATTEINT'); }
+
+  get totalEnGarde(): number { return this.sumItems(d => d.montantRestant, d => d.statut === 'ACTIF'); }
+  get nbDepotsActifs(): number { return this.countItems(d => d.statut === 'ACTIF'); }
+  get nbDepotsClotures(): number { return this.countItems(d => d.statut === 'CLOTURE'); }
+
+  /** Libellé du bouton flottant étendu (même action que le « + » de l'en-tête : startCreate()). */
+  fabLabel(): string {
+    switch (this.type) {
+      case 'factures': return 'Nouvelle facture';
+      case 'comptes': return 'Nouveau compte';
+      case 'dettes': return 'Nouvelle dette';
+      case 'employes': return 'Nouvel employé';
+      case 'vendeurs': return 'Nouveau vendeur';
+      case 'fournisseurs': return 'Nouveau fournisseur';
+      case 'depots-garde': return 'Nouveau dépôt';
+      case 'objectifs-fournisseur': return 'Nouvel objectif';
+      case 'objectifs-vendeur': return 'Nouvelle prime';
+      default: return 'Créer';
+    }
+  }
+
+  /** Icône + titre de l'état vide (mêmes textes que les écrans React Native). */
+  emptyMeta(): { icon: string; title: string } {
+    switch (this.type) {
+      case 'factures': return { icon: 'document-text-outline', title: 'Aucune donnée' };
+      case 'comptes': return { icon: 'card-outline', title: 'Aucun compte enregistré' };
+      case 'dettes': return { icon: 'alert-circle-outline', title: 'Aucune dette enregistrée' };
+      case 'employes': return { icon: 'people-outline', title: 'Aucune donnée' };
+      case 'paiement-employe': return { icon: 'wallet-outline', title: 'Aucun paiement enregistré' };
+      case 'vendeurs': return { icon: 'people-circle-outline', title: 'Aucun utilisateur trouvé' };
+      case 'depots-garde': return { icon: 'lock-closed-outline', title: 'Aucun dépôt' };
+      case 'objectifs-fournisseur': return { icon: 'trophy-outline', title: 'Aucun objectif enregistré' };
+      case 'objectifs-vendeur': return { icon: 'ribbon-outline', title: 'Aucune prime enregistrée' };
+      default: return { icon: 'file-tray-outline', title: 'Aucune donnée' };
+    }
+  }
+
   title(item: any): string {
     if (this.type === 'factures') return item.numeroFacture || `Facture #${item.id}`;
     if (this.type === 'comptes') return item.nomBanque || item.nom || `Compte #${item.id}`;
@@ -689,7 +806,7 @@ export class ResourcesPage {
 
   private async alertObjectifAtteint(objectif: ObjectifFournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: '🎯 Objectif atteint !',
+      header: 'Objectif atteint !',
       cssClass: 'alert-pre-line',
       message: `${objectif.fournisseurNom} — ${this.moisLabels[objectif.mois] || ''} ${objectif.annee}\n\nVous pouvez valider pour ajouter les bonus au stock.`,
       buttons: [
@@ -706,7 +823,7 @@ export class ResourcesPage {
 
   private async alertBonusAjoute(objectif: ObjectifFournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: '✅ Stock mis à jour !',
+      header: 'Stock mis à jour !',
       message: `${objectif.quantiteBonusRecue} unité(s) de "${objectif.produitNom || 'produit'}" ont été ajoutées au stock.`,
       buttons: ['OK']
     });
@@ -1054,7 +1171,7 @@ export class ResourcesPage {
 
   async confirmDeleteFournisseur(fournisseur: Fournisseur): Promise<void> {
     const alert = await this.alertCtrl.create({
-      header: '⚠️ Supprimer le fournisseur',
+      header: 'Supprimer le fournisseur',
       message: `${fournisseur.nom} sera supprimé définitivement.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },

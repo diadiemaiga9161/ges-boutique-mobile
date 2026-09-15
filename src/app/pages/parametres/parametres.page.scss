@@ -1,136 +1,238 @@
-.param-content {
-  --background: var(--ion-color-light, #f4f5f8);
+// Paramètres (réinitialisation / suppression des données) — design commun Ionic ↔ RN.
+// 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark) local ne
+// suivait pas le « Sombre » forcé du Profil (body.theme-dark).
+// Classes gls-* identiques à parametres-hub ; gl-pill / gl-btn identiques à Inventaire.
+
+.param-content { --background: var(--gl-bg); }
+
+.gls-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-// Accès refusé
-.param-access-denied {
+.gls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// -------- Carte de réglages --------
+.gls-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.gls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+
+  & + & { border-top: 1px solid var(--gl-border); }
+
+  // Ligne case à cocher : toute la ligne est la zone touchable de l'ion-checkbox
+  &--check { padding: 0; }
+}
+
+.gls-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok  { background: var(--gl-ok-soft);  color: var(--gl-ok); }
+  &--bad { background: var(--gl-bad-soft); color: var(--gl-bad); }
+}
+
+.gls-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gls-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--gl-text);
+}
+
+.gls-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+.gls-value {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+}
+
+// -------- Case à cocher (tokens, même rendu que RN) --------
+.gls-check {
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  --size: 22px;
+  --border-radius: 6px;
+  --border-width: 2px;
+  --border-style: solid;
+  --border-color: var(--gl-muted);
+  --border-color-checked: var(--gl-action);
+  --checkbox-background: var(--gl-surface);
+  --checkbox-background-checked: var(--gl-action);
+  --checkmark-color: #ffffff;
+
+  &::part(label) {
+    white-space: normal;
+    overflow: visible;
+    margin-inline-start: 12px;
+  }
+}
+
+// -------- Skeleton --------
+.gls-sk-icon { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }
+.gls-sk-end  { width: 25%; flex-shrink: 0; }
+
+// -------- Pastille de statut --------
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--bad  { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+// -------- Avertissement --------
+.gls-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  ion-icon { font-size: 20px; flex-shrink: 0; }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--gl-text-2);
+  }
+
+  &--warn {
+    background: var(--gl-warn-soft);
+    ion-icon { color: var(--gl-warn); }
+  }
+}
+
+// -------- Actions --------
+.gls-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  ion-spinner { width: 20px; height: 20px; color: currentColor; }
+
+  // Danger « contour » (texte bad) — même rendu que AppButton variant="danger" (RN)
+  &--danger-outline {
+    background: transparent;
+    color: var(--gl-bad);
+    border: 1.5px solid var(--gl-bad-soft);
+    &:active { background: var(--gl-surface-2); }
+  }
+
+  // Danger plein : suppression confirmée par saisie
+  &--danger {
+    background: var(--gl-bad-solid);
+    color: #ffffff;
+    &:active { opacity: 0.85; }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// -------- Accès refusé (même visuel que gl-empty-state / EmptyState RN) --------
+.gls-denied {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 24px;
-  gap: 16px;
-  color: var(--ion-color-medium);
-
-  ion-icon {
-    font-size: 56px;
-    color: var(--ion-color-danger);
-  }
-
-  p {
-    font-size: 16px;
-    text-align: center;
-    margin: 0;
-  }
-}
-
-// Sections
-.param-section {
-  padding: 16px 16px 0;
-}
-
-.param-section-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ion-color-medium);
-  margin: 0 4px 8px;
-}
-
-// Carte liste
-.param-card {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-
-  ion-item {
-    --background: transparent;
-    --border-color: var(--ion-color-light);
-    --min-height: 56px;
-
-    ion-label {
-      h3 {
-        font-size: 14px;
-        font-weight: 500;
-      }
-      p {
-        font-size: 12px;
-        color: var(--ion-color-medium);
-        margin: 2px 0 0;
-      }
-    }
-  }
-}
-
-// Valeur statistique
-.param-stat {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ion-color-dark);
-}
-
-// Zone avertissement
-.param-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 20px 16px 0;
-  padding: 12px 14px;
-  background: rgba(var(--ion-color-warning-rgb), 0.1);
-  border-left: 3px solid var(--ion-color-warning);
-  border-radius: 8px;
-
-  ion-icon {
-    font-size: 20px;
-    color: var(--ion-color-warning-shade);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  p {
-    font-size: 12px;
-    color: var(--ion-color-dark);
-    margin: 0;
-    line-height: 1.5;
-  }
-}
-
-// Boutons d'action
-.param-actions {
-  padding: 20px 16px 32px;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
 
-  ion-button {
-    --border-radius: 10px;
-    font-weight: 600;
+  &__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gl-surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon { font-size: 26px; color: var(--gl-muted); }
+  }
+
+  &__title {
+    margin: 0;
     font-size: 15px;
-    height: 50px;
-  }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .param-content { --background: #111827; }
-
-  .param-card {
-    background: #1f2937;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-
-    ion-item { --border-color: #374151; }
-  }
-
-  .param-stat { color: #e5e7eb; }
-
-  .param-warning {
-    background: rgba(245,158,11,0.14);
-    border-left-color: #f59e0b;
-
-    p { color: #fcd34d; }
+    font-weight: 700;
+    color: var(--gl-text);
   }
 }

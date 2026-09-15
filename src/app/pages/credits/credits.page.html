@@ -15,332 +15,292 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="credits-content">
 
-  <!-- Segment principal -->
-  <ion-segment [(ngModel)]="activeTab" color="warning" class="mx-3 mt-2 mb-1">
-    <ion-segment-button value="credits">
-      <ion-label>Crédits</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="groupes">
-      <ion-label>Paiements groupés</ion-label>
-    </ion-segment-button>
-  </ion-segment>
+  <!-- ═══════════ SEGMENT PRINCIPAL ═══════════ -->
+  <div class="tab-segment-wrap">
+    <ion-segment [(ngModel)]="activeTab">
+      <ion-segment-button value="credits">
+        <ion-label>Crédits</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="groupes">
+        <ion-label>
+          Paiements groupés
+          <ion-badge *ngIf="paiementsGroupes.length > 0" class="seg-count">{{ paiementsGroupes.length }}</ion-badge>
+        </ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
 
   <div *ngIf="activeTab === 'credits'">
   <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- ═══════════ HERO ═══════════ -->
+  <!-- ═══════════ BANDEAU HÉROS : total restant dû + KPI vitrés ═══════════ -->
   <div class="credits-hero">
-    <div class="hero-stat hero-stat--total">
-      <p class="hs-label">Total dû</p>
-      <p class="hs-val">{{ money(totalCreditsEnCours) }}</p>
+    <div class="hero-bg-deco"></div>
+    <div class="hero-main">
+      <p class="hero-eyebrow">Total dû</p>
+      <h1 class="hero-amount">{{ money(totalCreditsEnCours) }}</h1>
     </div>
-    <div class="hero-stat">
-      <p class="hs-label">Clients</p>
-      <p class="hs-val">{{ nbClients }}</p>
-    </div>
-    <div class="hero-stat hero-stat--retard">
-      <p class="hs-label">En retard</p>
-      <p class="hs-val">{{ nbCreditsEnRetard }}</p>
-    </div>
-    <div class="hero-stat hero-stat--regle">
-      <p class="hs-label">Réglés</p>
-      <p class="hs-val">{{ nbCreditsRegles }}</p>
-    </div>
-  </div>
-
-  <!-- ═══════════ ONGLETS STATUT ═══════════ -->
-  <div class="statut-tabs">
-    <button class="stab" [class.stab--active]="statutFilter === 'EN_COURS'"
-            (click)="setStatut('EN_COURS')">
-      <ion-icon name="time-outline"></ion-icon>
-      En cours
-    </button>
-    <button class="stab" [class.stab--active]="statutFilter === 'REGLES'"
-            (click)="setStatut('REGLES')">
-      <ion-icon name="checkmark-circle-outline"></ion-icon>
-      Réglés
-    </button>
-    <button class="stab" [class.stab--active]="statutFilter === 'TOUS'"
-            (click)="setStatut('TOUS')">
-      <ion-icon name="list-outline"></ion-icon>
-      Tous
-    </button>
-  </div>
-
-  <!-- ═══════════ BARRE DE RECHERCHE ═══════════ -->
-  <div class="search-bar-card">
-    <div class="search-bar-inner">
-      <div class="search-bar-icon">
-        <ion-icon name="search-outline"></ion-icon>
+    <div class="hero-minis">
+      <div class="hero-mini">
+        <ion-icon name="people-outline"></ion-icon>
+        <p class="hmc-label">Clients</p>
+        <p class="hmc-val">{{ nbClients }}</p>
       </div>
-      <input
-        class="search-bar-input"
-        type="text"
-        [(ngModel)]="searchTerm"
-        (input)="applyFilter()"
-        placeholder="Rechercher par nom ou téléphone..."
-      />
-      <button class="search-bar-clear" *ngIf="searchTerm" (click)="searchTerm = ''; applyFilter()">
-        <ion-icon name="close-circle-outline"></ion-icon>
-      </button>
+      <div class="hero-mini">
+        <ion-icon name="warning-outline"></ion-icon>
+        <p class="hmc-label">En retard</p>
+        <p class="hmc-val hmc-val--warn">{{ nbCreditsEnRetard }}</p>
+      </div>
+      <div class="hero-mini">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <p class="hmc-label">Réglés</p>
+        <p class="hmc-val">{{ nbCreditsRegles }}</p>
+      </div>
     </div>
-    <button class="retard-chip" [class.retard-chip--active]="filterRetard"
-            *ngIf="statutFilter !== 'REGLES'"
-            (click)="filterRetard = !filterRetard; applyFilter()">
-      <ion-icon name="warning-outline"></ion-icon>
-      En retard
-    </button>
   </div>
 
-  <!-- ═══════════ FILTRES AVANCÉS ═══════════ -->
-  <ion-card class="filtres-card" style="margin:6px 12px 4px;">
-    <ion-card-content style="padding:10px 12px;">
+  <div class="page-pad stack">
 
-      <!-- Filtre par client -->
-      <ion-item lines="none" style="--padding-start:0;--inner-padding-end:0;margin-bottom:6px;">
-        <ion-icon name="person-outline" slot="start" style="color:#64748b;font-size:1rem;margin-right:8px;"></ion-icon>
-        <ion-select
-          [(ngModel)]="clientSelectionne"
-          (ionChange)="applyFilter()"
-          placeholder="Tous les clients"
-          interface="action-sheet"
-          style="width:100%;font-size:0.85rem;">
-          <ion-select-option value="">Tous les clients</ion-select-option>
-          <ion-select-option *ngFor="let nom of clientsUniques" [value]="nom">{{ nom }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <!-- Filtre par plage de dates -->
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px;">
-          <ion-icon name="calendar-outline" style="color:#64748b;font-size:1rem;flex-shrink:0;"></ion-icon>
-          <ion-input
-            type="date"
-            [(ngModel)]="dateDebut"
-            (ionChange)="applyFilter()"
-            placeholder="Du"
-            style="font-size:0.82rem;--padding-start:0;">
-          </ion-input>
-        </div>
-        <span style="color:#94a3b8;font-size:0.8rem;flex-shrink:0;">au</span>
-        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:130px;">
-          <ion-input
-            type="date"
-            [(ngModel)]="dateFin"
-            (ionChange)="applyFilter()"
-            placeholder="Au"
-            style="font-size:0.82rem;--padding-start:0;">
-          </ion-input>
-        </div>
-        <button
-          *ngIf="dateDebut || dateFin"
-          (click)="effacerDates()"
-          style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;">
-          <ion-icon name="close-outline" style="vertical-align:middle;"></ion-icon>
-          Effacer
+    <!-- ═══════════ FILTRES ═══════════ -->
+    <div class="filter-zone">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Rechercher par nom ou téléphone..." />
+        <button type="button" class="fz-clear" *ngIf="searchTerm" (click)="searchTerm = ''; applyFilter()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+          <ion-icon name="close-circle-outline"></ion-icon>
         </button>
       </div>
 
-    </ion-card-content>
-  </ion-card>
-
-  <!-- ═══════════ LOADING ═══════════ -->
-  <div class="sk-list" *ngIf="loading">
-    <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
-      <div class="skeleton sk-avatar"></div>
-      <div class="sk-card-body">
-        <div class="skeleton sk-line sk-line--w80"></div>
-        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-      </div>
-      <div class="skeleton sk-line sk-line--w30"></div>
-    </div>
-  </div>
-
-  <!-- ═══════════ LISTE CLIENTS GROUPÉS ═══════════ -->
-  <div class="credits-list animate-cards" *ngIf="!loading">
-
-    <div class="empty-v2" *ngIf="!filteredGroups.length">
-      <div class="empty-v2__icon">
-        <ion-icon [name]="statutFilter === 'REGLES' ? 'checkmark-circle-outline' : 'receipt-outline'"></ion-icon>
-      </div>
-      <p class="empty-v2__title">{{ statutFilter === 'REGLES' ? 'Aucun crédit réglé' : statutFilter === 'EN_COURS' ? 'Aucun crédit en attente' : 'Aucun crédit trouvé' }}</p>
-      <p class="empty-v2__text">Ajustez vos filtres ou rechargez la liste</p>
-    </div>
-
-    <!-- Résumé pagination -->
-    <div *ngIf="filteredGroups.length > 0"
-         style="display:flex;justify-content:space-between;align-items:center;padding:4px 14px 2px;font-size:0.75rem;color:#94a3b8;">
-      <span>{{ filteredGroups.length }} client(s) trouvé(s)</span>
-      <span *ngIf="totalPages > 1">Page {{ pageActuelle }} / {{ totalPages }}</span>
-    </div>
-
-    <div class="client-group" *ngFor="let group of groupesPagines; trackBy: trackById"
-         [class.group--retard]="group.enRetard && statutFilter !== 'REGLES'">
-
-      <!-- En-tête groupe -->
-      <div class="group-header" (click)="toggleGroup(group)">
-        <div class="group-avatar" [class.avatar--retard]="group.enRetard && statutFilter !== 'REGLES'"
-             [class.avatar--regle]="statutFilter === 'REGLES'">
-          {{ group.clientNom[0].toUpperCase() }}
-        </div>
-        <div class="group-info">
-          <p class="group-nom">
-            {{ group.clientNom }}
-            <span class="group-prenom" *ngIf="group.clientPrenom"> {{ group.clientPrenom }}</span>
-          </p>
-          <p class="group-tel" *ngIf="group.clientTelephone">
-            <ion-icon name="call-outline"></ion-icon>
-            {{ group.clientTelephone }}
-          </p>
-          <div class="group-badges">
-            <span class="cr-count">{{ group.credits.length }} crédit{{ group.credits.length > 1 ? 's' : '' }}</span>
-            <span class="cr-retard" *ngIf="group.enRetard && statutFilter !== 'REGLES'">
-              <ion-icon name="warning-outline"></ion-icon> En retard
-            </span>
-            <span class="cr-regle" *ngIf="statutFilter === 'REGLES'">
-              <ion-icon name="checkmark-circle-outline"></ion-icon> Réglés
-            </span>
-          </div>
-        </div>
-        <div class="group-right">
-          <p class="group-total" [class.group-total--retard]="group.enRetard && statutFilter !== 'REGLES'"
-             [class.group-total--regle]="statutFilter === 'REGLES'">
-            {{ money(group.totalRestant) }}
-          </p>
-          <div class="group-actions" *ngIf="statutFilter !== 'REGLES'">
-            <button class="action-btn action-btn--groupe" (click)="$event.stopPropagation(); openGroupe(group)">
-              <ion-icon name="people-outline"></ion-icon>
-              Groupé
-            </button>
-          </div>
-          <ion-icon class="chevron" [class.chevron--open]="group.expanded" name="chevron-down-outline"></ion-icon>
+      <!-- Statut (anciens onglets) + bascule « En retard » -->
+      <div class="chip-row">
+        <ion-icon name="funnel-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'EN_COURS'" (click)="setStatut('EN_COURS')">
+            <ion-icon name="time-outline"></ion-icon>
+            En cours
+          </button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'REGLES'" (click)="setStatut('REGLES')">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            Réglés
+          </button>
+          <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'TOUS'" (click)="setStatut('TOUS')">
+            <ion-icon name="list-outline"></ion-icon>
+            Tous
+          </button>
+          <button type="button" class="fz-chip" *ngIf="statutFilter !== 'REGLES'" [class.fz-chip--active]="filterRetard"
+                  (click)="filterRetard = !filterRetard; applyFilter()">
+            <ion-icon name="warning-outline"></ion-icon>
+            En retard
+          </button>
         </div>
       </div>
 
-      <!-- Crédits du client -->
-      <div class="group-credits" *ngIf="group.expanded">
-        <div class="credit-item" *ngFor="let credit of group.credits; trackBy: trackById"
-             [class.credit-item--regle]="credit.estReglee">
+      <!-- Client : puces (mêmes valeurs / même modèle que l'ancienne liste « Tous les clients ») -->
+      <div class="chip-row" *ngIf="clientsUniques.length">
+        <ion-icon name="person-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="!clientSelectionne" (click)="clientSelectionne = ''; applyFilter()">Tous les clients</button>
+          <button type="button" class="fz-chip" *ngFor="let nom of clientsUniques" [class.fz-chip--active]="clientSelectionne === nom"
+                  (click)="clientSelectionne = nom; applyFilter()">{{ nom }}</button>
+        </div>
+      </div>
 
-          <div class="credit-top">
-            <div class="credit-left">
-              <span class="credit-num">{{ credit.numeroVente }}</span>
-              <span class="credit-date" *ngIf="credit.dateEcheance && !credit.estReglee">
-                <ion-icon name="calendar-outline"></ion-icon>
-                Éch. {{ formatDate(credit.dateEcheance) }}
-              </span>
-              <span class="credit-date credit-date--regle" *ngIf="credit.estReglee && credit.dateReglement">
-                <ion-icon name="checkmark-done-outline"></ion-icon>
-                Réglé le {{ formatDate(credit.dateReglement) }}
-              </span>
+      <!-- Plage de dates -->
+      <div class="filter-dates">
+        <div class="date-field">
+          <label class="gl-label">Du</label>
+          <input type="date" class="gl-input" [(ngModel)]="dateDebut" (change)="applyFilter()" aria-label="Du" />
+        </div>
+        <div class="date-sep">→</div>
+        <div class="date-field">
+          <label class="gl-label">Au</label>
+          <input type="date" class="gl-input" [(ngModel)]="dateFin" (change)="applyFilter()" aria-label="Au" />
+        </div>
+      </div>
+      <div class="clear-row" *ngIf="dateDebut || dateFin">
+        <button type="button" class="link-btn" (click)="effacerDates()">
+          <ion-icon name="close-outline"></ion-icon>
+          Effacer
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════ CHARGEMENT ═══════════ -->
+    <div class="sk-list" *ngIf="loading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!loading">
+
+      <gl-empty-state
+        *ngIf="!filteredGroups.length"
+        [icon]="statutFilter === 'REGLES' ? 'checkmark-circle-outline' : 'receipt-outline'"
+        [title]="statutFilter === 'REGLES' ? 'Aucun crédit réglé' : statutFilter === 'EN_COURS' ? 'Aucun crédit en attente' : 'Aucun crédit trouvé'"
+        message="Ajustez vos filtres ou rechargez la liste">
+      </gl-empty-state>
+
+      <!-- Résumé pagination -->
+      <div class="results-bar" *ngIf="filteredGroups.length > 0">
+        <span class="gl-overline">{{ filteredGroups.length }} client(s) trouvé(s)</span>
+        <span class="gl-overline" *ngIf="totalPages > 1">Page {{ pageActuelle }} / {{ totalPages }}</span>
+      </div>
+
+      <!-- ═══════════ LISTE CLIENTS GROUPÉS ═══════════ -->
+      <section class="credits-list animate-cards">
+        <article class="gl-card group-card" *ngFor="let group of groupesPagines; trackBy: trackById"
+                 [class.group-card--retard]="group.enRetard && statutFilter !== 'REGLES'">
+
+          <!-- En-tête groupe (déplie les crédits) -->
+          <div class="group-head" (click)="toggleGroup(group)">
+            <div class="group-avatar" [class.group-avatar--retard]="group.enRetard && statutFilter !== 'REGLES'"
+                 [class.group-avatar--regle]="statutFilter === 'REGLES'">
+              {{ group.clientNom[0].toUpperCase() }}
             </div>
-            <div class="credit-right">
-              <span class="credit-montant" [class.credit-montant--regle]="credit.estReglee">
-                {{ money(credit.estReglee ? credit.montantTotal : credit.montantRestant) }}
-              </span>
-              <span class="credit-badge" [ngClass]="{
-                'badge--retard': credit.enRetard,
-                'badge--encours': !credit.enRetard && !credit.estReglee,
-                'badge--regle': credit.estReglee
-              }">
-                {{ credit.estReglee ? '✓ Réglé' : credit.enRetard ? '⚠ Retard' : 'En cours' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Barre de progression -->
-          <div class="credit-progress">
-            <div class="progress-bar">
-              <div class="progress-fill"
-                   [class.fill--retard]="credit.enRetard"
-                   [class.fill--regle]="credit.estReglee"
-                   [style.width.%]="credit.estReglee ? 100 : (credit.montantTotal > 0 ? ((credit.montantVerse / credit.montantTotal) * 100) : 0)">
+            <div class="group-info">
+              <p class="group-nom">
+                {{ group.clientNom }}<span class="group-prenom" *ngIf="group.clientPrenom"> {{ group.clientPrenom }}</span>
+              </p>
+              <p class="group-tel" *ngIf="group.clientTelephone">
+                <ion-icon name="call-outline"></ion-icon>
+                <span>{{ group.clientTelephone }}</span>
+              </p>
+              <div class="group-badges">
+                <span class="gl-pill gl-pill--blue">{{ group.credits.length }} crédit{{ group.credits.length > 1 ? 's' : '' }}</span>
+                <span class="gl-pill gl-pill--bad" *ngIf="group.enRetard && statutFilter !== 'REGLES'">
+                  <ion-icon name="warning-outline"></ion-icon> En retard
+                </span>
+                <span class="gl-pill gl-pill--ok" *ngIf="statutFilter === 'REGLES'">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon> Réglés
+                </span>
               </div>
             </div>
-            <div class="progress-labels">
-              <span>Versé {{ money(credit.montantVerse) }}</span>
-              <span>/ {{ money(credit.montantTotal) }}</span>
+            <div class="group-right">
+              <p class="group-total" [class.group-total--retard]="group.enRetard && statutFilter !== 'REGLES'"
+                 [class.group-total--regle]="statutFilter === 'REGLES'">
+                {{ money(group.totalRestant) }}
+              </p>
+              <ion-icon class="chevron" [class.chevron--open]="group.expanded" name="chevron-down-outline"></ion-icon>
             </div>
           </div>
 
-          <!-- Réglé par (si réglé) -->
-          <div class="credit-regle-par" *ngIf="credit.estReglee && credit.regleParNom">
-            <ion-icon name="person-circle-outline"></ion-icon>
-            Réglé par <strong>{{ credit.regleParNom }}</strong>
+          <!-- Crédits du client -->
+          <div class="group-credits" *ngIf="group.expanded">
+            <div class="credit-item" *ngFor="let credit of group.credits; trackBy: trackById">
+
+              <div class="credit-top">
+                <div class="credit-left">
+                  <span class="credit-num">{{ credit.numeroVente }}</span>
+                  <span class="credit-date" *ngIf="credit.dateEcheance && !credit.estReglee">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    Éch. {{ formatDate(credit.dateEcheance) }}
+                  </span>
+                  <span class="credit-date credit-date--regle" *ngIf="credit.estReglee && credit.dateReglement">
+                    <ion-icon name="checkmark-done-outline"></ion-icon>
+                    Réglé le {{ formatDate(credit.dateReglement) }}
+                  </span>
+                </div>
+                <div class="credit-right">
+                  <span class="credit-montant" [class.credit-montant--regle]="credit.estReglee" [class.credit-montant--retard]="!credit.estReglee && credit.enRetard">
+                    {{ money(credit.estReglee ? credit.montantTotal : credit.montantRestant) }}
+                  </span>
+                  <!-- Pastille de statut (mêmes libellés et mêmes booléens que gl-credit-badge) -->
+                  <span class="gl-pill"
+                        [class.gl-pill--ok]="!!credit.estReglee"
+                        [class.gl-pill--bad]="!credit.estReglee && !!credit.enRetard"
+                        [class.gl-pill--warn]="!credit.estReglee && !credit.enRetard">
+                    {{ credit.estReglee ? 'Réglé' : credit.enRetard ? 'En retard' : 'En cours' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Barre de progression -->
+              <div class="credit-progress">
+                <div class="gl-progress">
+                  <div class="gl-progress__fill"
+                       [class.gl-progress__fill--bad]="credit.enRetard"
+                       [style.width.%]="credit.estReglee ? 100 : (credit.montantTotal > 0 ? ((credit.montantVerse / credit.montantTotal) * 100) : 0)">
+                  </div>
+                </div>
+                <div class="progress-labels">
+                  <span>Versé {{ money(credit.montantVerse) }}</span>
+                  <span>/ {{ money(credit.montantTotal) }}</span>
+                </div>
+              </div>
+
+              <!-- Réglé par (si réglé) -->
+              <div class="credit-meta" *ngIf="credit.estReglee && credit.regleParNom">
+                <ion-icon name="person-circle-outline"></ion-icon>
+                <span>Réglé par <strong>{{ credit.regleParNom }}</strong></span>
+              </div>
+
+              <!-- Vente faite par -->
+              <div class="credit-meta" *ngIf="credit.vendeurNom">
+                <ion-icon name="storefront-outline"></ion-icon>
+                <span>Vente par <strong>{{ credit.vendeurNom }}</strong></span>
+              </div>
+
+              <!-- Actions crédit -->
+              <div class="credit-btns">
+                <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" (click)="openDetail(credit)">
+                  <ion-icon name="eye-outline"></ion-icon>
+                  Voir
+                </button>
+                <button type="button" class="gl-btn gl-btn--tonal gl-btn--sm credit-btns__main" *ngIf="!credit.estReglee" (click)="openSimple(credit)">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  Régler
+                </button>
+                <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" *ngIf="credit.estReglee" (click)="imprimerRecuCredit(credit)">
+                  <ion-icon name="receipt-outline"></ion-icon>
+                  Reçu
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Vente faite par -->
-          <div class="credit-vendeur" *ngIf="credit.vendeurNom">
-            <ion-icon name="storefront-outline"></ion-icon>
-            Vente par <strong>{{ credit.vendeurNom }}</strong>
-          </div>
-
-          <!-- Actions crédit -->
-          <div class="credit-btns">
-            <button class="detail-btn" (click)="openDetail(credit)">
-              <ion-icon name="eye-outline"></ion-icon>
-              Voir
-            </button>
-            <button class="pay-btn" *ngIf="!credit.estReglee" (click)="openSimple(credit)">
-              <ion-icon name="cash-outline"></ion-icon>
-              Régler
-            </button>
-            <button class="detail-btn" *ngIf="credit.estReglee" (click)="imprimerRecuCredit(credit)">
-              <ion-icon name="receipt-outline"></ion-icon>
-              Reçu
+          <!-- Pied de carte : règlement groupé -->
+          <div class="gl-card__foot" *ngIf="statutFilter !== 'REGLES'">
+            <button type="button" class="gl-act" (click)="$event.stopPropagation(); openGroupe(group)">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>Groupé</span>
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </article>
+      </section>
 
-    <!-- ═══════════ PAGINATION ═══════════ -->
-    <div *ngIf="filteredGroups.length > itemsParPage"
-         style="display:flex;justify-content:center;align-items:center;gap:6px;padding:14px 12px 20px;flex-wrap:wrap;">
-
-      <!-- Précédent -->
-      <button
-        (click)="allerPage(pageActuelle - 1)"
-        [disabled]="pageActuelle === 1"
-        style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;min-height:36px;opacity:1;"
-        [style.opacity]="pageActuelle === 1 ? '0.4' : '1'">
-        <ion-icon name="chevron-back-outline" style="vertical-align:middle;"></ion-icon>
-        Préc.
-      </button>
-
-      <!-- Numéros de page -->
-      <button
-        *ngFor="let p of pageNumbers"
-        (click)="allerPage(p)"
-        [style.background]="p === pageActuelle ? '#1a56db' : '#f1f5f9'"
-        [style.color]="p === pageActuelle ? '#fff' : '#475569'"
-        style="border:none;border-radius:8px;padding:8px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;min-width:36px;min-height:36px;">
-        {{ p }}
-      </button>
-
-      <!-- Suivant -->
-      <button
-        (click)="allerPage(pageActuelle + 1)"
-        [disabled]="pageActuelle === totalPages"
-        style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;min-height:36px;"
-        [style.opacity]="pageActuelle === totalPages ? '0.4' : '1'">
-        Suiv.
-        <ion-icon name="chevron-forward-outline" style="vertical-align:middle;"></ion-icon>
-      </button>
-    </div>
-
+      <!-- ═══════════ PAGINATION ═══════════ -->
+      <nav class="pager" *ngIf="filteredGroups.length > itemsParPage">
+        <button type="button" class="pager-btn" (click)="allerPage(pageActuelle - 1)" [disabled]="pageActuelle === 1">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+          Préc.
+        </button>
+        <button type="button" class="pager-num" *ngFor="let p of pageNumbers" [class.pager-num--active]="p === pageActuelle" (click)="allerPage(p)">
+          {{ p }}
+        </button>
+        <button type="button" class="pager-btn" (click)="allerPage(pageActuelle + 1)" [disabled]="pageActuelle === totalPages">
+          Suiv.
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </nav>
+    </ng-container>
   </div>
 
   </div><!-- fin activeTab === 'credits' -->
 
   <!-- ══ Section Paiements groupés ══ -->
-  <div *ngIf="activeTab === 'groupes'" class="ion-padding-horizontal">
+  <div *ngIf="activeTab === 'groupes'" class="page-pad stack">
 
-    <div class="sk-list" *ngIf="paiementsGroupesLoading">
+    <div class="sk-list sk-list--flush" *ngIf="paiementsGroupesLoading">
       <div class="sk-card" *ngFor="let i of [1,2,3]">
         <div class="skeleton sk-avatar"></div>
         <div class="sk-card-body">
@@ -351,253 +311,227 @@
       </div>
     </div>
 
-    <div *ngIf="!paiementsGroupesLoading && paiementsGroupes.length === 0"
-         class="ion-text-center ion-padding-top">
-      <ion-icon name="albums-outline" style="font-size:48px;color:#ccc"></ion-icon>
-      <p style="color:#888;margin-top:8px">Aucun paiement groupé</p>
-    </div>
+    <gl-empty-state *ngIf="!paiementsGroupesLoading && paiementsGroupes.length === 0" icon="albums-outline" title="Aucun paiement groupé"></gl-empty-state>
 
-    <!-- Filtres onglet paiements groupés -->
-    <div *ngIf="!paiementsGroupesLoading && paiementsGroupes.length > 0">
+    <ng-container *ngIf="!paiementsGroupesLoading && paiementsGroupes.length > 0">
 
-      <!-- Barre de recherche -->
-      <ion-searchbar [(ngModel)]="rechercheGroupe" placeholder="Rechercher un client..." debounce="200"></ion-searchbar>
+      <!-- Filtres onglet paiements groupés -->
+      <div class="filter-zone">
+        <ion-searchbar [(ngModel)]="rechercheGroupe" placeholder="Rechercher un client..." debounce="200" class="filter-search"></ion-searchbar>
 
-      <!-- Filtres date + client -->
-      <ion-card color="light" style="margin:8px">
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label position="stacked">Du</ion-label>
-                  <ion-input type="date" [(ngModel)]="dateDebutGroupe"></ion-input>
-                </ion-item>
-              </ion-col>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label position="stacked">Au</ion-label>
-                  <ion-input type="date" [(ngModel)]="dateFinGroupe"></ion-input>
-                </ion-item>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col>
-                <ion-select [(ngModel)]="clientGroupeSelectionne" placeholder="Tous les clients" interface="popover">
-                  <ion-select-option value="">Tous les clients</ion-select-option>
-                  <ion-select-option *ngFor="let c of clientsGroupesUniques" [value]="c">{{ c }}</ion-select-option>
-                </ion-select>
-              </ion-col>
-              <ion-col size="auto">
-                <ion-button fill="clear" color="medium" size="small"
-                  (click)="rechercheGroupe=''; clientGroupeSelectionne=''; dateDebutGroupe=''; dateFinGroupe=''">
-                  <ion-icon name="close-circle-outline"></ion-icon> Effacer
-                </ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Compteur résultats -->
-      <p style="text-align:center;color:#666;font-size:0.85rem">{{ paiementsGroupesFiltres.length }} session(s)</p>
-
-      <!-- Message vide après filtrage -->
-      <div *ngIf="paiementsGroupesFiltres.length === 0" class="ion-text-center ion-padding-top">
-        <ion-icon name="search-outline" style="font-size:48px;color:#ccc"></ion-icon>
-        <p style="color:#888;margin-top:8px">Aucun résultat pour ces filtres</p>
-      </div>
-
-      <ion-accordion-group *ngIf="paiementsGroupesFiltres.length > 0" [multiple]="true">
-        <ion-accordion *ngFor="let pg of paiementsGroupesFiltres; trackBy: trackById" [value]="pg.referenceGroupe">
-
-        <ion-item slot="header" color="warning">
-          <ion-label>
-            <h2 style="font-weight:700">{{ pg.clientNom }}</h2>
-            <p>{{ pg.date | date:'dd/MM/yyyy HH:mm' }} &mdash; {{ pg.montantTotalApporte | number:'1.0-0' }} FCFA</p>
-            <p>
-              <ion-badge color="dark">{{ pg.ventesImpliquees?.length || 0 }} crédit(s)</ion-badge>
-            </p>
-          </ion-label>
-        </ion-item>
-
-        <div slot="content">
-          <ion-list>
-            <ion-item *ngFor="let v of pg.ventesImpliquees; let last = last"
-                      [style.border-bottom]="!last ? '1px dashed #fde68a' : 'none'">
-              <ion-label>
-                <p style="font-family:monospace;font-size:12px">
-                  {{ v.numeroVente || ('Crédit #' + v.venteCreditId) }}
-                </p>
-                <h3 style="font-weight:700">{{ v.montantApplique | number:'1.0-0' }} FCFA</h3>
-                <p *ngIf="v.resteARegler > 0" style="color:#888;font-size:12px">
-                  Reste : {{ v.resteARegler | number:'1.0-0' }} FCFA
-                </p>
-              </ion-label>
-              <ion-badge slot="end"
-                         [color]="v.statutCredit === 'REGLE' ? 'success' : 'danger'">
-                {{ v.statutCredit === 'REGLE' ? 'Regle' : 'En cours' }}
-              </ion-badge>
-            </ion-item>
-          </ion-list>
-
-          <div style="padding:12px 16px;background:#fffbeb;display:flex;justify-content:space-between;align-items:center">
-            <span style="color:#888;font-size:13px">Total apporté</span>
-            <strong style="color:#b45309">{{ pg.montantTotalApporte | number:'1.0-0' }} FCFA</strong>
+        <div class="filter-dates">
+          <div class="date-field">
+            <label class="gl-label">Du</label>
+            <input type="date" class="gl-input" [(ngModel)]="dateDebutGroupe" aria-label="Du" />
+          </div>
+          <div class="date-sep">→</div>
+          <div class="date-field">
+            <label class="gl-label">Au</label>
+            <input type="date" class="gl-input" [(ngModel)]="dateFinGroupe" aria-label="Au" />
           </div>
         </div>
 
-      </ion-accordion>
-    </ion-accordion-group>
+        <div class="chip-row" *ngIf="clientsGroupesUniques.length">
+          <ion-icon name="person-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+          <div class="fz-chips">
+            <button type="button" class="fz-chip" [class.fz-chip--active]="!clientGroupeSelectionne" (click)="clientGroupeSelectionne = ''">Tous les clients</button>
+            <button type="button" class="fz-chip" *ngFor="let c of clientsGroupesUniques" [class.fz-chip--active]="clientGroupeSelectionne === c"
+                    (click)="clientGroupeSelectionne = c">{{ c }}</button>
+          </div>
+        </div>
 
-    </div><!-- fin div filtres groupes -->
+        <div class="results-bar results-bar--split">
+          <span class="gl-overline">{{ paiementsGroupesFiltres.length }} session(s)</span>
+          <button type="button" class="link-btn" (click)="rechercheGroupe=''; clientGroupeSelectionne=''; dateDebutGroupe=''; dateFinGroupe=''">
+            <ion-icon name="close-circle-outline"></ion-icon>
+            Effacer
+          </button>
+        </div>
+      </div>
+
+      <gl-empty-state *ngIf="paiementsGroupesFiltres.length === 0" icon="search-outline" title="Aucun résultat pour ces filtres"></gl-empty-state>
+
+      <ion-accordion-group *ngIf="paiementsGroupesFiltres.length > 0" [multiple]="true" class="pg-list">
+        <ion-accordion *ngFor="let pg of paiementsGroupesFiltres; trackBy: trackById" [value]="pg.referenceGroupe" class="pg-card">
+
+          <ion-item slot="header" lines="none" class="pg-head">
+            <div class="pg-icon" slot="start"><ion-icon name="people-outline"></ion-icon></div>
+            <ion-label class="pg-label">
+              <span class="pg-client">{{ pg.clientNom }}</span>
+              <span class="pg-meta">{{ pg.date | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="pg-amount-row">
+                <span class="pg-amount">{{ pg.montantTotalApporte | number:'1.0-0' }} FCFA</span>
+                <span class="gl-pill gl-pill--blue">{{ pg.ventesImpliquees?.length || 0 }} crédit(s)</span>
+              </span>
+            </ion-label>
+          </ion-item>
+
+          <div slot="content" class="pg-content">
+            <div class="pg-line" *ngFor="let v of pg.ventesImpliquees">
+              <div class="pg-line-info">
+                <span class="pg-ref">{{ v.numeroVente || ('Crédit #' + v.venteCreditId) }}</span>
+                <span class="pg-applied">{{ v.montantApplique | number:'1.0-0' }} FCFA</span>
+                <span class="pg-rest" *ngIf="v.resteARegler > 0">Reste : {{ v.resteARegler | number:'1.0-0' }} FCFA</span>
+              </div>
+              <span class="gl-pill" [class.gl-pill--ok]="v.statutCredit === 'REGLE'" [class.gl-pill--warn]="v.statutCredit !== 'REGLE'">
+                {{ v.statutCredit === 'REGLE' ? 'Regle' : 'En cours' }}
+              </span>
+            </div>
+
+            <div class="pg-total">
+              <span>Total apporté</span>
+              <strong>{{ pg.montantTotalApporte | number:'1.0-0' }} FCFA</strong>
+            </div>
+          </div>
+
+        </ion-accordion>
+      </ion-accordion-group>
+
+    </ng-container>
 
   </div><!-- fin activeTab === 'groupes' -->
 
 </ion-content>
 
 <!-- ═══════════════════════════════════════
-     MODAL DÉTAIL CRÉDIT
+     DIALOGUE DÉTAIL CRÉDIT
 ════════════════════════════════════════ -->
-<div class="modal-overlay" *ngIf="showDetailModal" (click)="showDetailModal = false">
-  <div class="modal-sheet" (click)="$event.stopPropagation()">
+<div class="dlg-overlay" *ngIf="showDetailModal" (click)="showDetailModal = false">
+  <div class="dlg dlg--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
 
-    <div class="modal-handle"></div>
-
-    <div class="modal-head">
-      <h3>Détail du crédit</h3>
-      <button class="modal-close" (click)="showDetailModal = false">
+    <header class="dlg-head">
+      <span class="dlg-icon"
+            [class.dlg-icon--ok]="detailCredit?.estReglee"
+            [class.dlg-icon--bad]="!detailCredit?.estReglee && detailCredit?.enRetard"
+            [class.dlg-icon--warn]="!detailCredit?.estReglee && !detailCredit?.enRetard">
+        <ion-icon name="receipt-outline"></ion-icon>
+      </span>
+      <div class="dlg-titles">
+        <h2 class="dlg-title">Détail du crédit</h2>
+        <p class="dlg-sub" *ngIf="detailCredit">{{ detailCredit.numeroVente }}</p>
+      </div>
+      <button type="button" class="dlg-close" (click)="showDetailModal = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
         <ion-icon name="close-outline"></ion-icon>
       </button>
-    </div>
+    </header>
 
-    <div class="modal-body" *ngIf="detailCredit">
+    <div class="dlg-body" *ngIf="detailCredit">
 
-      <!-- Statut badge -->
-      <div class="detail-statut" [ngClass]="{
-        'statut--regle': detailCredit.estReglee,
-        'statut--retard': detailCredit.enRetard,
-        'statut--encours': !detailCredit.estReglee && !detailCredit.enRetard
-      }">
-        <ion-icon [name]="detailCredit.estReglee ? 'checkmark-circle' : detailCredit.enRetard ? 'warning' : 'time'"></ion-icon>
+      <!-- Statut -->
+      <span class="gl-pill gl-pill--lg"
+            [class.gl-pill--ok]="detailCredit.estReglee"
+            [class.gl-pill--bad]="!detailCredit.estReglee && detailCredit.enRetard"
+            [class.gl-pill--warn]="!detailCredit.estReglee && !detailCredit.enRetard">
+        <ion-icon [name]="detailCredit.estReglee ? 'checkmark-circle-outline' : detailCredit.enRetard ? 'warning-outline' : 'time-outline'"></ion-icon>
         {{ detailCredit.estReglee ? 'Crédit réglé' : detailCredit.enRetard ? 'En retard' : 'En cours' }}
-      </div>
+      </span>
 
-      <!-- Info crédit -->
-      <div class="credit-info-card">
-        <div class="cic-row">
-          <span class="cic-label">Client</span>
-          <span class="cic-val">{{ detailCredit.clientNom }} {{ detailCredit.clientPrenom }}</span>
+      <!-- Infos crédit -->
+      <div class="gl-info">
+        <div class="gl-info-row">
+          <span class="gl-info-label">Client</span>
+          <span class="gl-info-val">{{ detailCredit.clientNom }} {{ detailCredit.clientPrenom }}</span>
         </div>
-        <div class="cic-row" *ngIf="detailCredit.clientTelephone">
-          <span class="cic-label">Téléphone</span>
-          <span class="cic-val">{{ detailCredit.clientTelephone }}</span>
+        <div class="gl-info-row" *ngIf="detailCredit.clientTelephone">
+          <span class="gl-info-label">Téléphone</span>
+          <span class="gl-info-val">{{ detailCredit.clientTelephone }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">N° vente</span>
-          <span class="cic-val">{{ detailCredit.numeroVente }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">N° vente</span>
+          <span class="gl-info-val">{{ detailCredit.numeroVente }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">Total</span>
-          <span class="cic-val font-bold">{{ money(detailCredit.montantTotal) }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">Total</span>
+          <span class="gl-info-val gl-info-val--strong">{{ money(detailCredit.montantTotal) }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">Versé</span>
-          <span class="cic-val text-success">{{ money(detailCredit.montantVerse) }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">Versé</span>
+          <span class="gl-info-val gl-info-val--ok">{{ money(detailCredit.montantVerse) }}</span>
         </div>
-        <div class="cic-row" *ngIf="!detailCredit.estReglee">
-          <span class="cic-label">Reste à payer</span>
-          <span class="cic-val text-danger font-bold">{{ money(detailCredit.montantRestant) }}</span>
+        <div class="gl-info-row" *ngIf="!detailCredit.estReglee">
+          <span class="gl-info-label">Reste à payer</span>
+          <span class="gl-info-val gl-info-val--bad gl-info-val--strong">{{ money(detailCredit.montantRestant) }}</span>
         </div>
-        <div class="cic-row" *ngIf="detailCredit.dateEcheance && !detailCredit.estReglee">
-          <span class="cic-label">Échéance</span>
-          <span class="cic-val" [class.text-danger]="detailCredit.enRetard">{{ formatDate(detailCredit.dateEcheance) }}</span>
+        <div class="gl-info-row" *ngIf="detailCredit.dateEcheance && !detailCredit.estReglee">
+          <span class="gl-info-label">Échéance</span>
+          <span class="gl-info-val" [class.gl-info-val--bad]="detailCredit.enRetard">{{ formatDate(detailCredit.dateEcheance) }}</span>
         </div>
-        <div class="cic-row" *ngIf="detailCredit.estReglee && detailCredit.dateReglement">
-          <span class="cic-label">Réglé le</span>
-          <span class="cic-val text-success">{{ formatDate(detailCredit.dateReglement) }}</span>
+        <div class="gl-info-row" *ngIf="detailCredit.estReglee && detailCredit.dateReglement">
+          <span class="gl-info-label">Réglé le</span>
+          <span class="gl-info-val gl-info-val--ok">{{ formatDate(detailCredit.dateReglement) }}</span>
         </div>
-        <div class="cic-row" *ngIf="detailCredit.regleParNom">
-          <span class="cic-label">Réglé par</span>
-          <span class="cic-val font-bold">{{ detailCredit.regleParNom }}</span>
+        <div class="gl-info-row" *ngIf="detailCredit.regleParNom">
+          <span class="gl-info-label">Réglé par</span>
+          <span class="gl-info-val gl-info-val--strong">{{ detailCredit.regleParNom }}</span>
         </div>
-        <div class="cic-row" *ngIf="detailCredit.vendeurNom">
-          <span class="cic-label">Vente par</span>
-          <span class="cic-val">{{ detailCredit.vendeurNom }}</span>
+        <div class="gl-info-row" *ngIf="detailCredit.vendeurNom">
+          <span class="gl-info-label">Vente par</span>
+          <span class="gl-info-val">{{ detailCredit.vendeurNom }}</span>
         </div>
       </div>
 
       <!-- Produits achetés -->
-      <div class="produits-section">
-        <p class="produits-title">
-          <ion-icon name="bag-outline"></ion-icon>
-          Produits achetés
-        </p>
+      <section class="gl-section">
+        <p class="gl-overline"><ion-icon name="bag-outline"></ion-icon> Produits achetés</p>
 
-        <div class="loading-mini" *ngIf="loadingDetail">
-          <ion-spinner name="crescent" style="width:20px;height:20px"></ion-spinner>
-          <p style="font-size:0.8rem;color:#94a3b8;margin:6px 0 0">Chargement...</p>
+        <div class="dlg-loading" *ngIf="loadingDetail">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>Chargement...</span>
         </div>
 
-        <div *ngIf="!loadingDetail && detailVente">
-          <div class="produits-list">
-            <div class="produit-row" *ngFor="let l of (detailVente.produits || detailVente.lignes || [])">
-              <span class="pr-name">{{ l.produitNom }}</span>
-              <span class="pr-qty">× {{ l.quantite }}</span>
-              <span class="pr-price">{{ money(l.sousTotal) }}</span>
-            </div>
-            <div class="produit-row" *ngIf="(detailVente.produits || detailVente.lignes || []).length === 0">
-              <span class="pr-name" style="color:#94a3b8;">Aucun produit trouvé</span>
-            </div>
+        <div class="gl-info" *ngIf="!loadingDetail && detailVente">
+          <div class="prod-row" *ngFor="let l of (detailVente.produits || detailVente.lignes || [])">
+            <span class="prod-name">{{ l.produitNom }}</span>
+            <span class="prod-qty-txt">× {{ l.quantite }}</span>
+            <span class="prod-price">{{ money(l.sousTotal) }}</span>
           </div>
-          <div class="detail-totaux">
-            <div class="dt-row">
-              <span>Total</span>
-              <span class="font-bold">{{ money(detailCredit.montantTotal) }}</span>
+          <div class="prod-row" *ngIf="(detailVente.produits || detailVente.lignes || []).length === 0">
+            <span class="prod-name prod-name--muted">Aucun produit trouvé</span>
+          </div>
+          <div class="prod-totals">
+            <div class="gl-info-row">
+              <span class="gl-info-label">Total</span>
+              <span class="gl-info-val gl-info-val--strong">{{ money(detailCredit.montantTotal) }}</span>
             </div>
-            <div class="dt-row" *ngIf="detailCredit.montantVerse > 0">
-              <span>Versé</span>
-              <span class="text-success">- {{ money(detailCredit.montantVerse) }}</span>
+            <div class="gl-info-row" *ngIf="detailCredit.montantVerse > 0">
+              <span class="gl-info-label">Versé</span>
+              <span class="gl-info-val gl-info-val--ok">- {{ money(detailCredit.montantVerse) }}</span>
             </div>
-            <div class="dt-row dt-row--reste" *ngIf="!detailCredit.estReglee">
-              <span>Reste dû</span>
-              <span class="text-danger font-bold">{{ money(detailCredit.montantRestant) }}</span>
+            <div class="gl-info-row" *ngIf="!detailCredit.estReglee">
+              <span class="gl-info-label">Reste dû</span>
+              <span class="gl-info-val gl-info-val--bad gl-info-val--strong">{{ money(detailCredit.montantRestant) }}</span>
             </div>
           </div>
         </div>
 
-        <div *ngIf="!loadingDetail && !detailVente" class="empty-detail">
-          <ion-icon name="alert-circle-outline" color="medium"></ion-icon>
+        <div *ngIf="!loadingDetail && !detailVente" class="empty-inline">
+          <ion-icon name="alert-circle-outline"></ion-icon>
           <p>Impossible de charger les produits</p>
         </div>
-      </div>
+      </section>
 
       <!-- Historique des versements -->
-      <div class="produits-section" style="margin-top:12px">
-        <p class="produits-title">
-          <ion-icon name="time-outline"></ion-icon>
-          Historique des versements
-        </p>
+      <section class="gl-section">
+        <p class="gl-overline"><ion-icon name="time-outline"></ion-icon> Historique des versements</p>
 
-        <div class="loading-mini" *ngIf="versementsLoading">
-          <ion-spinner name="crescent" style="width:20px;height:20px"></ion-spinner>
-          <p style="font-size:0.8rem;color:#94a3b8;margin:6px 0 0">Chargement…</p>
+        <div class="dlg-loading" *ngIf="versementsLoading">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>Chargement…</span>
         </div>
 
-        <div *ngIf="!versementsLoading && versements.length === 0" class="empty-detail">
-          <ion-icon name="receipt-outline" color="medium"></ion-icon>
+        <div *ngIf="!versementsLoading && versements.length === 0" class="empty-inline">
+          <ion-icon name="receipt-outline"></ion-icon>
           <p>Aucun versement enregistré</p>
         </div>
 
-        <div *ngIf="!versementsLoading && versements.length > 0">
+        <ng-container *ngIf="!versementsLoading && versements.length > 0">
 
           <!-- Bannière paiement groupé -->
-          <div *ngIf="getVersementGroupe() as vg"
-               style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;">
-            <ion-icon name="people-circle-outline" style="font-size:1.4rem;color:#b45309;flex-shrink:0;margin-top:1px;"></ion-icon>
+          <div class="warn-band" *ngIf="getVersementGroupe() as vg">
+            <ion-icon name="people-circle-outline"></ion-icon>
             <div>
-              <p style="font-weight:700;color:#92400e;font-size:0.85rem;margin:0 0 2px;">Paiement groupé</p>
-              <p style="font-size:0.78rem;color:#b45309;margin:0;">
+              <p class="warn-band__title">Paiement groupé</p>
+              <p class="warn-band__text">
                 Montant total apporté :
                 <strong>{{ money(extractMontantGroupeApporte(vg.motif)) }}</strong>
                 — réparti sur {{ versements.length }} versement{{ versements.length > 1 ? 's' : '' }}
@@ -605,131 +539,96 @@
             </div>
           </div>
 
-          <!-- Barre de recherche versements -->
+          <!-- Recherche versements -->
           <ion-searchbar
             [(ngModel)]="rechercheVersement"
             placeholder="Rechercher un versement…"
             [debounce]="200"
-            style="--border-radius:10px;--box-shadow:none;--background:#f8fafc;padding:0 0 8px;font-size:0.82rem;">
+            class="filter-search">
           </ion-searchbar>
 
           <!-- Versements simples -->
-          <div *ngIf="versementsSimples.length > 0">
-            <div class="produit-row" style="font-weight:600;font-size:0.75rem;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
-              <span style="flex:2">Date</span>
-              <span style="flex:1;text-align:right">Montant</span>
-              <span style="flex:1;text-align:center">Mode</span>
+          <div class="gl-info" *ngIf="versementsSimples.length > 0">
+            <div class="vers-head">
+              <span>Date</span>
+              <span>Montant</span>
+              <span>Mode</span>
             </div>
 
-            <div *ngIf="versementsFiltres.length === 0" class="empty-detail" style="padding:10px 0;">
-              <ion-icon name="search-outline" color="medium"></ion-icon>
-              <p style="font-size:0.8rem;color:#94a3b8;">Aucun versement correspondant</p>
+            <div *ngIf="versementsFiltres.length === 0" class="empty-inline">
+              <ion-icon name="search-outline"></ion-icon>
+              <p>Aucun versement correspondant</p>
             </div>
 
-            <div class="produit-row" *ngFor="let v of versementsFiltres"
-                 style="align-items:flex-start;flex-direction:column;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.8rem;color:#475569;">{{ formatDate(v.dateOperation) }}</span>
-                <span style="font-weight:700;color:#16a34a;">+{{ money(v.montant) }}</span>
-                <span style="font-size:0.75rem;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">{{ v.modePaiement || 'ESPECES' }}</span>
+            <div class="vers-row" *ngFor="let v of versementsFiltres">
+              <div class="vers-main">
+                <span class="vers-date">{{ formatDate(v.dateOperation) }}</span>
+                <span class="vers-amount">+{{ money(v.montant) }}</span>
+                <span class="gl-pill gl-pill--neutral">{{ v.modePaiement || 'ESPECES' }}</span>
               </div>
-              <div *ngIf="v.referencePaiement" style="font-size:0.73rem;color:#94a3b8;margin-top:2px;">
-                Réf : {{ v.referencePaiement }}
-              </div>
-              <div *ngIf="v.utilisateurNom" style="font-size:0.73rem;color:#94a3b8;">
-                Par {{ v.utilisateurNom }}
-              </div>
+              <div class="vers-sub" *ngIf="v.referencePaiement">Réf : {{ v.referencePaiement }}</div>
+              <div class="vers-sub" *ngIf="v.utilisateurNom">Par {{ v.utilisateurNom }}</div>
             </div>
           </div>
 
-          <!-- Versements avec referenceGroupe inclus dans les simples (affichage avec badge) -->
-          <div *ngIf="versementsSimples.length === 0 && versements.length > 0">
-            <!-- Tous sont groupés, on affiche quand même le tableau complet -->
-            <div class="produit-row" style="font-weight:600;font-size:0.75rem;color:#64748b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
-              <span style="flex:2">Date</span>
-              <span style="flex:1;text-align:right">Montant</span>
-              <span style="flex:1;text-align:center">Mode</span>
+          <!-- Tous les versements sont groupés : tableau complet avec pastille -->
+          <div class="gl-info" *ngIf="versementsSimples.length === 0 && versements.length > 0">
+            <div class="vers-head">
+              <span>Date</span>
+              <span>Montant</span>
+              <span>Mode</span>
             </div>
-            <div class="produit-row" *ngFor="let v of versements"
-                 style="align-items:flex-start;flex-direction:column;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.8rem;color:#475569;">{{ formatDate(v.dateOperation) }}</span>
-                <span style="font-weight:700;color:#16a34a;">+{{ money(v.montant) }}</span>
-                <span style="font-size:0.75rem;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">{{ v.modePaiement || 'ESPECES' }}</span>
+            <div class="vers-row" *ngFor="let v of versements">
+              <div class="vers-main">
+                <span class="vers-date">{{ formatDate(v.dateOperation) }}</span>
+                <span class="vers-amount">+{{ money(v.montant) }}</span>
+                <span class="gl-pill gl-pill--neutral">{{ v.modePaiement || 'ESPECES' }}</span>
               </div>
-              <div *ngIf="v.referencePaiement" style="font-size:0.73rem;color:#94a3b8;margin-top:2px;">
-                Réf : {{ v.referencePaiement }}
-              </div>
-              <div *ngIf="v.utilisateurNom" style="font-size:0.73rem;color:#94a3b8;">
-                Par {{ v.utilisateurNom }}
-              </div>
-              <!-- Badge GROUPÉ sur chaque ligne -->
-              <div *ngIf="v.referenceGroupe"
-                   style="margin-top:3px;">
-                <ion-chip color="warning" style="height:20px;font-size:0.68rem;padding:0 8px;">
-                  <ion-icon name="people-outline" style="font-size:0.75rem;margin-right:3px;"></ion-icon>
-                  GROUPÉ
-                </ion-chip>
-              </div>
-              <!-- Ancien indicateur motif -->
-              <div *ngIf="!v.referenceGroupe && (v.motif || '').includes('Paiement groupé')"
-                   style="font-size:0.7rem;color:#92400e;background:#fef9c3;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-flex;align-items:center;gap:3px;">
-                <ion-icon name="people-outline" style="font-size:0.75rem;"></ion-icon>
+              <div class="vers-sub" *ngIf="v.referencePaiement">Réf : {{ v.referencePaiement }}</div>
+              <div class="vers-sub" *ngIf="v.utilisateurNom">Par {{ v.utilisateurNom }}</div>
+              <span class="gl-pill gl-pill--warn" *ngIf="v.referenceGroupe">
+                <ion-icon name="people-outline"></ion-icon>
+                GROUPÉ
+              </span>
+              <span class="gl-pill gl-pill--warn" *ngIf="!v.referenceGroupe && (v.motif || '').includes('Paiement groupé')">
+                <ion-icon name="people-outline"></ion-icon>
                 Paiement groupé
-              </div>
+              </span>
             </div>
           </div>
 
-          <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;border-top:2px solid #e2e8f0;margin-top:4px;">
-            <span style="color:#475569;">Total versé</span>
-            <span style="color:#16a34a;">{{ money(detailCredit!.montantVerse) }}</span>
+          <div class="total-band total-band--ok">
+            <span>Total versé</span>
+            <strong>{{ money(detailCredit!.montantVerse) }}</strong>
           </div>
 
-          <!-- ══ Section Paiements groupés dans le modal ══ -->
-          <div *ngIf="paiementsGroupesDetail.size > 0" style="margin-top:14px;">
-            <p class="produits-title" style="margin-bottom:8px;">
-              <ion-icon name="people-circle-outline"></ion-icon>
-              Paiements groupés ({{ paiementsGroupesDetail.size }} groupe(s))
-            </p>
+          <!-- Paiements groupés du crédit -->
+          <div class="gl-section" *ngIf="paiementsGroupesDetail.size > 0">
+            <p class="gl-overline"><ion-icon name="people-circle-outline"></ion-icon> Paiements groupés ({{ paiementsGroupesDetail.size }} groupe(s))</p>
 
-            <ion-accordion-group [multiple]="true">
-              <ion-accordion *ngFor="let ref of groupesDetailKeys" [value]="ref"
-                             style="border:1px solid #fde68a;border-radius:10px;margin-bottom:8px;overflow:hidden;">
+            <ion-accordion-group [multiple]="true" class="pg-list">
+              <ion-accordion *ngFor="let ref of groupesDetailKeys" [value]="ref" class="pg-card pg-card--inner">
 
-                <ion-item slot="header" style="--background:#fef3c7;--color:#92400e;--inner-padding-end:8px;">
-                  <ion-label>
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;">
-                      <div>
-                        <span style="font-weight:700;font-size:0.85rem;">Groupe {{ refCourte(ref) }}</span>
-                        <span style="font-size:0.75rem;color:#b45309;margin-left:8px;">{{ dateGroupe(ref) }}</span>
-                      </div>
-                      <strong style="color:#92400e;font-size:0.9rem;">{{ money(montantTotalGroupe(ref)) }}</strong>
-                    </div>
+                <ion-item slot="header" lines="none" class="pg-head">
+                  <ion-label class="pg-label">
+                    <span class="pg-client">Groupe {{ refCourte(ref) }}</span>
+                    <span class="pg-meta">{{ dateGroupe(ref) }}</span>
                   </ion-label>
+                  <span class="pg-amount" slot="end">{{ money(montantTotalGroupe(ref)) }}</span>
                 </ion-item>
 
-                <div slot="content" style="background:#fffbeb;padding:8px 12px;">
-                  <!-- En-tête tableau -->
-                  <div style="display:flex;font-size:0.7rem;font-weight:700;color:#92400e;padding:4px 0;border-bottom:1px solid #fde68a;margin-bottom:4px;">
-                    <span style="flex:2">Date</span>
-                    <span style="flex:1;text-align:right">Montant</span>
-                    <span style="flex:1;text-align:center">Mode</span>
-                    <span style="flex:1.5;text-align:center">Référence</span>
-                    <span style="flex:1;text-align:right">Par</span>
+                <div slot="content" class="pg-content">
+                  <div class="pg-line pg-line--op" *ngFor="let op of paiementsGroupesDetail.get(ref)">
+                    <div class="vers-main">
+                      <span class="vers-date">{{ formatDate(op.dateOperation) }}</span>
+                      <span class="vers-amount vers-amount--warn">{{ money(op.montant) }}</span>
+                      <span class="gl-pill gl-pill--neutral">{{ op.modePaiement || 'ESPECES' }}</span>
+                    </div>
+                    <div class="vers-sub">Réf : {{ op.referencePaiement || '—' }} · Par {{ op.utilisateurNom || '—' }}</div>
                   </div>
-                  <!-- Lignes -->
-                  <div *ngFor="let op of paiementsGroupesDetail.get(ref)"
-                       style="display:flex;align-items:center;font-size:0.75rem;padding:4px 0;border-bottom:1px solid #fef9c3;">
-                    <span style="flex:2;color:#475569;">{{ formatDate(op.dateOperation) }}</span>
-                    <span style="flex:1;text-align:right;font-weight:700;color:#92400e;">{{ money(op.montant) }}</span>
-                    <span style="flex:1;text-align:center;font-size:0.68rem;background:#fde68a;padding:2px 4px;border-radius:4px;color:#92400e;">{{ op.modePaiement || 'ESPECES' }}</span>
-                    <span style="flex:1.5;text-align:center;font-size:0.68rem;color:#94a3b8;">{{ op.referencePaiement || '—' }}</span>
-                    <span style="flex:1;text-align:right;font-size:0.68rem;color:#64748b;">{{ op.utilisateurNom || '—' }}</span>
-                  </div>
-                  <!-- Total groupe -->
-                  <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:0.8rem;border-top:1px solid #fde68a;margin-top:4px;">
-                    <span style="color:#92400e;">Total groupe</span>
-                    <span style="color:#92400e;">{{ money(montantTotalGroupe(ref)) }}</span>
+                  <div class="pg-total">
+                    <span>Total groupe</span>
+                    <strong>{{ money(montantTotalGroupe(ref)) }}</strong>
                   </div>
                 </div>
 
@@ -737,202 +636,202 @@
             </ion-accordion-group>
           </div>
 
-        </div>
-      </div>
+        </ng-container>
+      </section>
 
     </div>
 
-    <div class="modal-footer">
-      <button class="btn-cancel" (click)="showDetailModal = false">Fermer</button>
-      <button class="btn-pdf" *ngIf="versements.length > 0" (click)="imprimerVersementsCredit()">
-        <ion-icon name="document-text-outline"></ion-icon>
-        PDF
-      </button>
-      <button class="btn-confirm" *ngIf="!detailCredit?.estReglee"
+    <footer class="dlg-foot dlg-foot--stack">
+      <button type="button" class="gl-btn gl-btn--primary" *ngIf="!detailCredit?.estReglee"
               (click)="showDetailModal = false; openSimple(detailCredit!)">
         <ion-icon name="cash-outline"></ion-icon>
         Régler ce crédit
       </button>
-    </div>
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showDetailModal = false">Fermer</button>
+      <button type="button" class="gl-btn gl-btn--secondary" *ngIf="versements.length > 0" (click)="imprimerVersementsCredit()">
+        <ion-icon name="document-text-outline"></ion-icon>
+        PDF
+      </button>
+    </footer>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════
-     MODAL RÈGLEMENT SIMPLE
+     DIALOGUE RÈGLEMENT SIMPLE
 ════════════════════════════════════════ -->
-<div class="modal-overlay" *ngIf="showSimpleModal" (click)="showSimpleModal = false">
-  <div class="modal-sheet" (click)="$event.stopPropagation()">
+<div class="dlg-overlay" *ngIf="showSimpleModal" (click)="showSimpleModal = false">
+  <div class="dlg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
 
-    <div class="modal-handle"></div>
-
-    <div class="modal-head">
-      <h3>Règlement crédit</h3>
-      <button class="modal-close" (click)="showSimpleModal = false">
+    <header class="dlg-head">
+      <span class="dlg-icon"><ion-icon name="cash-outline"></ion-icon></span>
+      <div class="dlg-titles">
+        <h2 class="dlg-title">Règlement crédit</h2>
+        <p class="dlg-sub" *ngIf="selectedCredit">{{ selectedCredit.clientNom }} {{ selectedCredit.clientPrenom }}</p>
+      </div>
+      <button type="button" class="dlg-close" (click)="showSimpleModal = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
         <ion-icon name="close-outline"></ion-icon>
       </button>
-    </div>
+    </header>
 
-    <div class="modal-body" *ngIf="selectedCredit">
+    <div class="dlg-body" *ngIf="selectedCredit">
 
-      <div class="credit-info-card">
-        <div class="cic-row">
-          <span class="cic-label">Client</span>
-          <span class="cic-val">{{ selectedCredit.clientNom }} {{ selectedCredit.clientPrenom }}</span>
+      <div class="gl-info">
+        <div class="gl-info-row">
+          <span class="gl-info-label">Client</span>
+          <span class="gl-info-val">{{ selectedCredit.clientNom }} {{ selectedCredit.clientPrenom }}</span>
         </div>
-        <div class="cic-row" *ngIf="selectedCredit.clientTelephone">
-          <span class="cic-label">Téléphone</span>
-          <span class="cic-val">{{ selectedCredit.clientTelephone }}</span>
+        <div class="gl-info-row" *ngIf="selectedCredit.clientTelephone">
+          <span class="gl-info-label">Téléphone</span>
+          <span class="gl-info-val">{{ selectedCredit.clientTelephone }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">N° vente</span>
-          <span class="cic-val">{{ selectedCredit.numeroVente }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">N° vente</span>
+          <span class="gl-info-val">{{ selectedCredit.numeroVente }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">Total</span>
-          <span class="cic-val font-bold">{{ money(selectedCredit.montantTotal) }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">Total</span>
+          <span class="gl-info-val gl-info-val--strong">{{ money(selectedCredit.montantTotal) }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">Versé</span>
-          <span class="cic-val text-success">{{ money(selectedCredit.montantVerse) }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">Versé</span>
+          <span class="gl-info-val gl-info-val--ok">{{ money(selectedCredit.montantVerse) }}</span>
         </div>
-        <div class="cic-row">
-          <span class="cic-label">Reste à payer</span>
-          <span class="cic-val text-danger font-bold">{{ money(selectedCredit.montantRestant) }}</span>
+        <div class="gl-info-row">
+          <span class="gl-info-label">Reste à payer</span>
+          <span class="gl-info-val gl-info-val--bad gl-info-val--strong">{{ money(selectedCredit.montantRestant) }}</span>
         </div>
       </div>
 
-      <div class="produits-section">
-        <p class="produits-title">
-          <ion-icon name="bag-outline"></ion-icon>
-          Produits achetés
-        </p>
-        <div class="loading-mini" *ngIf="loadingVente">
-          <ion-spinner name="crescent" style="width:20px;height:20px"></ion-spinner>
+      <section class="gl-section">
+        <p class="gl-overline"><ion-icon name="bag-outline"></ion-icon> Produits achetés</p>
+        <div class="dlg-loading" *ngIf="loadingVente">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
-        <div class="produits-list" *ngIf="!loadingVente && selectedVente">
-          <div class="produit-row" *ngFor="let l of (selectedVente.produits || selectedVente.lignes || [])">
-            <span class="pr-name">{{ l.produitNom }}</span>
-            <span class="pr-qty">× {{ l.quantite }}</span>
-            <span class="pr-price">{{ money(l.sousTotal) }}</span>
+        <div class="gl-info" *ngIf="!loadingVente && selectedVente">
+          <div class="prod-row" *ngFor="let l of (selectedVente.produits || selectedVente.lignes || [])">
+            <span class="prod-name">{{ l.produitNom }}</span>
+            <span class="prod-qty-txt">× {{ l.quantite }}</span>
+            <span class="prod-price">{{ money(l.sousTotal) }}</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="reglement-form">
-        <div class="form-field">
-          <label>Montant à régler</label>
-          <input type="text" inputmode="numeric" appMontantInput class="field-input" [(ngModel)]="reglementSimple.montant" />
-        </div>
+      <section class="gl-section">
+        <p class="gl-overline gl-overline--link">Règlement</p>
+        <label class="gl-field">
+          <span class="gl-label">Montant à régler</span>
+          <input type="text" inputmode="numeric" appMontantInput class="gl-input gl-input--amount" [(ngModel)]="reglementSimple.montant" />
+        </label>
 
-        <div class="form-field">
-          <label>Mode de paiement</label>
-          <div class="mode-chips">
-            <button class="mode-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
-                    [class.mode-chip--active]="reglementSimple.modePaiement === mode"
+        <div class="gl-field">
+          <span class="gl-label">Mode de paiement</span>
+          <div class="fz-chips">
+            <button type="button" class="fz-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
+                    [class.fz-chip--active]="reglementSimple.modePaiement === mode"
                     (click)="reglementSimple.modePaiement = mode">
               {{ mode === 'ESPECES' ? 'Espèces' : mode === 'ORANGE_MONEY' ? 'Orange' : mode === 'MOOV_MONEY' ? 'Moov' : 'Virement' }}
             </button>
           </div>
         </div>
 
-        <div class="form-field" *ngIf="reglementSimple.modePaiement !== ModePaiementCaisse.ESPECES">
-          <label>Référence</label>
-          <input type="text" class="field-input" [(ngModel)]="reglementSimple.reference" placeholder="N° transaction..." />
-        </div>
-      </div>
+        <label class="gl-field" *ngIf="reglementSimple.modePaiement !== ModePaiementCaisse.ESPECES">
+          <span class="gl-label">Référence</span>
+          <input type="text" class="gl-input" [(ngModel)]="reglementSimple.reference" placeholder="N° transaction..." />
+        </label>
+      </section>
     </div>
 
-    <div class="modal-footer">
-      <button class="btn-cancel" (click)="showSimpleModal = false">Annuler</button>
-      <button class="btn-confirm" (click)="saveSimple()" [disabled]="savingSimple">
-        <ion-spinner *ngIf="savingSimple" name="crescent" style="width:16px;height:16px"></ion-spinner>
+    <footer class="dlg-foot">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showSimpleModal = false">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveSimple()" [disabled]="savingSimple">
+        <ion-spinner *ngIf="savingSimple" name="crescent"></ion-spinner>
         <ion-icon *ngIf="!savingSimple" name="cash-outline"></ion-icon>
         Enregistrer
       </button>
-    </div>
+    </footer>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════
-     MODAL RÈGLEMENT GROUPÉ
+     DIALOGUE RÈGLEMENT GROUPÉ
 ════════════════════════════════════════ -->
-<div class="modal-overlay" *ngIf="showGroupModal" (click)="showGroupModal = false">
-  <div class="modal-sheet modal-sheet--lg" (click)="$event.stopPropagation()">
+<div class="dlg-overlay" *ngIf="showGroupModal" (click)="showGroupModal = false">
+  <div class="dlg dlg--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
 
-    <div class="modal-handle"></div>
-
-    <div class="modal-head">
-      <h3>Règlement groupé — {{ selectedGroup?.clientNom }}</h3>
-      <button class="modal-close" (click)="showGroupModal = false">
+    <header class="dlg-head">
+      <span class="dlg-icon"><ion-icon name="people-outline"></ion-icon></span>
+      <div class="dlg-titles">
+        <h2 class="dlg-title">Règlement groupé — {{ selectedGroup?.clientNom }}</h2>
+      </div>
+      <button type="button" class="dlg-close" (click)="showGroupModal = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
         <ion-icon name="close-outline"></ion-icon>
       </button>
-    </div>
+    </header>
 
-    <div class="modal-body" *ngIf="selectedGroup">
+    <div class="dlg-body" *ngIf="selectedGroup">
 
-      <p class="select-hint">Sélectionnez les crédits à inclure :</p>
+      <p class="dlg-hint">Sélectionnez les crédits à inclure :</p>
 
-      <div class="groupe-credits">
-        <div class="groupe-credit-item" *ngFor="let c of selectedGroup.credits"
-             [class.groupe-credit-item--selected]="isCreditSelected(c.venteId)"
-             [class.groupe-credit-item--regle]="c.estReglee"
+      <div class="select-list">
+        <div class="select-item" *ngFor="let c of selectedGroup.credits"
+             [class.select-item--selected]="isCreditSelected(c.venteId)"
+             [class.select-item--regle]="c.estReglee"
              (click)="!c.estReglee && toggleCreditSelection(c.venteId)">
-          <div class="gci-check">
-            <ion-icon *ngIf="!c.estReglee"
-                      [name]="isCreditSelected(c.venteId) ? 'checkbox-outline' : 'square-outline'"
-                      [color]="isCreditSelected(c.venteId) ? 'primary' : 'medium'"></ion-icon>
-            <ion-icon *ngIf="c.estReglee" name="checkmark-circle" color="success"></ion-icon>
+          <div class="select-check" [class.select-check--on]="isCreditSelected(c.venteId)" [class.select-check--ok]="c.estReglee">
+            <ion-icon *ngIf="!c.estReglee" [name]="isCreditSelected(c.venteId) ? 'checkbox-outline' : 'square-outline'"></ion-icon>
+            <ion-icon *ngIf="c.estReglee" name="checkmark-circle-outline"></ion-icon>
           </div>
-          <div class="gci-info">
-            <span class="gci-num">{{ c.numeroVente }}</span>
-            <span class="gci-date" *ngIf="c.dateEcheance && !c.estReglee">Éch. {{ formatDate(c.dateEcheance) }}</span>
-            <span class="gci-date gci-date--regle" *ngIf="c.estReglee">Réglé le {{ formatDate(c.dateReglement) }}</span>
+          <div class="select-info">
+            <span class="select-num">{{ c.numeroVente }}</span>
+            <span class="select-date" *ngIf="c.dateEcheance && !c.estReglee">Éch. {{ formatDate(c.dateEcheance) }}</span>
+            <span class="select-date select-date--ok" *ngIf="c.estReglee">Réglé le {{ formatDate(c.dateReglement) }}</span>
           </div>
-          <span class="gci-montant" [class.text-danger]="c.enRetard" [class.text-success]="c.estReglee">
+          <span class="select-amount" [class.select-amount--bad]="c.enRetard" [class.select-amount--ok]="c.estReglee">
             {{ money(c.estReglee ? c.montantTotal : c.montantRestant) }}
           </span>
         </div>
       </div>
 
-      <div class="groupe-total">
+      <div class="total-band">
         <span>{{ selectedCreditsForGroup.length }} crédit(s) sélectionné(s)</span>
-        <span class="gt-val">{{ money(getGroupTotal()) }}</span>
+        <strong>{{ money(getGroupTotal()) }}</strong>
       </div>
 
-      <div class="reglement-form">
-        <div class="form-field">
-          <label>Montant total à régler</label>
-          <input type="text" inputmode="numeric" appMontantInput class="field-input" [(ngModel)]="reglementGroupe.montant" />
-          <small class="field-hint" *ngIf="reglementGroupe.montant < getGroupTotal()">
+      <section class="gl-section">
+        <p class="gl-overline gl-overline--link">Règlement</p>
+        <label class="gl-field">
+          <span class="gl-label">Montant total à régler</span>
+          <input type="text" inputmode="numeric" appMontantInput class="gl-input gl-input--amount" [(ngModel)]="reglementGroupe.montant" />
+          <small class="gl-hint" *ngIf="reglementGroupe.montant < getGroupTotal()">
             Montant partiel — distribué proportionnellement
           </small>
-        </div>
+        </label>
 
-        <div class="form-field">
-          <label>Mode de paiement</label>
-          <div class="mode-chips">
-            <button class="mode-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
-                    [class.mode-chip--active]="reglementGroupe.modePaiement === mode"
+        <div class="gl-field">
+          <span class="gl-label">Mode de paiement</span>
+          <div class="fz-chips">
+            <button type="button" class="fz-chip" *ngFor="let mode of [ModePaiementCaisse.ESPECES, ModePaiementCaisse.ORANGE_MONEY, ModePaiementCaisse.MOOV_MONEY, ModePaiementCaisse.VIREMENT]"
+                    [class.fz-chip--active]="reglementGroupe.modePaiement === mode"
                     (click)="reglementGroupe.modePaiement = mode">
               {{ mode === 'ESPECES' ? 'Espèces' : mode === 'ORANGE_MONEY' ? 'Orange' : mode === 'MOOV_MONEY' ? 'Moov' : 'Virement' }}
             </button>
           </div>
         </div>
 
-        <div class="form-field" *ngIf="reglementGroupe.modePaiement !== ModePaiementCaisse.ESPECES">
-          <label>Référence</label>
-          <input type="text" class="field-input" [(ngModel)]="reglementGroupe.reference" placeholder="N° transaction..." />
-        </div>
-      </div>
+        <label class="gl-field" *ngIf="reglementGroupe.modePaiement !== ModePaiementCaisse.ESPECES">
+          <span class="gl-label">Référence</span>
+          <input type="text" class="gl-input" [(ngModel)]="reglementGroupe.reference" placeholder="N° transaction..." />
+        </label>
+      </section>
     </div>
 
-    <div class="modal-footer">
-      <button class="btn-cancel" (click)="showGroupModal = false">Annuler</button>
-      <button class="btn-confirm" (click)="saveGroupe()" [disabled]="savingGroupe || !selectedCreditsForGroup.length">
-        <ion-spinner *ngIf="savingGroupe" name="crescent" style="width:16px;height:16px"></ion-spinner>
+    <footer class="dlg-foot">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showGroupModal = false">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveGroupe()" [disabled]="savingGroupe || !selectedCreditsForGroup.length">
+        <ion-spinner *ngIf="savingGroupe" name="crescent"></ion-spinner>
         <ion-icon *ngIf="!savingGroupe" name="people-outline"></ion-icon>
         Régler ({{ selectedCreditsForGroup.length }})
       </button>
-    </div>
+    </footer>
   </div>
 </div>

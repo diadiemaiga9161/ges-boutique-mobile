@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CartPageRoutingModule } from './cart-routing.module';
 import { CartPage } from './cart.page';
 import { MontantInputDirective } from '../../directives/montant-input.directive';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
   imports: [
@@ -14,7 +15,8 @@ import { MontantInputDirective } from '../../directives/montant-input.directive'
     IonicModule,
     TranslateModule,
     CartPageRoutingModule,
-    MontantInputDirective
+    MontantInputDirective,
+    SharedComponentsModule
   ],
   declarations: [CartPage]
 })

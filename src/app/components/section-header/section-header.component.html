@@ -1,0 +1,7 @@
+<div class="gl-section-header">
+  <p class="gl-section-header__title">{{ title }}</p>
+  <button class="gl-section-header__action" *ngIf="actionLabel" (click)="actionClick.emit()">
+    {{ actionLabel }}
+    <ion-icon name="chevron-forward-outline"></ion-icon>
+  </button>
+</div>

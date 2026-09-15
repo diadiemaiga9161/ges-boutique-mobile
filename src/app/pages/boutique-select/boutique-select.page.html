@@ -1,28 +1,27 @@
 <ion-content [fullscreen]="true" class="select-content">
   <div class="select-wrapper">
 
-    <!-- ZONE HAUTE — BRAND -->
+    <!-- ══ ZONE HAUTE — BANDEAU (même langage que la connexion) ══ -->
     <div class="select-hero">
-      <div class="lh-deco lh-deco--1"></div>
-      <div class="lh-deco lh-deco--2"></div>
+      <div class="sh-deco sh-deco--1"></div>
+      <div class="sh-deco sh-deco--2"></div>
 
-      <div class="lh-body">
-        <div class="lh-logo">
-          <span class="lh-logo__m">M</span>
-          <span class="lh-logo__c">C</span>
+      <div class="sh-body">
+        <div class="sh-logo">
+          <img class="sh-logo__img" src="assets/icons/icon-192x192.png" alt="Ges Lafia" width="64" height="64" />
         </div>
-        <h1 class="lh-app-name">Ges Lafia</h1>
-        <p class="lh-tagline">Maïga Consulting · Gestion de boutique</p>
+        <h1 class="sh-app-name">Ges Lafia</h1>
+        <p class="sh-tagline">Maïga Consulting · Gestion de boutique</p>
       </div>
 
-      <div class="lh-wave">
+      <div class="sh-wave">
         <svg viewBox="0 0 375 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,20 C60,50 120,0 200,25 C270,48 330,5 375,25 L375,60 L0,60 Z" fill="#f0f4f8"/>
+          <path class="sh-wave-path" d="M0,20 C60,50 120,0 200,25 C270,48 330,5 375,25 L375,60 L0,60 Z"/>
         </svg>
       </div>
     </div>
 
-    <!-- ZONE BASSE — LISTE DES BOUTIQUES -->
+    <!-- ══ ZONE BASSE — LISTE DES BOUTIQUES ══ -->
     <div class="select-zone">
       <div class="select-card">
         <h2 class="select-card__title">Choisissez votre boutique</h2>
@@ -30,6 +29,7 @@
 
         <div class="boutique-list">
           <button
+            type="button"
             *ngFor="let b of boutiques"
             class="boutique-item"
             [disabled]="isLoading"

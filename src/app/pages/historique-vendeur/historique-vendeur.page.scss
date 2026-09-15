@@ -1,11 +1,368 @@
-// (Les filtres Du/Au utilisent désormais ion-input type="date" fill="outline"
-// dans le HTML — plus fiable/cohérent visuellement que le <input type="date">
-// natif précédent, dont le style ne s'appliquait pas correctement.)
+// ══════════════════════════════════════════════════════════════════
+//  HISTORIQUE VENDEUR — design commun Ionic ↔ React Native
+//  100 % tokens --gl-* : lisible en clair, sombre Auto ET sombre forcé
+//  (body.theme-dark). L'ancien bloc local @media (prefers-color-scheme: dark),
+//  inopérant en sombre forcé, et les styles en ligne gris figés sont supprimés.
+// ══════════════════════════════════════════════════════════════════
 
-// Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
-// global.scss : sans ce correctif la page reste gris clair même écran sombre.
-@media (prefers-color-scheme: dark) {
-  ion-content {
-    --background: var(--ion-background-color, #111827);
+.hv-content {
+  --background: var(--gl-bg);
+}
+
+// ══════════════════════════════════════════════════
+//  BANDEAU HÉROS (reste bleu dans les 2 thèmes)
+// ══════════════════════════════════════════════════
+.hv-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 16px;
+  background: var(--gl-hero);
+}
+
+.hv-hero__deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
   }
+}
+
+.hv-hero__main {
+  position: relative;
+  z-index: 1;
+}
+
+.hv-hero__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hv-hero__amount {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.hv-hero__sub {
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+  font-variant-numeric: tabular-nums;
+
+  ion-icon { font-size: 14px; flex-shrink: 0; }
+}
+
+.hv-hero__sk {
+  width: 60%;
+  height: 33px;
+  border-radius: 8px;
+  background: var(--gl-glass);
+  border: 1px solid var(--gl-glass-line);
+  animation: hvPulse 1.1s ease-in-out infinite alternate;
+}
+
+// ══════════════════════════════════════════════════
+//  STRUCTURE
+// ══════════════════════════════════════════════════
+.hv-page {
+  padding: 16px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hv-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+.hv-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hv-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.hv-overline {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hv-count {
+  min-width: 24px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Tuiles KPI (gl-stat-card) : grille 2 colonnes
+.hv-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+// Pastille d'icône colorée
+.hv-pastille {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 20px; }
+
+  &--bad { background: var(--gl-bad-soft); color: var(--gl-bad); }
+}
+
+// ══════════════════════════════════════════════════
+//  CHAMPS DATE (libellé 13/600, champ 48, radius 12)
+// ══════════════════════════════════════════════════
+.hv-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hv-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hv-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
+}
+
+// Jamais flex:1 dans une colonne (piège vague 1)
+.hv-date {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  color-scheme: var(--gl-color-scheme);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    border-color: var(--gl-action);
+    box-shadow: 0 0 0 4px var(--gl-ring);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  CHARGEMENT / ERREUR / VIDE
+// ══════════════════════════════════════════════════
+.hv-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hv-sk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hv-sk {
+  position: relative;
+  overflow: hidden;
+  height: 116px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  animation: hvPulse 1.1s ease-in-out infinite alternate;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--gl-surface-2);
+    box-shadow: inset 0 0 0 1px var(--gl-border);
+  }
+
+  &::before { top: 18px; width: 45%; }
+  &::after  { top: 42px; width: 30%; }
+
+  &--row { height: 88px; }
+}
+
+@keyframes hvPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
+}
+
+.hv-error {
+  flex-direction: row;
+  align-items: center;
+  border-color: var(--gl-bad-soft);
+}
+
+.hv-error__text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gl-bad);
+}
+
+.hv-empty { padding: 0 16px; }
+
+// ══════════════════════════════════════════════════
+//  HISTORIQUE PAR JOUR (cartes de liste)
+// ══════════════════════════════════════════════════
+.hv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hv-day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+.hv-day__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hv-day__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hv-amount {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gl-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hv-day__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.hv-day__metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+
+  ion-icon { font-size: 14px; flex-shrink: 0; }
+}
+
+// ══════════════════════════════════════════════════
+//  ACCESSIBILITÉ / RESPONSIVE
+// ══════════════════════════════════════════════════
+@media (prefers-reduced-motion: reduce) {
+  .hv-sk,
+  .hv-hero__sk { animation: none; }
+}
+
+@media (max-width: 360px) {
+  .hv-hero__amount { font-size: 26px; }
+  .hv-dates { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 720px) {
+  .hv-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hv-hero { padding: 24px max(16px, calc((100% - 800px) / 2 + 20px)); }
+  .hv-hero__amount { font-size: 36px; }
 }

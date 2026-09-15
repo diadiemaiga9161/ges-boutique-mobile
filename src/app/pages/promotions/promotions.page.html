@@ -1,197 +1,67 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/menu" [text]="'COMMON.BACK' | translate"></ion-back-button>
+      <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ 'PROMO.TITLE' | translate }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="startCreate()" *ngIf="!showForm">
-        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="promo-content">
 
-  <!-- Formulaire création/édition -->
-  <div *ngIf="showForm" class="form-container ion-padding">
-    <div class="form-card">
-      <div class="form-card-header">
-        <h3>{{ editing ? ('PROMO.EDIT' | translate) : ('PROMO.NEW' | translate) }}</h3>
-        <ion-button fill="clear" size="small" (click)="cancel()">
-          <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-        </ion-button>
-      </div>
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
 
-      <ion-list lines="none" class="form-list">
+  <div class="page-pad stack">
 
-        <ion-item>
-          <ion-input label="{{ 'PROMO.LABEL_TITLE' | translate }} *" labelPlacement="floating"
-            [(ngModel)]="form.titre" placeholder="Ex: Promo Ramadan..." maxlength="100">
-          </ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-textarea label="{{ 'PROMO.LABEL_DESC' | translate }}" labelPlacement="floating"
-            [(ngModel)]="form.description" rows="2"
-            placeholder="{{ 'PROMO.LABEL_DESC_PLACEHOLDER' | translate }}">
-          </ion-textarea>
-        </ion-item>
-
-        <ion-item>
-          <ion-input label="{{ 'PROMO.LABEL_START' | translate }} *" labelPlacement="floating"
-            type="date" [(ngModel)]="form.dateDebut">
-          </ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-input label="{{ 'PROMO.LABEL_END' | translate }} *" labelPlacement="floating"
-            type="date" [(ngModel)]="form.dateFin" [min]="form.dateDebut">
-          </ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label>{{ 'PROMO.LABEL_TYPE' | translate }} *</ion-label>
-          <ion-select [(ngModel)]="form.typeReduction" interface="action-sheet" slot="end">
-            <ion-select-option value="POURCENTAGE">{{ 'PROMO.TYPE_PCT' | translate }}</ion-select-option>
-            <ion-select-option value="MONTANT_FIXE">{{ 'PROMO.TYPE_FIXED' | translate }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-item>
-          <ion-input [label]="(form.typeReduction === 'POURCENTAGE' ? ('PROMO.LABEL_VALUE_PCT' | translate) : ('PROMO.LABEL_VALUE_FIXED' | translate)) + ' *'"
-            labelPlacement="floating" type="number" [(ngModel)]="form.valeurReduction"
-            [max]="form.typeReduction === 'POURCENTAGE' ? 100 : null" min="0.01">
-          </ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label>{{ 'PROMO.LABEL_ACTIVE' | translate }}</ion-label>
-          <ion-toggle [(ngModel)]="form.active" slot="end"></ion-toggle>
-        </ion-item>
-
-        <!-- TYPE PROMO : Globale ou Par produits -->
-        <div class="promo-type-section">
-          <div class="promo-type-label">Application de la promotion</div>
-          <div class="promo-type-row">
-            <div class="promo-type-btn" [class.active]="form.globale"
-              (click)="form.globale = true; form.produitIds = []">
-              <ion-icon name="globe-outline"></ion-icon>
-              <span>Globale</span>
-              <small>Tous les produits</small>
-            </div>
-            <div class="promo-type-btn" [class.active]="!form.globale"
-              (click)="form.globale = false">
-              <ion-icon name="pricetag-outline"></ion-icon>
-              <span>Par produits</span>
-              <small>Produits spécifiques</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sélecteur produits (si pas globale) -->
-        <div *ngIf="!form.globale" class="produit-selector">
-          <div class="produit-selector-label">
-            <ion-icon name="cube-outline"></ion-icon>
-            Produits concernés
-            <span class="produit-count" *ngIf="form.produitIds?.length">
-              {{ form.produitIds!.length }} sélectionné(s)
-            </span>
-          </div>
-
-          <!-- Produits déjà sélectionnés -->
-          <div class="produits-chips" *ngIf="form.produitIds?.length">
-            <span *ngFor="let id of form.produitIds" class="produit-chip">
-              {{ getProduitNom(id) }}
-              <ion-icon name="close-circle" (click)="retirerProduit(id)"></ion-icon>
-            </span>
-          </div>
-
-          <!-- Recherche produits -->
-          <ion-searchbar [(ngModel)]="produitSearch" placeholder="Rechercher un produit..."
-            (ionFocus)="showProduitDropdown = true" debounce="200" class="produit-searchbar">
-          </ion-searchbar>
-
-          <div class="produit-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
-            <div *ngFor="let p of produitsFiltres" class="produit-option"
-              [class.selected]="isProduitSelectionne(p)"
-              (click)="toggleProduit(p)">
-              <ion-icon [name]="isProduitSelectionne(p) ? 'checkbox' : 'square-outline'"
-                [color]="isProduitSelectionne(p) ? 'primary' : 'medium'">
-              </ion-icon>
-              <span>{{ p.nom }}</span>
-              <span class="produit-prix">{{ p.prixVente | number }} FCFA</span>
-            </div>
-            <div class="produit-dropdown-close" (click)="showProduitDropdown = false">
-              <ion-icon name="checkmark-circle-outline" color="primary"></ion-icon>
-              Fermer
-            </div>
-          </div>
-        </div>
-
-      </ion-list>
-
-      <div class="form-actions ion-padding-top">
-        <ion-button expand="block" (click)="save()" [disabled]="loading">
-          <ion-spinner *ngIf="loading" name="crescent" slot="start"></ion-spinner>
-          {{ editing ? ('PROMO.BTN_SAVE' | translate) : ('PROMO.BTN_CREATE' | translate) }}
-        </ion-button>
-        <ion-button expand="block" fill="outline" color="medium" (click)="cancel()" class="ion-margin-top">
-          {{ 'COMMON.CANCEL' | translate }}
-        </ion-button>
-      </div>
+    <!-- ═══ TUILES KPI ═══ -->
+    <div class="kpi-grid" *ngIf="promotions.length > 0">
+      <gl-stat-card icon="pricetag-outline" [label]="'PROMO.TITLE' | translate" [value]="promotions.length + ''" variant="blue"></gl-stat-card>
+      <gl-stat-card icon="checkmark-circle-outline" [label]="'PROMO.ACTIVE' | translate" [value]="nbPromosActives + ''" variant="green"></gl-stat-card>
+      <gl-stat-card [icon]="remiseMoyenne > 0 ? 'stats-chart-outline' : 'pause-circle-outline'"
+                    [label]="remiseMoyenne > 0 ? 'Remise moy.' : ('PROMO.STATUS_INACTIVE' | translate)"
+                    [value]="remiseMoyenne > 0 ? remiseMoyenne + '%' : (promotions.length - nbPromosActives) + ''"
+                    variant="orange"></gl-stat-card>
     </div>
-  </div>
 
-  <!-- Liste -->
-  <div *ngIf="!showForm">
-    <ion-refresher slot="fixed" (ionRefresh)="load($event)">
-      <ion-refresher-content></ion-refresher-content>
-    </ion-refresher>
-
-    <!-- Suggestions de promo flash (produits proches péremption) -->
-    <div class="suggestions-section ion-padding" *ngIf="suggestionsFiltrees.length > 0">
-      <div class="suggestions-header">
-        <ion-icon name="flash-outline"></ion-icon>
-        <div class="suggestions-header-text">
-          <div class="suggestions-title">{{ 'PROMO.SUGGESTIONS_TITLE' | translate }}</div>
-          <div class="suggestions-subtitle">{{ 'PROMO.SUGGESTIONS_SUB' | translate }}</div>
+    <!-- ═══ SUGGESTIONS DE PROMO FLASH (produits proches péremption) ═══ -->
+    <section class="gl-card sugg-card" *ngIf="suggestionsFiltrees.length > 0">
+      <div class="sugg-head">
+        <span class="sugg-head__icon"><ion-icon name="flash-outline"></ion-icon></span>
+        <div class="sugg-head__text">
+          <p class="sugg-head__title">{{ 'PROMO.SUGGESTIONS_TITLE' | translate }}</p>
+          <p class="sugg-head__sub">{{ 'PROMO.SUGGESTIONS_SUB' | translate }}</p>
         </div>
       </div>
 
-      <div class="suggestions-list">
-        <div class="promo-card suggestion-card" *ngFor="let s of suggestionsFiltrees; trackBy: trackById">
-          <div class="promo-header">
-            <div class="promo-titre">{{ s.nom }}</div>
-            <span class="status-badge status-badge--warning">
-              <ng-container *ngIf="joursRestants(s) > 0; else expireToday">
-                {{ 'PROMO.SUGGESTION_DAYS_LEFT' | translate: { jours: joursRestants(s) } }}
-              </ng-container>
-              <ng-template #expireToday>{{ 'PROMO.SUGGESTION_EXPIRES_TODAY' | translate }}</ng-template>
-            </span>
-          </div>
-
-          <div class="promo-dates">
+      <div class="sugg-scroll">
+        <div class="sugg-item" *ngFor="let s of suggestionsFiltrees; trackBy: trackById">
+          <p class="sugg-item__name">{{ s.nom }}</p>
+          <span class="gl-pill" [class.gl-pill--warn]="joursRestants(s) > 2" [class.gl-pill--bad]="joursRestants(s) <= 2">
+            <ng-container *ngIf="joursRestants(s) > 0; else expireToday">
+              {{ 'PROMO.SUGGESTION_DAYS_LEFT' | translate: { jours: joursRestants(s) } }}
+            </ng-container>
+            <ng-template #expireToday>{{ 'PROMO.SUGGESTION_EXPIRES_TODAY' | translate }}</ng-template>
+          </span>
+          <p class="sugg-item__meta">
             <ion-icon name="cube-outline"></ion-icon>
             {{ s.quantite }} {{ s.uniteMesure }}
-          </div>
-          <div class="promo-dates">
+          </p>
+          <p class="sugg-item__meta">
             <ion-icon name="calendar-outline"></ion-icon>
             {{ 'PROMO.SUGGESTION_EXPIRY' | translate }} : {{ s.datePeremption | date:'dd/MM/yyyy' }}
-          </div>
-
-          <div class="promo-actions">
-            <ion-button expand="block" color="warning" size="small" (click)="creerPromoDepuisSuggestion(s)">
-              <ion-icon name="flash-outline" slot="start"></ion-icon>
-              {{ 'PROMO.SUGGESTION_CREATE_BTN' | translate }}
-            </ion-button>
-          </div>
+          </p>
+          <button type="button" class="gl-btn gl-btn--warn-solid gl-btn--sm" (click)="creerPromoDepuisSuggestion(s)">
+            <ion-icon name="flash-outline"></ion-icon>
+            {{ 'PROMO.SUGGESTION_CREATE_BTN' | translate }}
+          </button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="sk-list" *ngIf="loading">
+    <!-- ═══ CHARGEMENT ═══ -->
+    <div class="sk-list sk-list--flush" *ngIf="loading && !showForm">
       <div class="sk-card" *ngFor="let i of [1,2,3,4]">
         <div class="skeleton sk-avatar"></div>
         <div class="sk-card-body">
@@ -202,155 +72,298 @@
       </div>
     </div>
 
-    <div class="empty-v2" *ngIf="!loading && promotions.length === 0">
-      <div class="empty-v2__icon"><ion-icon name="pricetag-outline"></ion-icon></div>
-      <p class="empty-v2__title">{{ 'PROMO.EMPTY' | translate }}</p>
-      <p class="empty-v2__text">{{ 'PROMO.EMPTY_SUB' | translate }}</p>
-      <ion-button size="small" (click)="startCreate()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'PROMO.NEW' | translate }}
-      </ion-button>
-    </div>
+    <!-- ═══ VIDE ═══ -->
+    <gl-empty-state *ngIf="!loading && promotions.length === 0"
+                    icon="pricetag-outline"
+                    [title]="'PROMO.EMPTY' | translate"
+                    [message]="'PROMO.EMPTY_SUB' | translate"
+                    [ctaLabel]="'PROMO.NEW' | translate"
+                    (ctaClick)="startCreate()">
+    </gl-empty-state>
 
-    <div class="promos-list ion-padding animate-cards" *ngIf="!loading && promotions.length > 0">
-      <div class="promo-card" *ngFor="let promo of promotions; trackBy: trackById"
-        [class.promo-expired]="getStatut(promo).label === 'Expirée'">
+    <!-- ═══ LISTE ═══ -->
+    <section class="promo-list animate-cards" *ngIf="promotions.length > 0 && (!loading || showForm)">
+      <article class="gl-list-card" *ngFor="let promo of promotions; trackBy: trackById"
+               [class.gl-list-card--muted]="getStatut(promo).label === 'Expirée'">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon"
+                 [class.glc-icon--ok]="getStatut(promo).color === 'success'"
+                 [class.glc-icon--info]="getStatut(promo).color === 'primary'"
+                 [class.glc-icon--bad]="getStatut(promo).color === 'danger'">
+              <ion-icon name="pricetag-outline"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ promo.titre }}</p>
+              <p class="glc-sub" *ngIf="promo.description">{{ promo.description }}</p>
+            </div>
+            <span class="gl-pill"
+                  [class.gl-pill--ok]="getStatut(promo).color === 'success'"
+                  [class.gl-pill--warn]="getStatut(promo).color === 'warning'"
+                  [class.gl-pill--bad]="getStatut(promo).color === 'danger'"
+                  [class.gl-pill--blue]="getStatut(promo).color === 'primary'"
+                  [class.gl-pill--neutral]="getStatut(promo).color === 'medium'">{{ getStatut(promo).label }}</span>
+          </div>
 
-        <div class="promo-header">
-          <div class="promo-titre">{{ promo.titre }}</div>
-          <span class="status-badge" [ngClass]="{
-            'status-badge--success': getStatut(promo).color === 'success',
-            'status-badge--warning': getStatut(promo).color === 'warning',
-            'status-badge--danger':  getStatut(promo).color === 'danger',
-            'status-badge--gray':    getStatut(promo).color === 'medium'
-          }">{{ getStatut(promo).label }}</span>
-        </div>
+          <p class="glc-amount">
+            <span *ngIf="promo.typeReduction === 'POURCENTAGE'">{{ promo.valeurReduction }}%</span>
+            <span *ngIf="promo.typeReduction === 'MONTANT_FIXE'">{{ formatPrice(promo.valeurReduction) }}</span>
+            <span class="glc-amount__suffix"> {{ 'PROMO.REDUCTION' | translate }}</span>
+          </p>
 
-        <p class="promo-desc" *ngIf="promo.description">{{ promo.description }}</p>
-
-        <div class="promo-reduction">
-          <ion-icon name="pricetag-outline"></ion-icon>
-          <span *ngIf="promo.typeReduction === 'POURCENTAGE'">{{ promo.valeurReduction }}% {{ 'PROMO.REDUCTION' | translate }}</span>
-          <span *ngIf="promo.typeReduction === 'MONTANT_FIXE'">{{ formatPrice(promo.valeurReduction) }} {{ 'PROMO.REDUCTION' | translate }}</span>
-        </div>
-
-        <div class="promo-dates">
-          <ion-icon name="calendar-outline"></ion-icon>
-          Du {{ promo.dateDebut | date:'dd/MM/yyyy' }} au {{ promo.dateFin | date:'dd/MM/yyyy' }}
-        </div>
-
-        <div class="promo-actions">
-          <ion-button expand="block" color="success" size="small" (click)="ouvrirWhatsApp(promo)">
-            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
-            WhatsApp
-          </ion-button>
-          <div class="promo-btn-row">
-            <ion-button fill="outline" color="primary" size="small" (click)="startEdit(promo)">
-              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-            <ion-button fill="outline" color="danger" size="small" (click)="supprimer(promo)">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-            </ion-button>
+          <div class="glc-row">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Du {{ promo.dateDebut | date:'dd/MM/yyyy' }} au {{ promo.dateFin | date:'dd/MM/yyyy' }}</span>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
+        <div class="glc-actions">
+          <button type="button" class="glc-action glc-action--ok" (click)="ouvrirWhatsApp(promo)">
+            <ion-icon name="logo-whatsapp"></ion-icon>
+            <span>WhatsApp</span>
+          </button>
+          <button type="button" class="glc-action glc-action--link" (click)="startEdit(promo)">
+            <ion-icon name="create-outline"></ion-icon>
+            <span>{{ 'COMMON.EDIT' | translate }}</span>
+          </button>
+          <button type="button" class="glc-action glc-action--bad" (click)="supprimer(promo)">
+            <ion-icon name="trash-outline"></ion-icon>
+            <span>{{ 'COMMON.DELETE' | translate }}</span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+  </div>
 </ion-content>
 
-<!-- Modal WhatsApp -->
-<div class="wa-modal-backdrop" *ngIf="showWAModal" (click)="fermerWhatsApp()"></div>
-<div class="wa-modal" *ngIf="showWAModal">
-  <div class="wa-modal-content">
-    <div class="wa-modal-header">
-      <div class="wa-modal-title">
-        <ion-icon name="logo-whatsapp"></ion-icon>
-        {{ 'PROMO.WA_TITLE' | translate }}
+<!-- Bouton flottant étendu : création (même action / même condition que l'ancien bouton + de la barre) -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="!showForm">
+  <button type="button" class="gl-fab-extended" (click)="startCreate()">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    {{ 'PROMO.NEW' | translate }}
+  </button>
+</ion-fab>
+
+<!-- ════════ MODALE CENTRÉE : formulaire création / édition ════════ -->
+<div class="md-overlay" *ngIf="showForm">
+  <div class="md-backdrop" (click)="cancel()"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon" [class.md-icon--warn]="editing" [class.md-icon--info]="!editing">
+        <ion-icon [name]="editing ? 'create-outline' : 'pricetag-outline'"></ion-icon>
       </div>
-      <ion-button fill="clear" size="small" (click)="fermerWhatsApp()">
-        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-      </ion-button>
+      <h2 class="md-title">{{ editing ? ('PROMO.EDIT' | translate) : ('PROMO.NEW' | translate) }}</h2>
+      <button type="button" class="md-close" (click)="cancel()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
     </div>
 
-    <div class="wa-modal-body">
-      <div *ngIf="loadingWA" class="ion-text-center ion-padding">
-        <ion-spinner name="crescent" color="success"></ion-spinner>
+    <div class="md-body">
+      <!-- Informations -->
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="document-text-outline"></ion-icon> Informations</p>
+        <div class="md-fields">
+          <label class="md-field">
+            <span>{{ 'PROMO.LABEL_TITLE' | translate }} *</span>
+            <input type="text" [(ngModel)]="form.titre" placeholder="Ex: Promo Ramadan..." maxlength="100" />
+          </label>
+          <label class="md-field">
+            <span>{{ 'PROMO.LABEL_DESC' | translate }}</span>
+            <textarea [(ngModel)]="form.description" rows="2" [placeholder]="'PROMO.LABEL_DESC_PLACEHOLDER' | translate"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <!-- Période -->
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="calendar-outline"></ion-icon> Période</p>
+        <div class="md-row">
+          <label class="md-field md-grow">
+            <span>{{ 'PROMO.LABEL_START' | translate }} *</span>
+            <input type="date" [(ngModel)]="form.dateDebut" />
+          </label>
+          <label class="md-field md-grow">
+            <span>{{ 'PROMO.LABEL_END' | translate }} *</span>
+            <input type="date" [(ngModel)]="form.dateFin" [min]="form.dateDebut" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Réduction -->
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="pricetag-outline"></ion-icon> {{ 'PROMO.LABEL_TYPE' | translate }} *</p>
+        <div class="choice-row" role="radiogroup">
+          <button type="button" class="choice" [class.choice--on]="form.typeReduction === 'POURCENTAGE'" (click)="form.typeReduction = 'POURCENTAGE'" role="radio" [attr.aria-checked]="form.typeReduction === 'POURCENTAGE'">
+            <ion-icon name="stats-chart-outline"></ion-icon>
+            <span>{{ 'PROMO.TYPE_PCT' | translate }}</span>
+          </button>
+          <button type="button" class="choice" [class.choice--on]="form.typeReduction === 'MONTANT_FIXE'" (click)="form.typeReduction = 'MONTANT_FIXE'" role="radio" [attr.aria-checked]="form.typeReduction === 'MONTANT_FIXE'">
+            <ion-icon name="cash-outline"></ion-icon>
+            <span>{{ 'PROMO.TYPE_FIXED' | translate }}</span>
+          </button>
+        </div>
+        <label class="md-field">
+          <span>{{ (form.typeReduction === 'POURCENTAGE' ? ('PROMO.LABEL_VALUE_PCT' | translate) : ('PROMO.LABEL_VALUE_FIXED' | translate)) + ' *' }}</span>
+          <input type="number" class="md-input-amount" [(ngModel)]="form.valeurReduction"
+                 [max]="form.typeReduction === 'POURCENTAGE' ? 100 : null" min="0.01" />
+        </label>
+        <div class="md-toggle-row">
+          <span>{{ 'PROMO.LABEL_ACTIVE' | translate }}</span>
+          <ion-toggle [(ngModel)]="form.active" [attr.aria-label]="'PROMO.LABEL_ACTIVE' | translate"></ion-toggle>
+        </div>
+      </section>
+
+      <!-- Application : Globale ou Par produits -->
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="options-outline"></ion-icon> Application de la promotion</p>
+        <div class="choice-row">
+          <button type="button" class="choice choice--tall" [class.choice--on]="form.globale"
+                  (click)="form.globale = true; form.produitIds = []">
+            <ion-icon name="globe-outline"></ion-icon>
+            <span>Globale</span>
+            <small>Tous les produits</small>
+          </button>
+          <button type="button" class="choice choice--tall" [class.choice--on]="!form.globale"
+                  (click)="form.globale = false">
+            <ion-icon name="pricetag-outline"></ion-icon>
+            <span>Par produits</span>
+            <small>Produits spécifiques</small>
+          </button>
+        </div>
+
+        <!-- Sélecteur produits (si pas globale) -->
+        <div *ngIf="!form.globale" class="prod-sel">
+          <p class="prod-sel__label">
+            <ion-icon name="cube-outline"></ion-icon>
+            Produits concernés
+            <span class="gl-pill gl-pill--blue" *ngIf="form.produitIds?.length">{{ form.produitIds!.length }} sélectionné(s)</span>
+          </p>
+
+          <div class="prod-chips" *ngIf="form.produitIds?.length">
+            <span *ngFor="let id of form.produitIds" class="prod-chip">
+              <span class="prod-chip__name">{{ getProduitNom(id) }}</span>
+              <button type="button" class="prod-chip__del" (click)="retirerProduit(id)" aria-label="Retirer">
+                <ion-icon name="close-circle-outline"></ion-icon>
+              </button>
+            </span>
+          </div>
+
+          <ion-searchbar [(ngModel)]="produitSearch" placeholder="Rechercher un produit..."
+                         (ionFocus)="showProduitDropdown = true" debounce="200" class="filter-search">
+          </ion-searchbar>
+
+          <div class="md-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
+            <button type="button" *ngFor="let p of produitsFiltres" class="md-drop-item"
+                    [class.md-drop-item--on]="isProduitSelectionne(p)"
+                    (click)="toggleProduit(p)">
+              <ion-icon class="md-drop-check" [name]="isProduitSelectionne(p) ? 'checkbox-outline' : 'square-outline'"></ion-icon>
+              <span class="md-drop-name">{{ p.nom }}</span>
+              <span class="md-drop-price">{{ p.prixVente | number }} FCFA</span>
+            </button>
+            <button type="button" class="md-drop-close" (click)="showProduitDropdown = false">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              Fermer
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="cancel()">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="save()" [disabled]="loading">
+        <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+        {{ editing ? ('PROMO.BTN_SAVE' | translate) : ('PROMO.BTN_CREATE' | translate) }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODALE CENTRÉE : envoi WhatsApp ════════ -->
+<div class="md-overlay" *ngIf="showWAModal">
+  <div class="md-backdrop" (click)="fermerWhatsApp()"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--ok">
+        <ion-icon name="logo-whatsapp"></ion-icon>
+      </div>
+      <h2 class="md-title">{{ 'PROMO.WA_TITLE' | translate }}</h2>
+      <button type="button" class="md-close" (click)="fermerWhatsApp()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="md-body">
+      <div *ngIf="loadingWA" class="md-loading">
+        <ion-spinner name="crescent"></ion-spinner>
         <p>{{ 'PROMO.WA_LOADING' | translate }}</p>
       </div>
 
       <ng-container *ngIf="!loadingWA && whatsAppResult">
 
-        <!-- Message preview enrichi avec infos boutique -->
-        <div class="wa-preview">
-          <div class="wa-preview-label">{{ 'PROMO.PREVIEW' | translate }}</div>
-          <div class="wa-bubble wa-bubble--promo">
-            <div class="wa-promo-badge">🎁 PROMOTION SPÉCIALE 🎁</div>
-            <div class="wa-promo-msg">{{ whatsAppResult.message }}</div>
-            <div class="wa-boutique-sig">
+        <!-- Aperçu du message (contenu réellement envoyé) -->
+        <section class="md-section">
+          <p class="md-section-title"><ion-icon name="chatbubble-ellipses-outline"></ion-icon> {{ 'PROMO.PREVIEW' | translate }}</p>
+          <div class="wa-bubble">
+            <p class="wa-bubble__badge">🎁 PROMOTION SPÉCIALE 🎁</p>
+            <p class="wa-bubble__msg">{{ whatsAppResult.message }}</p>
+            <p class="wa-bubble__sig">
               ━━━━━━━━━━━━━━━<br>
               🏪 {{ whatsAppResult.promotion?.titre }}<br>
-              <span class="wa-shop-hint">+ vos infos boutique seront ajoutées</span>
-            </div>
+              <span class="wa-bubble__hint">+ vos infos boutique seront ajoutées</span>
+            </p>
           </div>
-        </div>
+        </section>
 
         <!-- Stats -->
         <div class="wa-stats">
           <div class="wa-stat">
-            <div class="wa-stat-val">{{ whatsAppResult.totalClients }}</div>
-            <div class="wa-stat-lbl">{{ 'PROMO.TOTAL_CLIENTS' | translate }}</div>
+            <p class="wa-stat__val">{{ whatsAppResult.totalClients }}</p>
+            <p class="wa-stat__lbl">{{ 'PROMO.TOTAL_CLIENTS' | translate }}</p>
           </div>
-          <div class="wa-stat wa-stat-green">
-            <div class="wa-stat-val">{{ whatsAppResult.clientsAvecTelephone }}</div>
-            <div class="wa-stat-lbl">{{ 'PROMO.WITH_PHONE' | translate }}</div>
+          <div class="wa-stat">
+            <p class="wa-stat__val wa-stat__val--ok">{{ whatsAppResult.clientsAvecTelephone }}</p>
+            <p class="wa-stat__lbl">{{ 'PROMO.WITH_PHONE' | translate }}</p>
           </div>
-          <div class="wa-stat wa-stat-orange">
-            <div class="wa-stat-val">{{ whatsAppResult.clientsSansTelephone }}</div>
-            <div class="wa-stat-lbl">{{ 'PROMO.WITHOUT_PHONE' | translate }}</div>
+          <div class="wa-stat">
+            <p class="wa-stat__val wa-stat__val--warn">{{ whatsAppResult.clientsSansTelephone }}</p>
+            <p class="wa-stat__lbl">{{ 'PROMO.WITHOUT_PHONE' | translate }}</p>
           </div>
         </div>
 
-        <!-- Option envoi automatique -->
-        <div class="wa-auto-row">
-          <ion-toggle [(ngModel)]="autoEnvoi" color="success"></ion-toggle>
-          <div class="wa-auto-label">
+        <!-- Envoi automatique -->
+        <div class="md-toggle-row md-toggle-row--card">
+          <span class="md-toggle-text">
             <strong>Envoi automatique</strong>
-            <span>Ouvre WhatsApp pour chaque client sans confirmation</span>
-          </div>
+            <small>Ouvre WhatsApp pour chaque client sans confirmation</small>
+          </span>
+          <ion-toggle [(ngModel)]="autoEnvoi" aria-label="Envoi automatique"></ion-toggle>
         </div>
 
-        <!-- Bouton Tout envoyer (mode auto) -->
-        <div *ngIf="autoEnvoi" class="wa-auto-btn-row">
-          <ion-button expand="block" color="success" [disabled]="envoiEnCours || liensFiltered.length === 0"
-            (click)="lancerEnvoiAuto()">
-            <ion-icon name="send-outline" slot="start"></ion-icon>
-            <span *ngIf="!envoiEnCours">{{ 'PROMO.SEND' | translate }} ({{ liensFiltered.length }} clients)</span>
-            <span *ngIf="envoiEnCours">Envoi {{ envoiIndex }} / {{ liensFiltered.length }}...</span>
-          </ion-button>
-        </div>
+        <button type="button" *ngIf="autoEnvoi" class="gl-btn gl-btn--primary gl-btn--block"
+                [disabled]="envoiEnCours || liensFiltered.length === 0" (click)="lancerEnvoiAuto()">
+          <ion-icon name="send-outline"></ion-icon>
+          <span *ngIf="!envoiEnCours">{{ 'PROMO.SEND' | translate }} ({{ liensFiltered.length }} clients)</span>
+          <span *ngIf="envoiEnCours">Envoi {{ envoiIndex }} / {{ liensFiltered.length }}...</span>
+        </button>
 
         <!-- Recherche -->
-        <div class="wa-search">
-          <ion-searchbar [(ngModel)]="searchWA" placeholder="{{ 'COMMON.SEARCH' | translate }}" debounce="200"></ion-searchbar>
-        </div>
+        <ion-searchbar [(ngModel)]="searchWA" placeholder="{{ 'COMMON.SEARCH' | translate }}" debounce="200" class="filter-search"></ion-searchbar>
 
         <!-- Liste clients -->
-        <div *ngIf="liensFiltered.length === 0" class="ion-text-center ion-padding text-muted">
-          {{ 'CLIENTS.NO_RESULTS' | translate }}
-        </div>
+        <p *ngIf="liensFiltered.length === 0" class="md-hint">{{ 'CLIENTS.NO_RESULTS' | translate }}</p>
 
-        <div class="wa-clients-list">
-          <div class="wa-client-item" *ngFor="let lien of liensFiltered">
-            <div class="wa-client-avatar">{{ lien.nom.charAt(0).toUpperCase() }}</div>
-            <div class="wa-client-info">
-              <div class="wa-client-nom">{{ lien.nom }}</div>
-              <div class="wa-client-tel">{{ lien.telephone }}</div>
+        <div class="wa-list" *ngIf="liensFiltered.length > 0">
+          <div class="wa-client" *ngFor="let lien of liensFiltered">
+            <div class="wa-client__avatar">{{ lien.nom.charAt(0).toUpperCase() }}</div>
+            <div class="wa-client__info">
+              <p class="wa-client__nom">{{ lien.nom }}</p>
+              <p class="wa-client__tel">{{ lien.telephone }}</p>
             </div>
-            <a [href]="enrichirUrl(lien.url)" target="_blank" class="wa-send-link">
-              <ion-button size="small" color="success">
-                <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
-                {{ 'PROMO.SEND' | translate }}
-              </ion-button>
+            <a [href]="enrichirUrl(lien.url)" target="_blank" class="gl-btn gl-btn--ok-tonal gl-btn--sm">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+              {{ 'PROMO.SEND' | translate }}
             </a>
           </div>
         </div>
@@ -358,10 +371,10 @@
       </ng-container>
     </div>
 
-    <div class="wa-modal-footer">
-      <ion-button expand="block" fill="outline" color="medium" (click)="fermerWhatsApp()">
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerWhatsApp()">
         {{ 'COMMON.CLOSE' | translate }}
-      </ion-button>
+      </button>
     </div>
   </div>
 </div>

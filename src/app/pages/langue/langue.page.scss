@@ -1,108 +1,132 @@
-.lang-content {
-  --background: #f1f5f9;
+// Langue — design commun Ionic ↔ React Native.
+// 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark) local ne
+// suivait pas le « Sombre » forcé du Profil. Grille de drapeaux (émojis) remplacée
+// par une liste de choix radio en cartes (même sélection : selectLanguage).
+
+.lang-content { --background: var(--gl-bg); }
+
+.gls-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
+// -------- En-tête --------
 .lang-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding: 28px 20px 16px;
+  padding: 8px 8px 4px;
 
   .lang-hero-icon {
-    font-size: 3rem;
-    margin-bottom: 8px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gl-blue-soft);
+    color: var(--gl-link);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+
+    ion-icon { font-size: 28px; }
   }
 
   .lang-hero-title {
-    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    margin: 0;
+    font-size: 17px;
     font-weight: 700;
-    color: #0f172a;
-    margin: 0 0 4px;
+    color: var(--gl-text);
   }
 
   .lang-hero-sub {
-    font-size: clamp(0.8rem, 3vw, 0.95rem);
-    color: #64748b;
-    margin: 0;
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gl-muted);
   }
 }
 
-.lang-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 8px 16px 32px;
-
-  @media (min-width: 480px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    padding: 8px 24px 32px;
-  }
+// -------- Liste radio --------
+.lang-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .lang-card {
-  position: relative;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 20px 12px 16px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  font-family: inherit;
+  text-align: left;
   cursor: pointer;
-  border: 2px solid transparent;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &:active {
-    transform: scale(0.96);
-  }
+  &:active { background: var(--gl-surface-2); }
 
   &--active {
-    border-color: #1a56db;
-    background: #eff6ff;
-    box-shadow: 0 4px 16px rgba(26,86,219,0.15);
-  }
+    border-color: var(--gl-action);
+    box-shadow: 0 0 0 1px var(--gl-action);
 
-  .lang-card-flag {
-    font-size: clamp(1.8rem, 6vw, 2.5rem);
-    margin-bottom: 8px;
-    line-height: 1;
-  }
-
-  .lang-card-name {
-    font-size: clamp(0.75rem, 3vw, 0.9rem);
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .lang-card-check {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 1.2rem;
+    .lang-code { background: var(--gl-blue-soft); color: var(--gl-link); }
+    .lang-name { font-weight: 700; }
+    .lang-radio {
+      background: var(--gl-action);
+      border-color: var(--gl-action);
+      color: #ffffff;
+    }
   }
 }
 
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .lang-content { --background: #111827; }
+// Pastille code langue (FR, EN…)
+.lang-code {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
 
-  .lang-hero {
-    .lang-hero-title { color: #f1f5f9; }
-    .lang-hero-sub   { color: #94a3b8; }
-  }
+.lang-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gl-text);
+}
 
-  .lang-card {
-    background: #1f2937;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+// Indicateur radio
+.lang-radio {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 2px solid var(--gl-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    &--active {
-      background: rgba(59,114,246,0.18);
-      border-color: #3b72f6;
-    }
-
-    .lang-card-name { color: #e5e7eb; }
-  }
+  ion-icon { font-size: 16px; }
 }

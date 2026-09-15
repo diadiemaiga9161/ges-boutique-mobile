@@ -1,25 +1,185 @@
-ion-item { --padding-start: 12px; }
+// Notifications — design commun Ionic ↔ React Native (NotificationsScreen.tsx).
+// Couleurs 100 % tokens --gl-* (l'ancien bloc @media prefers-color-scheme local,
+// inopérant en « Sombre » forcé, est supprimé).
 
-// ── Tablette (720px+) ─────────────────────────────
+.nt-content { --background: var(--gl-bg); }
+
+// ── Bandeau héros ──
+.nt-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 16px 16px;
+  background: var(--gl-hero);
+}
+
+.nt-hero__deco {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  top: -80px;
+  right: -60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.nt-hero__eyebrow {
+  position: relative;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.72);
+}
+
+.nt-hero__value {
+  position: relative;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Liste ──
+.nt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 32px;
+}
+
+.nt-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 -4px;
+}
+
+.nt-read-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-link);
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; }
+  &:active { opacity: 0.7; }
+}
+
+.nt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  cursor: pointer;
+  transition: transform 0.12s;
+
+  &:active { transform: scale(0.99); }
+}
+
+.nt-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+
+  ion-icon { font-size: 20px; }
+
+  &--danger  { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--warning { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--success { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+}
+
+.nt-info { flex: 1; min-width: 0; }
+
+.nt-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--gl-text-2);
+  overflow-wrap: anywhere;
+}
+
+// Non lue : titre 15/700 + pastille action
+.nt-card--unread .nt-title { font-weight: 700; color: var(--gl-text); }
+
+.nt-message {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+
+.nt-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+
+  &--danger  { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--warning { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--success { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+}
+
+.nt-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--gl-action);
+}
+
+gl-empty-state { display: block; padding: 32px 16px; }
+
+// ── Tablette (720px+) ──
 @media (min-width: 720px) {
-  ion-item { --padding-start: 20px; --min-height: 62px; font-size: 0.95rem; }
-  ion-list { max-width: 720px; margin: 0 auto; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  ion-list { max-width: 900px; }
-  ion-item { --padding-start: 28px; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  (.list-item-card et .sk-card passent déjà en sombre
-//  via global.scss — ici on corrige les textes qui
-//  restaient en couleur foncée sur la carte assombrie)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .lic-name { color: #f1f5f9; }
-
-  .empty-v2__title { color: #e5e7eb; }
+  .nt-body { max-width: 720px; margin: 0 auto; }
 }

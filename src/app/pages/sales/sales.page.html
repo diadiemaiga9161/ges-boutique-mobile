@@ -15,7 +15,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="sales-content">
   <ion-refresher slot="fixed" (ionRefresh)="activeTab === 'annulees' ? loadVentesAnnulees($event) : load($event)">
     <ion-refresher-content pullingIcon="chevron-down-outline" refreshingSpinner="crescent"></ion-refresher-content>
   </ion-refresher>
@@ -31,7 +31,7 @@
       <ion-segment-button value="annulees">
         <ion-label>
           {{ 'SALES.TAB_ANNULEES' | translate }}
-          <ion-badge *ngIf="ventesAnnulees.length > 0" color="danger" style="margin-left:4px;font-size:10px">{{ ventesAnnulees.length }}</ion-badge>
+          <ion-badge *ngIf="ventesAnnulees.length > 0" color="danger" class="seg-count">{{ ventesAnnulees.length }}</ion-badge>
         </ion-label>
       </ion-segment-button>
     </ion-segment>
@@ -155,7 +155,6 @@
       <button class="pchip" [class.pchip--active]="activePeriod==='today'" (click)="filterToday()">{{ 'SALES.TODAY' | translate }}</button>
       <button class="pchip" [class.pchip--active]="activePeriod==='week'" (click)="filterWeek()">{{ 'SALES.WEEK' | translate }}</button>
       <button class="pchip" [class.pchip--active]="activePeriod==='month'" (click)="filterMonth()">{{ 'SALES.MONTH' | translate }}</button>
-      <button class="pchip" [class.pchip--active]="activePeriod==='all'" (click)="filterAll()">{{ 'SALES.ALL' | translate }}</button>
     </div>
   </div>
 
@@ -172,37 +171,23 @@
         class="filter-search">
       </ion-searchbar>
 
-      <div class="filter-row">
-        <div class="filter-select-wrap">
-          <ion-icon name="funnel-outline" class="filter-icon"></ion-icon>
-          <ion-select
-            [(ngModel)]="typeFilter"
-            (ionChange)="applyFilter()"
-            interface="popover"
-            placeholder="Type"
-            class="filter-select">
-            <ion-select-option value="">Tous types</ion-select-option>
-            <ion-select-option value="COMPTANT">Comptant</ion-select-option>
-            <ion-select-option value="CREDIT">Crédit</ion-select-option>
-            <ion-select-option value="CREDIT_EN_RETARD">En retard</ion-select-option>
-          </ion-select>
+      <!-- Type de vente : puces (mêmes valeurs que l'ancienne liste « Tous types ») -->
+      <div class="chip-row">
+        <ion-icon name="funnel-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips" role="group" aria-label="Type">
+          <button type="button" class="fz-chip" *ngFor="let opt of typeOptions"
+            [class.fz-chip--active]="typeFilter === opt.value"
+            (click)="typeFilter = opt.value; applyFilter()">{{ opt.label }}</button>
         </div>
+      </div>
 
-        <div class="filter-select-wrap">
-          <ion-icon name="wallet-outline" class="filter-icon"></ion-icon>
-          <ion-select
-            [(ngModel)]="modeFilter"
-            (ionChange)="applyFilter()"
-            interface="popover"
-            placeholder="Paiement"
-            class="filter-select">
-            <ion-select-option value="">Tous modes</ion-select-option>
-            <ion-select-option value="ESPECES">Espèces</ion-select-option>
-            <ion-select-option value="ORANGE_MONEY">Orange Money</ion-select-option>
-            <ion-select-option value="MOOV_MONEY">Moov Money</ion-select-option>
-            <ion-select-option value="CARTE_BANCAIRE">Carte</ion-select-option>
-            <ion-select-option value="VIREMENT">Virement</ion-select-option>
-          </ion-select>
+      <!-- Mode de paiement : puces (mêmes valeurs que l'ancienne liste « Tous modes ») -->
+      <div class="chip-row">
+        <ion-icon name="wallet-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips" role="group" aria-label="Paiement">
+          <button type="button" class="fz-chip" *ngFor="let opt of modeOptions"
+            [class.fz-chip--active]="modeFilter === opt.value"
+            (click)="modeFilter = opt.value; applyFilter()">{{ opt.label }}</button>
         </div>
       </div>
 
@@ -341,46 +326,25 @@
           </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Actions : 3-4 boutons ronds compacts toujours pertinents + tiroir
+             "···" pour le reste (Voir/Modifier/Annuler/Retour/PDF/QR), afin de
+             ne plus surcharger la carte ni chevaucher le FAB "+" flottant. -->
         <div class="sale-actions">
-          <button class="saction" (click)="openDetailModal(sale)">
+          <button class="sact-round" (click)="openDetailModal(sale)" aria-label="Détails" title="Détails">
             <ion-icon name="eye-outline"></ion-icon>
-            <span>Détails</span>
           </button>
-          <button class="saction saction--warn" (click)="doModify(sale)" *ngIf="!sale.annulee">
-            <ion-icon name="create-outline"></ion-icon>
-            <span>Modifier</span>
-          </button>
-          <button class="saction saction--danger" (click)="confirmCancel(sale)" *ngIf="!sale.annulee">
-            <ion-icon name="ban-outline"></ion-icon>
-            <span>Annuler</span>
-          </button>
-          <button class="saction saction--retour" (click)="openRetourModal(sale)" *ngIf="!sale.annulee">
-            <ion-icon name="return-down-back-outline"></ion-icon>
-            <span>Retour</span>
-          </button>
-          <button class="saction saction--primary" (click)="telechargerFactureVente(sale)">
-            <ion-icon name="download-outline"></ion-icon>
-            <span>PDF</span>
-          </button>
-          <button class="saction" (click)="voirFactureVente(sale)">
-            <ion-icon name="eye-outline"></ion-icon>
-            <span>Voir</span>
-          </button>
-          <!-- Impression thermique Bluetooth (SPP/ESC-POS) — distincte de la facture PDF
-               ci-dessus. Visible seulement si la fonctionnalité est active pour la boutique. -->
-          <button class="saction" (click)="imprimerRecuThermique(sale)" *ngIf="impressionTicketActif && !sale.annulee">
+          <!-- Impression thermique Bluetooth (SPP/ESC-POS) — distincte de la facture PDF.
+               Visible seulement si la fonctionnalité est active pour la boutique. -->
+          <button class="sact-round sact-round--print" (click)="imprimerRecuThermique(sale)" *ngIf="impressionTicketActif && !sale.annulee"
+                  [attr.aria-label]="'IMPRESSION.PRINT_BUTTON' | translate" [title]="'IMPRESSION.PRINT_BUTTON' | translate">
             <ion-icon name="bluetooth-outline"></ion-icon>
-            <span>{{ 'IMPRESSION.PRINT_BUTTON' | translate }}</span>
           </button>
-          <button class="saction saction--qr" (click)="getQrCodeUrlSale(sale)">
-            <ion-icon name="qr-code-outline"></ion-icon>
-            <span>QR</span>
-          </button>
-          <button class="saction saction--whatsapp" (click)="envoyerFactureWhatsApp(sale)" [disabled]="!sale.clientTelephone"
-                  [title]="sale.clientTelephone ? 'Envoyer la facture par WhatsApp' : 'Ajoutez un numéro de téléphone au client pour activer l\'envoi WhatsApp'">
+          <button class="sact-round sact-round--whatsapp" (click)="envoyerFactureWhatsApp(sale)" *ngIf="sale.clientTelephone"
+                  aria-label="Envoyer la facture par WhatsApp" title="Envoyer la facture par WhatsApp">
             <ion-icon name="logo-whatsapp"></ion-icon>
-            <span>WhatsApp</span>
+          </button>
+          <button class="sact-round sact-round--more" (click)="openActionsSheet(sale)" aria-label="Plus d'actions" title="Plus d'actions">
+            <ion-icon name="ellipsis-horizontal"></ion-icon>
           </button>
         </div>
 
@@ -405,11 +369,13 @@
 
 </ion-content>
 
-<!-- FAB Nouvelle vente -->
+<!-- Bouton flottant étendu « Nouvelle vente » (même action que l'ancien FAB « + »).
+     Le contenu réserve 96px en bas (.sales-content) pour ne jamais être recouvert. -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <ion-fab-button routerLink="/cart" color="primary">
-    <ion-icon name="add-outline"></ion-icon>
-  </ion-fab-button>
+  <button type="button" class="gl-fab-extended" routerLink="/cart">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    {{ 'SALES.NEW' | translate }}
+  </button>
 </ion-fab>
 
 

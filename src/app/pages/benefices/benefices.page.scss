@@ -1,143 +1,426 @@
-/* Hero */
+// ══════════════════════════════════════════════════════════════════
+//  BÉNÉFICES — design commun Ionic ↔ React Native (BeneficesScreen.tsx)
+//  100 % tokens --gl-* : lisible en clair, sombre Auto ET sombre forcé
+//  (body.theme-dark). L'ancien bloc local @media (prefers-color-scheme: dark)
+//  et le dégradé vert figé sont supprimés. Motifs repris de Caisse / Rapports.
+// ══════════════════════════════════════════════════════════════════
+
+.ben-content {
+  --background: var(--gl-bg);
+}
+
+// ══════════════════════════════════════════════════
+//  BANDEAU HÉROS (reste bleu dans les 2 thèmes)
+// ══════════════════════════════════════════════════
 .ben-hero {
   position: relative;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: #fff;
-  padding: 28px 20px 20px;
-  text-align: center;
   overflow: hidden;
+  padding: 20px 16px;
+  background: var(--gl-hero);
+}
 
-  &__deco {
+.ben-hero__deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &::before {
+    content: '';
     position: absolute;
-    top: -40px; right: -40px;
-    width: 130px; height: 130px;
+    top: -80px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-  }
-
-  &__label {
-    font-size: 13px;
-    opacity: 0.85;
-    margin: 0 0 4px;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-  }
-
-  &__val {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 8px;
-
-    &--neg { color: #fca5a5; }
-  }
-
-  &__sub {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 13px;
-    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.06);
   }
 }
 
-.ben-evo {
-  &--success { color: #d1fae5; }
-  &--danger  { color: #fecaca; }
-  &--medium  { color: rgba(255,255,255,.7); }
+.ben-hero__main {
+  position: relative;
+  z-index: 1;
 }
 
-/* KPI row */
+.ben-hero__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ben-hero__amount {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+
+  // Perte : rouge clair lisible sur le dégradé (le signe "-" porte aussi le sens)
+  &--neg { color: #fca5a5; }
+}
+
+.ben-hero__sub {
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.72);
+
+  ion-icon { font-size: 16px; flex-shrink: 0; }
+}
+
+// Évolution posée sur le dégradé : teintes claires (le signe +/- porte le sens)
+.ben-evo--success { color: #6ee7b7; }
+.ben-evo--danger  { color: #fca5a5; }
+.ben-evo--medium  { color: rgba(255, 255, 255, 0.72); }
+
+// Squelette vitré pendant le chargement
+.ben-hero__sk {
+  width: 60%;
+  height: 33px;
+  border-radius: 8px;
+  background: var(--gl-glass);
+  border: 1px solid var(--gl-glass-line);
+  animation: benPulse 1.1s ease-in-out infinite alternate;
+}
+
+// ══════════════════════════════════════════════════
+//  STRUCTURE
+// ══════════════════════════════════════════════════
+.ben-page {
+  padding: 16px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ben-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ben-overline {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ben-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+.ben-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ben-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
+}
+
+// Tuiles KPI (gl-stat-card) : grille 2 colonnes
 .ben-kpis {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ben-kpis__full { grid-column: 1 / -1; }
+
+// ══════════════════════════════════════════════════
+//  FILTRE DATE (même rendu que la réconciliation de Caisse)
+// ══════════════════════════════════════════════════
+.ben-date-item {
+  --background: var(--gl-surface);
+  --background-focused: var(--gl-surface);
+  --background-activated: var(--gl-surface-2);
+  --color: var(--gl-text);
+  --min-height: 56px;
+  --padding-start: 16px;
+  --inner-padding-end: 12px;
+  margin: 0;
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+
+  &.item-has-focus {
+    --background: var(--gl-surface);
+    border-color: var(--gl-action) !important;
+  }
+
+  ion-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gl-text);
+  }
+
+  ion-datetime-button::part(native) {
+    min-height: 36px;
+    border-radius: 8px;
+    background: var(--gl-surface-2);
+    color: var(--gl-text);
+    font-weight: 600;
+  }
+}
+
+.ben-date-item__icon {
+  margin-inline-end: 12px;
+  font-size: 20px;
+  color: var(--gl-link);
+}
+
+// ══════════════════════════════════════════════════
+//  BOUTON PRINCIPAL
+// ══════════════════════════════════════════════════
+.ben-btn {
+  width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding-top: 12px;
-  padding-bottom: 4px;
-}
+  padding: 0 16px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s, opacity 0.15s;
 
-.ben-kpi {
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
+  ion-icon { flex-shrink: 0; font-size: 20px; }
 
-  &__label {
-    font-size: 10px;
-    color: #6b7280;
-    margin: 0 0 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+
+    &:active:not([disabled]) { background: var(--gl-action-press); transform: translateY(1px); }
   }
 
-  &__val {
-    font-size: 14px;
-    font-weight: 700;
-    margin: 0;
-  }
+  &:focus-visible { outline: 2px solid var(--gl-action); outline-offset: 2px; }
 
-  &--blue   { background: rgba(59,130,246,.1);  .ben-kpi__val { color: #3b82f6; } }
-  &--purple { background: rgba(139,92,246,.1);  .ben-kpi__val { color: #7c3aed; } }
-  &--amber  { background: rgba(245,158,11,.1);  .ben-kpi__val { color: #d97706; } }
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
 }
 
-/* Chart */
+// ══════════════════════════════════════════════════
+//  CHARGEMENT / VIDE
+// ══════════════════════════════════════════════════
+.ben-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ben-sk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ben-sk {
+  position: relative;
+  overflow: hidden;
+  height: 104px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  animation: benPulse 1.1s ease-in-out infinite alternate;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--gl-surface-2);
+    box-shadow: inset 0 0 0 1px var(--gl-border);
+  }
+
+  &::before { top: 18px; width: 40%; }
+  &::after  { top: 42px; width: 60%; }
+
+  &--chart { height: 272px; }
+}
+
+@keyframes benPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
+}
+
+.ben-empty {
+  padding: 0 16px;
+}
+
+// ══════════════════════════════════════════════════
+//  GRAPHIQUE
+// ══════════════════════════════════════════════════
+// Taille lue par dessinerChart() (getBoundingClientRect du parent du canvas)
 .chart-wrap {
   height: 220px;
   canvas { width: 100% !important; height: 100% !important; }
 }
 
-ion-card-title {
-  font-size: 15px;
+// Légende : la couleur n'est jamais le seul porteur de sens
+.ben-legend {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.ben-legend__item {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gl-text-2);
 }
 
-// ── Tablette (720px+) ─────────────────────────────
+.ben-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+
+  &--ok  { background: var(--gl-ok); }
+  &--bad { background: var(--gl-bad); }
+}
+
+// ══════════════════════════════════════════════════
+//  DÉTAIL PAR PÉRIODE
+// ══════════════════════════════════════════════════
+.ben-list {
+  gap: 0;
+  padding: 4px 16px 0;
+  overflow: hidden;
+}
+
+.ben-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gl-border);
+
+  &:last-of-type { border-bottom: none; }
+}
+
+.ben-row__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ben-row__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gl-text);
+  overflow-wrap: anywhere;
+}
+
+.ben-row__meta {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ben-amount {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gl-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+
+  &--ok  { color: var(--gl-ok); }
+  &--bad { color: var(--gl-bad); }
+}
+
+.ben-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -16px;
+  padding: 14px 16px;
+  background: var(--gl-surface-2);
+  border-top: 1px solid var(--gl-border);
+
+  .ben-amount { font-size: 17px; }
+}
+
+.ben-total__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+// ══════════════════════════════════════════════════
+//  ACCESSIBILITÉ / RESPONSIVE
+// ══════════════════════════════════════════════════
+@media (prefers-reduced-motion: reduce) {
+  .ben-sk,
+  .ben-hero__sk { animation: none; }
+}
+
+@media (max-width: 360px) {
+  .ben-hero__amount { font-size: 26px; }
+}
+
 @media (min-width: 720px) {
-  .ben-hero {
-    padding: 36px 28px 24px;
-    &__val  { font-size: 2.6rem; }
-    &__sub  { font-size: 15px; }
+  .ben-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 20px calc(32px + env(safe-area-inset-bottom, 0px));
   }
 
-  .ben-kpis {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding-top: 16px;
-  }
-
-  .ben-kpi {
-    padding: 14px 12px;
-    &__label { font-size: 12px; }
-    &__val   { font-size: 17px; }
-  }
-
+  .ben-hero { padding: 24px max(16px, calc((100% - 800px) / 2 + 20px)); }
+  .ben-hero__amount { font-size: 36px; }
+  .ben-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ben-kpis__full { grid-column: auto; }
   .chart-wrap { height: 280px; }
-  ion-card-title { font-size: 17px; }
 }
 
-// ── Grand écran (1024px+) ─────────────────────────
 @media (min-width: 1024px) {
-  .ben-hero {
-    padding: 42px 40px 30px;
-    &__val { font-size: 3rem; }
-  }
-
-  .ben-kpis { grid-template-columns: repeat(3, 1fr); }
-  .ben-kpi__val { font-size: 19px; }
-  .chart-wrap   { height: 340px; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .ben-kpi {
-    &__label { color: #9ca3af; }
-    &--blue   { background: rgba(59,130,246,.18); }
-    &--purple { background: rgba(139,92,246,.18); }
-    &--amber  { background: rgba(245,158,11,.18); }
-  }
+  .chart-wrap { height: 340px; }
 }

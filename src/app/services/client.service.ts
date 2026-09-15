@@ -67,6 +67,16 @@ export interface ClientReleveLigne {
   resteAPayerApres?: number;
   modePaiement?: string;
   utilisateurNom?: string;
+  /** Uniquement pour VERSEMENT : ventes réglées (plusieurs = paiement groupé) avec leurs produits. */
+  ventesReglees?: ClientReleveVenteReglee[];
+}
+
+export interface ClientReleveVenteReglee {
+  venteId: number;
+  numeroVente?: string;
+  dateVente?: string;
+  montantApplique: number;
+  produits: { produitNom?: string; quantite?: number; prixUnitaire?: number }[];
 }
 
 export interface ClientReleveResponse {

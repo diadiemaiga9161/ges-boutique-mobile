@@ -1,35 +1,36 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="goBack()">
-        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
-      </ion-button>
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
     </ion-buttons>
     <ion-title>{{ 'LANG.SELECT' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="lang-content">
+  <div class="gls-page">
 
-  <div class="lang-hero">
-    <div class="lang-hero-icon">🌍</div>
-    <h2 class="lang-hero-title">{{ 'LANG.SELECT' | translate }}</h2>
-    <p class="lang-hero-sub">Choisissez votre langue préférée</p>
-  </div>
-
-  <div class="lang-grid">
-    <div class="lang-card"
-         *ngFor="let lang of languages"
-         [class.lang-card--active]="lang.code === currentCode"
-         (click)="selectLanguage(lang)">
-
-      <div class="lang-card-flag">{{ lang.flag }}</div>
-      <div class="lang-card-name">{{ lang.name }}</div>
-
-      <div class="lang-card-check" *ngIf="lang.code === currentCode">
-        <ion-icon name="checkmark-circle" color="success"></ion-icon>
-      </div>
+    <div class="lang-hero">
+      <div class="lang-hero-icon"><ion-icon name="language-outline"></ion-icon></div>
+      <h2 class="lang-hero-title">{{ 'LANG.SELECT' | translate }}</h2>
+      <p class="lang-hero-sub">Choisissez votre langue préférée</p>
     </div>
-  </div>
 
+    <!-- Liste de choix radio en cartes -->
+    <div class="lang-list">
+      <button type="button"
+              class="lang-card"
+              *ngFor="let lang of languages"
+              [attr.aria-current]="lang.code === currentCode ? 'true' : null"
+              [class.lang-card--active]="lang.code === currentCode"
+              (click)="selectLanguage(lang)">
+        <span class="lang-code">{{ lang.code | uppercase }}</span>
+        <span class="lang-name">{{ lang.name }}</span>
+        <span class="lang-radio">
+          <ion-icon *ngIf="lang.code === currentCode" name="checkmark-outline"></ion-icon>
+        </span>
+      </button>
+    </div>
+
+  </div>
 </ion-content>

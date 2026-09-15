@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { ToastController } from '@ionic/angular';
+import { Chart, registerables } from 'chart.js';
 import {
   RapportHebdomadaire,
   RapportJournalier,
@@ -11,13 +12,15 @@ import { CaisseService, CreditInfo, SituationCredits } from '../../services/cais
 import { RapportWhatsappService } from '../../services/rapport-whatsapp.service';
 import { AuthService } from '../../services/auth.service';
 
+Chart.register(...registerables);
+
 @Component({
   selector: 'app-reports',
   templateUrl: './reports.page.html',
   styleUrls: ['./reports.page.scss'],
   standalone: false
 })
-export class ReportsPage {
+export class ReportsPage implements OnDestroy {
   stats?: StatistiquesGenerales;
   daily?: RapportJournalier;
   weekly?: RapportHebdomadaire;
@@ -44,6 +47,10 @@ export class ReportsPage {
   maxVentes = 1;
 
   currentUser: any = null;
+
+  @ViewChild('ca30Chart', { static: false }) ca30ChartRef!: ElementRef;
+  private ca30Chart?: Chart;
+  private analysesAccordionOuverte = false;
 
   constructor(
     public reports: RapportService,
@@ -290,7 +297,11 @@ export class ReportsPage {
   chargerAnalytics(): void {
     this.isLoadingAnalytics = true;
     this.reports.getCA30Jours().subscribe({
-      next: d => { this.ca30Jours = d; this.maxCA = Math.max(...d.map((x: any) => x.ca), 1); },
+      next: d => {
+        this.ca30Jours = d;
+        this.maxCA = Math.max(...d.map((x: any) => x.ca), 1);
+        setTimeout(() => this.dessinerCA30Chart(), 200);
+      },
       error: () => {}
     });
     this.reports.getTopProduits().subscribe({
@@ -309,6 +320,77 @@ export class ReportsPage {
 
   pct(val: number, max: number): number {
     return max > 0 ? Math.round((val / max) * 100) : 0;
+  }
+
+  // L'accordéon "Analyses visuelles" est replié par défaut : le <canvas> du graphique
+  // CA 30 jours n'existe pas encore dans le DOM tant qu'il n'a pas été ouvert au moins
+  // une fois, donc getContext('2d') échouerait si on dessinait au chargement des données.
+  // On (re)dessine donc aussi à l'ouverture de l'accordéon "analyses".
+  onAccordionChange(event: any): void {
+    const valeurs = event?.detail?.value;
+    const estOuverte = Array.isArray(valeurs) ? valeurs.includes('analyses') : valeurs === 'analyses';
+    if (estOuverte && !this.analysesAccordionOuverte) {
+      this.analysesAccordionOuverte = true;
+      // Délai > durée de l'animation d'ouverture de l'accordéon (~300ms) pour mesurer
+      // la taille définitive du conteneur, pas une taille intermédiaire de l'animation.
+      setTimeout(() => this.dessinerCA30Chart(), 350);
+    }
+  }
+
+  private dessinerCA30Chart(): void {
+    if (!this.ca30Jours?.length || !this.ca30ChartRef) return;
+    this.ca30Chart?.destroy();
+    const canvas = this.ca30ChartRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // responsive:true (ResizeObserver interne à Chart.js) boucle à l'infini et gèle
+    // l'onglet quand le canvas est dans un conteneur qui anime sa propre taille à
+    // l'ouverture (ion-accordion) : chaque redraw déclenche une nouvelle détection de
+    // redimensionnement pendant l'animation, qui redéclenche un redraw, etc. On fixe
+    // donc la taille du canvas nous-mêmes (dimensions natives, pas juste CSS) une
+    // seule fois et on désactive complètement le suivi automatique de Chart.js.
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(rect.width, 1) * dpr;
+    canvas.height = Math.max(rect.height, 1) * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Couleurs lues depuis les tokens --gl-* au moment du dessin : correctes en
+    // clair, sombre Auto ET sombre forcé (body.theme-dark), contrairement à
+    // l'ancien test prefers-color-scheme. Données et calculs inchangés.
+    const css = getComputedStyle(document.body);
+    const token = (nom: string, repli: string) => css.getPropertyValue(nom).trim() || repli;
+    const tickColor = token('--gl-muted', '#64748b');
+    const gridColor = token('--gl-border', '#e2e8f0');
+    const barColor = token('--gl-action', '#1a56db');
+
+    this.ca30Chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: this.ca30Jours.map(d => d.date),
+        datasets: [{
+          label: 'CA',
+          data: this.ca30Jours.map(d => d.ca),
+          backgroundColor: barColor,
+          borderColor: barColor,
+          borderWidth: 0,
+          borderRadius: 2
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } },
+          x: { ticks: { color: tickColor, maxRotation: 0, autoSkip: true }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.ca30Chart?.destroy();
   }
 
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {

@@ -1,294 +1,95 @@
 <ion-app>
 
-  <!-- ══════════════════ SIDEBAR MENU ══════════════════ -->
-  <ion-menu menuId="main-menu" contentId="main-content" type="overlay">
+  <!-- ══════════════════ SIDEBAR MENU (design commun ≡ DrawerContent RN) ══════════════════ -->
+  <ion-menu menuId="main-menu" contentId="main-content" type="overlay" class="gl-menu">
 
-    <!-- En-tête avec logo MC -->
+    <!-- En-tête : bandeau dégradé, marque, utilisateur / rôle, cloche -->
     <ion-header class="ion-no-border">
       <div class="menu-header">
-        <!-- Logo + nom app -->
-        <div class="menu-logo-row">
-          <img src="assets/icon/favicon.png" alt="Ges Lafia" class="menu-img-logo" />
-          <div>
+        <div class="menu-header__deco"></div>
+
+        <div class="menu-brand">
+          <div class="menu-brand__logo">
+            <img src="assets/icon/favicon.png" alt="Ges Lafia" class="menu-brand__img" />
+          </div>
+          <div class="menu-brand__text">
             <p class="menu-app-name">Ges Lafia</p>
             <p class="menu-app-sub">Maïga Consulting</p>
           </div>
         </div>
 
-        <!-- Utilisateur + cloche notification -->
         <div class="menu-user">
-          <div class="menu-avatar" [class.menu-avatar--photo]="userPhoto">
+          <div class="menu-avatar">
             <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" class="menu-avatar-img" />
-            <ion-icon *ngIf="!userPhoto" name="person-circle-outline"></ion-icon>
+            <ion-icon *ngIf="!userPhoto" name="person-outline"></ion-icon>
           </div>
           <div class="menu-user-info">
             <p class="menu-username">{{ getUserName() }}</p>
-            <p class="menu-role">{{ getRole() }}</p>
+            <span class="menu-role" *ngIf="getRole()">{{ getRole() }}</span>
           </div>
           <!-- Cloche notification -->
-          <div class="menu-notif-bell" *ngIf="auth.isAdmin()" (click)="navigate('/tabs/notifications')">
+          <button type="button" class="menu-notif-bell" *ngIf="auth.isAdmin()" (click)="navigate('/tabs/notifications')" aria-label="Notifications">
             <ion-icon name="notifications-outline"></ion-icon>
             <span class="menu-notif-badge" *ngIf="(notifService.count$ | async) as c">
               {{ c > 99 ? '99+' : c }}
             </span>
-          </div>
+          </button>
         </div>
-      </div>
 
-      <!-- Indicateur WebSocket -->
-      <div class="ws-indicator" *ngIf="(ws.status$ | async) as status">
-        <div class="ws-dot"
-          [class.ws-connected]="status === 'connected'"
-          [class.ws-connecting]="status === 'connecting'"
-          [class.ws-disconnected]="status === 'disconnected'">
+        <!-- Indicateur WebSocket -->
+        <div class="ws-indicator" *ngIf="(ws.status$ | async) as status">
+          <span class="ws-dot"
+            [class.ws-connected]="status === 'connected'"
+            [class.ws-connecting]="status === 'connecting'"
+            [class.ws-disconnected]="status === 'disconnected'">
+          </span>
+          <span class="ws-label">
+            {{ status === 'connected' ? ('MENU.CONNECTED' | translate) : status === 'connecting' ? ('MENU.CONNECTING' | translate) : ('MENU.OFFLINE' | translate) }}
+          </span>
         </div>
-        <span class="ws-label">
-          {{ status === 'connected' ? ('MENU.CONNECTED' | translate) : status === 'connecting' ? ('MENU.CONNECTING' | translate) : ('MENU.OFFLINE' | translate) }}
-        </span>
       </div>
     </ion-header>
 
-    <ion-content>
-      <ion-list lines="none">
+    <ion-content class="menu-content">
+      <nav class="menu-list">
 
-        <!-- Navigation commune -->
-        <p class="menu-section-label">{{ 'NAV.MORE' | translate }}</p>
+        <!-- Contenu piloté par src/app/config/menu-items.config.ts — voir
+             AppComponent.visibleMenuSections (canShowMenuItem est l'unique
+             source de vérité de visibilité, plus de *ngIf recopié par item). -->
+        <!-- trackBy obligatoire : visibleMenuSections renvoie de nouveaux objets à chaque
+             détection de changements ; sans trackBy, Angular recrée toutes les lignes,
+             chaque routerLinkActive recréé relance une détection → boucle infinie qui
+             fige l'appli (constaté sur la page de connexion). -->
+        <ng-container *ngFor="let section of visibleMenuSections; let first = first; trackBy: trackMenuSection">
+          <div class="menu-divider" *ngIf="!first"></div>
+          <p class="menu-section-label" *ngIf="section.labelKey">{{ section.labelKey | translate }}</p>
 
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/home')">
-          <ion-icon name="home-outline" slot="start"></ion-icon>
-          <ion-label>Dashboard</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/sales')">
-          <ion-icon name="receipt-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'NAV.SALES' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/cart')">
-          <ion-icon name="cart-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'SALES.NEW' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/clients')">
-          <ion-icon name="people-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'NAV.CLIENTS' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/credits')">
-          <ion-icon name="time-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'NAV.CREDITS' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/inventory')" *ngIf="auth.isAdmin() || permissionInventaireLectureActive">
-          <ion-icon name="clipboard-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'NAV.INVENTORY' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/sorties')" *ngIf="auth.isAdmin()">
-          <ion-icon name="arrow-down-circle-outline" slot="start"></ion-icon>
-          <ion-label>Sorties Stock</ion-label>
-        </ion-item>
-
-        <!-- Admin seulement -->
-        <ng-container *ngIf="auth.isAdmin()">
-
-          <div class="menu-divider"></div>
-          <p class="menu-section-label">{{ 'MENU.FINANCES' | translate }}</p>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/factures')">
-            <ion-icon name="document-text-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.INVOICES' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/comptes')" *ngIf="!fonctionnalitesDesactivees.has('COMPTES_BANCAIRES')">
-            <ion-icon name="card-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.BANK' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/dettes')" *ngIf="!fonctionnalitesDesactivees.has('DETTES_ANCIENNES')">
-            <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.DEBTS' | translate }}</ion-label>
-          </ion-item>
-
-          <div class="menu-divider"></div>
-          <p class="menu-section-label">{{ 'MENU.HR' | translate }}</p>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/employes')">
-            <ion-icon name="person-add-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.EMPLOYEES' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/paiement-employe')">
-            <ion-icon name="wallet-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.EMPLOYEE_PAY' | translate }}</ion-label>
-          </ion-item>
-
-          <div class="menu-divider"></div>
-          <p class="menu-section-label">{{ 'BOUTIQUE_SETTINGS.TITLE' | translate }}</p>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/fournisseurs')">
-            <ion-icon name="business-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SUPPLIERS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/depots')" *ngIf="!fonctionnalitesDesactivees.has('DEPOT_GARDE')">
-            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SAFE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-fournisseur')" *ngIf="!fonctionnalitesDesactivees.has('OBJECTIFS_FOURNISSEUR')">
-            <ion-icon name="trophy-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SUPPLIER_OBJ' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/objectifs-vendeur')" *ngIf="!fonctionnalitesDesactivees.has('OBJECTIFS_VENDEUR')">
-            <ion-icon name="cash-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SELLER_BONUS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resources/vendeurs')">
-            <ion-icon name="people-circle-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SELLERS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/boutique')">
-            <ion-icon name="storefront-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SHOP' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/super-admin-fonctionnalites')" *ngIf="auth.isSuperAdmin()">
-            <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
-            <ion-label>Fonctionnalités (super admin)</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/facture-design')">
-            <ion-icon name="color-palette-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.INVOICE_DESIGN' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/langue')">
-            <ion-icon name="language-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'LANG.SELECT' | translate }}</ion-label>
-          </ion-item>
-
-          <ng-container *ngIf="featureTransfertsActif">
-            <div class="menu-divider"></div>
-            <p class="menu-section-label">{{ 'NAV.TRANSFERS' | translate }}</p>
-
-            <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/transferts')">
-              <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
-              <ion-label>{{ 'NAV.TRANSFERS' | translate }}</ion-label>
-            </ion-item>
-
-            <ion-item class="menu-item" button detail="false" (click)="navigate('/config-transferts')">
-              <ion-icon name="settings-outline" slot="start"></ion-icon>
-              <ion-label>{{ 'MENU.CONFIG_PARTNERS' | translate }}</ion-label>
-            </ion-item>
-          </ng-container>
-
-          <div class="menu-divider"></div>
-          <p class="menu-section-label">{{ 'MENU.ANALYSES' | translate }}</p>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/reports')">
-            <ion-icon name="stats-chart-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.REPORTS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/ia')" *ngIf="!fonctionnalitesDesactivees.has('IA')">
-            <ion-icon name="sparkles-outline" slot="start" style="color:#f59e0b"></ion-icon>
-            <ion-label>{{ 'IA.TITLE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/benefices')">
-            <ion-icon name="trending-up-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.BENEFITS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/bonus-fournisseurs')" *ngIf="!fonctionnalitesDesactivees.has('BONUS_FOURNISSEURS')">
-            <ion-icon name="gift-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.SUPPLIER_BONUS' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/depenses')">
-            <ion-icon name="trending-down-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.EXPENSES' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/promotions')" *ngIf="!fonctionnalitesDesactivees.has('PROMOTIONS')">
-            <ion-icon name="pricetag-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.PROMO' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/resultat-net')" *ngIf="!fonctionnalitesDesactivees.has('RESULTAT_NET')">
-            <ion-icon name="analytics-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.NET_RESULT' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/historique-vendeur')">
-            <ion-icon name="bar-chart-outline" slot="start"></ion-icon>
-            <ion-label>Historique vendeur</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/annulation-paiements')">
-            <ion-icon name="close-circle-outline" slot="start" color="danger"></ion-icon>
-            <ion-label>Annulation paiements</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/export-donnees')">
-            <ion-icon name="cloud-download-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'EXPORT.TITRE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/journal-audit')">
-            <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'JOURNAL_AUDIT.TITRE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/sauvegardes')">
-            <ion-icon name="archive-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'BACKUP.TITLE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/parametres')">
-            <ion-icon name="settings-outline" slot="start" color="warning"></ion-icon>
-            <ion-label>{{ 'PARAMETRES.TITRE' | translate }}</ion-label>
-          </ion-item>
-
-          <ion-item class="menu-item" button detail="false" (click)="navigate('/tabs/notifications')" style="position:relative">
-            <ion-icon name="notifications-outline" slot="start"></ion-icon>
-            <ion-label>{{ 'NAV.NOTIFICATIONS' | translate }}</ion-label>
-            <ion-badge slot="end" color="danger"
-              *ngIf="(notifService.count$ | async) as c">{{ c > 99 ? '99+' : c }}</ion-badge>
-          </ion-item>
-
+          <!-- routerLinkActive : surligne l'entrée de la page courante (lien caché,
+               affichage seulement — la navigation reste navigate(item.route)). -->
+          <button type="button" class="menu-item"
+            *ngFor="let item of section.items; trackBy: trackMenuItem"
+            routerLinkActive="menu-item--active"
+            (click)="navigate(item.route)">
+            <span [routerLink]="item.route" hidden aria-hidden="true" tabindex="-1"></span>
+            <ion-icon class="menu-item__icon" [name]="item.icon" [class.menu-item__icon--danger]="item.iconColor === 'danger'"></ion-icon>
+            <span class="menu-item__label">{{ item.titleKey ? (item.titleKey | translate) : item.title }}</span>
+            <span class="menu-item__badge" *ngIf="item.showNotificationBadge && (notifService.count$ | async) as c">
+              {{ c > 99 ? '99+' : c }}
+            </span>
+          </button>
         </ng-container>
 
-        <div class="menu-divider"></div>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/profile')">
-          <ion-icon name="person-circle-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'PROFILE.TITLE' | translate }}</ion-label>
-        </ion-item>
-
-        <ion-item class="menu-item" button detail="false" (click)="navigate('/a-propos')">
-          <ion-icon name="information-circle-outline" slot="start"></ion-icon>
-          <ion-label>{{ 'RESSOURCES.TITRE' | translate }}</ion-label>
-        </ion-item>
-
-      </ion-list>
+      </nav>
 
       <div class="menu-footer">
-        <a href="https://wa.me/22353417919" target="_blank" class="menu-whatsapp-btn">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.563 4.14 1.542 5.873L.057 23.58a.5.5 0 0 0 .609.61l5.805-1.476A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.794 9.794 0 0 1-5.017-1.382l-.36-.213-3.724.947.988-3.617-.235-.372A9.79 9.79 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
-          </svg>
+        <a href="https://wa.me/22353417919" target="_blank" rel="noopener" class="menu-whatsapp-btn">
+          <ion-icon name="logo-whatsapp"></ion-icon>
           {{ 'MENU.CONTACT_WA' | translate }}
         </a>
-        <ion-button expand="block" fill="clear" color="danger" (click)="logout()">
-          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+        <button type="button" class="menu-logout-btn" (click)="logout()">
+          <ion-icon name="log-out-outline"></ion-icon>
           {{ 'MENU.LOGOUT' | translate }}
-        </ion-button>
+        </button>
       </div>
     </ion-content>
   </ion-menu>

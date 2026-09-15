@@ -1,57 +1,131 @@
+// Modèle de facture — design commun Ionic ↔ React Native.
+// L'écran autour suit les tokens --gl-* (clair / sombre Auto / sombre forcé) ;
+// l'APERÇU du document (.preview / .pv-*) reste volontairement un « papier »
+// blanc aux couleurs figées du PDF, dans les 2 thèmes.
+
+.gls-page {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gls-hint {
+  margin: 0 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--gl-muted);
+}
+
+// -------- Carte de choix (radio) --------
 .design-card {
-  position: relative;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
-  margin-bottom: 20px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
 
   &--active {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.15);
+    border-color: var(--gl-action);
+    box-shadow: 0 0 0 1px var(--gl-action), 0 0 0 5px var(--gl-ring);
   }
 }
 
-.design-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: var(--ion-color-primary);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
-
-  &--dark {
-    background: #18181b;
-  }
+.design-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
+
+.design-info { flex: 1; min-width: 0; }
 
 .design-name {
+  font-size: 15px;
   font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 4px;
+  line-height: 1.3;
+  color: var(--gl-text);
 }
 
 .design-desc {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 12px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
 }
 
-/* ===== APERÇU COMMUN ===== */
+// Pastille « sélectionné » (blue-soft + check)
+.design-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+
+  ion-icon { font-size: 14px; }
+}
+
+// -------- Boutons --------
+.gl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+    &:active { background: var(--gl-surface-2); }
+  }
+}
+
+/* ===== APERÇU COMMUN (papier blanc, couleurs du PDF) ===== */
 .preview {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 12px;
   font-size: 9px;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .pv-client { padding: 4px 8px; font-size: 9px; }
-.pv-table { width: 100%; border-collapse: collapse; font-size: 9px;
+.pv-table { width: 100%; border-collapse: collapse; font-size: 9px; color: #0f172a;
   th, td { padding: 3px 6px; text-align: left; }
   thead tr { background: #f1f5f9; }
 }
@@ -98,6 +172,7 @@
   background: #fff;
 }
 .pv-boutique--black { font-weight: 700; font-size: 11px; color: #18181b; }
+.pv-contact { font-size: 9px; color: #666; }
 .pv-num--right { font-size: 9px; color: #52525b; font-style: italic; }
 .pv-divider { height: 1px; background: #18181b; margin: 2px 0; }
 .pv-client--minimal { padding: 4px 8px; font-size: 9px; color: #52525b; }
@@ -111,22 +186,6 @@
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  // Grille 2 colonnes sur tablette
-  ion-content {
-    ion-list,
-    .designs-list { /* container wrapping design cards */ }
-  }
-  .design-card {
-    font-size: 1rem;
-    padding: 20px;
-  }
-  .design-name { font-size: 18px; }
-  .design-desc { font-size: 14px; }
-  .design-badge { font-size: 12px; padding: 4px 10px; }
+  .design-card { padding: 20px; }
   .preview { border-radius: 10px; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .design-card { max-width: 800px; margin-left: auto; margin-right: auto; }
 }

@@ -52,23 +52,43 @@
 
   <div class="page-pad stack">
 
-    <!-- ══════════════════════ KPI CARDS ══════════════════════ -->
+    <!-- ══════════════════════ KPI (grille 2×2) ══════════════════════ -->
     <div class="kpi-row">
-      <div class="kpi-tile kpi-tile--blue">
-        <div class="kpi-tile__icon"><ion-icon name="trending-up-outline"></ion-icon></div>
-        <p class="kpi-tile__label">Ventes</p>
-        <p class="kpi-tile__val">{{ stats?.chiffreAffaire?.totalVentes || 0 }}</p>
-      </div>
-      <div class="kpi-tile kpi-tile--orange">
-        <div class="kpi-tile__icon"><ion-icon name="alert-circle-outline"></ion-icon></div>
-        <p class="kpi-tile__label">Stock faible</p>
-        <p class="kpi-tile__val">{{ stats?.inventaire?.produitsStockFaible || 0 }}</p>
-      </div>
-      <div class="kpi-tile kpi-tile--red">
-        <div class="kpi-tile__icon"><ion-icon name="card-outline"></ion-icon></div>
-        <p class="kpi-tile__label">Crédits</p>
-        <p class="kpi-tile__val">{{ money(stats?.credits?.montantTotalCredits) }}</p>
-      </div>
+      <gl-stat-card
+        icon="receipt-outline"
+        label="Ventes du jour"
+        [value]="count(stats?.chiffreAffaire?.totalVentes)"
+        variant="slate"
+        [tappable]="true"
+        (cardClick)="go('/tabs/sales')">
+      </gl-stat-card>
+
+      <gl-stat-card
+        icon="trending-up-outline"
+        label="Bénéfice du jour"
+        [value]="money(beneficeJour?.beneficeTotal)"
+        variant="green"
+        [tappable]="true"
+        (cardClick)="go('/tabs/benefices')">
+      </gl-stat-card>
+
+      <gl-stat-card
+        icon="cash-outline"
+        label="Cash en caisse"
+        [value]="money(soldeCaisse?.solde)"
+        variant="blue"
+        [tappable]="true"
+        (cardClick)="go('/tabs/caisse')">
+      </gl-stat-card>
+
+      <gl-stat-card
+        icon="card-outline"
+        label="Crédits en cours"
+        [value]="money(stats?.credits?.montantTotalCredits)"
+        variant="red"
+        [tappable]="true"
+        (cardClick)="go('/credits')">
+      </gl-stat-card>
     </div>
 
     <!-- ══════════════════════ TRANSFERTS EN ATTENTE ══════════════════════ -->
@@ -86,32 +106,69 @@
       </ion-card>
     </div>
 
-    <!-- ══════════════════════ ALERTES STOCK IA ══════════════════════ -->
-    <div class="alertes-section" *ngIf="alertesStock.length > 0">
-      <ion-card class="alerte-card" *ngFor="let a of alertesStock.slice(0, 3)">
-        <ion-card-header>
-          <ion-badge [color]="a.ruptureImminente ? 'danger' : 'warning'" style="margin-right:8px">
-            {{ a.ruptureImminente ? 'Rupture imminente' : 'Stock bas' }}
-          </ion-badge>
-          <ion-card-title style="font-size:14px">{{ a.produitNom }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p *ngIf="a.joursAvantRupture >= 0" style="margin:0;font-size:12px;color:var(--ion-color-medium)">
+    <!-- ══════════════════════ ALERTES STOCK ══════════════════════
+         « Stock faible » et « Rupture » (anciennes tuiles KPI) : compteurs dans
+         l'en-tête, même destination au toucher (/tabs/inventory). Cartes = alertes
+         de rupture IA, comme avant. -->
+    <section class="stock-alerts">
+      <div class="sa-head">
+        <p class="sa-title">{{ 'PRODUCTS.ALERTS_TITLE' | translate }}</p>
+        <button type="button" class="sa-counts" (click)="go('/tabs/inventory')">
+          <span class="sa-count sa-count--bad">{{ 'PRODUCTS.ALERTS_OUT_COUNT' | translate: { count: count(stats?.inventaire?.produitsRupture) } }}</span>
+          <span class="sa-sep" aria-hidden="true">·</span>
+          <span class="sa-count sa-count--warn">{{ 'PRODUCTS.ALERTS_LOW_COUNT' | translate: { count: count(stats?.inventaire?.produitsStockFaible) } }}</span>
+          <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+        </button>
+      </div>
+
+      <div class="sa-list" *ngIf="alertesStock.length > 0">
+        <article
+          class="sa-card"
+          *ngFor="let a of alertesStock.slice(0, 3)"
+          [class.sa-card--bad]="a.ruptureImminente"
+          [class.sa-card--warn]="!a.ruptureImminente">
+          <span class="sa-pill">{{ a.ruptureImminente ? ('PRODUCTS.ALERT_IMMINENT' | translate) : ('PRODUCTS.LOW_STOCK' | translate) }}</span>
+          <p class="sa-name">{{ a.produitNom }}</p>
+          <p class="sa-detail" *ngIf="a.joursAvantRupture >= 0">
             {{ a.joursAvantRupture === 0 ? 'En rupture actuellement' : 'Rupture dans ' + a.joursAvantRupture + ' jour(s)' }}
           </p>
-          <p style="margin:4px 0 0;font-size:12px">
+          <p class="sa-detail">
             Stock : <strong>{{ a.stockActuel }}</strong>
             <span *ngIf="a.quantiteReappro > 0"> — Commander {{ a.quantiteReappro }} unités</span>
           </p>
-        </ion-card-content>
-      </ion-card>
+        </article>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ PRODUITS LES PLUS VENDUS ══════════════════════ -->
+    <div class="top-produits-section">
+      <gl-section-header title="Produits les plus vendus"></gl-section-header>
+
+      <div class="top-produits-list" *ngIf="(stats?.produitsPlusVendus?.length || 0) > 0; else noTopProduits">
+        <div class="top-produit-row" *ngFor="let p of (stats?.produitsPlusVendus || []).slice(0, 5)">
+          <div class="top-produit-row__info">
+            <p class="top-produit-row__nom">{{ p.nom }}</p>
+            <p class="top-produit-row__qte">{{ p.quantiteVendue }} vendu(s)</p>
+          </div>
+          <p class="top-produit-row__ca">{{ money(p.chiffreAffaire) }}</p>
+        </div>
+      </div>
+
+      <ng-template #noTopProduits>
+        <gl-empty-state
+          icon="bar-chart-outline"
+          title="Aucune vente enregistrée"
+          message="Les produits les plus vendus apparaîtront ici dès la première vente.">
+        </gl-empty-state>
+      </ng-template>
     </div>
 
     <!-- ══════════════════════ ACCÈS RAPIDE ══════════════════════ -->
-    <p class="section-label">Accès rapide</p>
+    <gl-section-header title="Accès rapide"></gl-section-header>
 
     <div class="quick-grid">
       <button
+        type="button"
         class="quick-tile"
         *ngFor="let action of actions"
         (click)="go(action.route)">

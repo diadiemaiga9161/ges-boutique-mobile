@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { forkJoin } from 'rxjs';
 import { Depense, DepenseRequest, DepenseService, TypeDepense } from '../../services/depense.service';
@@ -65,6 +65,22 @@ export class DepensesPage {
   // doit masquer ces actions pour VENDEUR, qui ne doit avoir qu'un accès lecture.
   get isAdmin(): boolean {
     return this.auth.isAdmin();
+  }
+
+  // Fermeture des modales centrées (plus des ion-modal) à la touche Échap :
+  // la modale des types (au-dessus) d'abord, puis le formulaire.
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showTypesModal) { this.fermerGestionTypes(); return; }
+    if (this.showForm) this.showForm = false;
+  }
+
+  // Filtre type en puces : reproduit exactement l'ancien (ionChange) de la liste
+  // déroulante — déclenché uniquement quand la valeur change réellement.
+  choisirTypeFiltre(nom: string): void {
+    if (this.typeDepenseFiltreSelectionne === nom) return;
+    this.typeDepenseFiltreSelectionne = nom;
+    this.filtrerPeriode();
   }
 
   ionViewWillEnter(): void {

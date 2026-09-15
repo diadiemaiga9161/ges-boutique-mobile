@@ -13,140 +13,166 @@
   </ion-refresher>
 
   <div class="page-pad stack">
-    <section class="metric-grid">
-      <div class="metric-card" style="border-left:4px solid #f59e0b">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <ion-icon name="warning-outline" style="color:#f59e0b;font-size:1rem"></ion-icon>
-          <p class="metric-label" style="margin:0">Stock faible</p>
-        </div>
-        <p class="metric-value warning" style="margin:0">{{ stats?.produitsStockFaible || lowStock.length }}</p>
-      </div>
-      <div class="metric-card" style="border-left:4px solid #ef4444">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <ion-icon name="alert-circle-outline" style="color:#ef4444;font-size:1rem"></ion-icon>
-          <p class="metric-label" style="margin:0">Rupture</p>
-        </div>
-        <p class="metric-value danger" style="margin:0">{{ stats?.produitsRupture || 0 }}</p>
-      </div>
-      <div class="metric-card" style="border-left:4px solid #3b82f6">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <ion-icon name="cash-outline" style="color:#3b82f6;font-size:1rem"></ion-icon>
-          <p class="metric-label" style="margin:0">Valeur stock</p>
-        </div>
-        <p class="metric-value" style="margin:0;font-size:0.85rem">{{ money(stats?.valeurTotaleStock || 0) }}</p>
-      </div>
-      <div class="metric-card" style="border-left:4px solid #10b981">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <ion-icon name="swap-vertical-outline" style="color:#10b981;font-size:1rem"></ion-icon>
-          <p class="metric-label" style="margin:0">Mouvements</p>
-        </div>
-        <p class="metric-value" style="margin:0">{{ movements.length }}</p>
-      </div>
+
+    <!-- KPI (tuiles 2 colonnes, design commun) -->
+    <section class="kpi-grid">
+      <gl-stat-card
+        icon="warning-outline"
+        label="Stock faible"
+        [value]="'' + (stats?.produitsStockFaible || lowStock.length)"
+        variant="orange">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="alert-circle-outline"
+        label="Rupture"
+        [value]="'' + (stats?.produitsRupture || 0)"
+        variant="red">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="cash-outline"
+        label="Valeur stock"
+        [value]="money(stats?.valeurTotaleStock || 0)"
+        variant="blue">
+      </gl-stat-card>
+      <gl-stat-card
+        icon="swap-vertical-outline"
+        label="Mouvements"
+        [value]="'' + movements.length"
+        variant="green">
+      </gl-stat-card>
     </section>
 
+    <!-- Onglets internes (Mouvement masqué au vendeur : lecture seule) -->
     <ion-segment [(ngModel)]="segment">
       <ion-segment-button value="move" *ngIf="!isVendeur">Mouvement</ion-segment-button>
       <ion-segment-button value="low">Alertes</ion-segment-button>
       <ion-segment-button value="history">Historique</ion-segment-button>
     </ion-segment>
 
-    <!-- Onglet Mouvement : admin seulement -->
-    <section class="form-panel stack" *ngIf="segment === 'move' && !isVendeur">
+    <!-- ══ Onglet Mouvement : admin seulement ══ -->
+    <section class="gl-form-card" *ngIf="segment === 'move' && !isVendeur">
       <ion-segment [(ngModel)]="typeMouvement">
         <ion-segment-button value="ENTREE">Entrée</ion-segment-button>
         <ion-segment-button value="SORTIE">Sortie</ion-segment-button>
         <ion-segment-button value="AJUSTEMENT">Ajuster</ion-segment-button>
       </ion-segment>
 
-      <div class="search-scan-row">
-        <ion-input class="search-scan-input" label="Rechercher produit" labelPlacement="floating" fill="outline"
-          [(ngModel)]="form.searchProduit"
-          (ionInput)="searchProductsForForm()">
-          <ion-icon name="search-outline" slot="start"></ion-icon>
-        </ion-input>
-        <ion-button class="scan-btn" color="primary" (click)="scanProduit()">
-          <ion-icon name="scan-outline" slot="icon-only"></ion-icon>
-        </ion-button>
-      </div>
-      <div *ngIf="filteredProductsForForm.length && form.searchProduit" class="dropdown-list">
-        <div *ngFor="let p of filteredProductsForForm" class="dropdown-item" (click)="selectProduct(p)">
-          <strong>{{ p.nom }}</strong> · Stock: {{ p.quantite }} · {{ money(p.prixVente) }}
+      <div class="gl-field">
+        <span class="gl-field__label">Rechercher produit</span>
+        <div class="gl-field__row">
+          <div class="gl-input">
+            <ion-icon name="search-outline"></ion-icon>
+            <input [(ngModel)]="form.searchProduit" (input)="searchProductsForForm()" aria-label="Rechercher produit" />
+          </div>
+          <button type="button" class="gl-icon-btn" (click)="scanProduit()" aria-label="Scanner">
+            <ion-icon name="scan-outline"></ion-icon>
+          </button>
+        </div>
+        <div *ngIf="filteredProductsForForm.length && form.searchProduit" class="gl-dropdown">
+          <button type="button" *ngFor="let p of filteredProductsForForm" class="gl-dropdown__item" (click)="selectProduct(p)">
+            <strong>{{ p.nom }}</strong> · Stock: {{ p.quantite }} · {{ money(p.prixVente) }}
+          </button>
         </div>
       </div>
-      <p *ngIf="form.produitId" class="muted ion-padding-start">
-        Produit sélectionné: <strong>{{ form.searchProduit }}</strong>
+
+      <p *ngIf="form.produitId" class="gl-selected">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <span>Produit sélectionné: <strong>{{ form.searchProduit }}</strong></span>
       </p>
 
-      <ion-input *ngIf="typeMouvement !== 'AJUSTEMENT'" label="Quantité" labelPlacement="floating" type="number" fill="outline" [(ngModel)]="form.quantite">
-        <ion-icon name="cube-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT" label="Nouvelle quantité" labelPlacement="floating" type="number" fill="outline" [(ngModel)]="form.nouvelleQuantite">
-        <ion-icon name="cube-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-input label="Motif" labelPlacement="floating" fill="outline" [(ngModel)]="form.motif">
-        <ion-icon name="create-outline" slot="start"></ion-icon>
-      </ion-input>
-      <ion-button expand="block" (click)="saveMovement()" [disabled]="!form.produitId">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+      <label class="gl-field" *ngIf="typeMouvement !== 'AJUSTEMENT'">
+        <span class="gl-field__label">Quantité</span>
+        <span class="gl-input">
+          <ion-icon name="cube-outline"></ion-icon>
+          <input type="number" [(ngModel)]="form.quantite" />
+        </span>
+      </label>
+      <label class="gl-field" *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT">
+        <span class="gl-field__label">Nouvelle quantité</span>
+        <span class="gl-input">
+          <ion-icon name="cube-outline"></ion-icon>
+          <input type="number" [(ngModel)]="form.nouvelleQuantite" />
+        </span>
+      </label>
+      <label class="gl-field">
+        <span class="gl-field__label">Motif</span>
+        <span class="gl-input">
+          <ion-icon name="create-outline"></ion-icon>
+          <input [(ngModel)]="form.motif" />
+        </span>
+      </label>
+
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveMovement()" [disabled]="!form.produitId">
+        <ion-icon name="checkmark-outline"></ion-icon>
         Enregistrer le mouvement
-      </ion-button>
+      </button>
     </section>
 
-    <!-- Onglet Alertes -->
+    <!-- ══ Onglet Alertes (lecture seule) ══ -->
     <section class="stack animate-cards" *ngIf="segment === 'low'">
-      <article class="mobile-card" *ngFor="let product of lowStock; trackBy: trackById">
-        <div class="row-between">
-          <div>
-            <h2 class="card-title">{{ product.nom }}</h2>
-            <p class="card-subtitle">{{ product.categorie?.nom || 'Produit' }}</p>
+      <article class="gl-list-card" *ngFor="let product of lowStock; trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-info">
+              <p class="glc-title">{{ product.nom }}</p>
+              <p class="glc-sub">{{ product.categorie?.nom || 'Produit' }}</p>
+            </div>
+            <gl-stock-badge [stock]="product.quantite" [seuil]="product.seuilAlerte" [unite]="$any(product).uniteBase"></gl-stock-badge>
           </div>
-          <ion-badge [color]="product.quantite === 0 ? 'danger' : 'warning'">
-            {{ product.quantite === 0 ? 'Rupture' : product.quantite + ' restant(s)' }}
-          </ion-badge>
+          <div class="glc-meta">
+            <span class="glc-meta__item">Seuil: {{ product.seuilAlerte }}</span>
+            <span class="glc-meta__item">Prix: {{ money(product.prixVente) }}</span>
+          </div>
         </div>
-        <p class="muted">Seuil: {{ product.seuilAlerte }} · Prix: {{ money(product.prixVente) }}</p>
       </article>
-      <div class="empty-v2" *ngIf="!lowStock.length">
-        <div class="empty-v2__icon"><ion-icon name="checkmark-circle-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucune alerte stock</p>
-        <p class="empty-v2__text">Tous les stocks sont suffisants</p>
-      </div>
+      <gl-empty-state
+        *ngIf="!lowStock.length"
+        icon="checkmark-circle-outline"
+        title="Aucune alerte stock"
+        message="Tous les stocks sont suffisants">
+      </gl-empty-state>
     </section>
 
-    <!-- Onglet Historique -->
+    <!-- ══ Onglet Historique ══ -->
     <section class="stack animate-cards" *ngIf="segment === 'history'">
-      <!-- Filtres -->
-      <div class="form-panel stack">
-        <div class="action-wrap">
-          <ion-button size="small" fill="outline" (click)="filterByPeriod('today')">Aujourd'hui</ion-button>
-          <ion-button size="small" fill="outline" (click)="filterByPeriod('week')">Semaine</ion-button>
-          <ion-button size="small" fill="outline" (click)="filterByPeriod('month')">Mois</ion-button>
-          <ion-button size="small" fill="clear" color="medium" (click)="resetFilters()">Réinitialiser</ion-button>
+      <!-- Carte de filtres -->
+      <div class="filter-zone">
+        <div class="fz-search">
+          <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+          <input class="fz-input" [(ngModel)]="searchTerm" (input)="applyFilters()" placeholder="Rechercher" />
+          <button type="button" class="fz-clear" *ngIf="searchTerm" (click)="searchTerm = ''; applyFilters()" aria-label="Effacer">
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </button>
         </div>
-        <div class="two-cols">
-          <ion-input label="Du" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateDebut" (ionChange)="loadMovements()">
-            <ion-icon name="calendar-outline" slot="start"></ion-icon>
-          </ion-input>
-          <ion-input label="Au" labelPlacement="floating" type="date" fill="outline" [(ngModel)]="dateFin" (ionChange)="loadMovements()">
-            <ion-icon name="calendar-outline" slot="start"></ion-icon>
-          </ion-input>
+
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" (click)="filterByPeriod('today')">Aujourd'hui</button>
+          <button type="button" class="fz-chip" (click)="filterByPeriod('week')">Semaine</button>
+          <button type="button" class="fz-chip" (click)="filterByPeriod('month')">Mois</button>
+          <button type="button" class="fz-chip" (click)="resetFilters()">
+            <ion-icon name="refresh-outline"></ion-icon> Réinitialiser
+          </button>
         </div>
-        <ion-item>
-          <ion-select label="Type" labelPlacement="stacked" [(ngModel)]="typeMouvFilter" (ionChange)="applyFilters()">
-            <ion-select-option value="">Tous les mouvements</ion-select-option>
-            <ion-select-option value="ENTREE">Entrée stock</ion-select-option>
-            <ion-select-option value="SORTIE">Sortie stock</ion-select-option>
-            <ion-select-option value="VENTE">Vente</ion-select-option>
-            <ion-select-option value="CREDIT">Crédit</ion-select-option>
-            <ion-select-option value="ANNULATION_VENTE">Annulation vente</ion-select-option>
-            <ion-select-option value="ANNULATION_CREDIT">Annulation crédit</ion-select-option>
-            <ion-select-option value="RETOUR">Retour fournisseur</ion-select-option>
-            <ion-select-option value="AJUSTEMENT">Ajustement</ion-select-option>
-            <ion-select-option value="BONUS_FOURNISSEUR">Bonus Fournisseur</ion-select-option>
-            <ion-select-option value="DECOMPOSITION">Décomposition</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-searchbar [(ngModel)]="searchTerm" placeholder="Rechercher" (ionInput)="applyFilters()"></ion-searchbar>
+
+        <!-- Type : mêmes valeurs que l'ancienne liste déroulante -->
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" *ngFor="let t of typesMouvementFiltre"
+            [class.fz-chip--active]="typeMouvFilter === t.value"
+            (click)="typeMouvFilter = t.value; applyFilters()">
+            {{ t.label }}
+          </button>
+        </div>
+
+        <div class="fz-dates">
+          <label class="gl-field">
+            <span class="gl-field__label">Du</span>
+            <input class="gl-date" type="date" [(ngModel)]="dateDebut" (change)="loadMovements()" />
+          </label>
+          <label class="gl-field">
+            <span class="gl-field__label">Au</span>
+            <input class="gl-date" type="date" [(ngModel)]="dateFin" (change)="loadMovements()" />
+          </label>
+        </div>
       </div>
 
       <div class="sk-list" *ngIf="loading">
@@ -160,34 +186,47 @@
         </div>
       </div>
 
-      <p class="muted ion-padding-start">{{ movementsFiltered.length }} mouvement(s)</p>
+      <gl-section-header [title]="movementsFiltered.length + ' mouvement(s)'"></gl-section-header>
 
-      <article class="mobile-card" *ngFor="let m of movementsFiltered.slice(0, 100); trackBy: trackById">
-        <div class="row-between">
-          <div>
-            <h2 class="card-title">{{ m.produit?.nom || 'Produit' }}</h2>
-            <p class="card-subtitle">{{ inventory.formatDateTimeForDisplay(m.dateMouvement) }}</p>
+      <article class="gl-list-card" *ngFor="let m of movementsFiltered.slice(0, 100); trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [ngClass]="'glc-icon--' + toneMouvement(m.typeMouvement)">
+              <ion-icon [name]="iconeMouvement(m.typeMouvement)"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ m.produit?.nom || 'Produit' }}</p>
+              <p class="glc-sub">{{ inventory.formatDateTimeForDisplay(m.dateMouvement) }}</p>
+            </div>
+            <div class="glc-right">
+              <p class="glc-amount" [class.glc-amount--ok]="isVariationPositive(m)" [class.glc-amount--bad]="!isVariationPositive(m)">
+                {{ getVariation(m) }}
+              </p>
+              <span class="gl-pill" [ngClass]="'gl-pill--' + toneMouvement(m.typeMouvement)">
+                {{ getTypeLabel(m.typeMouvement) }}
+              </span>
+            </div>
           </div>
-          <div>
-            <ion-badge [color]="getTypeClass(m.typeMouvement) === 'text-success' ? 'success' : getTypeClass(m.typeMouvement) === 'text-danger' ? 'danger' : getTypeClass(m.typeMouvement) === 'text-warning' ? 'warning' : getTypeClass(m.typeMouvement) === 'text-primary' ? 'primary' : 'medium'">
-              {{ getTypeLabel(m.typeMouvement) }}
-            </ion-badge>
+          <div class="glc-meta">
+            <span class="glc-meta__item">
+              <ion-icon name="swap-horizontal-outline"></ion-icon>
+              {{ m.quantiteAvant || 0 }} → {{ m.quantiteApres || 0 }}
+            </span>
+            <span class="gl-pill gl-pill--info" *ngIf="m.niveauNom">{{ m.niveauNom }}</span>
+            <span class="glc-meta__item" *ngIf="m.utilisateur?.nomComplet">
+              <ion-icon name="person-outline"></ion-icon>
+              Par: {{ m.utilisateur?.nomComplet }}
+            </span>
           </div>
+          <p class="glc-note" *ngIf="m.motif">{{ m.motif }}</p>
         </div>
-        <div class="row-between">
-          <span class="muted">{{ m.quantiteAvant || 0 }} → {{ m.quantiteApres || 0 }}</span>
-          <span [class.success]="isVariationPositive(m)" [class.danger]="!isVariationPositive(m)">
-            <strong>{{ getVariation(m) }}</strong>
-          </span>
-        </div>
-        <p class="muted" *ngIf="m.motif">{{ m.motif }}</p>
-        <p class="muted" *ngIf="m.utilisateur?.nomComplet">Par: {{ m.utilisateur?.nomComplet }}</p>
       </article>
-      <div class="empty-v2" *ngIf="!movementsFiltered.length">
-        <div class="empty-v2__icon"><ion-icon name="swap-vertical-outline"></ion-icon></div>
-        <p class="empty-v2__title">Aucun mouvement</p>
-        <p class="empty-v2__text">Aucun mouvement pour les filtres sélectionnés</p>
-      </div>
+      <gl-empty-state
+        *ngIf="!movementsFiltered.length"
+        icon="swap-vertical-outline"
+        title="Aucun mouvement"
+        message="Aucun mouvement pour les filtres sélectionnés">
+      </gl-empty-state>
     </section>
 
   </div>

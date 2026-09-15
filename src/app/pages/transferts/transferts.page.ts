@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest, PaiementTransfert } from '../../services/transfert.service';
 import { ProductService } from '../../services/product.service';
@@ -64,6 +64,15 @@ export class TransfertsPage implements OnInit {
     CREE: 'primary', EN_ATTENTE_CONFIRMATION: 'warning', EN_ATTENTE: 'warning',
     CONFIRME: 'success', ACCEPTE: 'success', REJETE: 'danger', COMPLETE: 'tertiary', ANNULE: 'medium'
   };
+
+  // Modales centrées (design commun) : Échap ferme la fenêtre du dessus
+  // (mêmes actions que la croix / le fond).
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.transfertDetail) { this.fermerModal(); return; }
+    if (this.afficherFormulaire) { this.afficherFormulaire = false; return; }
+    if (this.showAccuseModal) { this.showAccuseModal = false; }
+  }
 
   constructor(
     private transfertService: TransfertService,
@@ -280,6 +289,22 @@ export class TransfertsPage implements OnInit {
 
   labelPaiement(v: string): string {
     return this.TYPES_PAIEMENT.find(tp => tp.v === v)?.l ?? v;
+  }
+
+  /** Teinte de la pastille de statut (affichage uniquement, classes .gl-pill-- / .glc-icon--). */
+  statutTone(statut: string): 'ok' | 'warn' | 'bad' | 'info' | 'neutral' {
+    switch (statut) {
+      case 'CONFIRME': case 'ACCEPTE': case 'COMPLETE': return 'ok';
+      case 'EN_ATTENTE_CONFIRMATION': case 'EN_ATTENTE': return 'warn';
+      case 'REJETE': case 'ANNULE': return 'bad';
+      case 'CREE': return 'info';
+      default: return 'neutral';
+    }
+  }
+
+  /** Montant d'un transfert (affichage) : même calcul que montantTotalAffiche, pour une ligne. */
+  montantTransfert(t: TransfertStock): number {
+    return (t.lignes || []).reduce((s, l) => s + (l.quantite || 0) * (l.prixUnitaire || 0), 0);
   }
 
   estEditable(t: TransfertStock | null): boolean {

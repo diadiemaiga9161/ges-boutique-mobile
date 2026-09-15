@@ -1,0 +1,19 @@
+<gl-bottom-sheet [showClose]="false">
+  <div class="gl-confirm-sheet">
+    <div class="gl-confirm-sheet__icon" [class.gl-confirm-sheet__icon--danger]="danger">
+      <ion-icon [name]="icon"></ion-icon>
+    </div>
+    <p class="gl-confirm-sheet__title">{{ title }}</p>
+    <p class="gl-confirm-sheet__message">{{ message }}</p>
+
+    <div class="gl-confirm-sheet__actions">
+      <button type="button" class="gl-confirm-sheet__btn gl-confirm-sheet__btn--cancel" (click)="onCancel()">
+        {{ cancelLabel }}
+      </button>
+      <button type="button" class="gl-confirm-sheet__btn gl-confirm-sheet__btn--confirm"
+              [class.gl-confirm-sheet__btn--danger]="danger" (click)="onConfirm()">
+        {{ confirmLabel }}
+      </button>
+    </div>
+  </div>
+</gl-bottom-sheet>

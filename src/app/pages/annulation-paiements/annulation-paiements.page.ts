@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
 import { CaisseService } from '../../services/caisse.service';
@@ -33,7 +33,6 @@ export class AnnulationPaiementsPage {
   constructor(
     private productService: ProductService,
     private caisseService: CaisseService,
-    private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private auth: AuthService
   ) {}
@@ -121,31 +120,32 @@ export class AnnulationPaiementsPage {
     this.charger();
   }
 
+  // Affichage uniquement : la confirmation passe de l'ion-alert à la modale centrée
+  // du design commun (annulation-paiements.page.html). Mêmes textes ; rien n'est
+  // envoyé tant que « Oui, annuler » n'est pas touché, puis même appel qu'avant.
+  confirmation: { item: any; type: 'fournisseur' | 'credit'; label: string } | null = null;
+
   async confirmerAnnulation(item: any, type: 'fournisseur' | 'credit'): Promise<void> {
     const label = type === 'fournisseur'
       ? `Annuler le paiement de ${this.formatMontant(item.montant)} a ${item.fournisseur?.nom} ?`
       : `Annuler le reglement de ${this.formatMontant(item.montant)} pour ${item.clientNom} ?`;
 
-    const alert = await this.alertCtrl.create({
-      header: 'Annuler ce paiement ?',
-      cssClass: 'alert-pre-line',
-      message: label + "\n\nL'argent sera remis a sa source (caisse ou banque).",
-      buttons: [
-        { text: 'Non', role: 'cancel' },
-        {
-          text: 'Oui, annuler',
-          cssClass: 'alert-button-danger',
-          handler: () => {
-            if (type === 'fournisseur') {
-              this.annulerPaiementFournisseur(item);
-            } else {
-              this.annulerReglement(item);
-            }
-          }
-        }
-      ]
-    });
-    await alert.present();
+    this.confirmation = { item, type, label };
+  }
+
+  fermerConfirmation(): void {
+    this.confirmation = null;
+  }
+
+  validerAnnulation(): void {
+    const c = this.confirmation;
+    if (!c) return;
+    this.confirmation = null;
+    if (c.type === 'fournisseur') {
+      this.annulerPaiementFournisseur(c.item);
+    } else {
+      this.annulerReglement(c.item);
+    }
   }
 
   annulerPaiementFournisseur(paiement: any): void {

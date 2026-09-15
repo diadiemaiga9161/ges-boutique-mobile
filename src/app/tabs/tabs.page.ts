@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { MenuController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 import { LoadingService } from '../services/loading.service';
@@ -13,12 +13,14 @@ import { LoadingService } from '../services/loading.service';
 export class TabsPage {
   constructor(
     public auth: AuthService,
-    private router: Router,
+    private menuCtrl: MenuController,
     public notifService: NotificationService,
     public loadingService: LoadingService
   ) {}
 
-  newSale(): void {
-    this.router.navigateByUrl('/cart');
+  // Le 5e onglet "Menu" n'est pas une route : il ouvre le tiroir latéral existant
+  // (même menuId que celui utilisé partout ailleurs — voir app.component.html/.ts).
+  openMenu(): void {
+    this.menuCtrl.open('main-menu');
   }
 }

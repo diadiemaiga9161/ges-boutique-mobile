@@ -1,7 +1,11 @@
 // ══════════════════════════════════════════════════
-//  LOGIN PAGE — Ges Lafia
+//  LOGIN PAGE — Ges Lafia (design commun Ionic ↔ React Native)
+//  Toutes les couleurs passent par les tokens --gl-* : le mode sombre (Auto ET
+//  forcé depuis le Profil) est géré par src/theme/_dark-theme.mixin.scss.
+//  L'ancien bloc @media (prefers-color-scheme: dark) local ne fonctionnait pas
+//  en sombre forcé : il est remplacé par ces variables.
 // ══════════════════════════════════════════════════
-.login-content { --background: #f0f4f8; }
+.login-content { --background: var(--gl-bg); }
 
 // ── Sélecteur de langue ───────────────────────────
 .lang-selector {
@@ -14,32 +18,37 @@
 .lang-btn {
   display:     flex;
   align-items: center;
-  gap:         5px;
-  background:  rgba(255,255,255,0.15);
-  border:      1.5px solid rgba(255,255,255,0.30);
-  border-radius: 20px;
-  padding:     6px 12px;
+  gap:         6px;
+  min-height:  44px;
+  padding:     0 12px;
+  background:  var(--gl-glass);
+  border:      1px solid var(--gl-glass-line);
+  border-radius: 12px;
   color:       #ffffff;
   cursor:      pointer;
-  font-size:   0.82rem;
+  font-family: inherit;
+  font-size:   13px;
   font-weight: 600;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   transition:  background 0.2s;
-  ion-icon { font-size: 0.75rem; }
-  &:active { background: rgba(255,255,255,0.25); }
+
+  ion-icon { font-size: 14px; }
+  &:active { background: rgba(255,255,255,0.22); }
 }
 
-.lang-code { text-transform: uppercase; letter-spacing: 0.5px; }
+.lang-code { text-transform: uppercase; letter-spacing: 0.04em; }
 
 .lang-dropdown {
   position:      absolute;
   top:           calc(100% + 6px);
   right:         0;
-  background:    #ffffff;
-  border:        1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow:    0 8px 32px rgba(8,22,72,0.15);
-  min-width:     160px;
+  min-width:     180px;
+  padding:       4px;
+  background:    var(--gl-surface);
+  border:        1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow:    0 8px 32px rgba(8,22,72,0.18);
   overflow:      hidden;
   animation:     fadeDown 0.18s ease;
 }
@@ -54,18 +63,22 @@
   align-items: center;
   gap:         10px;
   width:       100%;
-  padding:     10px 16px;
+  min-height:  44px;
+  padding:     0 12px;
   background:  none;
   border:      none;
+  border-radius: 12px;
   cursor:      pointer;
-  font-size:   0.88rem;
-  color:       #1e293b;
+  font-family: inherit;
+  font-size:   15px;
+  font-weight: 500;
+  color:       var(--gl-text);
   text-align:  left;
   transition:  background 0.15s;
 
-  &:hover, &.active { background: #eff6ff; }
-  &.active { font-weight: 700; color: #1a56db; }
-  .lang-flag { font-size: 1.1rem; }
+  &:hover, &.active { background: var(--gl-blue-soft); }
+  &.active { font-weight: 700; color: var(--gl-link); }
+  .lang-flag { font-size: 18px; }
   .lang-name { flex: 1; }
 }
 
@@ -75,9 +88,9 @@
   flex-direction: column;
 }
 
-// ── Hero ──────────────────────────────────────────
+// ── Hero (reste bleu dans les 2 thèmes) ───────────
 .login-hero {
-  background:  linear-gradient(150deg, #081648 0%, #0d2b85 45%, #1a56db 100%);
+  background:  var(--gl-hero);
   position:    relative;
   overflow:    hidden;
   flex-shrink: 0;
@@ -98,48 +111,51 @@
   display:        flex;
   flex-direction: column;
   align-items:    center;
-  padding:        52px 20px 32px;
+  padding:        56px 24px 32px;
   position:       relative;
   z-index:        1;
 }
 
-// Logo MC (reproduce l'esprit du logo)
+// Boîte vitrée 80px contenant le vrai logo de l'application
 .lh-logo {
-  width:         80px;
-  height:        80px;
-  border-radius: 22px;
-  background:    rgba(255,255,255,0.12);
-  border:        2px solid rgba(255,255,255,0.25);
-  display:       flex;
-  align-items:   center;
+  width:           80px;
+  height:          80px;
+  border-radius:   22px;
+  background:      var(--gl-glass);
+  border:          1px solid var(--gl-glass-line);
+  display:         flex;
+  align-items:     center;
   justify-content: center;
-  margin-bottom: 18px;
-  box-shadow:    0 8px 32px rgba(0,0,0,0.25);
+  margin-bottom:   16px;
+  box-shadow:      0 8px 32px rgba(0,0,0,0.25);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  gap:           0;
-  font-weight:   900;
-  font-size:     2rem;
-  line-height:   1;
 }
 
-.lh-logo__m { color: #ffffff; }
-.lh-logo__c { color: #60a5fa; }
+.lh-logo__img {
+  display:       block;
+  width:         64px;
+  height:        64px;
+  border-radius: 16px;
+  object-fit:    contain;
+}
 
 .lh-app-name {
-  font-size:      2.1rem;
-  font-weight:    900;
+  font-size:      32px;
+  font-weight:    800;
+  line-height:    1.1;
   color:          #ffffff;
   margin:         0 0 6px;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.01em;
   text-align:     center;
 }
 
 .lh-tagline {
-  font-size:  0.82rem;
-  color:      rgba(255,255,255,0.60);
-  margin:     0;
-  text-align: center;
-  letter-spacing: 0.3px;
+  font-size:   13px;
+  font-weight: 500;
+  color:       rgba(255,255,255,0.72);
+  margin:      0;
+  text-align:  center;
 }
 
 .lh-wave {
@@ -151,11 +167,11 @@
   }
 }
 
-.lh-wave-path { fill: #f0f4f8; }
+.lh-wave-path { fill: var(--gl-bg); }
 
 // ── Formulaire ────────────────────────────────────
 .login-form-zone {
-  background:  #f0f4f8;
+  background:  var(--gl-bg);
   flex:        1;
   display:     flex;
   align-items: flex-start;
@@ -164,28 +180,31 @@
 }
 
 .login-card {
+  box-sizing:    border-box;
   width:         100%;
   max-width:     440px;
   margin:        0 auto;
-  background:    #ffffff;
+  background:    var(--gl-surface);
+  border:        1px solid var(--gl-border);
   border-radius: 22px;
-  padding:       24px 20px;
-  box-shadow:    0 4px 24px rgba(8,22,72,0.10);
-  border:        1px solid #e8eef8;
+  padding:       24px;
+  box-shadow:    var(--gl-card-shadow);
 }
 
 .login-card__title {
-  font-size:      1.5rem;
+  font-size:      22px;
   font-weight:    800;
-  color:          #0f172a;
-  margin:         0 0 5px;
-  letter-spacing: -0.3px;
+  line-height:    1.25;
+  color:          var(--gl-text);
+  margin:         0 0 4px;
+  letter-spacing: -0.01em;
 }
 
 .login-card__sub {
-  font-size:     0.88rem;
-  color:         #94a3b8;
-  margin:        0 0 22px;
+  font-size:   15px;
+  font-weight: 500;
+  color:       var(--gl-muted);
+  margin:      0 0 24px;
 }
 
 .login-form {
@@ -194,83 +213,117 @@
   gap:            16px;
 }
 
-// Input label avec icône
+.input-group { gap: 8px; }
+
+// Libellé 13/600 avec icône
 .input-label {
   display:        flex;
   align-items:    center;
-  gap:            5px;
-  font-size:      0.76rem;
-  font-weight:    700;
-  color:          #334155;
-  letter-spacing: 0.2px;
-  margin-bottom:  0;
+  gap:            6px;
+  font-size:      13px;
+  font-weight:    600;
+  color:          var(--gl-text-2);
+  letter-spacing: 0;
+  margin:         0;
 
-  ion-icon { font-size: 0.85rem; color: #94a3b8; }
+  ion-icon { font-size: 16px; color: var(--gl-muted); flex-shrink: 0; }
 }
 
+// Champ : hauteur 48, radius 12, bordure 1.5px ; focus = bordure action + halo 4px
 .input-wrap {
+  box-sizing:    border-box;
   display:       flex;
   align-items:   center;
-  background:    #f8fafc;
-  border:        1.5px solid #e2e8f0;
-  border-radius: 14px;
-  padding:       4px 12px;
-  transition:    border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  gap:           0;
+  height:        48px;
+  background:    var(--gl-surface);
+  border:        1.5px solid var(--gl-border);
+  border-radius: 12px;
+  padding:       0 2px 0 14px;
+  transition:    border-color 0.2s, box-shadow 0.2s;
 
   &:focus-within {
-    border-color: #1a56db;
-    background:   #eff6ff;
-    box-shadow:   0 0 0 4px rgba(26,86,219,0.10);
+    border-color: var(--gl-action);
+    background:   var(--gl-surface);
+    box-shadow:   0 0 0 4px var(--gl-ring);
   }
 }
 
 .input-field {
-  flex:               1;
-  --background:        transparent;
-  --color:             #0f172a;
-  --placeholder-color: #cbd5e1;
-  --padding-start:     0;
-  --padding-end:       0;
-  font-size:           0.95rem;
-  font-weight:         500;
-  color:               #0f172a;
-  min-height:          unset;
-  height:              44px;
+  flex:                  1;
+  min-width:             0;
+  --background:          transparent;
+  --color:               var(--gl-text);
+  --placeholder-color:   var(--gl-muted);
+  --placeholder-opacity: 1;
+  --padding-start:       0;
+  --padding-end:         12px;
+  font-size:             15px;
+  font-weight:           500;
+  color:                 var(--gl-text);
+  min-height:            unset;
+  height:                44px;
 }
 
+// Œil : vrai bouton 44×44
 .eye-toggle {
-  background:  none;
-  border:      none;
-  padding:     8px;
-  color:       #94a3b8;
-  cursor:      pointer;
-  display:     flex;
-  align-items: center;
-  transition:  color 0.15s;
+  width:           44px;
+  height:          44px;
+  flex-shrink:     0;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      none;
+  border:          none;
+  border-radius:   10px;
+  padding:         0;
+  color:           var(--gl-muted);
+  cursor:          pointer;
+  transition:      color 0.15s;
 
-  ion-icon { font-size: 1.1rem; }
-  &:active { color: #1a56db; }
+  ion-icon { font-size: 20px; }
+  &:active { color: var(--gl-action); }
 }
 
-// Bouton connexion
+// « Mot de passe oublié ? » sous le champ, à droite (zone touchable 44px,
+// marges négatives pour ne pas creuser l'espacement visuel du formulaire)
+.login-forgot-row {
+  display:         flex;
+  justify-content: flex-end;
+  margin:          -4px 0 -12px;
+}
+
+.login-forgot {
+  display:         inline-flex;
+  align-items:     center;
+  min-height:      44px;
+  font-size:       13px;
+  font-weight:     600;
+  color:           var(--gl-link);
+  text-decoration: none;
+
+  &:active { opacity: 0.7; }
+}
+
+// Bouton principal plein (plus de dégradé)
 .login-submit {
-  width:          100%;
-  height:         52px;
-  background:     linear-gradient(135deg, #081648 0%, #1a56db 100%);
-  color:          #ffffff;
-  border:         none;
-  border-radius:  14px;
-  font-size:      1rem;
-  font-weight:    800;
-  letter-spacing: 0.4px;
-  cursor:         pointer;
-  display:        flex;
-  align-items:    center;
+  width:           100%;
+  height:          52px;
+  margin-top:      4px;
+  background:      var(--gl-action);
+  color:           #ffffff;
+  border:          none;
+  border-radius:   14px;
+  font-family:     inherit;
+  font-size:       15px;
+  font-weight:     700;
+  letter-spacing:  0;
+  cursor:          pointer;
+  display:         flex;
+  align-items:     center;
   justify-content: center;
-  gap:            8px;
-  box-shadow:     0 6px 22px rgba(26,86,219,0.38);
-  transition:     transform 0.15s, box-shadow 0.15s;
-  margin-top:     4px;
+  gap:             8px;
+  transition:      background 0.15s, transform 0.12s;
 
   span {
     display:     flex;
@@ -278,11 +331,11 @@
     gap:         8px;
   }
 
-  ion-icon { font-size: 1.15rem; }
+  ion-icon { font-size: 20px; }
 
   &:active:not([disabled]) {
-    transform:  translateY(2px);
-    box-shadow: 0 3px 10px rgba(26,86,219,0.25);
+    background: var(--gl-action-press);
+    transform:  scale(0.99);
   }
 
   &[disabled] {
@@ -299,98 +352,42 @@
 }
 
 .login-version {
-  text-align: center;
-  font-size:  0.72rem;
-  color:      #cbd5e1;
-  margin:     20px 0 0;
-  letter-spacing: 0.3px;
+  text-align:  center;
+  font-size:   12px;
+  font-weight: 500;
+  color:       var(--gl-muted);
+  margin:      20px 0 0;
 }
 
 // ── Très petit écran (≤360px) ─────────────────────
 @media (max-width: 360px) {
-  .lh-body { padding: 36px 16px 24px; }
-  .lh-logo { width: 64px; height: 64px; font-size: 1.6rem; margin-bottom: 12px; }
-  .lh-app-name { font-size: 1.7rem; }
-  .lh-tagline  { font-size: 0.75rem; }
+  .lh-body { padding: 48px 16px 24px; }
+  .lh-logo { width: 64px; height: 64px; border-radius: 18px; margin-bottom: 12px; }
+  .lh-logo__img { width: 50px; height: 50px; border-radius: 12px; }
+  .lh-app-name { font-size: 26px; }
 
   .login-form-zone { padding: 2px 12px 24px; }
-  .login-card { padding: 18px 14px; border-radius: 18px; }
-  .login-card__title { font-size: 1.3rem; }
-  .login-card__sub { font-size: 0.82rem; margin-bottom: 16px; }
-  .input-field { height: 40px; font-size: 0.88rem; }
-  .login-submit { height: 46px; font-size: 0.92rem; }
-  .login-form { gap: 13px; }
+  .login-card { padding: 20px 16px; }
+  .login-card__sub { margin-bottom: 20px; }
+  .login-form { gap: 14px; }
 }
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
   .lh-body { padding: 64px 28px 40px; }
-  .lh-logo  { width: 96px; height: 96px; font-size: 2.5rem; }
-  .lh-app-name { font-size: 2.6rem; }
+  .lh-logo { width: 96px; height: 96px; }
+  .lh-logo__img { width: 76px; height: 76px; border-radius: 18px; }
+  .lh-app-name { font-size: 40px; }
 
   .login-form-zone { padding: 16px 24px 48px; align-items: center; }
   .login-card {
     max-width: 480px;
     padding: 32px 28px;
-    border-radius: 28px;
   }
-  .login-card__title { font-size: 1.7rem; }
-  .input-field  { height: 50px; font-size: 1rem; }
-  .login-submit { height: 58px; font-size: 1.05rem; }
 }
 
 // ── Grand écran (1024px+) ─────────────────────────
 @media (min-width: 1024px) {
   .login-card { max-width: 520px; }
-  .lh-app-name { font-size: 3rem; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .login-content { --background: #111827; }
-  .login-form-zone { background: #111827; }
-  .lh-wave-path { fill: #111827; }
-
-  .login-card {
-    background:  #1f2937;
-    border-color: #374151;
-  }
-
-  .login-card__title { color: #f1f5f9; }
-
-  .input-label { color: #e2e8f0; }
-
-  .input-wrap {
-    background:  #172033;
-    border-color: #374151;
-
-    &:focus-within {
-      border-color: #3b72f6;
-      background:   #1e293b;
-      box-shadow:   0 0 0 4px rgba(59,114,246,0.18);
-    }
-  }
-
-  .input-field {
-    --color:             #f1f5f9;
-    --placeholder-color: #64748b;
-    color:               #f1f5f9;
-  }
-
-  .lang-dropdown {
-    background:  #1f2937;
-    border-color: #374151;
-    box-shadow:  0 8px 32px rgba(0,0,0,0.45);
-  }
-
-  .lang-option {
-    color: #e5e7eb;
-
-    &:hover, &.active { background: rgba(59,114,246,0.18); }
-    &.active { color: #60a5fa; }
-  }
-
-  .login-version { color: #4b5563; }
+  .lh-app-name { font-size: 44px; }
 }

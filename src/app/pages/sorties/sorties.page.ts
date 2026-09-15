@@ -19,7 +19,10 @@ export class SortiesPage {
   dateDebut = '';
   dateFin = '';
   searchTerm = '';
-  selectedPeriod: 'today' | 'week' | 'month' | 'year' | 'all' = 'all';
+  // 'custom' : dates saisies manuellement (champs Du/Au) — aucun chip de préréglage
+  // n'est alors mis en évidence, mais ce n'est pas un mode "tout afficher" : dateDebut/
+  // dateFin restent renseignées avec les valeurs choisies par l'utilisateur.
+  selectedPeriod: 'today' | 'week' | 'month' | 'custom' = 'today';
 
   TypeSortie = TypeSortie;
   trackById = (_: number, item: any) => item.id;
@@ -38,7 +41,9 @@ export class SortiesPage {
   ) {}
 
   ionViewWillEnter(): void {
-    this.charger();
+    // filterByPeriod('today') plutôt que charger() nu : calcule et applique la
+    // borne de date du jour (dateDebut/dateFin étaient sinon vides = "tout").
+    this.filterByPeriod('today');
   }
 
   charger(event?: any): void {
@@ -81,14 +86,8 @@ export class SortiesPage {
     this.sortiesFiltrees = filtered;
   }
 
-  filterByPeriod(period: 'today' | 'week' | 'month' | 'year' | 'all'): void {
+  filterByPeriod(period: 'today' | 'week' | 'month'): void {
     this.selectedPeriod = period;
-    if (period === 'all') {
-      this.dateDebut = '';
-      this.dateFin = '';
-      this.charger();
-      return;
-    }
     const today = new Date();
     this.dateFin = today.toISOString().split('T')[0];
     if (period === 'today') {
@@ -98,10 +97,8 @@ export class SortiesPage {
       const day = d.getDay();
       d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
       this.dateDebut = d.toISOString().split('T')[0];
-    } else if (period === 'month') {
-      this.dateDebut = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     } else {
-      this.dateDebut = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+      this.dateDebut = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     }
     this.charger();
   }
@@ -113,16 +110,32 @@ export class SortiesPage {
   resetFiltres(): void {
     this.typeSortieFilter = '';
     this.produitFilter = '';
-    this.dateDebut = '';
-    this.dateFin = '';
     this.searchTerm = '';
-    this.selectedPeriod = 'all';
-    this.charger();
+    this.filterByPeriod('today');
   }
 
   getTypeSortieColor(type: string): string {
     const t = this.typesSortie.find(x => x.value === type);
     return t?.color || 'medium';
+  }
+
+  // Affichage uniquement (design commun) : teinte de pastille et icône par type de sortie.
+  toneTypeSortie(type: string): 'info' | 'warn' | 'bad' | 'neutral' {
+    if (type === 'DETAIL') return 'info';
+    if (type === 'CONSOMMATION') return 'warn';
+    if (type === 'PERTE') return 'bad';
+    return 'neutral';
+  }
+
+  iconeTypeSortie(type: string): string {
+    const icones: Record<string, string> = {
+      DETAIL: 'cart-outline',
+      CONSOMMATION: 'restaurant-outline',
+      UTILISATION: 'construct-outline',
+      PERTE: 'alert-circle-outline',
+      AUTRE: 'ellipsis-horizontal-outline'
+    };
+    return icones[type] || 'ellipsis-horizontal-outline';
   }
 
   money(v: number): string { return this.inventaireService.formatPrice(v); }

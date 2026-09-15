@@ -91,6 +91,14 @@ export class JournalAuditPage {
     this.charger();
   }
 
+  /** Puce utilisateur (affichage uniquement) : même modèle et même déclenchement que
+   *  l'ancien ion-select (ionChange ne se déclenchait que si la valeur changeait). */
+  choisirUtilisateur(id: number | null): void {
+    if (this.utilisateurId === id) return;
+    this.utilisateurId = id;
+    this.appliquerFiltres();
+  }
+
   /** Revient à la vue par défaut (jour même, tous les utilisateurs), pas à un historique complet non filtré. */
   effacerFiltres(): void {
     const today = this.todayStr();

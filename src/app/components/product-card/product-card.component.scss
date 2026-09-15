@@ -1,0 +1,107 @@
+// Carte produit — design commun Ionic ↔ React Native (même visuel que
+// .product-card de products.page.scss). Tokens --gl-* uniquement.
+.gl-product-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.gl-product-card__body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gl-product-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gl-product-card__info { flex: 1; min-width: 0; }
+
+.gl-product-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.gl-product-card__bio {
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+}
+
+.gl-product-card__cat { font-size: 12px; font-weight: 500; color: var(--gl-muted); margin-top: 2px; }
+
+gl-stock-badge { flex-shrink: 0; max-width: 55%; }
+
+.gl-product-card__price-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.gl-product-card__price-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 2px;
+}
+
+.gl-product-card__price-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+
+  &--sell { color: var(--gl-link); }
+}
+
+.gl-product-card__actions {
+  display: flex;
+  border-top: 1px solid var(--gl-border);
+}
+
+.gl-product-card__action {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gl-link);
+  cursor: pointer;
+
+  & + & { border-left: 1px solid var(--gl-border); }
+
+  ion-icon { font-size: 18px; }
+
+  &:active { background: var(--gl-blue-soft); }
+
+  &--danger {
+    color: var(--gl-bad);
+    &:active { background: var(--gl-bad-soft); }
+  }
+}

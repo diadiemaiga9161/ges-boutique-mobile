@@ -1,27 +1,183 @@
-// BUG FIX (vérifié par capture d'écran) : .lic-footer (global.scss) a
-// gap:0 — pensé pour des boutons d'action collés bord à bord, mais ici
-// réutilisé pour du texte info (badge + "avant → après" + auteur), qui se
-// retrouvait collé sans espace ("94 → 92Administrateur Principal").
-// Corrigé localement plutôt que dans la classe globale, pour ne pas
-// affecter les autres pages qui utilisent .lic-footer pour de vrais boutons.
-.lic-footer {
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 8px 16px;
+// Sorties de stock — design commun Ionic ↔ React Native.
+// Couleurs 100 % tokens --gl-* (clair, sombre Auto, sombre forcé).
+// Les classes gl-list-card / gl-pill / gl-field sont locales (pas encore de
+// composant partagé équivalent) et identiques sur Inventaire, Commandes et
+// Fournisseurs.
+
+// -------- KPI --------
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.stat-chip {
+// La zone de filtres est déjà dans .page-pad : pas de marge latérale en plus
+.filter-zone { margin: 0; }
+
+.fz-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+// -------- Champ (libellé au-dessus, input 48, radius 12) --------
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+
+  input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 12px;
+    border: 1.5px solid var(--gl-border);
+    border-radius: 12px;
+    background: var(--gl-surface);
+    color: var(--gl-text);
+    color-scheme: var(--gl-color-scheme);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+  }
+}
+
+// -------- Carte de liste --------
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+}
+
+.glc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.glc-amount {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+
+  &--bad { color: var(--gl-bad); }
+}
+
+.glc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+
+    ion-icon { font-size: 14px; }
+  }
+}
+
+.glc-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-text-2);
+  margin: 0;
+}
+
+// -------- Pastille de statut --------
+.gl-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
-  background: #fff3cd;
-  color: #856404;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
 }
-.stat-chip.danger { background: #fde8e8; color: #c0392b; }
-.stat-chip.info { background: #dbeafe; color: #1e40af; }
-.stat-chip.success { background: #d1fae5; color: #065f46; }
-.stat-chip.purple { background: #ede9fe; color: #5b21b6; }
+
+// ── Tablette (720px+) ─────────────────────────────
+@media (min-width: 720px) {
+  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

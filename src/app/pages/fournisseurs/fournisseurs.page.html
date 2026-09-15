@@ -1,19 +1,67 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>{{ 'SUPPLIERS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="ouvrirFichePdf()" *ngIf="selectedFournisseur">
+      <ion-button (click)="ouvrirFichePdf()" *ngIf="selectedFournisseur" aria-label="PDF">
         <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button (click)="openNewFournisseur()">
+      <ion-button (click)="openNewFournisseur()" [attr.aria-label]="'SUPPLIERS.NEW' | translate">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
-  <ion-toolbar>
+</ion-header>
+
+<ion-content class="four-content">
+
+  <ion-refresher slot="fixed" *ngIf="segment === 'liste'" (ionRefresh)="loadFournisseurs($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Filtre par période (réutilisé dans Achats / Paiements / Situation) -->
+  <ng-template #periodeFilterTpl>
+    <div class="filter-zone" *ngIf="selectedFournisseur">
+      <div class="fz-chips">
+        <button type="button" class="fz-chip" [class.fz-chip--active]="periodePreset === 'jour'" (click)="appliquerPreset('jour')">{{ 'SUPPLIERS.PERIOD_TODAY' | translate }}</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="periodePreset === 'semaine'" (click)="appliquerPreset('semaine')">{{ 'SUPPLIERS.PERIOD_WEEK' | translate }}</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="periodePreset === 'mois'" (click)="appliquerPreset('mois')">{{ 'SUPPLIERS.PERIOD_MONTH' | translate }}</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="periodePreset === 'personnalise'" (click)="appliquerPreset('personnalise')">{{ 'SUPPLIERS.PERIOD_CUSTOM' | translate }}</button>
+      </div>
+      <div class="periode-custom" *ngIf="periodePreset === 'personnalise'">
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.FROM_DATE' | translate }}</span>
+          <input type="date" [(ngModel)]="filtreDateDebut" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.TO_DATE' | translate }}</span>
+          <input type="date" [(ngModel)]="filtreDateFin" />
+        </label>
+        <button type="button" class="gl-btn gl-btn--secondary periode-apply" (click)="appliquerPeriodePersonnalisee()">{{ 'SUPPLIERS.APPLY' | translate }}</button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Fournisseur sélectionné (Achats / Paiements / Situation) -->
+  <ng-template #selectionTpl>
+    <div class="sel-card" *ngIf="selectedFournisseur">
+      <div class="glc-avatar">{{ getInitiale(selectedFournisseur.nom) }}</div>
+      <div class="glc-info">
+        <p class="glc-title">{{ selectedFournisseur.nom }}</p>
+        <p class="glc-sub">{{ selectedFournisseur.code || '—' }}{{ selectedFournisseur.telephone ? ' · ' + selectedFournisseur.telephone : '' }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #noSelectionTpl>
+    <gl-empty-state icon="arrow-back-outline" [title]="'SUPPLIERS.SELECT_HINT' | translate"></gl-empty-state>
+  </ng-template>
+
+  <div class="page-pad stack">
+
+    <!-- Onglets internes -->
     <ion-segment [(ngModel)]="segment" (ionChange)="segmentChanged($event)">
       <ion-segment-button value="liste">
         <ion-label>{{ 'SUPPLIERS.TAB_LIST' | translate }}</ion-label>
@@ -28,125 +76,25 @@
         <ion-label>{{ 'SUPPLIERS.TAB_SITUATION' | translate }}</ion-label>
       </ion-segment-button>
     </ion-segment>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content>
+    <!-- ══════════════ LISTE ══════════════ -->
+    <ng-container *ngIf="segment === 'liste'">
+      <div class="kpi-grid" *ngIf="!loading">
+        <gl-stat-card icon="business-outline" [label]="'SUPPLIERS.TITLE' | translate" [value]="fournisseurs.length + ''" variant="blue"></gl-stat-card>
+        <gl-stat-card icon="search-outline" label="Résultats" [value]="filteredFournisseurs.length + ''" variant="slate"></gl-stat-card>
+      </div>
 
-  <!-- Filtre par période (réutilisé dans Achats / Paiements / Situation) -->
-  <ng-template #periodeFilterTpl>
-    <div class="periode-filter" *ngIf="selectedFournisseur">
-      <div class="period-chips-static">
-        <button class="pchip2" [class.pchip2--active]="periodePreset === 'jour'" (click)="appliquerPreset('jour')">{{ 'SUPPLIERS.PERIOD_TODAY' | translate }}</button>
-        <button class="pchip2" [class.pchip2--active]="periodePreset === 'semaine'" (click)="appliquerPreset('semaine')">{{ 'SUPPLIERS.PERIOD_WEEK' | translate }}</button>
-        <button class="pchip2" [class.pchip2--active]="periodePreset === 'mois'" (click)="appliquerPreset('mois')">{{ 'SUPPLIERS.PERIOD_MONTH' | translate }}</button>
-        <button class="pchip2" [class.pchip2--active]="periodePreset === 'personnalise'" (click)="appliquerPreset('personnalise')">{{ 'SUPPLIERS.PERIOD_CUSTOM' | translate }}</button>
-        <button class="pchip2" [class.pchip2--active]="periodePreset === 'tout'" (click)="appliquerPreset('tout')">{{ 'SUPPLIERS.PERIOD_ALL' | translate }}</button>
-      </div>
-      <div class="periode-custom-row" *ngIf="periodePreset === 'personnalise'">
-        <input type="date" class="periode-date-input" [(ngModel)]="filtreDateDebut" [attr.aria-label]="'SUPPLIERS.FROM_DATE' | translate" />
-        <input type="date" class="periode-date-input" [(ngModel)]="filtreDateFin" [attr.aria-label]="'SUPPLIERS.TO_DATE' | translate" />
-        <ion-button size="small" (click)="appliquerPeriodePersonnalisee()">{{ 'SUPPLIERS.APPLY' | translate }}</ion-button>
-      </div>
-    </div>
-  </ng-template>
-
-  <!-- LISTE -->
-  <ng-container *ngIf="segment === 'liste'">
-    <div class="filter-zone" style="margin-top:10px">
-      <div class="fz-search">
-        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
-        <input class="fz-input" [(ngModel)]="searchTerm" (input)="onSearch()" [placeholder]="'SUPPLIERS.SEARCH_PLACEHOLDER' | translate" />
-        <button class="fz-clear" *ngIf="searchTerm" (click)="searchTerm=''; onSearch()">
-          <ion-icon name="close-circle-outline"></ion-icon>
-        </button>
-      </div>
-    </div>
-    <ion-refresher slot="fixed" (ionRefresh)="loadFournisseurs($event)">
-      <ion-refresher-content></ion-refresher-content>
-    </ion-refresher>
-    <div class="hero-stat-row" *ngIf="!loading && filteredFournisseurs.length > 0">
-      <div class="hsr-item">
-        <p class="hsr-val">{{ fournisseurs.length }}</p>
-        <p class="hsr-lbl">{{ 'SUPPLIERS.TITLE' | translate }}</p>
-      </div>
-      <div class="hsr-item">
-        <p class="hsr-val">{{ filteredFournisseurs.length }}</p>
-        <p class="hsr-lbl">Résultats</p>
-      </div>
-    </div>
-    <div class="sk-list" *ngIf="loading">
-      <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
-        <div class="skeleton sk-avatar"></div>
-        <div class="sk-card-body">
-          <div class="skeleton sk-line sk-line--w80"></div>
-          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+      <div class="filter-zone">
+        <div class="fz-search">
+          <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+          <input class="fz-input" [(ngModel)]="searchTerm" (input)="onSearch()" [placeholder]="'SUPPLIERS.SEARCH_PLACEHOLDER' | translate" [attr.aria-label]="'SUPPLIERS.SEARCH_PLACEHOLDER' | translate" />
+          <button type="button" class="fz-clear" *ngIf="searchTerm" (click)="searchTerm = ''; onSearch()" aria-label="Effacer">
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </button>
         </div>
-        <div class="skeleton sk-line sk-line--w30"></div>
       </div>
-    </div>
-    <ng-container *ngIf="!loading">
-      <div class="section-header" style="padding:0 16px;margin:8px 0 4px">
-        <p class="section-header__title">{{ 'SUPPLIERS.TAB_LIST' | translate }}</p>
-        <span class="section-header__count">{{ filteredFournisseurs.length }}</span>
-      </div>
-      <section class="stack animate-cards" style="padding:0 16px 16px">
-        <article class="list-item-card" *ngFor="let f of filteredFournisseurs; trackBy: trackById">
-          <div class="lic-header">
-            <div class="lic-avatar">{{ getInitiale(f.nom) }}</div>
-            <div class="lic-info">
-              <p class="lic-name">{{ f.nom }}</p>
-              <p class="lic-sub">
-                <ion-icon name="call-outline"></ion-icon>
-                {{ f.code || '—' }}{{ f.telephone ? ' · ' + f.telephone : '' }}
-              </p>
-            </div>
-            <div class="lic-right">
-              <span class="status-badge" [ngClass]="f.actif !== false ? 'status-badge--success' : 'status-badge--gray'">
-                {{ f.actif !== false ? ('SUPPLIERS.ACTIVE' | translate) : ('SUPPLIERS.INACTIVE' | translate) }}
-              </span>
-            </div>
-          </div>
-          <div class="lic-footer">
-            <button class="lic-action lic-action--primary" (click)="selectFournisseur(f)">
-              <ion-icon name="eye-outline"></ion-icon> Voir
-            </button>
-            <button class="lic-action" (click)="editFournisseur(f)">
-              <ion-icon name="create-outline"></ion-icon> Modifier
-            </button>
-            <button class="lic-action lic-action--danger" (click)="deleteFournisseur(f)">
-              <ion-icon name="trash-outline"></ion-icon> Supprimer
-            </button>
-          </div>
-        </article>
-      </section>
-    </ng-container>
-    <div class="empty-v2" *ngIf="!loading && filteredFournisseurs.length === 0">
-      <div class="empty-v2__icon"><ion-icon name="business-outline"></ion-icon></div>
-      <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY' | translate }}</p>
-      <p class="empty-v2__text">Ajoutez votre premier fournisseur</p>
-      <ion-button size="small" (click)="openNewFournisseur()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>{{ 'SUPPLIERS.NEW' | translate }}
-      </ion-button>
-    </div>
-  </ng-container>
 
-  <!-- ACHATS -->
-  <ng-container *ngIf="segment === 'achats'">
-    <div class="segment-header" *ngIf="selectedFournisseur">
-      <span class="f-chip">{{ selectedFournisseur.nom }}</span>
-    </div>
-    <div class="no-selection" *ngIf="!selectedFournisseur">
-      <ion-icon name="arrow-back-outline"></ion-icon>
-      <p>{{ 'SUPPLIERS.SELECT_HINT' | translate }}</p>
-    </div>
-    <ng-container *ngIf="selectedFournisseur">
-      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
-      <ion-button expand="block" color="success" class="action-btn" (click)="openAchat()">
-        <ion-icon name="bag-add-outline" slot="start"></ion-icon>
-        {{ 'SUPPLIERS.NEW_PURCHASE' | translate }}
-      </ion-button>
-      <div class="sk-list" *ngIf="loadingAchats">
+      <div class="sk-list" *ngIf="loading">
         <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
           <div class="skeleton sk-avatar"></div>
           <div class="sk-card-body">
@@ -156,224 +104,63 @@
           <div class="skeleton sk-line sk-line--w30"></div>
         </div>
       </div>
-      <ng-container *ngIf="!loadingAchats">
-        <ion-list-header *ngIf="achatsActifs.length">
-          <ion-label>{{ 'SUPPLIERS.ACTIVE_PURCHASES' | translate }} ({{ achatsActifs.length }})</ion-label>
-        </ion-list-header>
-        <ion-list *ngIf="achatsActifs.length">
-          <ng-container *ngFor="let a of achatsActifs; trackBy: trackById">
-            <ion-item button (click)="toggleAchat(a.id)" detail="false">
-              <ion-label>
-                <h2>{{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }} — {{ formatDate(a.dateAchat || a.dateCreation) }}</h2>
-                <p>{{ 'COMMON.TOTAL' | translate }}: <strong>{{ money(a.montantTotal) }}</strong> · {{ 'SUPPLIERS.PAID' | translate }}: {{ money(a.montantPaye) }}</p>
-                <p *ngIf="(a.montantRestant || 0) > 0" class="text-danger">{{ 'SUPPLIERS.REMAINING' | translate }}: {{ money(a.montantRestant) }}</p>
-              </ion-label>
-              <ion-badge slot="end" [color]="(a.montantRestant || 0) > 0 ? 'warning' : 'success'">
-                {{ (a.montantRestant || 0) > 0 ? money(a.montantRestant) : ('SUPPLIERS.SETTLED' | translate) }}
-              </ion-badge>
-              <ion-icon slot="end" [name]="achatExpandiId === a.id ? 'chevron-up-outline' : 'chevron-down-outline'" color="medium" style="margin-left:6px"></ion-icon>
-            </ion-item>
-            <ng-container *ngIf="achatExpandiId === a.id">
-              <ion-item *ngFor="let l of (a.lignes || []); trackBy: trackById" class="ligne-produit-item">
-                <ion-icon name="cube-outline" slot="start" color="medium" style="font-size:1rem"></ion-icon>
-                <ion-label>
-                  <p>{{ l.produitNom || l.produit?.nom || '—' }}</p>
-                  <p class="muted">{{ l.quantite }} x {{ money(l.prixAchatUnitaire) }}</p>
-                </ion-label>
-                <ion-note slot="end" color="dark">{{ money((l.quantite || 0) * (l.prixAchatUnitaire || 0)) }}</ion-note>
-              </ion-item>
-              <ion-item *ngIf="!(a.lignes || []).length" class="ligne-produit-item">
-                <ion-label><p class="muted">{{ 'SUPPLIERS.NO_LINES' | translate }}</p></ion-label>
-              </ion-item>
-              <div style="padding:4px 16px 12px">
-                <ion-button fill="outline" color="danger" size="small" (click)="annulerAchat(a)">
-                  <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-                  {{ 'SUPPLIERS.CANCEL_PURCHASE' | translate }}
-                </ion-button>
-              </div>
-            </ng-container>
-          </ng-container>
-        </ion-list>
-        <ng-container *ngIf="achatsAnnules.length">
-          <ion-list-header>
-            <ion-label color="danger">{{ 'SUPPLIERS.CANCELLED_PURCHASES' | translate }} ({{ achatsAnnules.length }})</ion-label>
-          </ion-list-header>
-          <ion-list>
-            <ion-item *ngFor="let a of achatsAnnules; trackBy: trackById">
-              <ion-label>
-                <h2 style="text-decoration:line-through;color:var(--ion-color-medium)">
-                  {{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }} — {{ formatDate(a.dateAchat || a.dateCreation) }}
-                </h2>
-                <p>{{ 'COMMON.TOTAL' | translate }}: {{ money(a.montantTotal) }}</p>
-              </ion-label>
-              <ion-badge slot="end" color="medium">{{ 'SUPPLIERS.CANCELLED' | translate }}</ion-badge>
-            </ion-item>
-          </ion-list>
-        </ng-container>
-        <div class="empty-v2" *ngIf="achats.length === 0">
-          <div class="empty-v2__icon"><ion-icon name="bag-outline"></ion-icon></div>
-          <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_PURCHASES' | translate }}</p>
-        </div>
-      </ng-container>
-    </ng-container>
-  </ng-container>
 
-  <!-- PAIEMENTS -->
-  <ng-container *ngIf="segment === 'paiements'">
-    <div class="segment-header" *ngIf="selectedFournisseur">
-      <span class="f-chip">{{ selectedFournisseur.nom }}</span>
-    </div>
-    <div class="no-selection" *ngIf="!selectedFournisseur">
-      <ion-icon name="arrow-back-outline"></ion-icon>
-      <p>{{ 'SUPPLIERS.SELECT_HINT' | translate }}</p>
-    </div>
-    <ng-container *ngIf="selectedFournisseur">
-      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
-      <div class="action-row">
-        <ion-button expand="block" color="success" (click)="openPaiement()">
-          <ion-icon name="cash-outline" slot="start"></ion-icon>
-          {{ 'SUPPLIERS.PAYMENT' | translate }}
-        </ion-button>
-        <ion-button expand="block" color="warning" (click)="openAvance()">
-          <ion-icon name="wallet-outline" slot="start"></ion-icon>
-          {{ 'SUPPLIERS.ADVANCE' | translate }}
-        </ion-button>
-      </div>
-      <div class="sk-list" *ngIf="loadingPaiements">
-        <div class="sk-card" *ngFor="let i of [1,2,3]">
-          <div class="skeleton sk-avatar"></div>
-          <div class="sk-card-body">
-            <div class="skeleton sk-line sk-line--w80"></div>
-            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-          </div>
-          <div class="skeleton sk-line sk-line--w30"></div>
-        </div>
-      </div>
-      <ng-container *ngIf="!loadingPaiements">
-        <ion-list-header>
-          <ion-label>{{ 'SUPPLIERS.PAYMENTS' | translate }}</ion-label>
-        </ion-list-header>
-        <ion-list>
-          <ion-item *ngFor="let p of paiements; trackBy: trackById">
-            <ion-label>
-              <h2>{{ money(p.montant) }}</h2>
-              <p>{{ p.modePaiement }} · {{ formatDate(p.datePaiement) }}</p>
-              <p *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</p>
-              <p *ngIf="getPaiementAuteur(p)" style="font-size:0.8rem;color:var(--ion-color-medium)">Par : {{ getPaiementAuteur(p) }}</p>
-            </ion-label>
-            <ion-button fill="outline" size="small" color="primary" slot="end" (click)="imprimerRecuPaiement(p)">
-              <ion-icon name="receipt-outline" slot="start"></ion-icon> {{ 'SUPPLIERS.RECEIPT' | translate }}
-            </ion-button>
-          </ion-item>
-          <div class="empty-v2" *ngIf="paiements.length === 0">
-            <div class="empty-v2__icon"><ion-icon name="cash-outline"></ion-icon></div>
-            <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_PAYMENTS' | translate }}</p>
-          </div>
-        </ion-list>
-      </ng-container>
-      <div class="sk-list" *ngIf="loadingAvances">
-        <div class="sk-card" *ngFor="let i of [1,2,3]">
-          <div class="skeleton sk-avatar"></div>
-          <div class="sk-card-body">
-            <div class="skeleton sk-line sk-line--w80"></div>
-            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-          </div>
-          <div class="skeleton sk-line sk-line--w30"></div>
-        </div>
-      </div>
-      <ng-container *ngIf="!loadingAvances">
-        <ion-list-header>
-          <ion-label>{{ 'SUPPLIERS.ADVANCES' | translate }}</ion-label>
-        </ion-list-header>
-        <ion-list>
-          <ion-item *ngFor="let av of avances; trackBy: trackById">
-            <ion-label>
-              <h2>{{ money(av.montant) }}</h2>
-              <p>{{ av.modePaiement }} · {{ formatDate(av.dateAvance) }}</p>
-              <p *ngIf="av.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ av.reference }}</p>
-              <p *ngIf="getPayerLabel(av)" class="ion-text-wrap"><strong>Par :</strong> {{ getPayerLabel(av) }}</p>
-            </ion-label>
-            <ion-icon name="time-outline" slot="end" color="warning"></ion-icon>
-          </ion-item>
-          <div class="empty-v2" *ngIf="avances.length === 0">
-            <div class="empty-v2__icon"><ion-icon name="wallet-outline"></ion-icon></div>
-            <p class="empty-v2__title">{{ 'SUPPLIERS.EMPTY_ADVANCES' | translate }}</p>
-          </div>
-        </ion-list>
-      </ng-container>
-    </ng-container>
-  </ng-container>
-
-  <!-- SITUATION -->
-  <ng-container *ngIf="segment === 'situation'">
-    <div class="no-selection" *ngIf="!selectedFournisseur">
-      <ion-icon name="arrow-back-outline"></ion-icon>
-      <p>{{ 'SUPPLIERS.SELECT_HINT' | translate }}</p>
-    </div>
-    <ng-container *ngIf="selectedFournisseur">
-      <div class="situation-header">
-        <div class="f-avatar-lg">{{ getInitiale(selectedFournisseur.nom) }}</div>
-        <h2>{{ selectedFournisseur.nom }}</h2>
-        <p *ngIf="selectedFournisseur.telephone">{{ selectedFournisseur.telephone }}</p>
-      </div>
-      <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
-      <div class="sk-list" *ngIf="loadingSituation">
-        <div class="sk-card" *ngFor="let i of [1,2,3,4]">
-          <div class="skeleton sk-avatar"></div>
-          <div class="sk-card-body">
-            <div class="skeleton sk-line sk-line--w80"></div>
-            <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-          </div>
-          <div class="skeleton sk-line sk-line--w30"></div>
-        </div>
-      </div>
-      <ng-container *ngIf="!loadingSituation && situation">
-        <ion-grid class="situation-grid">
-          <ion-row>
-            <ion-col size="6">
-              <div class="stat-card stat-card--blue">
-                <div class="stat-value">{{ money(situation.totalAchats || 0) }}</div>
-                <div class="stat-label">{{ 'SUPPLIERS.TOTAL_PURCHASES' | translate }}</div>
+      <ng-container *ngIf="!loading && filteredFournisseurs.length > 0">
+        <gl-section-header [title]="('SUPPLIERS.TAB_LIST' | translate) + ' · ' + filteredFournisseurs.length"></gl-section-header>
+        <section class="stack animate-cards">
+          <article class="gl-list-card" *ngFor="let f of filteredFournisseurs; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-avatar">{{ getInitiale(f.nom) }}</div>
+                <div class="glc-info">
+                  <p class="glc-title">{{ f.nom }}</p>
+                  <p class="glc-sub glc-sub--icon">
+                    <ion-icon name="call-outline"></ion-icon>
+                    {{ f.code || '—' }}{{ f.telephone ? ' · ' + f.telephone : '' }}
+                  </p>
+                </div>
+                <span class="gl-pill" [class.gl-pill--ok]="f.actif !== false" [class.gl-pill--neutral]="f.actif === false">
+                  {{ f.actif !== false ? ('SUPPLIERS.ACTIVE' | translate) : ('SUPPLIERS.INACTIVE' | translate) }}
+                </span>
               </div>
-            </ion-col>
-            <ion-col size="6">
-              <div class="stat-card stat-card--green">
-                <div class="stat-value">{{ money(situation.totalPaiements || 0) }}</div>
-                <div class="stat-label">{{ 'SUPPLIERS.TOTAL_PAID' | translate }}</div>
-              </div>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="6">
-              <div class="stat-card stat-card--orange">
-                <div class="stat-value">{{ money(situation.soldeRestant || situation.dette || 0) }}</div>
-                <div class="stat-label">{{ 'SUPPLIERS.BALANCE' | translate }}</div>
-              </div>
-            </ion-col>
-            <ion-col size="6">
-              <div class="stat-card stat-card--purple">
-                <div class="stat-value">{{ money(soldeAvance) }}</div>
-                <div class="stat-label">{{ 'SUPPLIERS.ADVANCE_BALANCE' | translate }}</div>
-              </div>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-        <ion-card class="info-card" *ngIf="situation.nbAchats">
-          <ion-card-content>
-            <div class="info-row">
-              <span>{{ 'SUPPLIERS.NB_PURCHASES' | translate }}</span>
-              <strong>{{ situation.nbAchats }}</strong>
             </div>
-            <div class="info-row" *ngIf="situation.dernierAchat">
-              <span>{{ 'SUPPLIERS.LAST_PURCHASE' | translate }}</span>
-              <strong>{{ formatDate(situation.dernierAchat) }}</strong>
+            <div class="glc-actions">
+              <button type="button" class="glc-action glc-action--link" (click)="selectFournisseur(f)">
+                <ion-icon name="eye-outline"></ion-icon><span>Voir</span>
+              </button>
+              <button type="button" class="glc-action" (click)="editFournisseur(f)">
+                <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
+              </button>
+              <button type="button" class="glc-action glc-action--bad" (click)="deleteFournisseur(f)">
+                <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
+              </button>
             </div>
-          </ion-card-content>
-        </ion-card>
+          </article>
+        </section>
+      </ng-container>
 
-        <!-- Achats non payés (statut EN_COURS, non filtré par période) -->
-        <div class="sk-list" *ngIf="loadingAchatsNonPayes">
-          <div class="sk-card" *ngFor="let i of [1,2]">
+      <gl-empty-state
+        *ngIf="!loading && filteredFournisseurs.length === 0"
+        icon="business-outline"
+        [title]="'SUPPLIERS.EMPTY' | translate"
+        message="Ajoutez votre premier fournisseur"
+        [ctaLabel]="'SUPPLIERS.NEW' | translate"
+        (ctaClick)="openNewFournisseur()">
+      </gl-empty-state>
+    </ng-container>
+
+    <!-- ══════════════ ACHATS ══════════════ -->
+    <ng-container *ngIf="segment === 'achats'">
+      <ng-container *ngIf="!selectedFournisseur">
+        <ng-container *ngTemplateOutlet="noSelectionTpl"></ng-container>
+      </ng-container>
+
+      <ng-container *ngIf="selectedFournisseur">
+        <ng-container *ngTemplateOutlet="selectionTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
+
+        <div class="sk-list" *ngIf="loadingAchats">
+          <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
             <div class="skeleton sk-avatar"></div>
             <div class="sk-card-body">
               <div class="skeleton sk-line sk-line--w80"></div>
@@ -382,305 +169,566 @@
             <div class="skeleton sk-line sk-line--w30"></div>
           </div>
         </div>
-        <ng-container *ngIf="!loadingAchatsNonPayes">
-          <div class="section-title" *ngIf="achatsNonPayes.length">
-            <ion-icon name="alert-circle-outline" color="warning"></ion-icon>
-            {{ 'SUPPLIERS.UNPAID_PURCHASES' | translate }} ({{ achatsNonPayes.length }})
-          </div>
-          <ion-card class="hist-card unpaid-card" *ngFor="let a of achatsNonPayes; trackBy: trackById">
-            <ion-card-content>
-              <div class="hist-row">
-                <span class="hist-date">{{ formatDate(a.dateAchat) }}</span>
-                <span class="hist-badge badge--partial">{{ 'SUPPLIERS.ONGOING' | translate }}</span>
-              </div>
-              <div class="hist-amounts">
-                <span>{{ 'COMMON.TOTAL' | translate }} : <strong>{{ money(a.montantTotal) }}</strong></span>
-                <span class="text-success">{{ 'SUPPLIERS.PAID' | translate }} : {{ money(a.montantPaye) }}</span>
-                <span class="text-danger">{{ 'SUPPLIERS.REMAINING' | translate }} : {{ money(a.montantRestant) }}</span>
-              </div>
-              <div class="hist-produits" *ngIf="(a.lignes || []).length">
-                <span *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produit?.nom || l.produitNom }} x{{ l.quantite }}</span>
-              </div>
-              <div style="margin-top:8px">
-                <ion-button fill="solid" color="warning" size="small" (click)="openPaiementPourAchat(a)">
-                  <ion-icon name="cash-outline" slot="start"></ion-icon>
-                  {{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }}
-                </ion-button>
-              </div>
-            </ion-card-content>
-          </ion-card>
-          <div class="empty-v2" *ngIf="achatsNonPayes.length === 0">
-            <div class="empty-v2__icon"><ion-icon name="checkmark-circle-outline" color="success"></ion-icon></div>
-            <p class="empty-v2__title">{{ 'SUPPLIERS.NO_UNPAID_PURCHASES' | translate }}</p>
-          </div>
-        </ng-container>
 
-        <ng-container *ngIf="topProduits.length">
-          <div class="section-title">
-            <ion-icon name="trophy-outline"></ion-icon>
-            {{ 'SUPPLIERS.TOP_PRODUCTS' | translate }}
-          </div>
-          <ion-card class="info-card">
-            <ion-card-content>
-              <div class="info-row" *ngFor="let tp of topProduits; let i = index; trackBy: trackById">
-                <span>
-                  <ion-badge [color]="i === 0 ? 'warning' : 'light'" style="margin-right:6px">{{ i + 1 }}</ion-badge>
-                  {{ tp.nom }}
-                </span>
-                <strong>{{ tp.quantite }} {{ 'SUPPLIERS.UNITS' | translate }}</strong>
+        <ng-container *ngIf="!loadingAchats">
+          <gl-section-header *ngIf="achatsActifs.length" [title]="('SUPPLIERS.ACTIVE_PURCHASES' | translate) + ' (' + achatsActifs.length + ')'"></gl-section-header>
+
+          <article class="gl-list-card" *ngFor="let a of achatsActifs; trackBy: trackById">
+            <div class="glc-body glc-body--button" role="button" tabindex="0"
+              [attr.aria-expanded]="achatExpandiId === a.id"
+              (click)="toggleAchat(a.id)" (keydown.enter)="toggleAchat(a.id)">
+              <div class="glc-head">
+                <div class="glc-icon glc-icon--info"><ion-icon name="bag-outline"></ion-icon></div>
+                <div class="glc-info">
+                  <p class="glc-title">{{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }}</p>
+                  <p class="glc-sub">{{ formatDate(a.dateAchat || a.dateCreation) }}</p>
+                </div>
+                <div class="glc-pills">
+                  <span class="gl-pill" [class.gl-pill--warn]="(a.montantRestant || 0) > 0" [class.gl-pill--ok]="!((a.montantRestant || 0) > 0)">
+                    {{ (a.montantRestant || 0) > 0 ? money(a.montantRestant) : ('SUPPLIERS.SETTLED' | translate) }}
+                  </span>
+                  <ion-icon class="glc-chevron" [name]="achatExpandiId === a.id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+                </div>
               </div>
-            </ion-card-content>
-          </ion-card>
+              <div class="glc-kv">
+                <div class="glc-kv__item"><span>{{ 'COMMON.TOTAL' | translate }}</span><strong>{{ money(a.montantTotal) }}</strong></div>
+                <div class="glc-kv__item"><span>{{ 'SUPPLIERS.PAID' | translate }}</span><strong class="is-ok">{{ money(a.montantPaye) }}</strong></div>
+                <div class="glc-kv__item" *ngIf="(a.montantRestant || 0) > 0"><span>{{ 'SUPPLIERS.REMAINING' | translate }}</span><strong class="is-bad">{{ money(a.montantRestant) }}</strong></div>
+              </div>
+            </div>
+
+            <ng-container *ngIf="achatExpandiId === a.id">
+              <div class="glc-lines">
+                <div class="glc-line" *ngFor="let l of (a.lignes || []); trackBy: trackById">
+                  <ion-icon name="cube-outline"></ion-icon>
+                  <div class="glc-line__info">
+                    <span class="glc-line__name">{{ l.produitNom || l.produit?.nom || '—' }}</span>
+                    <span class="glc-line__sub">{{ l.quantite }} x {{ money(l.prixAchatUnitaire) }}</span>
+                  </div>
+                  <strong class="glc-line__total">{{ money((l.quantite || 0) * (l.prixAchatUnitaire || 0)) }}</strong>
+                </div>
+                <p class="glc-line__empty" *ngIf="!(a.lignes || []).length">{{ 'SUPPLIERS.NO_LINES' | translate }}</p>
+              </div>
+              <div class="glc-actions">
+                <button type="button" class="glc-action glc-action--bad glc-action--full" (click)="annulerAchat(a)">
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                  <span>{{ 'SUPPLIERS.CANCEL_PURCHASE' | translate }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </article>
+
+          <ng-container *ngIf="achatsAnnules.length">
+            <gl-section-header [title]="('SUPPLIERS.CANCELLED_PURCHASES' | translate) + ' (' + achatsAnnules.length + ')'"></gl-section-header>
+            <article class="gl-list-card gl-list-card--muted" *ngFor="let a of achatsAnnules; trackBy: trackById">
+              <div class="glc-body">
+                <div class="glc-head">
+                  <div class="glc-icon"><ion-icon name="ban-outline"></ion-icon></div>
+                  <div class="glc-info">
+                    <p class="glc-title glc-title--strike">{{ 'SUPPLIERS.PURCHASE_NUM' | translate }} #{{ a.id }} — {{ formatDate(a.dateAchat || a.dateCreation) }}</p>
+                    <p class="glc-sub">{{ 'COMMON.TOTAL' | translate }}: {{ money(a.montantTotal) }}</p>
+                  </div>
+                  <span class="gl-pill gl-pill--neutral">{{ 'SUPPLIERS.CANCELLED' | translate }}</span>
+                </div>
+              </div>
+            </article>
+          </ng-container>
+
+          <gl-empty-state *ngIf="achats.length === 0" icon="bag-outline" [title]="'SUPPLIERS.EMPTY_PURCHASES' | translate"></gl-empty-state>
         </ng-container>
-        <div class="section-title" *ngIf="achats.length">
-          <ion-icon name="cart-outline"></ion-icon>
-          {{ 'SUPPLIERS.PURCHASE_HISTORY' | translate }} ({{ achats.length }})
-        </div>
-        <ion-card class="hist-card" *ngFor="let a of achats; trackBy: trackById">
-          <ion-card-content>
-            <div class="hist-row">
-              <span class="hist-date">{{ formatDate(a.dateAchat || a.dateCreation) }}</span>
-              <span class="hist-badge"
-                    [class.badge--paid]="a.statut === 'PAYE'"
-                    [class.badge--partial]="a.statut === 'EN_COURS'"
-                    [class.badge--cancelled]="a.statut === 'ANNULE'">
-                {{ a.statut === 'PAYE' ? ('SUPPLIERS.PAID_STATUS' | translate) : a.statut === 'EN_COURS' ? ('SUPPLIERS.ONGOING' | translate) : a.statut === 'ANNULE' ? ('SUPPLIERS.CANCELLED' | translate) : a.statut }}
-              </span>
-            </div>
-            <div class="hist-amounts">
-              <span>{{ 'COMMON.TOTAL' | translate }} : <strong>{{ money(a.montantTotal) }}</strong></span>
-              <span class="text-success">{{ 'SUPPLIERS.PAID' | translate }} : {{ money(a.montantPaye) }}</span>
-              <span class="text-danger" *ngIf="(a.montantRestant || 0) > 0">{{ 'SUPPLIERS.REMAINING' | translate }} : {{ money(a.montantRestant) }}</span>
-            </div>
-            <div class="hist-produits" *ngIf="(a.lignes || []).length">
-              <span *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produitNom || l.produit?.nom }} x{{ l.quantite }}</span>
-            </div>
-          </ion-card-content>
-        </ion-card>
-        <div class="section-title" *ngIf="paiements.length" style="margin-top:16px">
-          <ion-icon name="cash-outline"></ion-icon>
-          {{ 'SUPPLIERS.PAYMENT_HISTORY' | translate }} ({{ paiements.length }})
-        </div>
-        <ion-card class="hist-card" *ngFor="let p of paiements; trackBy: trackById">
-          <ion-card-content>
-            <div class="hist-row">
-              <span class="hist-date">{{ formatDate(p.datePaiement) }}</span>
-              <span class="hist-mode">{{ p.modePaiement }}</span>
-            </div>
-            <div class="hist-amounts">
-              <span class="text-success"><strong>{{ money(p.montant) }}</strong></span>
-              <span class="hist-ref" *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</span>
-            </div>
-            <div class="hist-ref" *ngIf="getPaiementAuteur(p)">Par : {{ getPaiementAuteur(p) }}</div>
-            <div style="margin-top:8px">
-              <ion-button fill="outline" size="small" color="primary" (click)="imprimerRecuPaiement(p)">
-                <ion-icon name="receipt-outline" slot="start"></ion-icon> {{ 'SUPPLIERS.RECEIPT' | translate }}
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
       </ng-container>
-      <div class="empty-v2" *ngIf="!loadingSituation && !situation">
-        <div class="empty-v2__icon"><ion-icon name="analytics-outline"></ion-icon></div>
-        <p class="empty-v2__title">{{ 'SUPPLIERS.NO_SITUATION' | translate }}</p>
-      </div>
     </ng-container>
-  </ng-container>
 
+    <!-- ══════════════ PAIEMENTS ══════════════ -->
+    <ng-container *ngIf="segment === 'paiements'">
+      <ng-container *ngIf="!selectedFournisseur">
+        <ng-container *ngTemplateOutlet="noSelectionTpl"></ng-container>
+      </ng-container>
+
+      <ng-container *ngIf="selectedFournisseur">
+        <ng-container *ngTemplateOutlet="selectionTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
+
+        <!-- Avance : action secondaire (le paiement est le bouton flottant) -->
+        <button type="button" class="gl-btn gl-btn--secondary" (click)="openAvance()">
+          <ion-icon name="wallet-outline"></ion-icon>
+          {{ 'SUPPLIERS.ADVANCE' | translate }}
+        </button>
+
+        <div class="sk-list" *ngIf="loadingPaiements">
+          <div class="sk-card" *ngFor="let i of [1,2,3]">
+            <div class="skeleton sk-avatar"></div>
+            <div class="sk-card-body">
+              <div class="skeleton sk-line sk-line--w80"></div>
+              <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+            </div>
+            <div class="skeleton sk-line sk-line--w30"></div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!loadingPaiements">
+          <gl-section-header [title]="'SUPPLIERS.PAYMENTS' | translate"></gl-section-header>
+          <article class="gl-list-card" *ngFor="let p of paiements; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-icon glc-icon--ok"><ion-icon name="cash-outline"></ion-icon></div>
+                <div class="glc-info">
+                  <p class="glc-amount">{{ money(p.montant) }}</p>
+                  <p class="glc-sub">{{ p.modePaiement }} · {{ formatDate(p.datePaiement) }}</p>
+                </div>
+              </div>
+              <div class="glc-meta">
+                <span class="glc-meta__item" *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</span>
+                <span class="glc-meta__item" *ngIf="getPaiementAuteur(p)">
+                  <ion-icon name="person-outline"></ion-icon> Par : {{ getPaiementAuteur(p) }}
+                </span>
+              </div>
+            </div>
+            <div class="glc-actions">
+              <button type="button" class="glc-action glc-action--link glc-action--full" (click)="imprimerRecuPaiement(p)">
+                <ion-icon name="receipt-outline"></ion-icon>
+                <span>{{ 'SUPPLIERS.RECEIPT' | translate }}</span>
+              </button>
+            </div>
+          </article>
+          <gl-empty-state *ngIf="paiements.length === 0" icon="cash-outline" [title]="'SUPPLIERS.EMPTY_PAYMENTS' | translate"></gl-empty-state>
+        </ng-container>
+
+        <div class="sk-list" *ngIf="loadingAvances">
+          <div class="sk-card" *ngFor="let i of [1,2,3]">
+            <div class="skeleton sk-avatar"></div>
+            <div class="sk-card-body">
+              <div class="skeleton sk-line sk-line--w80"></div>
+              <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+            </div>
+            <div class="skeleton sk-line sk-line--w30"></div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!loadingAvances">
+          <gl-section-header [title]="'SUPPLIERS.ADVANCES' | translate"></gl-section-header>
+          <article class="gl-list-card" *ngFor="let av of avances; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-icon glc-icon--warn"><ion-icon name="time-outline"></ion-icon></div>
+                <div class="glc-info">
+                  <p class="glc-amount">{{ money(av.montant) }}</p>
+                  <p class="glc-sub">{{ av.modePaiement }} · {{ formatDate(av.dateAvance) }}</p>
+                </div>
+              </div>
+              <div class="glc-meta">
+                <span class="glc-meta__item" *ngIf="av.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ av.reference }}</span>
+                <span class="glc-meta__item" *ngIf="getPayerLabel(av)">
+                  <ion-icon name="person-outline"></ion-icon> Par : {{ getPayerLabel(av) }}
+                </span>
+              </div>
+            </div>
+          </article>
+          <gl-empty-state *ngIf="avances.length === 0" icon="wallet-outline" [title]="'SUPPLIERS.EMPTY_ADVANCES' | translate"></gl-empty-state>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+
+    <!-- ══════════════ SITUATION ══════════════ -->
+    <ng-container *ngIf="segment === 'situation'">
+      <ng-container *ngIf="!selectedFournisseur">
+        <ng-container *ngTemplateOutlet="noSelectionTpl"></ng-container>
+      </ng-container>
+
+      <ng-container *ngIf="selectedFournisseur">
+        <ng-container *ngTemplateOutlet="selectionTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
+
+        <div class="sk-list" *ngIf="loadingSituation">
+          <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+            <div class="skeleton sk-avatar"></div>
+            <div class="sk-card-body">
+              <div class="skeleton sk-line sk-line--w80"></div>
+              <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+            </div>
+            <div class="skeleton sk-line sk-line--w30"></div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!loadingSituation && situation">
+          <div class="kpi-grid">
+            <gl-stat-card icon="cart-outline" [label]="'SUPPLIERS.TOTAL_PURCHASES' | translate" [value]="money(situation.totalAchats || 0)" variant="blue"></gl-stat-card>
+            <gl-stat-card icon="checkmark-done-outline" [label]="'SUPPLIERS.TOTAL_PAID' | translate" [value]="money(situation.totalPaiements || 0)" variant="green"></gl-stat-card>
+            <gl-stat-card icon="alert-circle-outline" [label]="'SUPPLIERS.BALANCE' | translate" [value]="money(situation.soldeRestant || situation.dette || 0)" variant="orange"></gl-stat-card>
+            <gl-stat-card icon="wallet-outline" [label]="'SUPPLIERS.ADVANCE_BALANCE' | translate" [value]="money(soldeAvance)" variant="slate"></gl-stat-card>
+          </div>
+
+          <article class="gl-list-card" *ngIf="situation.nbAchats">
+            <div class="glc-body glc-body--rows">
+              <div class="info-row">
+                <span>{{ 'SUPPLIERS.NB_PURCHASES' | translate }}</span>
+                <strong>{{ situation.nbAchats }}</strong>
+              </div>
+              <div class="info-row" *ngIf="situation.dernierAchat">
+                <span>{{ 'SUPPLIERS.LAST_PURCHASE' | translate }}</span>
+                <strong>{{ formatDate(situation.dernierAchat) }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <!-- Achats non payés (statut EN_COURS, non filtré par période) -->
+          <div class="sk-list" *ngIf="loadingAchatsNonPayes">
+            <div class="sk-card" *ngFor="let i of [1,2]">
+              <div class="skeleton sk-avatar"></div>
+              <div class="sk-card-body">
+                <div class="skeleton sk-line sk-line--w80"></div>
+                <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+              </div>
+              <div class="skeleton sk-line sk-line--w30"></div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!loadingAchatsNonPayes">
+            <gl-section-header *ngIf="achatsNonPayes.length" [title]="('SUPPLIERS.UNPAID_PURCHASES' | translate) + ' (' + achatsNonPayes.length + ')'"></gl-section-header>
+            <article class="gl-list-card" *ngFor="let a of achatsNonPayes; trackBy: trackById">
+              <div class="glc-body">
+                <div class="glc-head">
+                  <div class="glc-icon glc-icon--warn"><ion-icon name="alert-circle-outline"></ion-icon></div>
+                  <div class="glc-info">
+                    <p class="glc-title">{{ formatDate(a.dateAchat) }}</p>
+                  </div>
+                  <span class="gl-pill gl-pill--warn">{{ 'SUPPLIERS.ONGOING' | translate }}</span>
+                </div>
+                <div class="glc-kv">
+                  <div class="glc-kv__item"><span>{{ 'COMMON.TOTAL' | translate }}</span><strong>{{ money(a.montantTotal) }}</strong></div>
+                  <div class="glc-kv__item"><span>{{ 'SUPPLIERS.PAID' | translate }}</span><strong class="is-ok">{{ money(a.montantPaye) }}</strong></div>
+                  <div class="glc-kv__item"><span>{{ 'SUPPLIERS.REMAINING' | translate }}</span><strong class="is-bad">{{ money(a.montantRestant) }}</strong></div>
+                </div>
+                <div class="glc-tags" *ngIf="(a.lignes || []).length">
+                  <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produit?.nom || l.produitNom }} x{{ l.quantite }}</span>
+                </div>
+              </div>
+              <div class="glc-actions">
+                <button type="button" class="glc-action glc-action--warn glc-action--full" (click)="openPaiementPourAchat(a)">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  <span>{{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }}</span>
+                </button>
+              </div>
+            </article>
+            <gl-empty-state
+              *ngIf="achatsNonPayes.length === 0"
+              icon="checkmark-circle-outline"
+              [title]="'SUPPLIERS.NO_UNPAID_PURCHASES' | translate">
+            </gl-empty-state>
+          </ng-container>
+
+          <ng-container *ngIf="topProduits.length">
+            <gl-section-header [title]="'SUPPLIERS.TOP_PRODUCTS' | translate"></gl-section-header>
+            <article class="gl-list-card">
+              <div class="glc-body glc-body--rows">
+                <div class="info-row" *ngFor="let tp of topProduits; let i = index; trackBy: trackById">
+                  <span class="info-row__label">
+                    <span class="rank" [class.rank--first]="i === 0">{{ i + 1 }}</span>
+                    {{ tp.nom }}
+                  </span>
+                  <strong>{{ tp.quantite }} {{ 'SUPPLIERS.UNITS' | translate }}</strong>
+                </div>
+              </div>
+            </article>
+          </ng-container>
+
+          <gl-section-header *ngIf="achats.length" [title]="('SUPPLIERS.PURCHASE_HISTORY' | translate) + ' (' + achats.length + ')'"></gl-section-header>
+          <article class="gl-list-card" *ngFor="let a of achats; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-icon glc-icon--info"><ion-icon name="cart-outline"></ion-icon></div>
+                <div class="glc-info">
+                  <p class="glc-title">{{ formatDate(a.dateAchat || a.dateCreation) }}</p>
+                </div>
+                <span class="gl-pill"
+                  [class.gl-pill--ok]="a.statut === 'PAYE'"
+                  [class.gl-pill--warn]="a.statut === 'EN_COURS'"
+                  [class.gl-pill--bad]="a.statut === 'ANNULE'">
+                  {{ a.statut === 'PAYE' ? ('SUPPLIERS.PAID_STATUS' | translate) : a.statut === 'EN_COURS' ? ('SUPPLIERS.ONGOING' | translate) : a.statut === 'ANNULE' ? ('SUPPLIERS.CANCELLED' | translate) : a.statut }}
+                </span>
+              </div>
+              <div class="glc-kv">
+                <div class="glc-kv__item"><span>{{ 'COMMON.TOTAL' | translate }}</span><strong>{{ money(a.montantTotal) }}</strong></div>
+                <div class="glc-kv__item"><span>{{ 'SUPPLIERS.PAID' | translate }}</span><strong class="is-ok">{{ money(a.montantPaye) }}</strong></div>
+                <div class="glc-kv__item" *ngIf="(a.montantRestant || 0) > 0"><span>{{ 'SUPPLIERS.REMAINING' | translate }}</span><strong class="is-bad">{{ money(a.montantRestant) }}</strong></div>
+              </div>
+              <div class="glc-tags" *ngIf="(a.lignes || []).length">
+                <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produitNom || l.produit?.nom }} x{{ l.quantite }}</span>
+              </div>
+            </div>
+          </article>
+
+          <gl-section-header *ngIf="paiements.length" [title]="('SUPPLIERS.PAYMENT_HISTORY' | translate) + ' (' + paiements.length + ')'"></gl-section-header>
+          <article class="gl-list-card" *ngFor="let p of paiements; trackBy: trackById">
+            <div class="glc-body">
+              <div class="glc-head">
+                <div class="glc-icon glc-icon--ok"><ion-icon name="cash-outline"></ion-icon></div>
+                <div class="glc-info">
+                  <p class="glc-amount is-ok">{{ money(p.montant) }}</p>
+                  <p class="glc-sub">{{ formatDate(p.datePaiement) }}</p>
+                </div>
+                <span class="gl-pill gl-pill--info">{{ p.modePaiement }}</span>
+              </div>
+              <div class="glc-meta">
+                <span class="glc-meta__item" *ngIf="p.reference">{{ 'SUPPLIERS.REF' | translate }}: {{ p.reference }}</span>
+                <span class="glc-meta__item" *ngIf="getPaiementAuteur(p)">
+                  <ion-icon name="person-outline"></ion-icon> Par : {{ getPaiementAuteur(p) }}
+                </span>
+              </div>
+            </div>
+            <div class="glc-actions">
+              <button type="button" class="glc-action glc-action--link glc-action--full" (click)="imprimerRecuPaiement(p)">
+                <ion-icon name="receipt-outline"></ion-icon>
+                <span>{{ 'SUPPLIERS.RECEIPT' | translate }}</span>
+              </button>
+            </div>
+          </article>
+        </ng-container>
+
+        <gl-empty-state
+          *ngIf="!loadingSituation && !situation"
+          icon="analytics-outline"
+          [title]="'SUPPLIERS.NO_SITUATION' | translate">
+        </gl-empty-state>
+      </ng-container>
+    </ng-container>
+
+  </div>
 </ion-content>
 
-<!-- MODAL Fournisseur -->
-<ion-modal [isOpen]="showFournisseurModal" (didDismiss)="showFournisseurModal = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ fournisseurForm.id ? ('COMMON.EDIT' | translate) : ('SUPPLIERS.NEW' | translate) }} {{ 'SUPPLIERS.SUPPLIER' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showFournisseurModal = false"><ion-icon name="close-outline" slot="icon-only"></ion-icon></ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.NAME' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="fournisseurForm.nom" placeholder="Nom du fournisseur"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.CODE' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="fournisseurForm.code" placeholder="ex: FOUR-001"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.PHONE' | translate }}</ion-label>
-        <ion-input [(ngModel)]="fournisseurForm.telephone" type="tel"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">Email</ion-label>
-        <ion-input [(ngModel)]="fournisseurForm.email" type="email"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.ADDRESS' | translate }}</ion-label>
-        <ion-input [(ngModel)]="fournisseurForm.adresse"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.DESCRIPTION' | translate }}</ion-label>
-        <ion-textarea [(ngModel)]="fournisseurForm.description" rows="2"></ion-textarea>
-      </ion-item>
-      <ion-item>
-        <ion-label>{{ 'SUPPLIERS.ACTIVE' | translate }}</ion-label>
-        <ion-toggle [(ngModel)]="fournisseurForm.actif"></ion-toggle>
-      </ion-item>
-      <ion-button expand="block" color="primary" class="save-btn" (click)="saveFournisseur()">
-        <ion-icon name="save-outline" slot="start"></ion-icon>
+<!-- Boutons flottants étendus : action de création principale de chaque onglet -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'liste'">
+  <button type="button" class="gl-fab-extended" (click)="openNewFournisseur()">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    {{ 'SUPPLIERS.NEW' | translate }}
+  </button>
+</ion-fab>
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'achats' && selectedFournisseur">
+  <button type="button" class="gl-fab-extended" (click)="openAchat()">
+    <ion-icon name="bag-add-outline" aria-hidden="true"></ion-icon>
+    {{ 'SUPPLIERS.NEW_PURCHASE' | translate }}
+  </button>
+</ion-fab>
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'paiements' && selectedFournisseur">
+  <button type="button" class="gl-fab-extended" (click)="openPaiement()">
+    <ion-icon name="cash-outline" aria-hidden="true"></ion-icon>
+    {{ 'SUPPLIERS.PAYMENT' | translate }}
+  </button>
+</ion-fab>
+
+<!-- ══════════════ MODALE Fournisseur ══════════════ -->
+<div class="md-overlay" *ngIf="showFournisseurModal">
+  <div class="md-backdrop" (click)="showFournisseurModal = false"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--info"><ion-icon [name]="fournisseurForm.id ? 'create-outline' : 'business-outline'"></ion-icon></div>
+      <h2 class="md-title">{{ fournisseurForm.id ? ('COMMON.EDIT' | translate) : ('SUPPLIERS.NEW' | translate) }} {{ 'SUPPLIERS.SUPPLIER' | translate }}</h2>
+      <button type="button" class="md-close" (click)="showFournisseurModal = false" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="md-body">
+      <div class="md-fields">
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.NAME' | translate }} *</span>
+          <input [(ngModel)]="fournisseurForm.nom" placeholder="Nom du fournisseur" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.CODE' | translate }} *</span>
+          <input [(ngModel)]="fournisseurForm.code" placeholder="ex: FOUR-001" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.PHONE' | translate }}</span>
+          <input [(ngModel)]="fournisseurForm.telephone" type="tel" />
+        </label>
+        <label class="md-field">
+          <span>Email</span>
+          <input [(ngModel)]="fournisseurForm.email" type="email" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.ADDRESS' | translate }}</span>
+          <input [(ngModel)]="fournisseurForm.adresse" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.DESCRIPTION' | translate }}</span>
+          <textarea [(ngModel)]="fournisseurForm.description" rows="2"></textarea>
+        </label>
+        <div class="md-toggle-row">
+          <span>{{ 'SUPPLIERS.ACTIVE' | translate }}</span>
+          <ion-toggle [(ngModel)]="fournisseurForm.actif" [attr.aria-label]="'SUPPLIERS.ACTIVE' | translate"></ion-toggle>
+        </div>
+      </div>
+    </div>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showFournisseurModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveFournisseur()">
+        <ion-icon name="save-outline"></ion-icon>
         {{ 'COMMON.SAVE' | translate }}
-      </ion-button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      </button>
+    </div>
+  </div>
+</div>
 
-<!-- MODAL Achat -->
-<ion-modal [isOpen]="showAchatModal" (didDismiss)="showAchatModal = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="success">
-        <ion-title>{{ 'SUPPLIERS.NEW_PURCHASE' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showAchatModal = false"><ion-icon name="close-outline" slot="icon-only"></ion-icon></ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.PRODUCT' | translate }} *</ion-label>
-        <ion-select [(ngModel)]="achatForm.produitId" placeholder="Choisir un produit" interface="action-sheet">
-          <ion-select-option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.QUANTITY' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="achatForm.quantite" type="number" min="1"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.UNIT_PRICE' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="achatForm.prixAchatUnitaire" type="text" inputmode="numeric" appMontantInput></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.SALE_PRICE' | translate }}</ion-label>
-        <ion-input [(ngModel)]="achatForm.prixVente" type="text" inputmode="numeric" appMontantInput></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.AMOUNT_PAID' | translate }}</ion-label>
-        <ion-input [(ngModel)]="achatForm.montantPaye" type="text" inputmode="numeric" appMontantInput></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.COMMENT' | translate }}</ion-label>
-        <ion-textarea [(ngModel)]="achatForm.commentaire" rows="2"></ion-textarea>
-      </ion-item>
-      <ion-button expand="block" color="success" class="save-btn" (click)="saveAchat()">
-        <ion-icon name="bag-add-outline" slot="start"></ion-icon>
+<!-- ══════════════ MODALE Achat ══════════════ -->
+<div class="md-overlay" *ngIf="showAchatModal">
+  <div class="md-backdrop" (click)="showAchatModal = false"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--info"><ion-icon name="bag-add-outline"></ion-icon></div>
+      <h2 class="md-title">{{ 'SUPPLIERS.NEW_PURCHASE' | translate }}</h2>
+      <button type="button" class="md-close" (click)="showAchatModal = false" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="md-body">
+      <div class="md-fields">
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.PRODUCT' | translate }} *</span>
+          <select [(ngModel)]="achatForm.produitId">
+            <option [ngValue]="0" disabled>Choisir un produit</option>
+            <option *ngFor="let p of produits" [ngValue]="p.id">{{ p.nom }}</option>
+          </select>
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.QUANTITY' | translate }} *</span>
+          <input [(ngModel)]="achatForm.quantite" type="number" min="1" />
+        </label>
+        <div class="md-two">
+          <label class="md-field">
+            <span>{{ 'SUPPLIERS.UNIT_PRICE' | translate }} *</span>
+            <input [(ngModel)]="achatForm.prixAchatUnitaire" type="text" inputmode="numeric" appMontantInput />
+          </label>
+          <label class="md-field">
+            <span>{{ 'SUPPLIERS.SALE_PRICE' | translate }}</span>
+            <input [(ngModel)]="achatForm.prixVente" type="text" inputmode="numeric" appMontantInput />
+          </label>
+        </div>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.AMOUNT_PAID' | translate }}</span>
+          <input [(ngModel)]="achatForm.montantPaye" type="text" inputmode="numeric" appMontantInput />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.COMMENT' | translate }}</span>
+          <textarea [(ngModel)]="achatForm.commentaire" rows="2"></textarea>
+        </label>
+      </div>
+    </div>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showAchatModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveAchat()">
+        <ion-icon name="bag-add-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_PURCHASE' | translate }}
-      </ion-button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      </button>
+    </div>
+  </div>
+</div>
 
-<!-- MODAL Paiement -->
-<ion-modal [isOpen]="showPaiementModal" (didDismiss)="showPaiementModal = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="success">
-        <ion-title>{{ 'SUPPLIERS.PAYMENT' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showPaiementModal = false"><ion-icon name="close-outline" slot="icon-only"></ion-icon></ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div class="paiement-cible-note" *ngIf="paiementForm.achatCibleId">
-        <ion-icon name="pricetag-outline" color="warning"></ion-icon>
+<!-- ══════════════ MODALE Paiement ══════════════ -->
+<div class="md-overlay" *ngIf="showPaiementModal">
+  <div class="md-backdrop" (click)="showPaiementModal = false"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--ok"><ion-icon name="cash-outline"></ion-icon></div>
+      <h2 class="md-title">{{ 'SUPPLIERS.PAYMENT' | translate }}</h2>
+      <button type="button" class="md-close" (click)="showPaiementModal = false" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="md-body">
+      <div class="md-note md-note--warn" *ngIf="paiementForm.achatCibleId">
+        <ion-icon name="pricetag-outline"></ion-icon>
         <span>{{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }} #{{ paiementForm.achatCibleId }}</span>
       </div>
-      <div class="paiement-cible-note" *ngIf="getPayerLabel(paiementForm)">
-        <ion-icon name="person-outline" color="primary"></ion-icon>
+      <div class="md-note md-note--info" *ngIf="getPayerLabel(paiementForm)">
+        <ion-icon name="person-outline"></ion-icon>
         <span>Effectué par : {{ getPayerLabel(paiementForm) }}</span>
       </div>
-      <ion-item>
-        <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="paiementForm.montant" type="text" inputmode="numeric" appMontantInput></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.PAYMENT_MODE' | translate }}</ion-label>
-        <ion-select [(ngModel)]="paiementForm.modePaiement" interface="action-sheet">
-          <ion-select-option value="ESPECES">Espèces (Caisse)</ion-select-option>
-          <ion-select-option value="BANQUE">Banque</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item *ngIf="paiementForm.modePaiement === 'BANQUE'">
-        <ion-label position="stacked">Compte bancaire *</ion-label>
-        <ion-select [(ngModel)]="paiementForm.compteId" interface="action-sheet" placeholder="-- Choisir un compte --">
-          <ion-select-option *ngFor="let c of comptes" [value]="c.id">
-            {{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.REFERENCE' | translate }}</ion-label>
-        <ion-input [(ngModel)]="paiementForm.reference"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.OBSERVATION' | translate }}</ion-label>
-        <ion-textarea [(ngModel)]="paiementForm.observation" rows="2"></ion-textarea>
-      </ion-item>
-      <ion-button expand="block" color="success" class="save-btn" (click)="savePaiement()">
-        <ion-icon name="cash-outline" slot="start"></ion-icon>
+      <div class="md-fields">
+        <label class="md-field">
+          <span>{{ 'COMMON.AMOUNT' | translate }} *</span>
+          <input [(ngModel)]="paiementForm.montant" type="text" inputmode="numeric" appMontantInput />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.PAYMENT_MODE' | translate }}</span>
+          <select [(ngModel)]="paiementForm.modePaiement">
+            <option value="ESPECES">Espèces (Caisse)</option>
+            <option value="BANQUE">Banque</option>
+          </select>
+        </label>
+        <label class="md-field" *ngIf="paiementForm.modePaiement === 'BANQUE'">
+          <span>Compte bancaire *</span>
+          <select [(ngModel)]="paiementForm.compteId">
+            <option [ngValue]="undefined" disabled>-- Choisir un compte --</option>
+            <option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA</option>
+          </select>
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.REFERENCE' | translate }}</span>
+          <input [(ngModel)]="paiementForm.reference" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.OBSERVATION' | translate }}</span>
+          <textarea [(ngModel)]="paiementForm.observation" rows="2"></textarea>
+        </label>
+      </div>
+    </div>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showPaiementModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="savePaiement()">
+        <ion-icon name="cash-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_PAYMENT' | translate }}
-      </ion-button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      </button>
+    </div>
+  </div>
+</div>
 
-<!-- MODAL Avance -->
-<ion-modal [isOpen]="showAvanceModal" (didDismiss)="showAvanceModal = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="warning">
-        <ion-title>{{ 'SUPPLIERS.ADVANCE' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showAvanceModal = false"><ion-icon name="close-outline" slot="icon-only"></ion-icon></ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-item>
-        <ion-label position="stacked">{{ 'COMMON.AMOUNT' | translate }} *</ion-label>
-        <ion-input [(ngModel)]="avanceForm.montant" type="text" inputmode="numeric" appMontantInput></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">Source</ion-label>
-        <ion-select [(ngModel)]="avanceForm.sourceFinancement" interface="action-sheet">
-          <ion-select-option value="CAISSE">Caisse (Espèces)</ion-select-option>
-          <ion-select-option value="BANQUE">Banque</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item *ngIf="avanceForm.sourceFinancement === 'BANQUE'">
-        <ion-label position="stacked">Compte bancaire *</ion-label>
-        <ion-select [(ngModel)]="avanceForm.compteId" interface="action-sheet" placeholder="-- Choisir un compte --">
-          <ion-select-option *ngFor="let c of comptes" [value]="c.id">
-            {{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.REFERENCE' | translate }}</ion-label>
-        <ion-input [(ngModel)]="avanceForm.reference"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="stacked">{{ 'SUPPLIERS.OBSERVATION' | translate }}</ion-label>
-        <ion-textarea [(ngModel)]="avanceForm.observation" rows="2"></ion-textarea>
-      </ion-item>
-      <ion-button expand="block" color="warning" class="save-btn" (click)="saveAvance()">
-        <ion-icon name="wallet-outline" slot="start"></ion-icon>
+<!-- ══════════════ MODALE Avance ══════════════ -->
+<div class="md-overlay" *ngIf="showAvanceModal">
+  <div class="md-backdrop" (click)="showAvanceModal = false"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--warn"><ion-icon name="wallet-outline"></ion-icon></div>
+      <h2 class="md-title">{{ 'SUPPLIERS.ADVANCE' | translate }}</h2>
+      <button type="button" class="md-close" (click)="showAvanceModal = false" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="md-body">
+      <div class="md-fields">
+        <label class="md-field">
+          <span>{{ 'COMMON.AMOUNT' | translate }} *</span>
+          <input [(ngModel)]="avanceForm.montant" type="text" inputmode="numeric" appMontantInput />
+        </label>
+        <label class="md-field">
+          <span>Source</span>
+          <select [(ngModel)]="avanceForm.sourceFinancement">
+            <option value="CAISSE">Caisse (Espèces)</option>
+            <option value="BANQUE">Banque</option>
+          </select>
+        </label>
+        <label class="md-field" *ngIf="avanceForm.sourceFinancement === 'BANQUE'">
+          <span>Compte bancaire *</span>
+          <select [(ngModel)]="avanceForm.compteId">
+            <option [ngValue]="undefined" disabled>-- Choisir un compte --</option>
+            <option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — {{ c.soldeActuel | number:'1.0-0' }} FCFA</option>
+          </select>
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.REFERENCE' | translate }}</span>
+          <input [(ngModel)]="avanceForm.reference" />
+        </label>
+        <label class="md-field">
+          <span>{{ 'SUPPLIERS.OBSERVATION' | translate }}</span>
+          <textarea [(ngModel)]="avanceForm.observation" rows="2"></textarea>
+        </label>
+      </div>
+    </div>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showAvanceModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="saveAvance()">
+        <ion-icon name="wallet-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_ADVANCE' | translate }}
-      </ion-button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      </button>
+    </div>
+  </div>
+</div>

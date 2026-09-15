@@ -1,103 +1,411 @@
-// ══════════════════════════════════════════════════
-//  ONGLET RÉSUMÉ — cartes par période
-// ══════════════════════════════════════════════════
-.mm-resume {
-  padding: 12px 16px;
+// ══════════════════════════════════════════════════════════════════
+//  MOBILE MONEY — design commun Ionic ↔ React Native
+//  Couleurs 100 % tokens --gl-* (clair, sombre Auto, sombre forcé) :
+//  l'ancien bloc @media (prefers-color-scheme: dark) local est supprimé.
+//  Héros = copie de credits.page.scss ; cartes / pastilles = copies de
+//  commandes.page.scss et credits.page.scss. Aucun émoji comme icône.
+// ══════════════════════════════════════════════════════════════════
+
+.mm-content {
+  --padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
-.mm-resume-card {
-  background: var(--ion-card-background, #fff);
-  border: 1px solid #e8eef8;
-  border-radius: 16px;
-  padding: 14px 16px 16px;
-  box-shadow: 0 2px 12px rgba(8, 22, 72, 0.07);
-  margin-bottom: 12px;
+.filter-zone { margin: 0; }
+.sk-list--flush { padding: 0; }
+
+.tab-segment-wrap {
+  padding: 12px 16px;
+  ion-segment { max-width: 480px; margin: 0 auto; }
 }
+
+// Pastilles de couleur des opérateurs (repère visuel, remplace les émojis)
+%op-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.op-dot, .hero-dot {
+  @extend %op-dot;
+  &--orange { background: var(--gl-warn); }
+  &--moov   { background: var(--gl-link); }
+  &--wave   { background: var(--gl-ok); }
+}
+// Sur le héros (fond bleu dans les 2 thèmes) : teintes claires lisibles
+.hero-dot {
+  margin-bottom: 6px;
+  &--orange { background: #fcd34d; }
+  &--moov   { background: #93c5fd; }
+  &--wave   { background: #6ee7b7; }
+}
+
+// ═══════════════ BANDEAU HÉROS (bleu dans les 2 thèmes) ═══════════════
+.mm-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 16px 16px;
+  background: var(--gl-hero);
+}
+
+.hero-bg-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  &::before {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    top: -80px;
+    right: -60px;
+  }
+}
+
+.hero-main { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-amount {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.hero-sub {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-minis {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hero-mini {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--gl-glass-line);
+  background: var(--gl-glass);
+}
+
+.hmc-label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hmc-val {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+// ═══════════════ FILTRES ═══════════════
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  .fz-chips { flex: 1; min-width: 0; }
+}
+
+.chip-row__icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--gl-muted);
+}
+
+// ═══════════════ SOCLE ═══════════════
+.gl-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-sizing: border-box;
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--blue { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+// ═══════════════ LISTE ═══════════════
+.mm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+
+  ion-icon { font-size: 13px; }
+}
+
+.glc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: 45%;
+}
+
+.glc-amount {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  margin: 0;
+}
+
+.glc-date {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+// ═══════════════ ONGLET RÉSUMÉ ═══════════════
+.mm-resume-card { padding: 14px 16px 16px; }
 
 .mm-resume-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.mm-resume-icon { font-size: 1rem; }
+.mm-resume-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  ion-icon { font-size: 16px; }
+}
 
 .mm-resume-title {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--ion-text-color, #0f172a);
+  color: var(--gl-text);
 }
 
 .mm-resume-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
 .mm-resume-op {
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--gl-border);
+  background: var(--gl-surface-2);
   text-align: center;
-  padding: 8px 4px;
-  border-radius: 10px;
-  background: rgba(148, 163, 184, 0.08);
 }
 
 .mm-resume-op-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin: 0;
-  font-size: 0.62rem;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--ion-color-medium, #64748b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gl-muted);
   white-space: nowrap;
 }
 
 .mm-resume-op-value {
-  margin: 3px 0 0;
-  font-size: 0.82rem;
+  margin: 4px 0 0;
+  font-size: 13px;
   font-weight: 800;
-  color: var(--ion-text-color, #0f172a);
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .mm-resume-op-count {
-  margin: 1px 0 0;
-  font-size: 0.6rem;
-  color: var(--ion-color-medium, #94a3b8);
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gl-muted);
 }
-
-.mm-resume-op--orange { border-bottom: 2px solid #f59e0b; }
-.mm-resume-op--moov   { border-bottom: 2px solid #3b82f6; }
-.mm-resume-op--wave   { border-bottom: 2px solid #8b5cf6; }
 
 .mm-resume-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #eef2f7;
-  margin-top: 10px;
-  padding-top: 10px;
-  font-size: 0.78rem;
-  color: var(--ion-color-medium, #64748b);
+  gap: 12px;
+  border-top: 1px solid var(--gl-border);
+  margin-top: 12px;
+  padding-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
 
   strong {
-    font-size: 1.05rem;
+    font-size: 17px;
     font-weight: 800;
-    color: #0e9f6e;
+    color: var(--gl-ok);
+    font-variant-numeric: tabular-nums;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .mm-resume-card {
-    border-color: #374151;
+// ═══════════════ ONGLET TÉLÉCHARGEMENT ═══════════════
+.mm-export-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--gl-border);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:last-child { border-bottom: none; }
+  &:active { background: var(--gl-surface-2); }
+}
+
+.mm-export-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mm-export-title { font-size: 15px; font-weight: 700; color: var(--gl-text); }
+.mm-export-sub { font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+.mm-export-amount { font-size: 15px; font-weight: 800; color: var(--gl-text); font-variant-numeric: tabular-nums; }
+
+// ── Petits téléphones ──
+@media (max-width: 360px) {
+  .hero-amount { font-size: 26px; }
+  .hero-mini { padding: 8px; }
+  .hmc-val { font-size: 13px; }
+}
+
+// ── Tablette (720px+) ──
+@media (min-width: 720px) {
+  .mm-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: start;
   }
-  .mm-resume-op {
-    background: rgba(255, 255, 255, 0.04);
-  }
-  .mm-resume-total {
-    border-top-color: #374151;
-  }
-  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
-  // global.scss : sans ce correctif la page reste gris clair même écran sombre.
-  ion-content {
-    --background: var(--ion-background-color, #111827);
-  }
+  .hero-amount { font-size: 36px; }
 }

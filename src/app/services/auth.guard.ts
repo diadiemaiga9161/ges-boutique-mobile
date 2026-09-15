@@ -26,14 +26,14 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     // Vérifier les rôles explicites définis sur la route
     const roles = route.data['roles'] as string[] | undefined;
     if (roles?.length && !roles.some(role => this.auth.hasRole(role))) {
-      this.router.navigateByUrl('/tabs/sales');
+      this.router.navigateByUrl('/tabs/home');
       return false;
     }
 
     // Page super admin (flag super_admin en base, pas un rôle séparé — voir
     // AuthService.isSuperAdmin) : bloque même un ADMIN classique.
     if (route.data['superAdminOnly'] && !this.auth.isSuperAdmin()) {
-      this.router.navigateByUrl('/tabs/sales');
+      this.router.navigateByUrl('/tabs/home');
       return false;
     }
 
@@ -42,7 +42,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       const path = route.routeConfig?.path || '';
       const isAdminRoute = this.ADMIN_ONLY_PATHS.some(p => path.includes(p));
       if (isAdminRoute) {
-        this.router.navigateByUrl('/tabs/sales');
+        this.router.navigateByUrl('/tabs/home');
         return false;
       }
     }

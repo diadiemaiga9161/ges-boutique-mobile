@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Language, LanguageService, LANGUAGES } from '../../services/language.service';
 
@@ -14,7 +14,6 @@ export class LanguePage {
 
   constructor(
     public langService: LanguageService,
-    private navCtrl: NavController,
     private toastCtrl: ToastController,
     private translate: TranslateService
   ) {}
@@ -34,9 +33,5 @@ export class LanguePage {
       color: 'success'
     });
     await toast.present();
-  }
-
-  goBack(): void {
-    this.navCtrl.back();
   }
 }

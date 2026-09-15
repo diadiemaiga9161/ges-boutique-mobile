@@ -1,0 +1,78 @@
+// Tuile KPI — design commun Ionic ↔ React Native.
+// Fond/bordure/texte 100 % tokens --gl-* (clair, sombre Auto, sombre forcé).
+// Plus de liseré de couleur en haut : il disparaissait en sombre ; la couleur
+// sémantique est portée uniquement par la pastille d'icône.
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.gl-stat-card {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--gl-card-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.gl-stat-card--tappable {
+  cursor: pointer;
+  transition: transform 0.12s;
+
+  &:active { transform: scale(0.97); }
+}
+
+.gl-stat-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+
+  ion-icon { font-size: 18px; }
+}
+
+.gl-stat-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+.gl-stat-card__value {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.gl-stat-card__sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+}
+
+// Pastille d'icône : fond *-soft + icône couleur sémantique
+.gl-stat-card--blue   .gl-stat-card__icon { background: var(--gl-blue-soft); ion-icon { color: var(--gl-link); } }
+.gl-stat-card--green  .gl-stat-card__icon { background: var(--gl-ok-soft);   ion-icon { color: var(--gl-ok); } }
+.gl-stat-card--orange .gl-stat-card__icon { background: var(--gl-warn-soft); ion-icon { color: var(--gl-warn); } }
+.gl-stat-card--red    .gl-stat-card__icon { background: var(--gl-bad-soft);  ion-icon { color: var(--gl-bad); } }
+// Variante neutre (ex. "Ventes du jour")
+.gl-stat-card--slate  .gl-stat-card__icon { background: var(--gl-surface-2); box-shadow: inset 0 0 0 1px var(--gl-border); ion-icon { color: var(--gl-text-2); } }

@@ -1,5 +1,5 @@
 <ion-header [translucent]="true">
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
@@ -9,166 +9,142 @@
 
 <ion-content [fullscreen]="true" class="ressources-content">
 
-  <!-- ===== HERO CARD ===== -->
-  <div class="hero-wrapper">
-    <div class="hero-card">
-      <div class="hero-logo-ring">
-        <img src="assets/icon/favicon.png" alt="Ges Lafia" class="hero-logo" />
-      </div>
-      <h1 class="hero-app-name">Ges Lafia</h1>
-      <p class="hero-subtitle">{{ 'RESSOURCES.SOUS_TITRE' | translate }}</p>
-      <ion-badge class="hero-badge">{{ 'RESSOURCES.VERSION_BADGE' | translate }}</ion-badge>
+  <!-- ===== BANDEAU HÉROS (≡ ResourcesScreen RN) ===== -->
+  <div class="rs-hero">
+    <div class="rs-hero__deco rs-hero__deco--1"></div>
+    <div class="rs-hero__deco rs-hero__deco--2"></div>
+    <div class="rs-logo">
+      <img src="assets/icon/favicon.png" alt="Ges Lafia" class="rs-logo__img" />
     </div>
+    <h1 class="rs-hero__name">Ges Lafia</h1>
+    <p class="rs-hero__sub">{{ 'RESSOURCES.SOUS_TITRE' | translate }}</p>
+    <span class="rs-hero__badge">{{ 'RESSOURCES.VERSION_BADGE' | translate }}</span>
   </div>
 
-  <!-- ===== SECTION FONCTIONNALITES ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">
-      <ion-icon name="grid-outline"></ion-icon>
-      {{ 'RESSOURCES.FONCTIONNALITES' | translate }}
-    </h2>
+  <div class="rs-body">
 
-    <ion-grid class="feat-grid">
-      <ion-row>
-        <ion-col size="6" *ngFor="let f of fonctionnalites">
-          <ion-card class="feat-card" button (click)="null">
-            <ion-card-content class="feat-card-content">
-              <div class="feat-icon-wrap" [style.background]="f.couleur + '1a'">
-                <ion-icon [name]="f.icon" [style.color]="f.couleur" class="feat-icon"></ion-icon>
-              </div>
-              <h3 class="feat-title">{{ f.titreKey | translate }}</h3>
-              <p class="feat-desc">{{ f.descKey | translate }}</p>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </div>
-
-  <!-- ===== SECTION CONTACT ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">
-      <ion-icon name="call-outline"></ion-icon>
-      {{ 'RESSOURCES.CONTACT' | translate }}
-    </h2>
-
-    <ion-list class="contact-list" lines="none">
-      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://wa.me/22353417919')">
-        <div class="contact-icon-wrap contact-icon-wa" slot="start">
-          <ion-icon name="logo-whatsapp"></ion-icon>
+    <!-- ===== FONCTIONNALITÉS ===== -->
+    <section class="rs-section">
+      <p class="rs-eyebrow">{{ 'RESSOURCES.FONCTIONNALITES' | translate }}</p>
+      <div class="rs-grid">
+        <div class="rs-feat" *ngFor="let f of fonctionnalites">
+          <div class="rs-feat__icon"><ion-icon [name]="f.icon"></ion-icon></div>
+          <h3 class="rs-feat__title">{{ f.titreKey | translate }}</h3>
+          <p class="rs-feat__desc">{{ f.descKey | translate }}</p>
         </div>
-        <ion-label>
-          <p class="contact-label">{{ 'RESSOURCES.WHATSAPP' | translate }}</p>
-          <p class="contact-value">+223 53 41 79 19</p>
-        </ion-label>
-        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
-      </ion-item>
+      </div>
+    </section>
 
-      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
-        <div class="contact-icon-wrap contact-icon-mail" slot="start">
-          <ion-icon name="mail-outline"></ion-icon>
+    <!-- ===== CONTACT ===== -->
+    <section class="rs-section">
+      <p class="rs-eyebrow">{{ 'RESSOURCES.CONTACT' | translate }}</p>
+      <div class="rs-card">
+        <button type="button" class="rs-row rs-row--link" (click)="ouvrirLien('https://wa.me/22353417919')">
+          <div class="rs-row__icon rs-row__icon--ok"><ion-icon name="logo-whatsapp"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">{{ 'RESSOURCES.WHATSAPP' | translate }}</p>
+            <p class="rs-row__value">+223 53 41 79 19</p>
+          </div>
+          <ion-icon name="open-outline" class="rs-row__end"></ion-icon>
+        </button>
+
+        <button type="button" class="rs-row rs-row--link" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
+          <div class="rs-row__icon"><ion-icon name="mail-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">{{ 'RESSOURCES.EMAIL' | translate }}</p>
+            <p class="rs-row__value">doumaiga3&#64;gmail.com</p>
+          </div>
+          <ion-icon name="open-outline" class="rs-row__end"></ion-icon>
+        </button>
+
+        <button type="button" class="rs-row rs-row--link" (click)="ouvrirLien('https://mg-consulting.site/')">
+          <div class="rs-row__icon"><ion-icon name="globe-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Notre site web</p>
+            <p class="rs-row__value">mg-consulting.site</p>
+          </div>
+          <ion-icon name="open-outline" class="rs-row__end"></ion-icon>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== À PROPOS ===== -->
+    <section class="rs-section">
+      <p class="rs-eyebrow">{{ 'RESSOURCES.A_PROPOS' | translate }}</p>
+      <div class="rs-card">
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="code-slash-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Version</p>
+            <p class="rs-row__value">{{ version }}</p>
+          </div>
         </div>
-        <ion-label>
-          <p class="contact-label">{{ 'RESSOURCES.EMAIL' | translate }}</p>
-          <p class="contact-value">doumaiga3@gmail.com</p>
-        </ion-label>
-        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
-      </ion-item>
 
-      <ion-item class="contact-item" button detail="false" (click)="ouvrirLien('https://diadiemaiga9161.github.io/Portfolio-Maiga-/')">
-        <div class="contact-icon-wrap contact-icon-web" slot="start">
-          <ion-icon name="globe-outline"></ion-icon>
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="business-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">{{ 'RESSOURCES.DEVELOPPEUR' | translate }}</p>
+            <p class="rs-row__value">Maïga Consulting</p>
+          </div>
         </div>
-        <ion-label>
-          <p class="contact-label">Amadou Maiga CEO</p>
-          <p class="contact-value">diadiemaiga9161.github.io</p>
-        </ion-label>
-        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
-      </ion-item>
-    </ion-list>
-  </div>
 
-  <!-- ===== SECTION A PROPOS ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">
-      <ion-icon name="information-circle-outline"></ion-icon>
-      {{ 'RESSOURCES.A_PROPOS' | translate }}
-    </h2>
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="person-circle-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Fondateur &amp; CEO</p>
+            <p class="rs-row__value">Amadou Maiga</p>
+          </div>
+        </div>
 
-    <ion-list class="about-list" lines="none">
-      <ion-item class="about-item">
-        <ion-icon name="code-slash-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">Version</p>
-          <p class="about-value">{{ version }}</p>
-        </ion-label>
-      </ion-item>
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="bulb-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Vision</p>
+            <p class="rs-row__value">Digitaliser la gestion des boutiques en Afrique avec des outils simples, puissants et accessibles offline</p>
+          </div>
+        </div>
 
-      <ion-item class="about-item">
-        <ion-icon name="business-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">{{ 'RESSOURCES.DEVELOPPEUR' | translate }}</p>
-          <p class="about-value">Maïga Consulting</p>
-        </ion-label>
-      </ion-item>
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="trending-up-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Secteur</p>
+            <p class="rs-row__value">FinTech / Commerce</p>
+          </div>
+        </div>
 
-      <ion-item class="about-item">
-        <ion-icon name="person-circle-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">Fondateur &amp; CEO</p>
-          <p class="about-value">Amadou Maiga</p>
-        </ion-label>
-      </ion-item>
+        <button type="button" class="rs-row rs-row--link" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="mail-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Contact</p>
+            <p class="rs-row__value">doumaiga3&#64;gmail.com</p>
+          </div>
+          <ion-icon name="open-outline" class="rs-row__end"></ion-icon>
+        </button>
 
-      <ion-item class="about-item">
-        <ion-icon name="bulb-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label class="ion-text-wrap">
-          <p class="about-label">Vision</p>
-          <p class="about-value">Digitaliser la gestion des boutiques en Afrique avec des outils simples, puissants et accessibles offline</p>
-        </ion-label>
-      </ion-item>
+        <button type="button" class="rs-row rs-row--link" (click)="ouvrirLien('https://mg-consulting.site/')">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="globe-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Notre site web</p>
+            <p class="rs-row__value">mg-consulting.site</p>
+          </div>
+          <ion-icon name="open-outline" class="rs-row__end"></ion-icon>
+        </button>
 
-      <ion-item class="about-item">
-        <ion-icon name="trending-up-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">Secteur</p>
-          <p class="about-value">FinTech / Commerce</p>
-        </ion-label>
-      </ion-item>
+        <div class="rs-row">
+          <div class="rs-row__icon rs-row__icon--neutral"><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+          <div class="rs-row__text">
+            <p class="rs-row__label">Copyright</p>
+            <p class="rs-row__value">© 2024-2026 Maïga Consulting. Tous droits réservés.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-
-      <ion-item class="about-item" button detail="false" (click)="ouvrirLien('mailto:doumaiga3@gmail.com')">
-        <ion-icon name="mail-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">Contact</p>
-          <p class="about-value">doumaiga3@gmail.com</p>
-        </ion-label>
-        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
-      </ion-item>
-
-      <ion-item class="about-item" button detail="false" (click)="ouvrirLien('https://diadiemaiga9161.github.io/Portfolio-Maiga-/')">
-        <ion-icon name="globe-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label class="ion-text-wrap">
-          <p class="about-label">Site — Amadou Maiga CEO</p>
-          <p class="about-value">diadiemaiga9161.github.io/Portfolio-Maiga-/</p>
-        </ion-label>
-        <ion-icon name="open-outline" slot="end" class="contact-arrow"></ion-icon>
-      </ion-item>
-
-      <ion-item class="about-item">
-        <ion-icon name="shield-checkmark-outline" slot="start" class="about-icon"></ion-icon>
-        <ion-label>
-          <p class="about-label">Copyright</p>
-          <p class="about-value">© 2024-2026 Maïga Consulting. Tous droits réservés.</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
-  </div>
-
-  <!-- Bas de page -->
-  <div class="page-footer">
-    <p>Ges Lafia · v{{ version }}</p>
-    <p class="footer-sub">Maïga Consulting · Amadou Maiga CEO</p>
+    <!-- Bas de page -->
+    <div class="rs-footer">
+      <p>Ges Lafia · v{{ version }}</p>
+      <p class="rs-footer__sub">Maïga Consulting · Amadou Maiga CEO</p>
+    </div>
   </div>
 
 </ion-content>

@@ -1,67 +1,328 @@
-// ── Scan + Recherche ──────────────────────────────
-.search-scan-row {
+// Inventaire — design commun Ionic ↔ React Native.
+// Couleurs 100 % tokens --gl-* : l'ancien bloc @media (prefers-color-scheme: dark)
+// local (inopérant en sombre forcé) est remplacé par ces variables.
+// gl-list-card / gl-pill / gl-field / gl-btn : classes locales identiques sur
+// Sorties, Commandes et Fournisseurs (pas encore de composant partagé).
+
+// -------- KPI --------
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-zone { margin: 0; }
+
+.fz-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+// -------- Carte formulaire (onglet Mouvement) --------
+.gl-form-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 14px;
+}
 
-  .search-scan-input { flex: 1; }
+// -------- Champ (libellé au-dessus, input 48, radius 12) --------
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  position: relative;
 
-  .scan-btn {
-    --border-radius: 12px;
-    height: 54px;
-    width: 54px;
-    flex-shrink: 0;
-    margin-top: 4px;
-    ion-icon { font-size: 1.4rem; }
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 
+.gl-input,
+.gl-date {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
 
-.form-panel {
-  display: grid;
-  gap: 12px;
+// flex:1 uniquement dans une rangée (.gl-field__row) : directement dans .gl-field (colonne),
+// sa base à 0 écrasait la hauteur des champs Quantité / Motif à une fine barre.
+.gl-field__row > .gl-input { flex: 1 1 auto; }
 
-  ion-input[fill="outline"] ion-icon[slot="start"] {
-    color: #1a56db;
-    margin-inline-end: 8px;
-    font-size: 1.05rem;
+.gl-input {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+
+  ion-icon { font-size: 18px; color: var(--gl-muted); flex-shrink: 0; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
   }
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.gl-date {
+  padding: 0 12px;
+  color-scheme: var(--gl-color-scheme);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+
+  &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.gl-icon-btn {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--gl-action);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  ion-icon { font-size: 22px; }
+  &:active { background: var(--gl-action-press); }
+}
+
+.gl-dropdown {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  box-shadow: var(--gl-card-shadow);
+  max-height: 220px;
+  overflow-y: auto;
+
+  &__item {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gl-border);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gl-text-2);
+    cursor: pointer;
+
+    strong { color: var(--gl-text); font-weight: 700; }
+    &:last-child { border-bottom: none; }
+    &:active { background: var(--gl-blue-soft); }
+  }
+}
+
+.gl-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--gl-ok-soft);
+  color: var(--gl-ok);
+  font-size: 13px;
+  font-weight: 600;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  strong { font-weight: 700; }
+}
+
+// -------- Boutons --------
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// -------- Carte de liste --------
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+gl-stock-badge { flex-shrink: 0; max-width: 55%; }
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+}
+
+.glc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.glc-amount {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+
+  &--ok  { color: var(--gl-ok); }
+  &--bad { color: var(--gl-bad); }
+}
+
+.glc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+
+    ion-icon { font-size: 14px; }
+  }
+}
+
+.glc-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-text-2);
+  margin: 0;
+}
+
+// -------- Pastille de statut --------
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
 }
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  .form-panel {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 720px;
-    margin: 0 auto;
-  }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .form-panel {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 1000px;
-  }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  .metric-value / .card-title / .dropdown-item sont des classes globales
-//  dont le fond du conteneur (.metric-card/.mobile-card/.dropdown-list)
-//  passe déjà en sombre via global.scss, mais dont le TEXTE reste codé en
-//  dur en couleur foncée -> illisible sur fond sombre. Corrigé ici, portée
-//  limitée à cette page grâce à l'encapsulation Angular.
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .metric-value,
-  .card-title {
-    color: #f1f5f9;
-  }
-
-  .dropdown-item {
-    color: #e5e7eb;
-    border-bottom-color: #374151;
-    &:hover, &:active { background: #263244; color: #93c5fd; }
-  }
+  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gl-form-card { max-width: 720px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 }

@@ -1,117 +1,375 @@
-.form-card {
-  margin: 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(8,22,72,0.08);
-  padding: 16px;
+// ══════════════════════════════════════════════════════════════════
+//  BOUTIQUES PARTENAIRES (config. transferts) — design commun Ionic ↔
+//  React Native (ConfigTransfertsScreen.tsx). Couleurs 100 % tokens --gl-*
+//  (clair, sombre Auto, sombre forcé) : l'ancien bloc local
+//  @media (prefers-color-scheme: dark), inopérant en sombre forcé, est
+//  supprimé. gl-list-card / glc-* / gl-pill / gl-btn / md-* : copies locales
+//  des implémentations validées (Commandes) — pas encore de composant partagé.
+// ══════════════════════════════════════════════════════════════════
 
-  .form-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1a56db;
-    margin: 0 0 12px;
-  }
+// Contenu défilant : ≥ 96px en bas pour le bouton flottant étendu
+.ct-content {
+  --padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
-.form-item {
-  --border-radius: 10px;
-  --background: #f8faff;
-  --padding-start: 12px;
-  margin-bottom: 8px;
-  border-radius: 10px;
-}
+.sk-list { padding: 0; }
 
-.form-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
-.loading-wrap {
-  display: flex;
+// -------- Boutons --------
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  padding: 48px;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; flex-shrink: 0; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--gl-link);
+    border: 1.5px solid var(--gl-blue-line);
+    &:active { background: var(--gl-blue-soft); }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
 }
 
-.empty-state {
+// -------- Carte de liste --------
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+}
+
+.glc-body {
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 60px 24px;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
   gap: 12px;
-  color: #94a3b8;
-
-  ion-icon { font-size: 3rem; }
-  p { font-size: 0.9rem; margin: 0; }
 }
 
-.partenaires-list {
-  padding: 8px 0;
-}
-
-.partenaire-item {
-  --padding-start: 12px;
-  --inner-padding-end: 12px;
-}
-
-.partenaire-icon {
+.glc-icon {
   width: 40px;
   height: 40px;
   border-radius: 12px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 4px;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
 
-  ion-icon { font-size: 1.3rem; }
+  ion-icon { font-size: 20px; }
 
-  &--actif { background: #eff6ff; ion-icon { color: #1a56db; } }
-  &--inactif { background: #f1f5f9; ion-icon { color: #94a3b8; } }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-muted); }
 }
 
-.partenaire-url {
-  font-size: 0.75rem;
-  color: #94a3b8;
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
-.status-badge {
-  font-size: 10px;
-  margin-top: 4px;
+.glc-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+
+  &--url {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+
+    ion-icon { font-size: 14px; flex-shrink: 0; }
+    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+}
+
+// Pied de carte : actions écrites (icône + libellé)
+.glc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -1px;
+}
+
+.glc-action {
+  flex: 1 1 33%;
+  min-width: 96px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gl-border);
+  border-right: 1px solid var(--gl-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--gl-text-2);
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  &:active { background: var(--gl-surface-2); }
+
+  &--link { color: var(--gl-link); &:active { background: var(--gl-blue-soft); } }
+  &--bad  { color: var(--gl-bad);  &:active { background: var(--gl-bad-soft); } }
+}
+
+// -------- Pastille de statut --------
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MODALE CENTRÉE (design-premium : fixed + overlay + centrage)
+// ══════════════════════════════════════════════════════════════════
+.md-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.md-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 22, 72, 0.55);
+  animation: md-fade 0.18s ease;
+}
+
+.md-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(8, 22, 72, 0.28);
+  animation: md-zoom 0.2s ease;
+}
+
+@keyframes md-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes md-zoom { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.md-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--gl-border);
+  flex-shrink: 0;
+}
+
+.md-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon { font-size: 20px; }
+
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+.md-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-text);
+  margin: 0;
+}
+
+.md-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gl-text-2);
+  flex-shrink: 0;
+
+  ion-icon { font-size: 22px; }
+}
+
+.md-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.md-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  flex-shrink: 0;
+
+  .gl-btn { flex: 1; }
+}
+
+.md-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+
+  ion-icon { font-size: 14px; color: var(--gl-link); }
+}
+
+// ── Champs (libellé au-dessus, input 48, radius 12, bouton effacer) ──
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  > span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+}
+
+.md-input {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding-left: 12px;
+  background: var(--gl-surface);
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 12px 0 0;
+    border: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
+  }
+
+  &__clear {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--gl-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon { font-size: 20px; }
+  }
+}
+
+.md-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+
+  span { font-size: 15px; font-weight: 500; color: var(--gl-text); }
 }
 
 // ── Tablette (720px+) ─────────────────────────────
 @media (min-width: 720px) {
-  .form-card { margin: 20px; padding: 20px; border-radius: 20px; }
-  .form-card .form-title { font-size: 1.05rem; }
-
-  .partenaire-icon { width: 48px; height: 48px; ion-icon { font-size: 1.5rem; } }
-  .partenaire-url  { font-size: 0.82rem; }
-  .status-badge    { font-size: 11px; }
-}
-
-// ── Grand écran (1024px+) ─────────────────────────
-@media (min-width: 1024px) {
-  .form-card { max-width: 800px; margin: 24px auto; }
-}
-
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .form-card {
-    background: #1f2937;
-  }
-  .form-item {
-    --background: #172033;
-  }
-  .partenaire-icon {
-    &--actif   { background: rgba(26, 86, 219, 0.18); }
-    &--inactif { background: rgba(148, 163, 184, 0.12); }
-  }
-  // Le fond ion-content global (#f6f8fb) n'est pas repris en mode sombre par
-  // global.scss : sans ce correctif la page reste gris clair même écran sombre.
-  ion-content {
-    --background: var(--ion-background-color, #111827);
-  }
+  .page-pad.stack { max-width: 800px; margin-left: auto; margin-right: auto; }
 }

@@ -6,9 +6,10 @@ import { DepensesPageRoutingModule } from './depenses-routing.module';
 import { DepensesPage } from './depenses.page';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../directives/montant-input.directive';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, DepensesPageRoutingModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, IonicModule, DepensesPageRoutingModule, TranslateModule, MontantInputDirective, SharedComponentsModule],
   declarations: [DepensesPage]
 })
 export class DepensesPageModule {}

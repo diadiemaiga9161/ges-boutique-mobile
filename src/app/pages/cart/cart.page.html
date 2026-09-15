@@ -12,229 +12,255 @@
   </ion-toolbar>
 </ion-header>
 
+<!-- ══════════════════════════════════════════════════════════════════
+     NOUVELLE VENTE — design commun Ionic ↔ React Native (VenteScreen.tsx)
+     Ordre : recherche/scan → produits en cartes → lignes du panier →
+     paiement → barre collée en bas (total 30/800 + action « Valider »).
+     Toute la logique (panier, remises, fidélité, crédit, avance, scanner,
+     impression, hors ligne) reste dans cart.page.ts, inchangée.
+═══════════════════════════════════════════════════════════════════ -->
 <ion-content [fullscreen]="true" class="cart-content">
   <div class="cart-wrapper">
 
-    <!-- ══════════════════════════════════════
-         SECTION 1 — RECHERCHE PRODUIT
-    ══════════════════════════════════════ -->
-    <section class="cart-section">
-      <div class="section-head">
-        <div class="section-num">1</div>
-        <div>
-          <p class="section-title">Sélectionner les produits</p>
-          <p class="section-sub">Tapez le nom ou scannez un code-barres</p>
+    <!-- Reçu de la dernière vente validée (fonctionnalité IMPRESSION_TICKET) —
+         action optionnelle et séparée, même condition qu'avant. -->
+    <div class="cart-card cart-ticket" *ngIf="impressionTicketActif && derniereVente">
+      <button type="button" class="cart-btn cart-btn--secondary" (click)="imprimerDernierRecu()">
+        <ion-icon name="bluetooth-outline" aria-hidden="true"></ion-icon>
+        {{ 'IMPRESSION.PRINT_BUTTON' | translate }}
+      </button>
+    </div>
+
+    <!-- ══════════ 1 — RECHERCHE / SCAN PRODUIT ══════════ -->
+    <section class="cart-block">
+      <div class="cart-head">
+        <div class="cart-head__text">
+          <p class="cart-head__title">Sélectionner les produits</p>
+          <p class="cart-head__sub">Tapez le nom ou scannez un code-barres</p>
         </div>
       </div>
 
-      <!-- Barre de recherche + scan -->
-      <div class="search-wrap">
-        <ion-icon name="search-outline" class="search-icon"></ion-icon>
-        <ion-input
-          class="search-input"
-          [(ngModel)]="query"
-          placeholder="Produit ou code-barres..."
-          (ionInput)="applySearch()"
-          clearInput="true">
-        </ion-input>
-        <button class="scan-btn" (click)="scanPourVente()" title="Scanner un produit">
-          <ion-icon name="barcode-outline"></ion-icon>
-        </button>
-      </div>
+      <div class="cart-card cart-search-card">
+        <div class="cart-search-row">
+          <div class="cart-search">
+            <ion-icon name="search-outline" class="cart-search__icon" aria-hidden="true"></ion-icon>
+            <ion-input
+              class="cart-search__input"
+              [(ngModel)]="query"
+              placeholder="Produit ou code-barres..."
+              aria-label="Produit ou code-barres"
+              (ionInput)="applySearch()"
+              clearInput="true">
+            </ion-input>
+          </div>
+          <button type="button" class="cart-scan-btn" (click)="scanPourVente()" title="Scanner un produit" aria-label="Scanner un produit">
+            <ion-icon name="barcode-outline"></ion-icon>
+          </button>
+        </div>
 
-      <!-- Grille produits -->
-      <div class="products-grid" *ngIf="filteredProducts.length">
-        <button
-          class="product-chip"
-          *ngFor="let product of filteredProducts"
-          (click)="add(product)"
-          [class.out-of-stock]="product.quantite <= 0">
-          <div class="pc-icon">
-            <ion-icon name="cube-outline"></ion-icon>
-          </div>
-          <div class="pc-info">
-            <span class="pc-name">{{ product.nom }}</span>
-            <span class="pc-price">{{ money(product.prixVente) }}</span>
-          </div>
-          <div class="pc-stock" [class.pc-stock--low]="product.quantite <= 5">
-            {{ product.quantite }}
-          </div>
-          <ion-icon name="add-circle" class="pc-add"></ion-icon>
-        </button>
-      </div>
+        <!-- Produits en cartes (même action add(product) qu'avant) -->
+        <div class="cart-products" *ngIf="filteredProducts.length">
+          <button
+            type="button"
+            class="cart-product"
+            *ngFor="let product of filteredProducts"
+            (click)="add(product)"
+            [class.out-of-stock]="product.quantite <= 0">
+            <span class="cart-product__icon"><ion-icon name="cube-outline"></ion-icon></span>
+            <span class="cart-product__info">
+              <span class="cart-product__name">{{ product.nom }}</span>
+              <span class="cart-product__price">{{ money(product.prixVente) }}</span>
+            </span>
+            <span class="cart-pill" [class.cart-pill--ok]="product.quantite > 5" [class.cart-pill--warn]="product.quantite <= 5">
+              {{ product.quantite }}
+            </span>
+            <span class="cart-product__add" aria-hidden="true"><ion-icon name="add-outline"></ion-icon></span>
+          </button>
+        </div>
 
-      <div class="search-empty" *ngIf="query && !filteredProducts.length">
-        <ion-icon name="search-outline"></ion-icon>
-        <p>Aucun produit trouvé</p>
+        <gl-empty-state
+          *ngIf="query && !filteredProducts.length"
+          icon="search-outline"
+          title="Aucun produit trouvé">
+        </gl-empty-state>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════
-         SECTION 2 — PANIER
-    ══════════════════════════════════════ -->
-    <section class="cart-section">
-      <div class="section-head">
-        <div class="section-num">2</div>
-        <div class="section-head-text">
-          <p class="section-title">Panier</p>
-          <p class="section-sub">{{ items.length }} article{{ items.length > 1 ? 's' : '' }}</p>
+    <!-- ══════════ 2 — PANIER ══════════ -->
+    <section class="cart-block">
+      <div class="cart-head">
+        <div class="cart-head__text">
+          <p class="cart-head__title">Panier</p>
+          <p class="cart-head__sub">{{ items.length }} article{{ items.length > 1 ? 's' : '' }}</p>
         </div>
-        <span class="cart-badge" *ngIf="items.length">{{ items.length }}</span>
+        <span class="cart-count" *ngIf="items.length">{{ items.length }}</span>
       </div>
 
       <!-- Panier vide -->
-      <div class="cart-empty" *ngIf="!items.length">
-        <ion-icon name="cart-outline"></ion-icon>
-        <p>Aucun article — sélectionnez des produits ci-dessus</p>
+      <div class="cart-card" *ngIf="!items.length">
+        <gl-empty-state icon="cart-outline" title="Aucun article — sélectionnez des produits ci-dessus"></gl-empty-state>
       </div>
 
-      <!-- Articles -->
-      <div class="cart-items" *ngIf="items.length">
-        <div class="cart-item" *ngFor="let item of items">
-          <div class="ci-left">
-            <div class="ci-avatar">
-              <ion-icon name="cube-outline"></ion-icon>
-            </div>
-            <div class="ci-info">
-              <p class="ci-name">{{ item.product.nom }}</p>
-              <!-- Badge niveau conditionnement -->
-              <div *ngIf="item.niveauNom" class="ci-promo-badge" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">
-                <ion-icon name="layers-outline"></ion-icon>
-                {{ item.niveauNom }}
-              </div>
-              <!-- Badge promotion active -->
-              <div *ngIf="item.promo" class="ci-promo-badge">
-                <ion-icon name="pricetag"></ion-icon>
-                {{ item.promo.titre }}
-                <span class="ci-promo-val">{{ item.promo.typeReduction === 'POURCENTAGE' ? '-'+item.promo.valeurReduction+'%' : '-'+item.promo.valeurReduction+' FCFA' }}</span>
-                <span class="ci-promo-original">{{ money(item.prixOriginal!) }}</span>
-              </div>
-              <!-- Prix de vente (modifiable) -->
-              <div class="ci-price-row">
-                <p class="ci-unit">
-                  {{ money(item.customPrice) }} / unité
-                  <span *ngIf="item.customPrice !== item.product.prixVente && !item.promo" class="ci-price-badge">modifié</span>
-                </p>
-                <button class="ci-price-btn" (click)="toggleEditPrice(item)" [class.ci-price-btn--active]="item.editingPrice">
-                  <ion-icon [name]="item.editingPrice ? 'close-outline' : 'create-outline'"></ion-icon>
-                </button>
-              </div>
-              <div *ngIf="item.editingPrice" class="ci-price-edit">
-                <ion-icon name="cash-outline" class="ci-price-icon"></ion-icon>
-                <ion-input
-                  class="ci-price-input"
-                  type="text"
-                  inputmode="numeric"
-                  appMontantInput
-                  [(ngModel)]="item.customPrice"
-                  (ionChange)="clampPrice(item)"
-                  [placeholder]="''+item.product.prixVente">
-                </ion-input>
-                <span class="ci-price-currency">FCFA</span>
-              </div>
-              <div class="ci-benefice" [ngClass]="getBeneficeLigneColor(item)">
-                <div class="ci-benefice-main">
-                  <span>{{ getBeneficeLigneLabel(item) }}</span>
-                  <strong>{{ money(getBeneficeLigneAbs(item)) }}</strong>
-                </div>
-                <div class="ci-benefice-meta">
-
-                  <span>Achat {{ money(getPrixAchatEffectif(item)) }}</span>
-                </div>
-                <p class="ci-benefice-alert" *ngIf="isVenteSousPrixAchat(item)">
-                  Prix de vente inférieur au prix d'achat
-                </p>
-              </div>
-              <!-- Remise ligne -->
-              <div class="ci-discount-wrap">
-                <ion-icon name="pricetag-outline"></ion-icon>
-                <ion-input
-                  class="ci-discount"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="0"
-                  [(ngModel)]="item.remisePourcentage">
-                </ion-input>
-                <span class="ci-discount-label">% remise</span>
+      <!-- Lignes du panier -->
+      <div class="cart-lines" *ngIf="items.length">
+        <article class="cart-card cart-line" *ngFor="let item of items">
+          <div class="cart-line__top">
+            <span class="cart-line__avatar"><ion-icon name="cube-outline"></ion-icon></span>
+            <div class="cart-line__info">
+              <p class="cart-line__name">{{ item.product.nom }}</p>
+              <div class="cart-line__badges" *ngIf="item.niveauNom || item.promo">
+                <!-- Niveau de conditionnement / unité de vente -->
+                <span *ngIf="item.niveauNom" class="cart-pill cart-pill--blue">
+                  <ion-icon name="layers-outline"></ion-icon>
+                  {{ item.niveauNom }}
+                </span>
+                <!-- Promotion active -->
+                <span *ngIf="item.promo" class="cart-pill cart-pill--ok cart-promo">
+                  <ion-icon name="pricetag-outline"></ion-icon>
+                  {{ item.promo.titre }}
+                  <strong class="cart-promo__val">{{ item.promo.typeReduction === 'POURCENTAGE' ? '-'+item.promo.valeurReduction+'%' : '-'+item.promo.valeurReduction+' FCFA' }}</strong>
+                  <span class="cart-promo__old">{{ money(item.prixOriginal!) }}</span>
+                </span>
               </div>
             </div>
+            <p class="cart-line__total">{{ money(totalLine(item)) }}</p>
           </div>
-          <div class="ci-right">
-            <!-- Contrôle quantité -->
-            <div class="ci-qty" [class.ci-qty--maxed]="item.quantity >= getStockMax(item)">
-              <button class="ci-qty-btn" (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null">−</button>
+
+          <!-- Prix de vente (modifiable) -->
+          <div class="cart-line__price">
+            <p class="cart-line__unit">
+              {{ money(item.customPrice) }} / unité
+              <span *ngIf="item.customPrice !== item.product.prixVente && !item.promo" class="cart-pill cart-pill--warn">modifié</span>
+            </p>
+            <button type="button" class="cart-icon-btn" title="Modifier le prix" (click)="toggleEditPrice(item)" [class.cart-icon-btn--active]="item.editingPrice"
+                    [attr.aria-label]="item.editingPrice ? 'Fermer' : 'Modifier le prix'">
+              <ion-icon [name]="item.editingPrice ? 'close-outline' : 'create-outline'"></ion-icon>
+            </button>
+          </div>
+          <div *ngIf="item.editingPrice" class="cart-field cart-field--inline">
+            <ion-icon name="cash-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+            <ion-input
+              class="cart-field__input"
+              type="text"
+              inputmode="numeric"
+              appMontantInput
+              aria-label="Prix unitaire"
+              [(ngModel)]="item.customPrice"
+              (ionChange)="clampPrice(item)"
+              [placeholder]="''+item.product.prixVente">
+            </ion-input>
+            <span class="cart-field__suffix">FCFA</span>
+          </div>
+
+          <!-- Bénéfice / perte de la ligne -->
+          <div class="cart-benefice" [ngClass]="getBeneficeLigneColor(item)">
+            <div class="cart-benefice__main">
+              <span>{{ getBeneficeLigneLabel(item) }}</span>
+              <strong>{{ money(getBeneficeLigneAbs(item)) }}</strong>
+            </div>
+            <div class="cart-benefice__meta">
+              <span>Achat {{ money(getPrixAchatEffectif(item)) }}</span>
+            </div>
+            <p class="cart-benefice__alert" *ngIf="isVenteSousPrixAchat(item)">
+              Prix de vente inférieur au prix d'achat
+            </p>
+          </div>
+
+          <!-- Remise ligne -->
+          <div class="cart-field cart-field--inline cart-field--remise">
+            <ion-icon name="pricetag-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+            <ion-input
+              class="cart-field__input"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0"
+              aria-label="% remise"
+              [(ngModel)]="item.remisePourcentage">
+            </ion-input>
+            <span class="cart-field__suffix">% remise</span>
+          </div>
+
+          <!-- Pied de carte : quantité (+/− 44px) et retrait -->
+          <div class="cart-line__foot">
+            <div class="cart-qty" [class.cart-qty--maxed]="item.quantity >= getStockMax(item)">
+              <button type="button" class="cart-qty__btn" aria-label="Diminuer" (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null">
+                <ion-icon name="remove-outline"></ion-icon>
+              </button>
               <ion-input
-                class="ci-qty-input"
+                class="cart-qty__input"
                 type="number"
                 min="1"
+                aria-label="Quantité"
                 [max]="getStockMax(item)"
                 [(ngModel)]="item.quantity"
                 (ionChange)="clampQty(item)">
               </ion-input>
-              <button class="ci-qty-btn"
+              <button type="button" class="cart-qty__btn"
+                aria-label="Augmenter"
                 [disabled]="item.quantity >= getStockMax(item)"
-                [class.ci-qty-btn--disabled]="item.quantity >= getStockMax(item)"
-                (click)="item.quantity < getStockMax(item) ? item.quantity = item.quantity + 1 : null">+</button>
+                [class.cart-qty__btn--disabled]="item.quantity >= getStockMax(item)"
+                (click)="item.quantity < getStockMax(item) ? item.quantity = item.quantity + 1 : null">
+                <ion-icon name="add-outline"></ion-icon>
+              </button>
             </div>
-            <p class="ci-stock-badge"
-              [class.ci-stock-badge--ok]="item.quantity < getStockMax(item)"
-              [class.ci-stock-badge--max]="item.quantity >= getStockMax(item)">
+            <span class="cart-pill"
+              [class.cart-pill--ok]="item.quantity < getStockMax(item)"
+              [class.cart-pill--bad]="item.quantity >= getStockMax(item)">
               {{ item.quantity }}/{{ getStockMax(item) }}
-            </p>
-            <p class="ci-total">{{ money(totalLine(item)) }}</p>
-            <button class="ci-delete" (click)="remove(item.product.id)">
-              <ion-icon name="trash-outline"></ion-icon>
+            </span>
+            <button type="button" class="cart-remove" (click)="remove(item.product.id)">
+              <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+              Retirer
             </button>
           </div>
-        </div>
+        </article>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════
-         SECTION 3 — PAIEMENT
-    ══════════════════════════════════════ -->
-    <section class="cart-section">
-      <div class="section-head">
-        <div class="section-num">3</div>
-        <div>
-          <p class="section-title">Paiement</p>
-          <p class="section-sub">Remise, client et mode de règlement</p>
+    <!-- ══════════ 3 — PAIEMENT ══════════ -->
+    <section class="cart-block cart-section--paiement">
+      <div class="cart-head">
+        <div class="cart-head__text">
+          <p class="cart-head__title">Paiement</p>
+          <p class="cart-head__sub">Remise, client et mode de règlement</p>
         </div>
       </div>
 
-      <!-- Sous-total + remise -->
-      <div class="totaux-card">
-        <div class="totaux-row">
+      <!-- Totaux + remise globale -->
+      <div class="cart-card cart-totaux">
+        <div class="cart-row">
           <span>Sous-total</span>
           <strong>{{ money(subTotal()) }}</strong>
         </div>
 
-        <div class="totaux-row totaux-benefice" [ngClass]="getBeneficeTotalColor()">
+        <div class="cart-row cart-row--benefice" [ngClass]="getBeneficeTotalColor()">
           <span>{{ getBeneficeTotalLabel() }} estimé</span>
           <strong>{{ money(getBeneficeTotalAbs()) }}</strong>
         </div>
 
-        <div class="remise-row">
-          <div class="field-group" style="flex:1">
-            <label class="field-label">Remise globale</label>
-            <div class="field-input-wrap">
-              <ion-icon name="pricetag-outline" class="field-icon"></ion-icon>
+        <div class="cart-remise">
+          <div class="cart-group cart-remise__field">
+            <label class="cart-label">Remise globale</label>
+            <div class="cart-field">
+              <ion-icon name="pricetag-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
               <ion-input
-                class="field-input"
+                class="cart-field__input"
                 type="number"
                 placeholder="0"
+                aria-label="Remise globale"
                 [(ngModel)]="remiseGlobale">
               </ion-input>
             </div>
           </div>
-          <div class="remise-type-wrap">
-            <label class="field-label">Type</label>
-            <div class="remise-type-btns">
+          <div class="cart-group">
+            <label class="cart-label">Type</label>
+            <div class="cart-segment" role="group" aria-label="Type">
               <button
-                class="rtype-btn"
+                type="button"
+                class="cart-segment__btn"
                 *ngFor="let type of remiseTypes"
-                [class.rtype-btn--active]="typeRemiseGlobale === type"
+                [class.cart-segment__btn--active]="typeRemiseGlobale === type"
                 (click)="typeRemiseGlobale = type">
                 {{ type === 'POURCENTAGE' ? '%' : 'F' }}
               </button>
@@ -242,227 +268,233 @@
           </div>
         </div>
 
-        <div class="totaux-row" *ngIf="programmeFideliteActif && reductionFidelite > 0">
+        <div class="cart-row cart-row--ok" *ngIf="programmeFideliteActif && reductionFidelite > 0">
           <span>{{ 'FIDELITE.REDUCTION' | translate }}</span>
           <strong>- {{ money(reductionFidelite) }}</strong>
         </div>
 
-        <div class="totaux-total-line">
-          <span class="totaux-total-label">TOTAL À PAYER</span>
-          <strong class="totaux-total-val">{{ money(totalAvecFidelite()) }}</strong>
+        <div class="cart-total-line">
+          <span class="cart-overline">TOTAL À PAYER</span>
+          <strong class="cart-total-line__val">{{ money(totalAvecFidelite()) }}</strong>
         </div>
       </div>
 
       <!-- Client -->
-      <div class="field-group">
-        <label class="field-label">
-          <ion-icon name="people-outline"></ion-icon>
-          Client
-        </label>
+      <div class="cart-card cart-form">
+        <div class="cart-group">
+          <label class="cart-label">
+            <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+            Client
+          </label>
 
-        <!-- Recherche client -->
-        <div class="client-search-wrap">
-          <div class="client-search-input-row">
-            <ion-icon name="search-outline" class="cs-icon"></ion-icon>
-            <input
-              class="client-search-input"
-              type="text"
-              [(ngModel)]="clientSearch"
-              (input)="filterClients()"
-              (focus)="filterClients()"
-              placeholder="Rechercher par nom ou téléphone..." />
-            <button class="cs-clear" *ngIf="clientId || clientSearch" (click)="clearClient()">
-              <ion-icon name="close-circle-outline"></ion-icon>
-            </button>
+          <div class="cart-client">
+            <div class="cart-field">
+              <ion-icon name="search-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <input
+                class="cart-field__native"
+                type="text"
+                [(ngModel)]="clientSearch"
+                (input)="filterClients()"
+                (focus)="filterClients()"
+                placeholder="Rechercher par nom ou téléphone..." />
+              <button type="button" class="cart-field__clear" *ngIf="clientId || clientSearch" (click)="clearClient()" aria-label="Effacer">
+                <ion-icon name="close-circle-outline"></ion-icon>
+              </button>
+            </div>
+
+            <!-- Client sélectionné -->
+            <div class="cart-pill cart-pill--ok cart-client__selected" *ngIf="clientId">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>{{ clientNom }} {{ clientPrenom }}</span>
+              <span *ngIf="clientTelephone" class="cart-client__phone">· {{ clientTelephone }}</span>
+            </div>
+
+            <!-- Résultats -->
+            <div class="cart-client__dropdown" *ngIf="showClientDropdown">
+              <button
+                type="button"
+                class="cart-client__option"
+                *ngFor="let c of clientsFiltres"
+                (click)="pickClient(c)">
+                <span class="cart-client__avatar">{{ (c.nom || '?')[0].toUpperCase() }}</span>
+                <span class="cart-client__info">
+                  <span class="cart-client__name">{{ c.nom }} {{ c.prenom }}</span>
+                  <span class="cart-client__tel" *ngIf="c.telephone || c.numeroTelephone">{{ c.telephone || c.numeroTelephone }}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Programme de fidélité — visible seulement si actif pour la boutique et un
+             client identifié (pas "client divers") est sélectionné. -->
+        <div class="cart-group" *ngIf="programmeFideliteActif && clientId">
+          <label class="cart-label">
+            <ion-icon name="star-outline" aria-hidden="true"></ion-icon>
+            {{ 'FIDELITE.TITLE' | translate }}
+          </label>
+
+          <div *ngIf="loadingFidelite" class="cart-info">
+            <ion-spinner name="crescent" class="cart-info__spinner"></ion-spinner>
+            {{ 'FIDELITE.LOADING' | translate }}
           </div>
 
-          <!-- Indicateur client sélectionné -->
-          <div class="client-selected-badge" *ngIf="clientId">
-            <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
-            <span>{{ clientNom }} {{ clientPrenom }}</span>
-            <span *ngIf="clientTelephone" class="cs-phone">· {{ clientTelephone }}</span>
+          <div *ngIf="!loadingFidelite && soldeFidelite" class="cart-info cart-info--block">
+            <p class="cart-info__text">
+              {{ 'FIDELITE.CLIENT_SOLDE' | translate: { points: soldeFidelite.points, valeur: money(soldeFidelite.valeurFcfa) } }}
+            </p>
+            <div class="cart-field" *ngIf="soldeFidelite.points > 0">
+              <ion-icon name="star-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <ion-input
+                class="cart-field__input"
+                type="number"
+                min="0"
+                aria-label="Points"
+                [max]="soldeFidelite.points"
+                placeholder="0"
+                [(ngModel)]="pointsAUtiliser"
+                (ionChange)="clampPointsFidelite()">
+              </ion-input>
+              <span class="cart-field__suffix">{{ 'FIDELITE.POINTS_LABEL' | translate }}</span>
+            </div>
+            <p class="cart-hint" *ngIf="pointsAUtiliser > 0">
+              {{ 'FIDELITE.REDUCTION_HINT' | translate: { montant: money(reductionFidelite) } }}
+            </p>
           </div>
+        </div>
 
-          <!-- Dropdown résultats -->
-          <div class="client-dropdown" *ngIf="showClientDropdown">
+        <!-- Mode de paiement -->
+        <div class="cart-group">
+          <label class="cart-label">
+            <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
+            Mode de paiement
+          </label>
+          <div class="cart-modes" role="group" aria-label="Mode de paiement">
             <button
-              class="client-option"
-              *ngFor="let c of clientsFiltres"
-              (click)="pickClient(c)">
-              <div class="co-avatar">{{ (c.nom || '?')[0].toUpperCase() }}</div>
-              <div class="co-info">
-                <span class="co-name">{{ c.nom }} {{ c.prenom }}</span>
-                <span class="co-phone" *ngIf="c.telephone || c.numeroTelephone">{{ c.telephone || c.numeroTelephone }}</span>
-              </div>
+              type="button"
+              class="cart-mode"
+              *ngFor="let mode of modes"
+              [class.cart-mode--active]="modePaiement === mode"
+              (click)="modePaiement = mode">
+              <ion-icon [name]="getPaymentIcon(mode)" aria-hidden="true"></ion-icon>
+              <span>{{ venteService.getModePaiementLabel(mode) }}</span>
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Programme de fidélité — visible seulement si actif pour la boutique et un
-           client identifié (pas "client divers") est sélectionné. -->
-      <div class="field-group" *ngIf="programmeFideliteActif && clientId">
-        <label class="field-label">
-          <ion-icon name="star-outline"></ion-icon>
-          {{ 'FIDELITE.TITLE' | translate }}
-        </label>
-
-        <div *ngIf="loadingFidelite" class="avance-alert-info">
-          <ion-spinner name="crescent" style="width:14px;height:14px"></ion-spinner>
-          {{ 'FIDELITE.LOADING' | translate }}
-        </div>
-
-        <div *ngIf="!loadingFidelite && soldeFidelite" class="avance-alert">
-          <p style="margin:0 0 6px">
-            {{ 'FIDELITE.CLIENT_SOLDE' | translate: { points: soldeFidelite.points, valeur: money(soldeFidelite.valeurFcfa) } }}
-          </p>
-          <div class="field-input-wrap" *ngIf="soldeFidelite.points > 0">
-            <ion-icon name="star-outline" class="field-icon"></ion-icon>
+        <!-- Référence (si non espèces) -->
+        <div class="cart-group" *ngIf="modePaiement !== 'ESPECES'" [@slideDown]>
+          <label class="cart-label">
+            <ion-icon name="document-outline" aria-hidden="true"></ion-icon>
+            Référence de paiement
+          </label>
+          <div class="cart-field">
             <ion-input
-              class="field-input"
-              type="number"
-              min="0"
-              [max]="soldeFidelite.points"
-              placeholder="0"
-              [(ngModel)]="pointsAUtiliser"
-              (ionChange)="clampPointsFidelite()">
+              class="cart-field__input"
+              placeholder="N° transaction, référence..."
+              aria-label="Référence de paiement"
+              [(ngModel)]="referencePaiement">
             </ion-input>
-            <span class="ci-discount-label">{{ 'FIDELITE.POINTS_LABEL' | translate }}</span>
           </div>
-          <p class="avance-hint" *ngIf="pointsAUtiliser > 0">
-            {{ 'FIDELITE.REDUCTION_HINT' | translate: { montant: money(reductionFidelite) } }}
-          </p>
         </div>
       </div>
 
-      <!-- Mode paiement en chips -->
-      <div class="field-group">
-        <label class="field-label">
-          <ion-icon name="wallet-outline"></ion-icon>
-          Mode de paiement
-        </label>
-        <div class="payment-chips">
-          <button
-            class="payment-chip"
-            *ngFor="let mode of modes"
-            [class.payment-chip--active]="modePaiement === mode"
-            (click)="modePaiement = mode">
-            <ion-icon [name]="getPaymentIcon(mode)"></ion-icon>
-            <span>{{ venteService.getModePaiementLabel(mode) }}</span>
-          </button>
+      <!-- Vente à crédit -->
+      <div class="cart-card cart-toggle" [class.cart-toggle--active]="estCredit">
+        <span class="cart-toggle__icon" [class.cart-toggle__icon--active]="estCredit">
+          <ion-icon name="time-outline"></ion-icon>
+        </span>
+        <div class="cart-toggle__text">
+          <p class="cart-toggle__title">Vente à crédit</p>
+          <p class="cart-toggle__sub">Le client paiera plus tard</p>
         </div>
-      </div>
-
-      <!-- Référence (si non espèces) -->
-      <div class="field-group" *ngIf="modePaiement !== 'ESPECES'" [@slideDown]>
-        <label class="field-label">
-          <ion-icon name="document-outline"></ion-icon>
-          Référence de paiement
-        </label>
-        <div class="field-input-wrap">
-          <ion-input
-            class="field-input"
-            placeholder="N° transaction, référence..."
-            [(ngModel)]="referencePaiement">
-          </ion-input>
-        </div>
-      </div>
-
-      <!-- Toggle crédit -->
-      <div class="toggle-card" [class.toggle-card--active]="estCredit">
-        <div class="toggle-card-left">
-          <div class="toggle-icon" [class.toggle-icon--active]="estCredit">
-            <ion-icon name="time-outline"></ion-icon>
-          </div>
-          <div>
-            <p class="toggle-title">Vente à crédit</p>
-            <p class="toggle-sub">Le client paiera plus tard</p>
-          </div>
-        </div>
-        <ion-toggle [(ngModel)]="estCredit" color="primary"></ion-toggle>
+        <ion-toggle [(ngModel)]="estCredit" color="primary" aria-label="Vente à crédit"></ion-toggle>
       </div>
 
       <!-- Champs crédit -->
-      <div class="credit-fields" *ngIf="estCredit">
+      <div class="cart-card cart-form cart-credit" *ngIf="estCredit">
 
-        <!-- Toggle créer client -->
-        <div class="toggle-card toggle-card--sm">
-          <div class="toggle-card-left">
-            <ion-icon name="person-add-outline" style="font-size:1.2rem;color:#1a56db"></ion-icon>
-            <p class="toggle-title">Créer ce client</p>
+        <!-- Créer le client -->
+        <div class="cart-toggle cart-toggle--inner">
+          <span class="cart-toggle__icon cart-toggle__icon--active">
+            <ion-icon name="person-add-outline"></ion-icon>
+          </span>
+          <div class="cart-toggle__text">
+            <p class="cart-toggle__title">Créer ce client</p>
           </div>
-          <ion-toggle [(ngModel)]="creerClient" [disabled]="!!clientId" color="primary"></ion-toggle>
+          <ion-toggle [(ngModel)]="creerClient" [disabled]="!!clientId" color="primary" aria-label="Créer ce client"></ion-toggle>
         </div>
 
-        <div class="credit-grid">
-          <div class="field-group">
-            <label class="field-label">Nom</label>
-            <div class="field-input-wrap">
-              <ion-icon name="person-outline" class="field-icon"></ion-icon>
-              <ion-input class="field-input" placeholder="Nom de famille" [(ngModel)]="clientNom"></ion-input>
+        <div class="cart-grid">
+          <div class="cart-group">
+            <label class="cart-label">Nom</label>
+            <div class="cart-field">
+              <ion-icon name="person-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <ion-input class="cart-field__input" placeholder="Nom de famille" aria-label="Nom" [(ngModel)]="clientNom"></ion-input>
             </div>
           </div>
-          <div class="field-group">
-            <label class="field-label">Prénom</label>
-            <div class="field-input-wrap">
-              <ion-input class="field-input" placeholder="Prénom" [(ngModel)]="clientPrenom"></ion-input>
+          <div class="cart-group">
+            <label class="cart-label">Prénom</label>
+            <div class="cart-field">
+              <ion-input class="cart-field__input" placeholder="Prénom" aria-label="Prénom" [(ngModel)]="clientPrenom"></ion-input>
             </div>
           </div>
-          <div class="field-group credit-grid--full">
-            <label class="field-label">Téléphone</label>
-            <div class="field-input-wrap">
-              <ion-icon name="call-outline" class="field-icon"></ion-icon>
-              <ion-input class="field-input" type="tel" placeholder="Ex: 70 00 00 00" [(ngModel)]="clientTelephone"></ion-input>
+          <div class="cart-group cart-grid__full">
+            <label class="cart-label">Téléphone</label>
+            <div class="cart-field">
+              <ion-icon name="call-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <ion-input class="cart-field__input" type="tel" placeholder="Ex: 70 00 00 00" aria-label="Téléphone" [(ngModel)]="clientTelephone"></ion-input>
             </div>
           </div>
-          <div class="field-group">
-            <label class="field-label">Date d'échéance</label>
-            <div class="field-input-wrap">
-              <ion-icon name="calendar-outline" class="field-icon"></ion-icon>
-              <input class="field-input-native" type="date" [(ngModel)]="dateEcheance" />
+          <div class="cart-group">
+            <label class="cart-label">Date d'échéance</label>
+            <div class="cart-field">
+              <ion-icon name="calendar-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <input class="cart-field__native cart-field__native--date" type="date" title="Date d'échéance" aria-label="Date d'échéance" [(ngModel)]="dateEcheance" />
             </div>
           </div>
-          <div class="field-group">
-            <label class="field-label">Montant versé (acompte)</label>
-            <div class="field-input-wrap">
-              <ion-icon name="cash-outline" class="field-icon"></ion-icon>
-              <ion-input class="field-input" type="text" inputmode="numeric" appMontantInput placeholder="0" [(ngModel)]="montantVerse"></ion-input>
+          <div class="cart-group">
+            <label class="cart-label">Montant versé (acompte)</label>
+            <div class="cart-field">
+              <ion-icon name="cash-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+              <ion-input class="cart-field__input" type="text" inputmode="numeric" appMontantInput placeholder="0" aria-label="Montant versé" [(ngModel)]="montantVerse"></ion-input>
             </div>
           </div>
         </div>
 
         <!-- Avance client -->
-        <div class="avance-alert" *ngIf="soldeAvanceClient > 0 || isLoadingAvance">
-          <div class="avance-alert-top">
-            <div class="avance-alert-info">
-              <ion-icon name="wallet-outline"></ion-icon>
+        <div class="cart-info cart-info--block" *ngIf="soldeAvanceClient > 0 || isLoadingAvance">
+          <div class="cart-avance__top">
+            <div class="cart-info__line">
+              <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
               <span *ngIf="isLoadingAvance">
-                <ion-spinner name="crescent" style="width:14px;height:14px"></ion-spinner>
+                <ion-spinner name="crescent" class="cart-info__spinner"></ion-spinner>
                 Chargement avance...
               </span>
               <span *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
                 Avance disponible : <strong>{{ money(soldeAvanceClient) }}</strong>
               </span>
             </div>
-            <div class="avance-toggle-wrap" *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
-              <span class="avance-toggle-label">Utiliser</span>
-              <ion-toggle [(ngModel)]="utiliserAvance" color="primary" size="small"></ion-toggle>
+            <div class="cart-avance__toggle" *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
+              <span class="cart-avance__label">Utiliser</span>
+              <ion-toggle [(ngModel)]="utiliserAvance" color="primary" size="small" aria-label="Utiliser"></ion-toggle>
             </div>
           </div>
-          <div class="avance-input-wrap" *ngIf="utiliserAvance && !isLoadingAvance">
-            <div class="field-input-wrap">
-              <ion-icon name="cash-outline" class="field-icon"></ion-icon>
+          <div class="cart-avance__input" *ngIf="utiliserAvance && !isLoadingAvance">
+            <div class="cart-field">
+              <ion-icon name="cash-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
               <ion-input
-                class="field-input"
+                class="cart-field__input"
                 type="text"
                 inputmode="numeric"
                 appMontantInput
                 placeholder="0"
+                aria-label="Avance à utiliser"
                 [(ngModel)]="montantAvanceAUtiliser">
               </ion-input>
-              <button class="avance-max-btn" (click)="utiliserTouteAvance()">Tout</button>
+              <button type="button" class="cart-avance__max" (click)="utiliserTouteAvance()">Tout</button>
             </div>
-            <p class="avance-hint">
+            <p class="cart-hint">
               Max : {{ money(soldeAvanceClient) }}
               <span *ngIf="montantAvanceAUtiliser > 0"> · Reste : {{ money(resteAPayerCredit) }}</span>
             </p>
@@ -470,167 +502,166 @@
         </div>
 
       </div>
-
-      <!-- Bouton valider -->
-      <button
-        class="submit-btn"
-        [class.submit-btn--disabled]="submitting || !items.length"
-        [disabled]="submitting || !items.length"
-        (click)="submit()">
-        <span *ngIf="!submitting">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          Valider la vente · {{ money(totalAvecFidelite()) }}
-        </span>
-        <span *ngIf="submitting" class="submit-loading">
-          <ion-spinner name="crescent"></ion-spinner>
-          Traitement en cours...
-        </span>
-      </button>
-
-      <!-- Imprimer le reçu — visible seulement si la fonctionnalité est active pour la
-           boutique (voir BoutiqueService.fonctionnalitesAvancees$) et juste après une vente
-           réussie. Action optionnelle : une erreur d'impression n'affecte jamais la vente déjà
-           enregistrée (voir ImpressionRecuService). -->
-      <button
-        class="submit-btn"
-        style="margin-top:10px;background:#0f172a"
-        *ngIf="impressionTicketActif && derniereVente"
-        (click)="imprimerDernierRecu()">
-        <ion-icon name="bluetooth-outline"></ion-icon>
-        {{ 'IMPRESSION.PRINT_BUTTON' | translate }}
-      </button>
-
     </section>
 
-    <div style="height: 32px"></div>
   </div>
 </ion-content>
 
-<!-- ==================== MODAL SÉLECTION NIVEAU ==================== -->
-<ion-modal [isOpen]="showNiveauxVenteModal" (didDismiss)="annulerChoixNiveau()" [breakpoints]="[0, 0.6, 1]" [initialBreakpoint]="0.6">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>
-          <ion-icon name="layers-outline" style="margin-right:6px"></ion-icon>
-          Choisir le conditionnement
-        </ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="annulerChoixNiveau()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="nv-content">
-      <div class="nv-produit-nom">{{ produitEnAttente?.nom }}</div>
+<!-- ══════════════════════════════════════════════════════════════════
+     BARRE COLLÉE EN BAS — total bien visible + UNE action principale.
+     « Payer » (scrollToPayment) conserve sa condition (articles présents) ;
+     « Valider la vente » garde son handler submit() et ses états
+     (désactivé si panier vide ou envoi en cours, spinner pendant l'envoi).
+═══════════════════════════════════════════════════════════════════ -->
+<ion-footer class="ion-no-border cart-footer">
+  <div class="cart-bar">
+    <div class="cart-bar__top">
+      <div class="cart-bar__total">
+        <span class="cart-overline">
+          TOTAL À PAYER<ng-container *ngIf="items.length"> · {{ items.length }} article{{ items.length > 1 ? 's' : '' }}</ng-container>
+        </span>
+        <strong class="cart-bar__amount">{{ money(totalAvecFidelite()) }}</strong>
+      </div>
+      <button type="button" class="cart-btn cart-btn--secondary cart-bar__pay" *ngIf="items.length" (click)="scrollToPayment()">
+        <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
+        Payer
+      </button>
+    </div>
 
-      <div *ngIf="loadingNiveauxVente" class="nv-loading">
+    <button
+      type="button"
+      class="cart-btn cart-btn--primary"
+      [class.cart-btn--disabled]="submitting || !items.length"
+      [disabled]="submitting || !items.length"
+      (click)="submit()">
+      <ng-container *ngIf="!submitting">
+        <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+        Valider la vente
+      </ng-container>
+      <ng-container *ngIf="submitting">
+        <ion-spinner name="crescent" class="cart-btn__spinner"></ion-spinner>
+        Traitement en cours...
+      </ng-container>
+    </button>
+  </div>
+</ion-footer>
+
+<!-- ==================== MODALE SÉLECTION NIVEAU (centrée) ==================== -->
+<div class="gl-modal-overlay" *ngIf="showNiveauxVenteModal" (click)="annulerChoixNiveau()" (document:keydown.escape)="annulerChoixNiveau()">
+  <div class="gl-modal" role="dialog" aria-modal="true" aria-labelledby="cart-niveau-title" (click)="$event.stopPropagation()">
+    <div class="gl-modal__head">
+      <span class="gl-modal__pastille"><ion-icon name="layers-outline"></ion-icon></span>
+      <div class="gl-modal__titles">
+        <p class="gl-modal__title" id="cart-niveau-title">Choisir le conditionnement</p>
+        <p class="gl-modal__sub">{{ produitEnAttente?.nom }}</p>
+      </div>
+      <button type="button" class="gl-modal__close" (click)="annulerChoixNiveau()" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="gl-modal__body">
+      <div *ngIf="loadingNiveauxVente" class="gl-modal__loading">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
 
       <div *ngIf="!loadingNiveauxVente" class="nv-list">
 
         <!-- ── Unité principale (ex: Carton) ── -->
-        <div class="nv-card nv-card--principal" (click)="choisirPrincipal()">
-          <div class="nv-card__left">
-            <div class="nv-card__nom">{{ produitEnAttente?.nom }}</div>
-            <div class="nv-card__tag">Unité principale</div>
-            <div class="nv-card__dispo nv-card__dispo--ok">
-              Stock : {{ quantitePrincipale }}
-            </div>
-          </div>
-          <div class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</div>
-        </div>
+        <button type="button" class="nv-card nv-card--principal" (click)="choisirPrincipal()">
+          <span class="nv-card__left">
+            <span class="nv-card__nom">{{ produitEnAttente?.nom }}</span>
+            <span class="nv-card__tag">Unité principale</span>
+            <span class="cart-pill cart-pill--ok">Stock : {{ quantitePrincipale }}</span>
+          </span>
+          <span class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</span>
+        </button>
 
         <div class="nv-separator">── ou choisir un sous-niveau ──</div>
 
         <!-- ── Sous-niveaux (Cartouche, Pièce…) ── -->
-        <div *ngFor="let n of niveauxDisponibles; let i = index"
+        <button type="button"
+             *ngFor="let n of niveauxDisponibles; let i = index"
              class="nv-card"
              [class.nv-card--epuise]="disponibleNiveau(n, i) === 0"
              (click)="choisirNiveau(n)">
-          <div class="nv-card__left">
-            <div class="nv-card__nom">{{ n.nom }}</div>
-            <div class="nv-card__tag">
+          <span class="nv-card__left">
+            <span class="nv-card__nom">{{ n.nom }}</span>
+            <span class="nv-card__tag">
               1 {{ i === 0 ? produitEnAttente?.nom : niveauxDisponibles[i-1].nom }} = {{ n.facteur }} {{ n.nom }}
-            </div>
+            </span>
             <!-- Stock propre du niveau (tri-états) -->
-            <div class="nv-card__dispo"
-                 [style.color]="(n.stock ?? 0) > 0 ? '#16a34a' : (disponibleNiveau(n, i) > 0 ? '#d97706' : '#dc2626')"
-                 [style.font-weight]="'600'">
+            <span class="cart-pill"
+                 [class.cart-pill--ok]="(n.stock ?? 0) > 0"
+                 [class.cart-pill--warn]="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) > 0"
+                 [class.cart-pill--bad]="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) === 0">
               <span *ngIf="(n.stock ?? 0) > 0">Stock : {{ n.stock }}</span>
               <span *ngIf="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) > 0">Cascade disponible ({{ disponibleNiveau(n, i) }} via parent)</span>
               <span *ngIf="(n.stock ?? 0) === 0 && disponibleNiveau(n, i) === 0">Rupture</span>
-            </div>
-          </div>
-          <div class="nv-card__prix">{{ money(n.prixVente) }}</div>
-        </div>
+            </span>
+          </span>
+          <span class="nv-card__prix">{{ money(n.prixVente) }}</span>
+        </button>
 
       </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+    </div>
+  </div>
+</div>
 
-<!-- ==================== MODAL SÉLECTION UNITÉ DE VENTE (VENTE_GROS_DETAIL) ==================== -->
-<ion-modal [isOpen]="showUniteVenteModal" (didDismiss)="annulerChoixUniteVente()" [breakpoints]="[0, 0.6, 1]" [initialBreakpoint]="0.6">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>
-          <ion-icon name="swap-horizontal-outline" style="margin-right:6px"></ion-icon>
-          {{ 'UNITE_VENTE.CHOOSE_TITLE' | translate }}
-        </ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="annulerChoixUniteVente()">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="nv-content">
-      <div class="nv-produit-nom">{{ produitEnAttente?.nom }}</div>
+<!-- ==================== MODALE SÉLECTION UNITÉ DE VENTE (VENTE_GROS_DETAIL, centrée) ==================== -->
+<div class="gl-modal-overlay" *ngIf="showUniteVenteModal" (click)="annulerChoixUniteVente()" (document:keydown.escape)="annulerChoixUniteVente()">
+  <div class="gl-modal" role="dialog" aria-modal="true" aria-labelledby="cart-unite-title" (click)="$event.stopPropagation()">
+    <div class="gl-modal__head">
+      <span class="gl-modal__pastille"><ion-icon name="swap-horizontal-outline"></ion-icon></span>
+      <div class="gl-modal__titles">
+        <p class="gl-modal__title" id="cart-unite-title">{{ 'UNITE_VENTE.CHOOSE_TITLE' | translate }}</p>
+        <p class="gl-modal__sub">{{ produitEnAttente?.nom }}</p>
+      </div>
+      <button type="button" class="gl-modal__close" (click)="annulerChoixUniteVente()" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
 
-      <div *ngIf="loadingUniteVente" class="nv-loading">
+    <div class="gl-modal__body">
+      <div *ngIf="loadingUniteVente" class="gl-modal__loading">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
 
       <div *ngIf="!loadingUniteVente" class="nv-list">
 
         <!-- ── Unité de base du produit ── -->
-        <div class="nv-card nv-card--principal" (click)="choisirUniteBase()">
-          <div class="nv-card__left">
-            <div class="nv-card__nom">{{ produitEnAttente?.uniteBase || ('UNITE_VENTE.DEFAULT_BASE' | translate) }}</div>
-            <div class="nv-card__tag">{{ 'UNITE_VENTE.BASE_UNIT' | translate }}</div>
-            <div class="nv-card__dispo nv-card__dispo--ok">
-              {{ 'PRODUCTS.STOCK' | translate }} : {{ produitEnAttente?.quantite }}
-            </div>
-          </div>
-          <div class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</div>
-        </div>
+        <button type="button" class="nv-card nv-card--principal" (click)="choisirUniteBase()">
+          <span class="nv-card__left">
+            <span class="nv-card__nom">{{ produitEnAttente?.uniteBase || ('UNITE_VENTE.DEFAULT_BASE' | translate) }}</span>
+            <span class="nv-card__tag">{{ 'UNITE_VENTE.BASE_UNIT' | translate }}</span>
+            <span class="cart-pill cart-pill--ok">{{ 'PRODUCTS.STOCK' | translate }} : {{ produitEnAttente?.quantite }}</span>
+          </span>
+          <span class="nv-card__prix">{{ money(produitEnAttente?.prixVente ?? 0) }}</span>
+        </button>
 
         <div class="nv-separator">── {{ 'UNITE_VENTE.OR_CHOOSE' | translate }} ──</div>
 
         <!-- ── Unités de vente (Carton, Cartouche…) ── -->
-        <div *ngFor="let u of uniteVenteDisponibles"
+        <button type="button"
+             *ngFor="let u of uniteVenteDisponibles"
              class="nv-card"
              [class.nv-card--epuise]="disponibleUniteVente(u) === 0"
              (click)="choisirUniteVente(u)">
-          <div class="nv-card__left">
-            <div class="nv-card__nom">{{ u.nom }}</div>
-            <div class="nv-card__tag">
+          <span class="nv-card__left">
+            <span class="nv-card__nom">{{ u.nom }}</span>
+            <span class="nv-card__tag">
               1 {{ u.nom }} = {{ u.facteurBase }} {{ produitEnAttente?.uniteBase || ('UNITE_VENTE.DEFAULT_BASE' | translate) }}
-            </div>
-            <div class="nv-card__dispo"
-                 [style.color]="disponibleUniteVente(u) > 0 ? '#16a34a' : '#dc2626'"
-                 style="font-weight:600">
+            </span>
+            <span class="cart-pill"
+                 [class.cart-pill--ok]="disponibleUniteVente(u) > 0"
+                 [class.cart-pill--bad]="disponibleUniteVente(u) <= 0">
               {{ 'PRODUCTS.STOCK' | translate }} : {{ disponibleUniteVente(u) }}
-            </div>
-          </div>
-          <div class="nv-card__prix">{{ money(u.prixVente) }}</div>
-        </div>
+            </span>
+          </span>
+          <span class="nv-card__prix">{{ money(u.prixVente) }}</span>
+        </button>
 
       </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+    </div>
+  </div>
+</div>

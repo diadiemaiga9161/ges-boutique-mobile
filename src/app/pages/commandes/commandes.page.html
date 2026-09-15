@@ -1,253 +1,225 @@
 <ion-header [translucent]="true">
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
     </ion-buttons>
     <ion-title>Commandes</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="charger()">
+      <ion-button fill="clear" (click)="charger()" aria-label="Actualiser">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="cmd-content">
   <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- ══ HERO BANNER ══════════════════════════════════════════════════════ -->
-  <div class="cmd-hero">
-    <div class="cmd-hero-deco"></div>
-    <div class="cmd-hero-top">
-      <div>
-        <p class="cmd-hero-label">Gestion des commandes</p>
-        <h1 class="cmd-hero-title">{{ commandes.length }} commande(s)</h1>
-      </div>
-      <button class="cmd-hero-btn" (click)="ouvrirCreer()">
-        <ion-icon name="add-outline"></ion-icon>
-        Nouvelle
-      </button>
+  <div class="page-pad stack">
+
+    <!-- ══ KPI (tuiles 2 colonnes, design commun) ══ -->
+    <div class="kpi-grid">
+      <gl-stat-card icon="time-outline" label="Brouillons" [value]="nbBrouillons + ''" variant="slate"></gl-stat-card>
+      <gl-stat-card icon="checkmark-circle-outline" label="Validées" [value]="nbValidees + ''" variant="green"></gl-stat-card>
+      <gl-stat-card icon="cash-outline" label="Crédits" [value]="nbCreditsEnCours + ''" variant="orange"></gl-stat-card>
+      <gl-stat-card icon="trending-up-outline" label="CA validé" [value]="formatMontant(totalValidees)" variant="blue"></gl-stat-card>
     </div>
 
-    <!-- Stats dans le hero -->
-    <div class="cmd-stats-row">
-      <div class="cmd-stat">
-        <span class="cmd-stat-val">{{ nbBrouillons }}</span>
-        <span class="cmd-stat-lbl">Brouillons</span>
-      </div>
-      <div class="cmd-stat-sep"></div>
-      <div class="cmd-stat">
-        <span class="cmd-stat-val" style="color:#6ee7b7">{{ nbValidees }}</span>
-        <span class="cmd-stat-lbl">Validées</span>
-      </div>
-      <div class="cmd-stat-sep"></div>
-      <div class="cmd-stat">
-        <span class="cmd-stat-val" style="color:#fcd34d">{{ nbCreditsEnCours }}</span>
-        <span class="cmd-stat-lbl">Crédits</span>
-      </div>
-      <div class="cmd-stat-sep"></div>
-      <div class="cmd-stat">
-        <span class="cmd-stat-val cmd-stat-val--sm">{{ formatMontant(totalValidees) }}</span>
-        <span class="cmd-stat-lbl">CA validé</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ FILTRES ══════════════════════════════════════════════════════════ -->
-  <div class="cmd-filters">
-    <div class="cmd-search-wrap">
-      <ion-icon name="search-outline"></ion-icon>
-      <input [(ngModel)]="searchTerm" (input)="appliquerFiltres()" placeholder="Rechercher commande, client..." />
-      <button *ngIf="searchTerm" (click)="searchTerm=''; appliquerFiltres()">
-        <ion-icon name="close-circle-outline"></ion-icon>
-      </button>
-    </div>
-
-    <div class="cmd-chips">
-      <button class="cmd-chip" [class.cmd-chip--active]="statutFilter === ''"
-        (click)="statutFilter=''; appliquerFiltres()">Toutes</button>
-      <button class="cmd-chip" [class.cmd-chip--active]="statutFilter === 'BROUILLON'"
-        (click)="statutFilter='BROUILLON'; appliquerFiltres()">Brouillons</button>
-      <button class="cmd-chip cmd-chip--green" [class.cmd-chip--active-green]="statutFilter === 'VALIDEE'"
-        (click)="statutFilter='VALIDEE'; appliquerFiltres()">Validées</button>
-      <button class="cmd-chip cmd-chip--orange" [class.cmd-chip--active-orange]="statutFilter === 'CREDIT'"
-        (click)="statutFilter='CREDIT'; appliquerFiltres()">Crédits</button>
-      <button class="cmd-chip cmd-chip--red" [class.cmd-chip--active-red]="statutFilter === 'ANNULEE'"
-        (click)="statutFilter='ANNULEE'; appliquerFiltres()">Annulées</button>
-    </div>
-  </div>
-
-  <!-- ══ CHARGEMENT ══════════════════════════════════════════════════════ -->
-  <div class="sk-list" *ngIf="isLoading">
-    <div class="sk-card" *ngFor="let i of [1,2,3,4]">
-      <div class="skeleton sk-avatar"></div>
-      <div class="sk-card-body">
-        <div class="skeleton sk-line sk-line--w80"></div>
-        <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
-      </div>
-      <div class="skeleton sk-line sk-line--w30"></div>
-    </div>
-  </div>
-
-  <!-- ══ VIDE ════════════════════════════════════════════════════════════ -->
-  <div class="empty-v2" *ngIf="!isLoading && commandesFiltrees.length === 0">
-    <div class="empty-v2__icon"><ion-icon name="clipboard-outline"></ion-icon></div>
-    <p class="empty-v2__title">Aucune commande</p>
-    <p class="empty-v2__text">Créez votre première commande fournisseur</p>
-    <ion-button size="small" (click)="ouvrirCreer()">
-      <ion-icon name="add-outline" slot="start"></ion-icon>Créer une commande
-    </ion-button>
-  </div>
-
-  <!-- ══ LISTE ════════════════════════════════════════════════════════════ -->
-  <div class="cmd-list animate-cards" *ngIf="!isLoading && commandesFiltrees.length > 0">
-
-    <article class="cmd-card"
-      *ngFor="let c of commandesFiltrees; trackBy: trackById"
-      [class.cmd-card--validee]="c.statut === StatutCommande.VALIDEE"
-      [class.cmd-card--annulee]="c.statut === StatutCommande.ANNULEE"
-      [class.cmd-card--credit]="c.estCredit && c.montantRestant > 0">
-
-      <!-- ── EN-TÊTE CARTE ── -->
-      <div class="cmd-card-head">
-        <div class="cmd-card-left">
-          <div class="cmd-avatar"
-            [class.cmd-avatar--green]="c.statut === StatutCommande.VALIDEE"
-            [class.cmd-avatar--red]="c.statut === StatutCommande.ANNULEE">
-            <ion-icon [name]="c.statut === StatutCommande.VALIDEE ? 'checkmark' : (c.statut === StatutCommande.ANNULEE ? 'close' : 'time-outline')"></ion-icon>
-          </div>
-          <div>
-            <h3 class="cmd-numero">{{ c.numeroCommande }}</h3>
-            <p class="cmd-date">{{ formatDate(c.dateCommande) }}</p>
-          </div>
-        </div>
-        <div class="cmd-badges">
-          <span class="cmd-badge"
-            [class.cmd-badge--green]="c.statut === StatutCommande.VALIDEE"
-            [class.cmd-badge--red]="c.statut === StatutCommande.ANNULEE"
-            [class.cmd-badge--gray]="c.statut === StatutCommande.BROUILLON">
-            {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : (c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon') }}
-          </span>
-          <span class="cmd-badge cmd-badge--orange" *ngIf="c.estCredit && c.montantRestant > 0">Crédit</span>
-          <span class="cmd-badge cmd-badge--blue" *ngIf="c.origine === 'VITRINE'" title="Reçue via la vitrine en ligne">
-            <ion-icon name="globe-outline"></ion-icon> En ligne
-          </span>
-        </div>
-      </div>
-
-      <!-- ── CORPS CARTE ── -->
-      <div class="cmd-card-body">
-
-        <!-- Client -->
-        <div class="cmd-info-row" *ngIf="getClientNom(c) !== 'N/A'">
-          <ion-icon name="person-circle-outline" class="cmd-info-icon"></ion-icon>
-          <div class="cmd-info-content">
-            <span class="cmd-info-main">{{ getClientNom(c) }}</span>
-            <span class="cmd-info-sub" *ngIf="c.clientTelephone">{{ c.clientTelephone }}</span>
-          </div>
-        </div>
-
-        <!-- Produits -->
-        <div class="cmd-info-row">
-          <ion-icon name="cube-outline" class="cmd-info-icon"></ion-icon>
-          <div class="cmd-info-content">
-            <span class="cmd-info-main">{{ c.lignes?.length || 0 }} article(s)</span>
-            <span class="cmd-info-sub" *ngIf="c.lignes?.length">
-              {{ c.lignes[0].produit?.nom || c.lignes[0].produitNom }}
-              <ng-container *ngIf="c.lignes.length > 1"> · +{{ c.lignes.length - 1 }} autre(s)</ng-container>
-            </span>
-          </div>
-        </div>
-
-        <!-- Montant -->
-        <div class="cmd-montant-block">
-          <div class="cmd-montant-total">{{ formatMontant(c.montantTotal) }}</div>
-          <div class="cmd-mode-pay">
-            <ion-icon name="wallet-outline"></ion-icon>
-            {{ getModePaiementLabel(c.modePaiement) }}
-            <span *ngIf="c.venteId" class="cmd-vente-ref"> · Vente #{{ c.venteId }}</span>
-          </div>
-        </div>
-
-        <!-- Crédit détail -->
-        <div class="cmd-credit-box" *ngIf="c.estCredit">
-          <div class="cmd-credit-row">
-            <span class="cmd-credit-label">Versé</span>
-            <span class="cmd-credit-versé">{{ formatMontant(c.montantVerse) }}</span>
-          </div>
-          <div class="cmd-credit-row" *ngIf="c.montantRestant > 0">
-            <span class="cmd-credit-label">Reste dû</span>
-            <span class="cmd-credit-reste">{{ formatMontant(c.montantRestant) }}</span>
-          </div>
-          <div class="cmd-credit-row" *ngIf="c.montantRestant === 0">
-            <span class="cmd-credit-soldé">Soldé</span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ── ACTIONS ── -->
-      <div class="cmd-card-actions">
-        <button class="cmd-act-btn" (click)="imprimerFacture(c)">
-          <ion-icon name="print-outline"></ion-icon>
-          <span>Imprimer</span>
-        </button>
-        <button class="cmd-act-btn cmd-act-btn--blue" (click)="ouvrirModifier(c)"
-          *ngIf="c.statut === StatutCommande.BROUILLON">
-          <ion-icon name="create-outline"></ion-icon>
-          <span>Modifier</span>
-        </button>
-        <button class="cmd-act-btn cmd-act-btn--green" (click)="valider(c)"
-          *ngIf="c.statut === StatutCommande.BROUILLON">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          <span>Valider</span>
-        </button>
-        <button class="cmd-act-btn cmd-act-btn--orange" (click)="ouvrirReglementIndividuel(c)"
-          *ngIf="c.estCredit && c.montantRestant > 0">
-          <ion-icon name="cash-outline"></ion-icon>
-          <span>Régler</span>
-        </button>
-        <button class="cmd-act-btn cmd-act-btn--red" (click)="annuler(c)"
-          *ngIf="c.statut !== StatutCommande.ANNULEE">
-          <ion-icon name="close-circle-outline"></ion-icon>
-          <span>Annuler</span>
-        </button>
-        <button class="cmd-act-btn cmd-act-btn--dark" (click)="supprimer(c)"
-          *ngIf="c.statut === StatutCommande.BROUILLON">
-          <ion-icon name="trash-outline"></ion-icon>
-          <span>Supprimer</span>
-        </button>
-      </div>
-
-    </article>
-  </div>
-
-  <!-- ══ FAB RÈGLEMENT GROUPÉ ════════════════════════════════════════════ -->
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="nbCreditsEnCours > 0">
-    <ion-fab-button color="warning" (click)="ouvrirReglementGroupe()">
+    <!-- Règlement groupé des crédits en cours (ancien bouton flottant, même condition) -->
+    <button type="button" class="gl-btn gl-btn--secondary" *ngIf="nbCreditsEnCours > 0" (click)="ouvrirReglementGroupe()">
       <ion-icon name="cash-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
+      Règlement groupé
+    </button>
 
+    <!-- ══ Carte de filtres ══ -->
+    <div class="filter-zone">
+      <div class="fz-search">
+        <ion-icon name="search-outline" class="fz-icon"></ion-icon>
+        <input class="fz-input" [(ngModel)]="searchTerm" (input)="appliquerFiltres()" placeholder="Rechercher commande, client..." />
+        <button type="button" class="fz-clear" *ngIf="searchTerm" (click)="searchTerm = ''; appliquerFiltres()" aria-label="Effacer">
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="fz-chips">
+        <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === ''"
+          (click)="statutFilter = ''; appliquerFiltres()">Toutes</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'BROUILLON'"
+          (click)="statutFilter = 'BROUILLON'; appliquerFiltres()">Brouillons</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'VALIDEE'"
+          (click)="statutFilter = 'VALIDEE'; appliquerFiltres()">Validées</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'CREDIT'"
+          (click)="statutFilter = 'CREDIT'; appliquerFiltres()">Crédits</button>
+        <button type="button" class="fz-chip" [class.fz-chip--active]="statutFilter === 'ANNULEE'"
+          (click)="statutFilter = 'ANNULEE'; appliquerFiltres()">Annulées</button>
+      </div>
+    </div>
+
+    <!-- ══ Chargement ══ -->
+    <div class="sk-list" *ngIf="isLoading">
+      <div class="sk-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton sk-avatar"></div>
+        <div class="sk-card-body">
+          <div class="skeleton sk-line sk-line--w80"></div>
+          <div class="skeleton sk-line sk-line--w50 sk-line--sm"></div>
+        </div>
+        <div class="skeleton sk-line sk-line--w30"></div>
+      </div>
+    </div>
+
+    <!-- ══ Vide ══ -->
+    <gl-empty-state
+      *ngIf="!isLoading && commandesFiltrees.length === 0"
+      icon="clipboard-outline"
+      title="Aucune commande"
+      message="Créez votre première commande fournisseur"
+      ctaLabel="Créer une commande"
+      (ctaClick)="ouvrirCreer()">
+    </gl-empty-state>
+
+    <gl-section-header *ngIf="!isLoading && commandesFiltrees.length > 0" [title]="commandesFiltrees.length + ' commande(s)'"></gl-section-header>
+
+    <!-- ══ Liste ══ -->
+    <section class="stack animate-cards" *ngIf="!isLoading && commandesFiltrees.length > 0">
+      <article class="gl-list-card" *ngFor="let c of commandesFiltrees; trackBy: trackById"
+        [class.gl-list-card--muted]="c.statut === StatutCommande.ANNULEE">
+
+        <div class="glc-body">
+          <!-- En-tête : statut en pastilles -->
+          <div class="glc-head">
+            <div class="glc-icon"
+              [class.glc-icon--ok]="c.statut === StatutCommande.VALIDEE"
+              [class.glc-icon--bad]="c.statut === StatutCommande.ANNULEE"
+              [class.glc-icon--info]="c.statut === StatutCommande.BROUILLON">
+              <ion-icon [name]="c.statut === StatutCommande.VALIDEE ? 'checkmark-outline' : (c.statut === StatutCommande.ANNULEE ? 'close-outline' : 'time-outline')"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ c.numeroCommande }}</p>
+              <p class="glc-sub">{{ formatDate(c.dateCommande) }}</p>
+            </div>
+            <div class="glc-pills">
+              <span class="gl-pill"
+                [class.gl-pill--ok]="c.statut === StatutCommande.VALIDEE"
+                [class.gl-pill--bad]="c.statut === StatutCommande.ANNULEE"
+                [class.gl-pill--neutral]="c.statut === StatutCommande.BROUILLON">
+                {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : (c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon') }}
+              </span>
+              <span class="gl-pill gl-pill--warn" *ngIf="c.estCredit && c.montantRestant > 0">Crédit</span>
+              <span class="gl-pill gl-pill--info" *ngIf="c.origine === 'VITRINE'" title="Reçue via la vitrine en ligne">
+                <ion-icon name="globe-outline"></ion-icon> En ligne
+              </span>
+            </div>
+          </div>
+
+          <!-- Client -->
+          <div class="glc-row" *ngIf="getClientNom(c) !== 'N/A'">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <div class="glc-row__content">
+              <span class="glc-row__main">{{ getClientNom(c) }}</span>
+              <span class="glc-row__sub" *ngIf="c.clientTelephone">{{ c.clientTelephone }}</span>
+            </div>
+          </div>
+
+          <!-- Produits -->
+          <div class="glc-row">
+            <ion-icon name="cube-outline"></ion-icon>
+            <div class="glc-row__content">
+              <span class="glc-row__main">{{ c.lignes?.length || 0 }} article(s)</span>
+              <span class="glc-row__sub" *ngIf="c.lignes?.length">
+                {{ c.lignes[0].produit?.nom || c.lignes[0].produitNom }}
+                <ng-container *ngIf="c.lignes.length > 1"> · +{{ c.lignes.length - 1 }} autre(s)</ng-container>
+              </span>
+            </div>
+          </div>
+
+          <!-- Montant -->
+          <div class="glc-total">
+            <p class="glc-amount">{{ formatMontant(c.montantTotal) }}</p>
+            <p class="glc-pay">
+              <ion-icon name="wallet-outline"></ion-icon>
+              {{ getModePaiementLabel(c.modePaiement) }}
+              <span *ngIf="c.venteId"> · Vente #{{ c.venteId }}</span>
+            </p>
+          </div>
+
+          <!-- Crédit détail -->
+          <div class="glc-credit" *ngIf="c.estCredit">
+            <div class="glc-credit__row">
+              <span>Versé</span>
+              <strong class="is-ok">{{ formatMontant(c.montantVerse) }}</strong>
+            </div>
+            <div class="glc-credit__row" *ngIf="c.montantRestant > 0">
+              <span>Reste dû</span>
+              <strong class="is-bad">{{ formatMontant(c.montantRestant) }}</strong>
+            </div>
+            <div class="glc-credit__row" *ngIf="c.montantRestant === 0">
+              <strong class="is-ok">Soldé</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Actions écrites en pied de carte ── -->
+        <div class="glc-actions">
+          <button type="button" class="glc-action" (click)="imprimerFacture(c)">
+            <ion-icon name="print-outline"></ion-icon>
+            <span>Imprimer</span>
+          </button>
+          <button type="button" class="glc-action glc-action--link" (click)="ouvrirModifier(c)"
+            *ngIf="c.statut === StatutCommande.BROUILLON">
+            <ion-icon name="create-outline"></ion-icon>
+            <span>Modifier</span>
+          </button>
+          <button type="button" class="glc-action glc-action--ok" (click)="valider(c)"
+            *ngIf="c.statut === StatutCommande.BROUILLON">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>Valider</span>
+          </button>
+          <button type="button" class="glc-action glc-action--warn" (click)="ouvrirReglementIndividuel(c)"
+            *ngIf="c.estCredit && c.montantRestant > 0">
+            <ion-icon name="cash-outline"></ion-icon>
+            <span>Régler</span>
+          </button>
+          <button type="button" class="glc-action glc-action--bad" (click)="annuler(c)"
+            *ngIf="c.statut !== StatutCommande.ANNULEE">
+            <ion-icon name="close-circle-outline"></ion-icon>
+            <span>Annuler</span>
+          </button>
+          <button type="button" class="glc-action glc-action--bad" (click)="supprimer(c)"
+            *ngIf="c.statut === StatutCommande.BROUILLON">
+            <ion-icon name="trash-outline"></ion-icon>
+            <span>Supprimer</span>
+          </button>
+        </div>
+
+      </article>
+    </section>
+
+  </div>
 </ion-content>
 
+<!-- Bouton flottant étendu : création de commande (même action que l'ancien bouton « Nouvelle ») -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <button type="button" class="gl-fab-extended" (click)="ouvrirCreer()">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    Nouvelle commande
+  </button>
+</ion-fab>
+
 <!-- ══════════════════════════════════════════════════════════════════════
-     MODAL CRÉER / MODIFIER
+     MODALE CRÉER / MODIFIER (centrée)
 ══════════════════════════════════════════════════════════════════════ -->
 <div class="md-overlay" *ngIf="showModal">
   <div class="md-backdrop" (click)="fermerModal()"></div>
-  <div class="md-sheet">
-
-    <div class="md-handle"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
 
     <div class="md-header">
-      <h2 class="md-title">
+      <div class="md-icon md-icon--info">
         <ion-icon [name]="editingId ? 'create-outline' : 'clipboard-outline'"></ion-icon>
-        {{ editingId ? 'Modifier la commande' : 'Nouvelle commande' }}
-      </h2>
-      <button class="md-close" (click)="fermerModal()">
+      </div>
+      <h2 class="md-title">{{ editingId ? 'Modifier la commande' : 'Nouvelle commande' }}</h2>
+      <button type="button" class="md-close" (click)="fermerModal()" aria-label="Fermer">
         <ion-icon name="close-outline"></ion-icon>
       </button>
     </div>
@@ -255,154 +227,159 @@
     <div class="md-body">
 
       <!-- ── CLIENT ── -->
-      <div class="md-section-title">
-        <ion-icon name="person-outline"></ion-icon> Client
-      </div>
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="person-outline"></ion-icon> Client</p>
 
-      <div class="md-search-wrap">
-        <ion-searchbar [(ngModel)]="searchClient" (ionInput)="filtrerClients()"
-          placeholder="Rechercher un client..." [debounce]="200" mode="ios">
-        </ion-searchbar>
-        <div class="md-dropdown" *ngIf="showClientDropdown && clientsFiltres.length > 0">
-          <div class="md-drop-item" *ngFor="let cl of clientsFiltres" (mousedown)="selectionnerClient(cl)">
-            <div class="md-drop-name">{{ cl.nom }} {{ cl.prenom }}</div>
-            <div class="md-drop-sub">{{ cl.numeroTelephone }}</div>
+        <div class="md-search-wrap">
+          <ion-searchbar [(ngModel)]="searchClient" (ionInput)="filtrerClients()"
+            placeholder="Rechercher un client..." [debounce]="200" mode="ios">
+          </ion-searchbar>
+          <div class="md-dropdown" *ngIf="showClientDropdown && clientsFiltres.length > 0">
+            <div class="md-drop-item" *ngFor="let cl of clientsFiltres" (mousedown)="selectionnerClient(cl)">
+              <div class="md-drop-name">{{ cl.nom }} {{ cl.prenom }}</div>
+              <div class="md-drop-sub">{{ cl.numeroTelephone }}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="md-client-selected" *ngIf="form.clientId">
-        <div class="md-client-avatar">{{ (form.clientNom || '?')[0].toUpperCase() }}</div>
-        <div class="md-client-info">
-          <strong>{{ form.clientNom }} {{ form.clientPrenom }}</strong>
-          <span *ngIf="form.clientTelephone">{{ form.clientTelephone }}</span>
+        <div class="md-client-selected" *ngIf="form.clientId">
+          <div class="md-client-avatar">{{ (form.clientNom || '?')[0].toUpperCase() }}</div>
+          <div class="md-client-info">
+            <strong>{{ form.clientNom }} {{ form.clientPrenom }}</strong>
+            <span *ngIf="form.clientTelephone">{{ form.clientTelephone }}</span>
+          </div>
+          <button type="button" class="md-client-clear" (click)="effacerClient()" aria-label="Effacer le client">
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </button>
         </div>
-        <button class="md-client-clear" (click)="effacerClient()">
-          <ion-icon name="close-circle-outline"></ion-icon>
-        </button>
-      </div>
 
-      <div class="md-fields" *ngIf="!form.clientId">
-        <div class="md-field">
-          <label>Nom client</label>
-          <input [(ngModel)]="form.clientNom" placeholder="Nom du client" />
+        <div class="md-fields" *ngIf="!form.clientId">
+          <label class="md-field">
+            <span>Nom client</span>
+            <input [(ngModel)]="form.clientNom" placeholder="Nom du client" />
+          </label>
+          <label class="md-field">
+            <span>Téléphone</span>
+            <input [(ngModel)]="form.clientTelephone" type="tel" placeholder="06..." />
+          </label>
         </div>
-        <div class="md-field">
-          <label>Téléphone</label>
-          <input [(ngModel)]="form.clientTelephone" type="tel" placeholder="06..." />
-        </div>
-      </div>
+      </section>
 
       <!-- ── PRODUITS ── -->
-      <div class="md-section-title">
-        <ion-icon name="cube-outline"></ion-icon> Produits
-      </div>
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="cube-outline"></ion-icon> Produits</p>
 
-      <div class="md-search-wrap">
-        <ion-searchbar [(ngModel)]="searchProduit" (ionInput)="filtrerProduits()"
-          placeholder="Ajouter un produit..." [debounce]="200" mode="ios">
-        </ion-searchbar>
-        <div class="md-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
-          <div class="md-drop-item" *ngFor="let p of produitsFiltres" (mousedown)="selectionnerProduit(p)">
-            <div class="md-drop-name">{{ p.nom }}</div>
-            <div class="md-drop-sub">{{ formatMontant(p.prixVente) }} · Stock : {{ p.quantite }}</div>
+        <div class="md-search-wrap">
+          <ion-searchbar [(ngModel)]="searchProduit" (ionInput)="filtrerProduits()"
+            placeholder="Ajouter un produit..." [debounce]="200" mode="ios">
+          </ion-searchbar>
+          <div class="md-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
+            <div class="md-drop-item" *ngFor="let p of produitsFiltres" (mousedown)="selectionnerProduit(p)">
+              <div class="md-drop-name">{{ p.nom }}</div>
+              <div class="md-drop-sub">{{ formatMontant(p.prixVente) }} · Stock : {{ p.quantite }}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="md-lignes" *ngIf="lignesForm.length > 0">
-        <div class="md-ligne" *ngFor="let l of lignesForm; let i = index">
-          <div class="md-ligne-head">
-            <div class="md-ligne-nom">{{ l.produitNom }}</div>
-            <button class="md-ligne-del" (click)="supprimerLigne(i)">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
+        <div class="md-lignes" *ngIf="lignesForm.length > 0">
+          <div class="md-ligne" *ngFor="let l of lignesForm; let i = index">
+            <div class="md-ligne-head">
+              <div class="md-ligne-nom">{{ l.produitNom }}</div>
+              <button type="button" class="md-ligne-del" (click)="supprimerLigne(i)" aria-label="Retirer le produit">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
+            <div class="md-ligne-controls">
+              <div class="md-ligne-qty">
+                <button type="button" class="md-qty-btn" (click)="changerQuantite(l, -1)" aria-label="Diminuer">
+                  <ion-icon name="remove-outline"></ion-icon>
+                </button>
+                <span class="md-qty-val">{{ l.quantite }}</span>
+                <button type="button" class="md-qty-btn" (click)="changerQuantite(l, 1)" aria-label="Augmenter">
+                  <ion-icon name="add-outline"></ion-icon>
+                </button>
+              </div>
+              <label class="md-field md-field--compact">
+                <span>Prix unit. (F)</span>
+                <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="l.prixUnitaire" />
+              </label>
+              <label class="md-field md-field--compact">
+                <span>Remise (%)</span>
+                <input type="number" [(ngModel)]="l.remise" min="0" max="100" />
+              </label>
+            </div>
+            <div class="md-ligne-total">
+              <span class="md-ligne-total-label">
+                {{ l.quantite }} × {{ formatMontant(l.prixUnitaire) }}
+                <ng-container *ngIf="l.remise > 0"> − {{ l.remise }}%</ng-container>
+              </span>
+              <strong>{{ formatMontant(prixLigne(l)) }}</strong>
+            </div>
           </div>
-          <div class="md-ligne-controls">
-            <div class="md-ligne-qty">
-              <button class="md-qty-btn" (click)="changerQuantite(l, -1)">−</button>
-              <span class="md-qty-val">{{ l.quantite }}</span>
-              <button class="md-qty-btn" (click)="changerQuantite(l, 1)">+</button>
-            </div>
-            <div class="md-ligne-field">
-              <label>Prix unit. (F)</label>
-              <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="l.prixUnitaire" />
-            </div>
-            <div class="md-ligne-field">
-              <label>Remise (%)</label>
-              <input type="number" [(ngModel)]="l.remise" min="0" max="100" />
-            </div>
-          </div>
-          <div class="md-ligne-total">
-            <span class="md-ligne-total-label">
-              {{ l.quantite }} × {{ formatMontant(l.prixUnitaire) }}
-              <ng-container *ngIf="l.remise > 0"> − {{ l.remise }}%</ng-container>
-            </span>
-            <strong>{{ formatMontant(prixLigne(l)) }}</strong>
+          <div class="md-total-bar">
+            <span>Total commande</span>
+            <strong>{{ formatMontant(totalCommande) }}</strong>
           </div>
         </div>
-        <div class="md-total-bar">
-          <span>Total commande</span>
-          <strong>{{ formatMontant(totalCommande) }}</strong>
-        </div>
-      </div>
+      </section>
 
       <!-- ── PAIEMENT ── -->
-      <div class="md-section-title">
-        <ion-icon name="wallet-outline"></ion-icon> Paiement
-      </div>
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="wallet-outline"></ion-icon> Paiement</p>
 
-      <div class="md-fields">
-        <div class="md-field">
-          <label>Mode de paiement</label>
-          <select [(ngModel)]="form.modePaiement">
-            <option value="ESPECES">Espèces</option>
-            <option value="ORANGE_MONEY">Orange Money</option>
-            <option value="MOOV_MONEY">Moov Money</option>
-            <option value="WAVE_MONEY">Wave</option>
-            <option value="CARTE_BANCAIRE">Carte Bancaire</option>
-            <option value="VIREMENT">Virement</option>
-            <option value="CHEQUE">Chèque</option>
-          </select>
+        <div class="md-fields">
+          <label class="md-field">
+            <span>Mode de paiement</span>
+            <select [(ngModel)]="form.modePaiement">
+              <option value="ESPECES">Espèces</option>
+              <option value="ORANGE_MONEY">Orange Money</option>
+              <option value="MOOV_MONEY">Moov Money</option>
+              <option value="WAVE_MONEY">Wave</option>
+              <option value="CARTE_BANCAIRE">Carte Bancaire</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="CHEQUE">Chèque</option>
+            </select>
+          </label>
+          <label class="md-field" *ngIf="form.modePaiement !== 'ESPECES'">
+            <span>Référence paiement *</span>
+            <input [(ngModel)]="form.referencePaiement" placeholder="N° transaction / référence"
+              [class.is-invalid]="!form.referencePaiement" />
+            <small class="md-error" *ngIf="!form.referencePaiement">Obligatoire pour ce mode</small>
+          </label>
         </div>
-        <div class="md-field" *ngIf="form.modePaiement !== 'ESPECES'">
-          <label>Référence paiement *</label>
-          <input [(ngModel)]="form.referencePaiement" placeholder="N° transaction / référence" />
-          <small style="color:#e57373;font-size:11px" *ngIf="!form.referencePaiement">Obligatoire pour ce mode</small>
-        </div>
-      </div>
 
-      <div class="md-toggle-row">
-        <span>Paiement à crédit</span>
-        <ion-toggle [(ngModel)]="form.estCredit" color="warning"></ion-toggle>
-      </div>
+        <div class="md-toggle-row">
+          <span>Paiement à crédit</span>
+          <ion-toggle [(ngModel)]="form.estCredit" aria-label="Paiement à crédit"></ion-toggle>
+        </div>
 
-      <div class="md-fields" *ngIf="form.estCredit">
-        <div class="md-field">
-          <label>Montant versé (FCFA)</label>
-          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montantVerse" placeholder="0" />
+        <div class="md-fields" *ngIf="form.estCredit">
+          <label class="md-field">
+            <span>Montant versé (FCFA)</span>
+            <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montantVerse" placeholder="0" />
+          </label>
+          <label class="md-field">
+            <span>Date d'échéance</span>
+            <input type="date" [(ngModel)]="form.dateEcheance" />
+          </label>
+          <div class="md-reste-box" *ngIf="resteAPayer > 0">
+            Reste dû : <strong>{{ formatMontant(resteAPayer) }}</strong>
+          </div>
         </div>
-        <div class="md-field">
-          <label>Date d'échéance</label>
-          <input type="date" [(ngModel)]="form.dateEcheance" />
-        </div>
-        <div class="md-reste-box" *ngIf="resteAPayer > 0">
-          Reste dû : <strong>{{ formatMontant(resteAPayer) }}</strong>
-        </div>
-      </div>
 
-      <div class="md-fields">
-        <div class="md-field">
-          <label>Notes</label>
-          <textarea [(ngModel)]="form.notes" rows="2" placeholder="Remarques..."></textarea>
+        <div class="md-fields">
+          <label class="md-field">
+            <span>Notes</span>
+            <textarea [(ngModel)]="form.notes" rows="3" placeholder="Remarques..."></textarea>
+          </label>
         </div>
-      </div>
+      </section>
 
     </div>
 
     <div class="md-footer">
-      <button class="md-btn md-btn--outline" (click)="fermerModal()">Annuler</button>
-      <button class="md-btn md-btn--primary" [disabled]="isSubmitting" (click)="enregistrer()">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerModal()">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" [disabled]="isSubmitting" (click)="enregistrer()">
         <ion-spinner name="crescent" *ngIf="isSubmitting"></ion-spinner>
         {{ editingId ? 'Modifier' : 'Créer la commande' }}
       </button>
@@ -412,19 +389,18 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     MODAL RÈGLEMENT INDIVIDUEL
+     MODALE RÈGLEMENT INDIVIDUEL (confirmation)
 ══════════════════════════════════════════════════════════════════════ -->
 <div class="md-overlay" *ngIf="showReglementModal">
   <div class="md-backdrop" (click)="fermerReglementModal()"></div>
-  <div class="md-sheet md-sheet--sm">
-
-    <div class="md-handle"></div>
+  <div class="md-sheet md-sheet--sm" role="dialog" aria-modal="true">
 
     <div class="md-header">
-      <h2 class="md-title">
-        <ion-icon name="cash-outline"></ion-icon> Régler le crédit
-      </h2>
-      <button class="md-close" (click)="fermerReglementModal()">
+      <div class="md-icon md-icon--warn">
+        <ion-icon name="cash-outline"></ion-icon>
+      </div>
+      <h2 class="md-title">Régler le crédit</h2>
+      <button type="button" class="md-close" (click)="fermerReglementModal()" aria-label="Fermer">
         <ion-icon name="close-outline"></ion-icon>
       </button>
     </div>
@@ -442,7 +418,7 @@
         </div>
         <div class="md-regl-row">
           <span>Déjà versé</span>
-          <span class="md-regl-versé">{{ formatMontant(commandeSelectionnee.montantVerse) }}</span>
+          <span class="is-ok">{{ formatMontant(commandeSelectionnee.montantVerse) }}</span>
         </div>
         <div class="md-regl-row md-regl-row--total">
           <span>Reste dû</span>
@@ -451,18 +427,17 @@
       </div>
 
       <div class="md-fields">
-        <div class="md-field">
-          <label>Montant à régler (FCFA)</label>
-          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="montantReglement"
-            placeholder="0" />
-        </div>
+        <label class="md-field">
+          <span>Montant à régler (FCFA)</span>
+          <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="montantReglement" placeholder="0" />
+        </label>
       </div>
 
       <div class="md-shortcuts">
-        <button class="md-shortcut" (click)="montantReglement = commandeSelectionnee.montantRestant / 2">
+        <button type="button" class="fz-chip" (click)="montantReglement = commandeSelectionnee.montantRestant / 2">
           Moitié ({{ formatMontant(commandeSelectionnee.montantRestant / 2) }})
         </button>
-        <button class="md-shortcut md-shortcut--full" (click)="montantReglement = commandeSelectionnee.montantRestant">
+        <button type="button" class="fz-chip" (click)="montantReglement = commandeSelectionnee.montantRestant">
           Tout régler ({{ formatMontant(commandeSelectionnee.montantRestant) }})
         </button>
       </div>
@@ -470,8 +445,8 @@
     </div>
 
     <div class="md-footer">
-      <button class="md-btn md-btn--outline" (click)="fermerReglementModal()">Annuler</button>
-      <button class="md-btn md-btn--warning" [disabled]="montantReglement <= 0" (click)="confirmerReglementIndividuel()">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerReglementModal()">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary" [disabled]="montantReglement <= 0" (click)="confirmerReglementIndividuel()">
         Confirmer le paiement
       </button>
     </div>
@@ -480,54 +455,55 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     MODAL RÈGLEMENT GROUPÉ
+     MODALE RÈGLEMENT GROUPÉ
 ══════════════════════════════════════════════════════════════════════ -->
 <div class="md-overlay" *ngIf="showReglementGroupeModal">
   <div class="md-backdrop" (click)="fermerReglementGroupeModal()"></div>
-  <div class="md-sheet">
-
-    <div class="md-handle"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
 
     <div class="md-header">
-      <h2 class="md-title">
-        <ion-icon name="cash-stack-outline"></ion-icon> Règlement groupé
-      </h2>
-      <button class="md-close" (click)="fermerReglementGroupeModal()">
+      <div class="md-icon md-icon--warn">
+        <ion-icon name="cash-outline"></ion-icon>
+      </div>
+      <h2 class="md-title">Règlement groupé</h2>
+      <button type="button" class="md-close" (click)="fermerReglementGroupeModal()" aria-label="Fermer">
         <ion-icon name="close-outline"></ion-icon>
       </button>
     </div>
 
     <div class="md-body">
 
-      <div class="md-select-all" (click)="selectionnerTousCredits()">
-        <div class="md-check" [class.md-check--on]="idsSelectionnes.length === commandesCredit.length">
-          <ion-icon name="checkmark-outline" *ngIf="idsSelectionnes.length === commandesCredit.length"></ion-icon>
-        </div>
-        <span>Tout sélectionner ({{ commandesCredit.length }})</span>
-      </div>
+      <div class="md-check-list">
+        <button type="button" class="md-check-row md-check-row--all" (click)="selectionnerTousCredits()">
+          <span class="md-check" [class.md-check--on]="idsSelectionnes.length === commandesCredit.length">
+            <ion-icon name="checkmark-outline" *ngIf="idsSelectionnes.length === commandesCredit.length"></ion-icon>
+          </span>
+          <span class="md-check-label">Tout sélectionner ({{ commandesCredit.length }})</span>
+        </button>
 
-      <div class="md-credit-item" *ngFor="let c of commandesCredit" (click)="toggleSelectionCredit(c.id)">
-        <div class="md-check" [class.md-check--on]="idsSelectionnes.includes(c.id)">
-          <ion-icon name="checkmark-outline" *ngIf="idsSelectionnes.includes(c.id)"></ion-icon>
-        </div>
-        <div class="md-credit-info">
-          <div class="md-credit-numero">{{ c.numeroCommande }} — {{ getClientNom(c) }}</div>
-          <div class="md-credit-reste">Reste : {{ formatMontant(c.montantRestant) }}</div>
-        </div>
+        <button type="button" class="md-check-row" *ngFor="let c of commandesCredit" (click)="toggleSelectionCredit(c.id)">
+          <span class="md-check" [class.md-check--on]="idsSelectionnes.includes(c.id)">
+            <ion-icon name="checkmark-outline" *ngIf="idsSelectionnes.includes(c.id)"></ion-icon>
+          </span>
+          <span class="md-credit-info">
+            <span class="md-credit-numero">{{ c.numeroCommande }} — {{ getClientNom(c) }}</span>
+            <span class="md-credit-reste">Reste : {{ formatMontant(c.montantRestant) }}</span>
+          </span>
+        </button>
       </div>
 
       <div class="md-fields">
-        <div class="md-field">
-          <label>Montant total à répartir (FCFA)</label>
+        <label class="md-field">
+          <span>Montant total à répartir (FCFA)</span>
           <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="montantReglementGroupe" placeholder="0" />
-        </div>
+        </label>
       </div>
 
     </div>
 
     <div class="md-footer">
-      <button class="md-btn md-btn--outline" (click)="fermerReglementGroupeModal()">Annuler</button>
-      <button class="md-btn md-btn--warning"
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerReglementGroupeModal()">Annuler</button>
+      <button type="button" class="gl-btn gl-btn--primary"
         [disabled]="idsSelectionnes.length === 0 || montantReglementGroupe <= 0"
         (click)="confirmerReglementGroupe()">
         Régler {{ idsSelectionnes.length }} commande(s)

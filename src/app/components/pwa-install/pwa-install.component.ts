@@ -88,18 +88,23 @@ import { IonicModule } from '@ionic/angular';
       </div>
     </div>
   `,
+  // Design commun : couleurs 100 % tokens --gl-* (fonds/textes blancs et gris
+  // figés remplacés — restaient clairs en mode sombre), textes >= 11px,
+  // zones touchables 44px, feuille radius 22.
   styles: [`
     /* ===== BANNIÈRE ANDROID ===== */
     .pwa-banner {
       position: fixed;
       bottom: 16px;
+      bottom: max(16px, env(safe-area-inset-bottom));
       left: 12px;
       right: 12px;
       z-index: 99999;
-      background: #ffffff;
+      background: var(--gl-surface);
+      color: var(--gl-text);
       border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(26,86,219,0.18), 0 2px 8px rgba(0,0,0,0.1);
-      border: 1.5px solid #e8eef8;
+      border: 1px solid var(--gl-border);
+      box-shadow: 0 8px 32px rgba(8,22,72,0.18);
       animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes slideUp {
@@ -109,56 +114,63 @@ import { IonicModule } from '@ionic/angular';
     .pwa-inner {
       display: flex;
       align-items: center;
-      padding: 12px 14px;
+      padding: 12px 6px 12px 14px;
       gap: 12px;
     }
     .pwa-icon img {
-      width: 46px;
-      height: 46px;
+      display: block;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       flex-shrink: 0;
     }
     .pwa-text { flex: 1; min-width: 0; }
     .pwa-title {
-      font-size: 0.9rem;
+      font-size: 15px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--gl-text);
       margin: 0 0 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .pwa-sub { font-size: 0.72rem; color: #64748b; margin: 0; }
+    .pwa-sub { font-size: 12px; font-weight: 500; color: var(--gl-muted); margin: 0; }
     .pwa-btn-install {
-      background: #1a56db;
+      background: var(--gl-action);
       color: #ffffff;
       border: none;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.82rem;
+      border-radius: 12px;
+      min-height: 44px;
+      padding: 0 14px;
+      font-family: inherit;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
       transition: background 0.15s;
     }
-    .pwa-btn-install:active { background: #0d47a1; }
+    .pwa-btn-install:active { background: var(--gl-action-press); }
     .pwa-btn-close {
+      width: 44px;
+      height: 44px;
       background: none;
       border: none;
-      color: #94a3b8;
+      border-radius: 12px;
+      color: var(--gl-muted);
       cursor: pointer;
-      padding: 4px;
+      padding: 0;
       display: flex;
       align-items: center;
+      justify-content: center;
       flex-shrink: 0;
-      font-size: 1.1rem;
+      font-size: 20px;
     }
 
     /* ===== GUIDE iOS ===== */
     .ios-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0,0,0,0.5);
       backdrop-filter: blur(4px);
       z-index: 99999;
       display: flex;
@@ -171,9 +183,13 @@ import { IonicModule } from '@ionic/angular';
       to   { opacity: 1; }
     }
     .ios-modal {
-      background: #f2f2f7;
+      background: var(--gl-bg);
+      color: var(--gl-text);
       border-radius: 22px 22px 0 0;
-      padding: 20px 20px 40px;
+      padding: 20px 16px 32px;
+      padding-bottom: max(32px, env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow-y: auto;
       position: relative;
       animation: slideUpModal 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
@@ -183,18 +199,18 @@ import { IonicModule } from '@ionic/angular';
     }
     .ios-close {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(120,120,128,0.16);
+      top: 8px;
+      right: 8px;
+      background: var(--gl-surface-2);
       border: none;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      border-radius: 12px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
-      color: #636366;
+      font-size: 22px;
+      color: var(--gl-muted);
       cursor: pointer;
     }
     .ios-header {
@@ -205,110 +221,103 @@ import { IonicModule } from '@ionic/angular';
       width: 64px;
       height: 64px;
       border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .ios-title {
-      font-size: 1.15rem;
+      font-size: 17px;
       font-weight: 700;
-      color: #1c1c1e;
+      color: var(--gl-text);
       margin: 0 0 4px;
     }
     .ios-subtitle {
-      font-size: 0.82rem;
-      color: #636366;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gl-muted);
       margin: 0;
     }
     .ios-steps {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 6px 0;
+      background: var(--gl-surface);
+      border: 1px solid var(--gl-border);
+      border-radius: 16px;
+      padding: 4px 0;
       margin-bottom: 16px;
     }
     .ios-step {
       display: flex;
       align-items: flex-start;
-      gap: 14px;
+      gap: 12px;
       padding: 14px 16px;
     }
     .ios-step-num {
-      width: 26px;
-      height: 26px;
-      background: #1a56db;
-      color: #fff;
+      width: 28px;
+      height: 28px;
+      background: var(--gl-action);
+      color: #ffffff;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: 13px;
       font-weight: 700;
       flex-shrink: 0;
-      margin-top: 2px;
     }
     .ios-step-content { flex: 1; }
     .ios-step-label {
-      font-size: 0.82rem;
-      color: #636366;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gl-text-2);
       margin: 0 0 6px;
     }
     .ios-step-hint {
-      font-size: 0.75rem;
-      color: #aeaeb2;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gl-muted);
       margin: 4px 0 0;
     }
-    .ios-share-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #e5f0ff;
-      color: #1a56db;
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
+    .ios-share-btn,
     .ios-home-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #e5f0ff;
-      color: #1a56db;
+      background: var(--gl-blue-soft);
+      color: var(--gl-link);
       border-radius: 8px;
       padding: 5px 10px;
-      font-size: 0.82rem;
+      font-size: 13px;
       font-weight: 600;
     }
-    .ios-add-icon { font-size: 1rem; }
+    .ios-add-icon { font-size: 16px; }
     .ios-ajouter {
       display: inline-block;
-      background: #e5f0ff;
-      color: #1a56db;
+      background: var(--gl-blue-soft);
+      color: var(--gl-link);
       border-radius: 8px;
       padding: 5px 12px;
-      font-size: 0.82rem;
+      font-size: 13px;
       font-weight: 700;
     }
     .ios-divider {
       height: 1px;
-      background: #f2f2f7;
+      background: var(--gl-border);
       margin: 0 16px;
     }
     .ios-tip {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #e8f0fe;
-      border-radius: 10px;
+      background: var(--gl-blue-soft);
+      border-radius: 12px;
       padding: 10px 14px;
-      font-size: 0.78rem;
-      color: #1a56db;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gl-link);
     }
-    .ios-tip ion-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .ios-tip ion-icon { font-size: 18px; flex-shrink: 0; }
     .ios-arrow {
       width: 40px;
-      height: 5px;
-      background: rgba(0,0,0,0.15);
-      border-radius: 3px;
+      height: 4px;
+      background: var(--gl-border);
+      border-radius: 2px;
       margin: 20px auto 0;
     }
   `]

@@ -1,0 +1,97 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" [text]="'COMMON.BACK' | translate"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'PARAMETRES.TITRE' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="gls-page">
+
+    <!-- Apparence -->
+    <section class="gls-section">
+      <gl-section-header [title]="'PARAMETRES_HUB.SECTION_APPARENCE' | translate"></gl-section-header>
+      <div class="gls-card">
+        <div class="gls-row" routerLink="/profile">
+          <span class="gls-icon"><ion-icon name="contrast-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_APPARENCE' | translate }}</span></span>
+          <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+    </section>
+
+    <!-- Langue -->
+    <section class="gls-section">
+      <gl-section-header [title]="'PARAMETRES_HUB.SECTION_LANGUE' | translate"></gl-section-header>
+      <div class="gls-card">
+        <div class="gls-row" routerLink="/langue">
+          <span class="gls-icon"><ion-icon name="language-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_LANGUE' | translate }}</span></span>
+          <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notifications -->
+    <section class="gls-section">
+      <gl-section-header [title]="'PARAMETRES_HUB.SECTION_NOTIFICATIONS' | translate"></gl-section-header>
+      <div class="gls-card">
+        <div class="gls-row" routerLink="/tabs/notifications">
+          <span class="gls-icon"><ion-icon name="notifications-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_NOTIFICATIONS' | translate }}</span></span>
+          <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+    </section>
+
+    <!-- Boutique — visible ADMIN uniquement -->
+    <ng-container *ngIf="auth.isAdmin()">
+      <section class="gls-section">
+        <gl-section-header [title]="'PARAMETRES_HUB.SECTION_BOUTIQUE' | translate"></gl-section-header>
+        <div class="gls-card">
+          <div class="gls-row" routerLink="/boutique">
+            <span class="gls-icon"><ion-icon name="storefront-outline"></ion-icon></span>
+            <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_BOUTIQUE_INFO' | translate }}</span></span>
+            <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+          </div>
+
+          <div class="gls-row" routerLink="/facture-design">
+            <span class="gls-icon"><ion-icon name="color-palette-outline"></ion-icon></span>
+            <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_FACTURE_DESIGN' | translate }}</span></span>
+            <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+          </div>
+
+          <div class="gls-row" routerLink="/export-donnees">
+            <span class="gls-icon"><ion-icon name="cloud-download-outline"></ion-icon></span>
+            <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_EXPORT' | translate }}</span></span>
+            <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+          </div>
+
+          <div class="gls-row" routerLink="/journal-audit">
+            <span class="gls-icon"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
+            <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_JOURNAL_AUDIT' | translate }}</span></span>
+            <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+          </div>
+
+          <div class="gls-row" routerLink="/sauvegardes">
+            <span class="gls-icon"><ion-icon name="archive-outline"></ion-icon></span>
+            <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_SAUVEGARDES' | translate }}</span></span>
+            <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+      </section>
+
+      <!-- Zone danger : réinitialisation / suppression des données -->
+      <div class="gls-card">
+        <div class="gls-row gls-row--danger" routerLink="/parametres">
+          <span class="gls-icon gls-icon--bad"><ion-icon name="warning-outline"></ion-icon></span>
+          <span class="gls-text"><span class="gls-label">{{ 'PARAMETRES_HUB.ITEM_REINIT' | translate }}</span></span>
+          <ion-icon class="gls-chevron" name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</ion-content>

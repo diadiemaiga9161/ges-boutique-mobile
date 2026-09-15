@@ -1,3 +1,6 @@
+// ── Mixin thème sombre partagé (voir usage plus bas, section DARK MODE) ───────
+@use "theme/dark-theme.mixin" as *;
+
 // ── Ionic core ───────────────────────────────────────────────────────────────
 @import "@ionic/angular/css/core.css";
 @import "@ionic/angular/css/normalize.css";
@@ -1025,8 +1028,9 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  background: white;
-  border-top: 1px solid #e2e8f0;
+  // Tokens : ce pied d'actions restait blanc en mode sombre.
+  background: var(--gl-surface);
+  border-top: 1px solid var(--gl-border);
 
   ion-button {
     flex: 1;
@@ -1068,15 +1072,16 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
 //  FILTER ZONE — zone de filtres universelle
 // ══════════════════════════════════════════════════
 .filter-zone {
-  background: #fff;
+  background: var(--gl-surface);
   margin: 0 12px 4px;
   border-radius: 16px;
   padding: 14px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  border: 1px solid #f1f5f9;
+  box-shadow: var(--gl-card-shadow);
+  border: 1px solid var(--gl-border);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
 }
 
 // Variante pour une zone remplie d'ion-chip (période, type...) : les puces doivent
@@ -1092,69 +1097,92 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f8fafc;
+  min-height: 48px;
+  box-sizing: border-box;
+  background: var(--gl-surface-2);
   border-radius: 12px;
-  padding: 0 14px;
-  border: 1.5px solid #e2e8f0;
-  transition: border-color 0.2s;
-  &:focus-within { border-color: #1a56db; }
+  padding: 0 2px 0 14px;
+  border: 1.5px solid var(--gl-border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
 
-  .fz-icon { color: #94a3b8; font-size: 1.1rem; flex-shrink: 0; }
+  .fz-icon { color: var(--gl-muted); font-size: 18px; flex-shrink: 0; }
 
   input, .fz-input {
     flex: 1;
     border: none;
     background: transparent;
-    padding: 11px 0;
-    font-size: 0.875rem;
-    color: #1e293b;
+    padding: 12px 0;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gl-text);
     outline: none;
     min-width: 0;
-    &::placeholder { color: #b0b8c9; }
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
   }
 
   .fz-clear {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     background: none;
     border: none;
-    padding: 4px;
+    padding: 0;
     cursor: pointer;
-    color: #94a3b8;
+    color: var(--gl-muted);
     display: flex;
     align-items: center;
-    ion-icon { font-size: 1.1rem; }
+    justify-content: center;
+    ion-icon { font-size: 20px; }
   }
 }
 
+// Puces de filtre (design commun Ionic ↔ RN). Chaque groupe = UNE ligne qui
+// défile horizontalement ; fondu sur le bord droit (mask-image) pour signaler
+// qu'il reste des puces à droite. Le padding-right permet à la dernière puce de
+// sortir entièrement du fondu une fois la ligne défilée jusqu'au bout.
 .fz-chips {
   display: flex;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 8px;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 28px 4px 0;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
   &::-webkit-scrollbar { display: none; }
 }
 
 .fz-chip {
+  position: relative;
   flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 500;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--gl-border);
+  background: var(--gl-surface);
+  color: var(--gl-text-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.18s;
-  display: flex;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   white-space: nowrap;
-  ion-icon { font-size: 0.85rem; }
-  &--active { background: #1a56db; border-color: #1a56db; color: #fff; }
-  &--green  { &.fz-chip--active { background: #16a34a; border-color: #16a34a; } }
-  &--orange { &.fz-chip--active { background: #d97706; border-color: #d97706; } }
-  &--red    { &.fz-chip--active { background: #dc2626; border-color: #dc2626; } }
-  &--warn   { &.fz-chip--active { background: #f59e0b; border-color: #f59e0b; } }
+  ion-icon { font-size: 15px; }
+  // Zone touchable portée à 44px sans changer la hauteur visuelle (36px)
+  &::after { content: ''; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
+  &:active:not(.fz-chip--active) { background: var(--gl-blue-soft); }
+  // Puce active : toujours bleu action (y compris en sombre). Les anciennes
+  // variantes de couleur (--green/--orange/--red/--warn) n'ont plus d'effet.
+  &--active { background: var(--gl-action); border-color: var(--gl-action); color: #ffffff; }
 }
 
 .fz-row {
@@ -1168,16 +1196,18 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  // Tokens --gl-* : ces zones de filtre restaient claires en mode sombre.
+  background: var(--gl-surface-2);
+  border: 1.5px solid var(--gl-border);
   border-radius: 12px;
   padding: 0 12px;
   min-height: 44px;
-  ion-icon { color: #64748b; font-size: 1rem; flex-shrink: 0; }
+  ion-icon { color: var(--gl-muted); font-size: 1rem; flex-shrink: 0; }
   ion-select {
     flex: 1;
     font-size: 0.85rem;
-    --placeholder-color: #94a3b8;
+    --color: var(--gl-text);
+    --placeholder-color: var(--gl-muted);
     --placeholder-opacity: 1;
     --padding-start: 0;
     --padding-end: 0;
@@ -1190,34 +1220,34 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   flex-direction: column;
   gap: 4px;
   label {
-    font-size: 0.7rem;
-    color: #94a3b8;
+    font-size: 11px;
+    color: var(--gl-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
   input[type="date"], input[type="month"] {
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
+    border: 1.5px solid var(--gl-border);
+    border-radius: 12px;
     padding: 8px 10px;
     font-size: 0.82rem;
-    color: #1e293b;
-    background: #f8fafc;
+    color: var(--gl-text);
+    background: var(--gl-surface-2);
     width: 100%;
     outline: none;
-    &:focus { border-color: #1a56db; }
+    &:focus { border-color: var(--gl-action); }
   }
 }
 
 .fz-count {
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--gl-muted);
   margin: 0;
   display: flex;
   align-items: center;
   gap: 4px;
   ion-spinner { width: 14px; height: 14px; }
-  strong { color: #1a56db; font-weight: 700; }
+  strong { color: var(--gl-link); font-weight: 700; }
 }
 
 // ══════════════════════════════════════════════════
@@ -1229,7 +1259,8 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #dde4ef 50%, #f1f5f9 75%);
+  // Tokens : l'ancien dégradé gris clair figé restait clair en mode sombre.
+  background: linear-gradient(90deg, var(--gl-surface-2) 25%, var(--gl-border) 50%, var(--gl-surface-2) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 8px;
@@ -1253,13 +1284,13 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
 .sk-line--w80 { width: 80%; }
 .sk-line--full { width: 100%; }
 
-// Carte skeleton (item liste)
+// Carte skeleton (item liste) — tokens : même carte que les listes (surface, bordure, radius 16)
 .sk-card {
-  background: #ffffff;
+  background: var(--gl-surface);
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(8,22,72,0.05);
-  border: 1px solid #e8eef8;
+  box-shadow: var(--gl-card-shadow);
+  border: 1px solid var(--gl-border);
   display: flex;
   gap: 14px;
   align-items: center;
@@ -1282,7 +1313,7 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
   border-radius: 16px;
   padding: 16px;
   height: 80px;
-  background: linear-gradient(90deg, #e2e8f4 25%, #c8d6ec 50%, #e2e8f4 75%);
+  background: linear-gradient(90deg, var(--gl-surface-2) 25%, var(--gl-border) 50%, var(--gl-surface-2) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite linear;
 }
@@ -1298,25 +1329,9 @@ ion-footer ion-toolbar ion-button:not([fill="clear"]):not([fill="outline"]) {
 // ══════════════════════════════════════════════════
 //  ION-SEGMENT — style pro global
 // ══════════════════════════════════════════════════
-ion-segment {
-  --background: #f1f5f9;
-  border-radius: 12px;
-  padding: 3px;
-
-  ion-segment-button {
-    --border-radius: 10px;
-    --color: #64748b;
-    --color-checked: #ffffff;
-    --indicator-color: #1a56db;
-    --indicator-box-shadow: 0 2px 10px rgba(26,86,219,0.28);
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: 0;
-    min-height: 36px;
-    transition: color 0.18s;
-  }
-}
+// Style du segment défini UNE seule fois dans src/theme/variables.scss (tokens
+// --gl-*). L'ancien bloc ici (sélecteur "ion-segment ion-segment-button", plus
+// spécifique) écrasait ces réglages et restait gris clair en mode sombre.
 
 // ══════════════════════════════════════════════════
 //  ION-CONTENT — fond légèrement coloré
@@ -1480,20 +1495,22 @@ ion-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 40px 20px;
+  gap: 8px;
+  padding: 32px 24px;
   text-align: center;
 
   .empty-v2__icon {
-    width: 72px; height: 72px;
+    width: 56px; height: 56px;
     border-radius: 50%;
-    background: #f1f5f9;
+    background: var(--gl-surface-2);
+    border: 1px solid var(--gl-border);
     display: flex; align-items: center; justify-content: center;
-    ion-icon { font-size: 2.2rem; color: #94a3b8; }
+    margin-bottom: 4px;
+    ion-icon { font-size: 26px; color: var(--gl-muted); }
   }
-  .empty-v2__title  { font-size: 1rem; font-weight: 700; color: #334155; margin: 0; }
-  .empty-v2__text   { font-size: 0.85rem; color: #94a3b8; margin: 0; line-height: 1.5; max-width: 220px; }
-  ion-button        { margin-top: 4px; }
+  .empty-v2__title  { font-size: 15px; font-weight: 700; color: var(--gl-text); margin: 0; }
+  .empty-v2__text   { font-size: 13px; font-weight: 500; color: var(--gl-muted); margin: 0; line-height: 1.5; max-width: 280px; }
+  ion-button        { margin-top: 8px; min-height: 44px; }
 }
 
 // ══════════════════════════════════════════════════
@@ -1506,20 +1523,20 @@ ion-content {
   padding: 0 4px;
 }
 .section-header__title {
-  font-size: 0.7rem;
+  font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--gl-muted);
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.06em;
   margin: 0;
 }
 .section-header__count {
-  background: #eff6ff;
-  color: #1a56db;
-  font-size: 0.7rem;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 // ══════════════════════════════════════════════════
@@ -1546,6 +1563,34 @@ ion-fab-button {
   --background: linear-gradient(135deg, #1a56db 0%, #081648 100%);
   --background-activated: #0e337a;
   --box-shadow: 0 6px 20px rgba(26,86,219,0.40);
+}
+
+// Bouton flottant ÉTENDU (icône + libellé), ex. « Nouvelle vente » (sales) —
+// à poser dans <ion-fab slot="fixed">. Fond plein, pas de dégradé. La page doit
+// réserver au moins 96px en bas du contenu défilant pour qu'il ne recouvre rien.
+.gl-fab-extended {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 20px 0 16px;
+  border: none;
+  border-radius: 16px;
+  background: var(--gl-action);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: var(--gl-fab-shadow);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+
+  ion-icon { font-size: 22px; }
+
+  &:active { background: var(--gl-action-press); transform: scale(0.97); }
 }
 
 // ══════════════════════════════════════════════════
@@ -1594,92 +1639,50 @@ ion-alert {
 }
 
 // ══════════════════════════════════════════════════
-//  DARK MODE AUTOMATIQUE (selon préférence système)
+//  GL BOTTOM SHEET / CONFIRM SHEET (BottomSheetService, ConfirmSheetService)
+//  Chrome de la ion-modal elle-même (coins arrondis en haut, ombre) — le
+//  contenu (poignée, en-tête, corps) est géré par <gl-bottom-sheet>. Même
+//  principe que .transfert-recu-modal déjà présent plus bas dans ce fichier.
 // ══════════════════════════════════════════════════
+ion-modal.gl-bottom-sheet-modal {
+  --border-radius: var(--gl-radius-lg, 16px) var(--gl-radius-lg, 16px) 0 0;
+  --box-shadow: 0 -8px 32px rgba(8,22,72,0.18);
+}
+
+// ══════════════════════════════════════════════════
+//  DARK MODE — Auto (système) + Sombre/Clair forcés (Profil)
+// ══════════════════════════════════════════════════
+// theme.service.ts pose body.theme-dark / body.theme-light selon le choix
+// utilisateur (Profil > Thème). Avant ce correctif, seul le bloc
+// @media (prefers-color-scheme: dark) ci-dessous existait : un choix manuel
+// "Sombre" sur un OS resté en clair n'avait donc aucun effet visuel, et un
+// choix manuel "Clair" sur un OS en sombre n'était pas garanti non plus. Le
+// contenu (identique à l'ancien bloc) vit maintenant dans le mixin partagé
+// gl-dark-theme (src/theme/_dark-theme.mixin.scss), appliqué ici sous 2
+// sélecteurs :
+//  - "Auto" (aucune classe body) : suit toujours l'OS, mais body.theme-light
+//    reste prioritaire et neutralise l'media query même si l'OS est sombre.
+//  - "Sombre" forcé (body.theme-dark) : s'applique inconditionnellement,
+//    même si l'OS est en clair.
+// "Clair" forcé (body.theme-light) : aucun sélecteur ci-dessous ne le
+// concerne, donc les valeurs claires de :root (jamais surchargées) restent
+// telles quelles — vérifié en inspectant les règles calculées, pas besoin de
+// bloc de réaffirmation supplémentaire.
 @media (prefers-color-scheme: dark) {
-  :root {
-    --ion-background-color: #111827;
-    --ion-background-color-rgb: 17,24,39;
-    --ion-text-color: #f9fafb;
-    --ion-text-color-rgb: 249,250,251;
-    --ion-color-step-50: #1f2937;
-    --ion-color-step-100: #1f2937;
-    --ion-color-step-150: #374151;
-    --ion-color-step-200: #374151;
-    --ion-color-step-250: #4b5563;
-    --ion-color-step-300: #6b7280;
-    --ion-color-step-350: #9ca3af;
-    --ion-color-step-400: #d1d5db;
-    --ion-card-background: #1f2937;
-    --ion-item-background: #1f2937;
-    --ion-toolbar-background: #1e3a8a;
+  body:not(.theme-light) {
+    @include gl-dark-theme;
+  }
+}
 
-    // --gl-slate-900 (variables.scss) = #0f172a, utilisé comme couleur de TEXTE par
-    // plusieurs classes (.metric-value ici, potentiellement d'autres dans les pages) —
-    // jamais réévalué en sombre jusqu'ici, d'où du texte quasi noir sur fond de carte
-    // devenu sombre. Le redéfinir ici corrige tout ce qui l'utilise, sans devoir
-    // toucher chaque classe individuellement.
-    --gl-slate-900: #f9fafb;
-
-    // ion-card color="light" et tout --background: var(--ion-color-light, ...) restaient
-    // blancs en mode sombre (jamais réévalués) — signalé indépendamment par 3 équipes
-    // différentes lors du passage de polish UI/UX du 2026-09-02 sur les 41 pages Ionic.
-    --ion-color-light: #1f2937;
-    --ion-color-light-rgb: 31, 41, 55;
-    --ion-color-light-contrast: #f9fafb;
-    --ion-color-light-shade: #374151;
-    --ion-color-light-tint: #374151;
-  }
-
-  // ion-content garde un fond clair fixe (#f6f8fb, voir plus bas dans ce fichier) tant
-  // qu'il n'est pas explicitement réévalué ici — bug de base touchant potentiellement
-  // TOUTE page qui n'a pas son propre correctif local (plusieurs pages en avaient déjà
-  // un copié-collé au cas par cas avant ce correctif centralisé).
-  ion-content {
-    --background: var(--ion-background-color, #111827);
-  }
-
-  // Texte de titre de carte — couleur fixe (pas une variable), donc --gl-slate-900
-  // ci-dessus ne suffit pas à la corriger : même bug "texte quasi noir sur fond sombre"
-  // que .metric-value, signalé sur plusieurs pages (Inventaire, Boutique, Profil...).
-  .card-title {
-    color: #f9fafb;
-  }
-
-  // Cartes/panneaux "maison" ci-dessous : couleurs fixes (#fff, #e8eef8...) qui ne
-  // suivaient pas le thème sombre, contrairement au texte/labels Ionic (déjà passés en
-  // clair via --ion-text-color juste au-dessus) — résultat : texte clair sur fond resté
-  // blanc, illisible ou carrément invisible. Concerne Profil, Boutique, et toutes les
-  // listes/formulaires qui utilisent ces classes (clients, produits, transferts...).
-  .mobile-card,
-  .form-panel,
-  .metric-card,
-  .sk-card,
-  .list-item-card {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  .mobile-card.annulee { background: #172033; }
-  .dropdown-list {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  .filter-zone {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  .fz-chip {
-    background: #1f2937;
-    border-color: #374151;
-    color: #9ca3af;
-  }
+body.theme-dark {
+  @include gl-dark-theme;
 }
 
 // ══════════════════════════════════════════════════
 //  SKELETON LOADERS — classes complémentaires
 // ══════════════════════════════════════════════════
 .skeleton-item {
-  background: linear-gradient(90deg, var(--ion-color-step-100, #e2e8f0) 25%, var(--ion-color-step-150, #f1f5f9) 50%, var(--ion-color-step-100, #e2e8f0) 75%);
+  background: linear-gradient(90deg, var(--gl-surface-2) 25%, var(--gl-border) 50%, var(--gl-surface-2) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s infinite;
   border-radius: 8px;
@@ -1695,11 +1698,12 @@ ion-alert {
 .skeleton-line.w-75 { width: 75%; }
 .skeleton-line.w-50 { width: 50%; }
 .skeleton-card {
-  background: var(--ion-card-background, #fff);
-  border-radius: 12px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
   padding: 16px;
   margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: var(--gl-card-shadow);
 }
 
 // ══════════════════════════════════════════════════
@@ -1777,6 +1781,6 @@ ion-alert {
   flex: 1; --background: #dc2626; --background-hover: #b91c1c;
   --color: white; --border-radius: 10px;
 }
-@media (prefers-color-scheme: dark) {
-  .transfert-recu-produit { background: #1e2d4f; }
-}
+// Dark mode pour .transfert-recu-produit : fusionné dans le mixin gl-dark-theme
+// (voir section "DARK MODE" plus haut dans ce fichier) — anciennement un 2e bloc
+// @media (prefers-color-scheme: dark) séparé ici.

@@ -1,0 +1,144 @@
+// ╔══════════════════════════════════════════════════════════╗
+// ║   GES LAFIA — Mixin thème sombre partagé                  ║
+// ║   Contenu extrait tel quel des 2 anciens blocs             ║
+// ║   `@media (prefers-color-scheme: dark)` de global.scss     ║
+// ║   (lignes ~1599 et ~1780 avant restructuration), pour      ║
+// ║   pouvoir être appliqué à la fois :                        ║
+// ║    - en mode "Auto" (suit l'OS)                            ║
+// ║    - en mode "Sombre" forcé manuellement (Profil)          ║
+// ║   Voir usage dans global.scss.                             ║
+// ╚══════════════════════════════════════════════════════════╝
+@mixin gl-dark-theme {
+  // ── Tokens sémantiques --gl-* (design commun Ionic ↔ React Native) ──────────
+  // Valeurs claires dans variables.scss (:root). Toute page/composant qui utilise
+  // ces variables est automatiquement correct dans les 2 cas sombres (Auto + forcé)
+  // sans aucun bloc @media local.
+  --gl-bg:           #111827;
+  --gl-surface:      #1f2937;
+  --gl-surface-2:    #172033;
+  --gl-border:       #374151;
+  --gl-text:         #f9fafb;
+  --gl-text-2:       #d1d5db;
+  --gl-muted:        #9ca3af;
+  --gl-navy:         #081648;
+  --gl-action:       #2563eb;
+  --gl-action-press: #1d4ed8;
+  --gl-link:         #60a5fa;
+  --gl-blue-soft:    #1e2f57;
+  --gl-blue-line:    #2c4a8a;
+  --gl-ring:         rgba(96,165,250,.25);
+  --gl-ok:           #34d399;
+  --gl-ok-soft:      #064e3b;
+  --gl-warn:         #fbbf24;
+  --gl-warn-soft:    #78350f;
+  --gl-bad:          #f87171;
+  --gl-bad-soft:     #7f1d1d;
+  --gl-bad-solid:    #dc2626;
+  --gl-hero:         linear-gradient(150deg,#081648 0%,#0d2b85 45%,#1a56db 100%);
+  --gl-card-shadow:  none;
+  --gl-fab-shadow:   0 6px 20px rgba(0,0,0,.45);
+  --gl-tabbar-bg:    rgba(31,41,55,.96);
+  --gl-tabbar-shadow: none;
+  --gl-color-scheme: dark;
+
+  --ion-background-color: #111827;
+  --ion-background-color-rgb: 17,24,39;
+  --ion-text-color: #f9fafb;
+  --ion-text-color-rgb: 249,250,251;
+  --ion-color-step-50: #1f2937;
+  --ion-color-step-100: #1f2937;
+  --ion-color-step-150: #374151;
+  --ion-color-step-200: #374151;
+  --ion-color-step-250: #4b5563;
+  --ion-color-step-300: #6b7280;
+  --ion-color-step-350: #9ca3af;
+  --ion-color-step-400: #d1d5db;
+  --ion-card-background: #1f2937;
+  --ion-item-background: #1f2937;
+  // Toolbar : même bleu nuit dans les 2 thèmes (spec design commun).
+  --ion-toolbar-background: #081648;
+
+  // --gl-slate-900 (variables.scss) = #0f172a, utilisé comme couleur de TEXTE par
+  // plusieurs classes (.metric-value ici, potentiellement d'autres dans les pages) —
+  // jamais réévalué en sombre jusqu'ici, d'où du texte quasi noir sur fond de carte
+  // devenu sombre. Le redéfinir ici corrige tout ce qui l'utilise, sans devoir
+  // toucher chaque classe individuellement.
+  --gl-slate-900: #f9fafb;
+
+  // ion-card color="light" et tout --background: var(--ion-color-light, ...) restaient
+  // blancs en mode sombre (jamais réévalués) — signalé indépendamment par 3 équipes
+  // différentes lors du passage de polish UI/UX du 2026-09-02 sur les 41 pages Ionic.
+  --ion-color-light: #1f2937;
+  --ion-color-light-rgb: 31, 41, 55;
+  --ion-color-light-contrast: #f9fafb;
+  --ion-color-light-shade: #374151;
+  --ion-color-light-tint: #374151;
+
+  // Ombres design system (variables.scss) : rgba(8,22,72,x) est calibré pour se voir
+  // sur des cartes BLANCHES posées sur un fond gris clair. Sur fond sombre (#111827)
+  // avec cartes #1f2937, cette même ombre bleu-nuit devient quasi invisible — on la
+  // remplace par une ombre noire plus opaque pour garder un minimum de relief.
+  --gl-shadow-sm: 0 2px 8px rgba(0,0,0,0.24);
+  --gl-shadow-md: 0 2px 12px rgba(0,0,0,0.32);
+
+  // ion-content garde un fond clair fixe (#f6f8fb, voir plus bas dans ce fichier) tant
+  // qu'il n'est pas explicitement réévalué ici — bug de base touchant potentiellement
+  // TOUTE page qui n'a pas son propre correctif local (plusieurs pages en avaient déjà
+  // un copié-collé au cas par cas avant ce correctif centralisé).
+  ion-content {
+    --background: var(--ion-background-color, #111827);
+  }
+
+  // Texte de titre de carte — couleur fixe (pas une variable), donc --gl-slate-900
+  // ci-dessus ne suffit pas à la corriger : même bug "texte quasi noir sur fond sombre"
+  // que .metric-value, signalé sur plusieurs pages (Inventaire, Boutique, Profil...).
+  .card-title {
+    color: #f9fafb;
+  }
+
+  // Cartes/panneaux "maison" ci-dessous : couleurs fixes (#fff, #e8eef8...) qui ne
+  // suivaient pas le thème sombre, contrairement au texte/labels Ionic (déjà passés en
+  // clair via --ion-text-color juste au-dessus) — résultat : texte clair sur fond resté
+  // blanc, illisible ou carrément invisible. Concerne Profil, Boutique, et toutes les
+  // listes/formulaires qui utilisent ces classes (clients, produits, transferts...).
+  .mobile-card,
+  .form-panel,
+  .metric-card,
+  .sk-card,
+  .list-item-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .mobile-card.annulee { background: #172033; }
+  .dropdown-list {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  // .filter-zone / .fz-chip : désormais entièrement pilotés par les tokens --gl-*
+  // (global.scss). L'ancien override .fz-chip ici avait une spécificité supérieure
+  // à .fz-chip--active et laissait la puce ACTIVE grise en sombre (bug corrigé).
+
+  // Bloc historiquement séparé (2e ancien @media, ~ligne 1780) : couleur de fond de la
+  // ligne produit dans la modale d'accusé de réception de transfert.
+  .transfert-recu-produit { background: #1e2d4f; }
+
+  // Composants gl-* (design system de la refonte mobile, src/app/components/) : même
+  // bug que .card-title/.metric-value ci-dessus, sur des composants créés après coup.
+  // Leur fond est codé en dur en blanc (#ffffff, jamais réévalué) alors que leur texte
+  // utilise --gl-slate-900 — redéfini juste au-dessus en quasi-blanc pour les anciennes
+  // cartes déjà passées en fond sombre. Résultat sans ce correctif : texte blanc sur
+  // fond resté blanc, invisible (gl-stat-card sur home/products/inventory/credits/
+  // caisse/fournisseurs, gl-product-card sur products, gl-sheet = coquille de
+  // gl-bottom-sheet/gl-confirm-sheet).
+  .gl-stat-card,
+  .gl-product-card,
+  .gl-sheet {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  // --gl-slate-700 n'est utilisé que par gl-empty-state (titre) et gl-quick-action
+  // (libellé) : jamais redéfini jusqu'ici, ce texte gris ardoise foncé reste
+  // quasiment illisible une fois posé sur un fond de page devenu sombre.
+  --gl-slate-700: #e2e8f0;
+}

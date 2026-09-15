@@ -1,559 +1,796 @@
-// Formulaire
-.form-container {
-  padding-top: 12px;
+// ══════════════════════════════════════════════════════════════════
+//  PROMOTIONS — design commun Ionic ↔ React Native
+//  Couleurs 100 % tokens --gl-* (clair, sombre Auto, sombre forcé).
+//  Carte de liste / pastille / modale = copies de commandes.page.scss et
+//  credits.page.scss (pas de composant partagé).
+// ══════════════════════════════════════════════════════════════════
+
+// Contenu défilant : ≥ 96px en bas pour le bouton flottant étendu
+.promo-content {
+  --padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
-.form-card {
-  background: var(--ion-card-background, #fff);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  overflow: hidden;
+.filter-search { margin: 0; }
+.sk-list--flush { padding: 0; }
 
-  .form-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 16px 4px;
-    h3 { font-size: 1.1rem; font-weight: 700; margin: 0; }
-  }
-
-  .form-list { background: transparent; }
-
-  .form-actions { padding: 0 16px 16px; }
-}
-
-// Suggestions de promo flash (produits proches péremption)
-.suggestions-section {
-  padding-top: 8px;
-  padding-bottom: 4px;
-}
-
-.suggestions-header {
-  display: flex;
-  align-items: center;
+// Tuiles KPI (3 en ligne : même rendu que la rangée RN)
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
-
-  ion-icon {
-    font-size: 1.4rem;
-    color: var(--ion-color-warning, #f59e0b);
-    flex-shrink: 0;
-  }
-
-  .suggestions-header-text {
-    min-width: 0;
-  }
-
-  .suggestions-title {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--ion-text-color);
-  }
-
-  .suggestions-subtitle {
-    font-size: 0.78rem;
-    color: var(--ion-color-medium);
-  }
 }
 
-.suggestions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.suggestion-card {
-  border-color: var(--ion-color-warning, #f59e0b);
-  border-width: 1.5px;
-  border-style: dashed;
-}
-
-// Liste promotions
-.promos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.promo-card {
-  background: var(--ion-card-background, #fff);
+// ═══════════════ SOCLE ═══════════════
+.gl-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  padding: 16px;
-  border: 1.5px solid var(--ion-color-light-shade, #e2e8f0);
-
-  &.promo-expired {
-    opacity: 0.6;
-  }
-
-  .promo-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
-  .promo-titre {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--ion-text-color);
-    flex: 1;
-    margin-right: 8px;
-  }
-
-  .promo-desc {
-    font-size: 0.85rem;
-    color: var(--ion-color-medium);
-    margin: 4px 0 8px;
-  }
-
-  .promo-reduction {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--ion-color-success);
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 8px;
-    ion-icon { font-size: 1rem; }
-  }
-
-  .promo-dates {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    color: var(--ion-color-medium);
-    margin-bottom: 12px;
-  }
-
-  .promo-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    .promo-btn-row {
-      display: flex;
-      gap: 8px;
-      ion-button { flex: 1; }
-    }
-  }
-}
-
-.empty-state {
-  padding-top: 60px;
-  h3 { font-weight: 700; color: var(--ion-color-medium); }
-  p { color: var(--ion-color-medium); font-size: 0.9rem; }
-}
-
-// Modal WhatsApp
-@keyframes wa-modal-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes wa-modal-zoom-in {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.wa-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  animation: wa-modal-fade-in 0.18s ease;
-}
-
-.wa-modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 1001;
-
-  @media (min-width: 576px) {
-    align-items: center;
-  }
-}
-
-.wa-modal-content {
-  background: var(--ion-background-color, #fff);
-  border-radius: 20px 20px 0 0;
-  width: 100%;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
+  box-shadow: var(--gl-card-shadow);
   overflow: hidden;
-  animation: wa-modal-zoom-in 0.2s ease;
-
-  @media (min-width: 576px) {
-    border-radius: 20px;
-    max-width: 560px;
-    max-height: 85dvh;
-  }
 }
 
-.wa-modal-header {
-  display: flex;
+.gl-pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 16px 12px;
-  background: #25D366;
-  color: white;
-  border-radius: 20px 20px 0 0;
+  gap: 4px;
   flex-shrink: 0;
-
-  .wa-modal-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
-    font-size: 1.05rem;
-    ion-icon { font-size: 1.3rem; }
-  }
-}
-
-.wa-modal-body {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: 12px 16px;
-}
-
-.wa-modal-footer {
-  flex-shrink: 0;
-  padding: 8px 16px 16px;
-}
-
-// Bulle WhatsApp
-.wa-preview {
-  background: #f0fdf4;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
-
-  .wa-preview-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #16a34a;
-    margin-bottom: 6px;
-  }
-
-  .wa-bubble {
-    background: #dcfce7;
-    border-radius: 12px 12px 12px 0;
-    padding: 10px 14px;
-    white-space: pre-line;
-    font-size: 0.85rem;
-    color: #14532d;
-  }
-}
-
-// Stats
-.wa-stats {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.wa-stat {
-  flex: 1;
-  text-align: center;
-  background: var(--ion-color-light, #f8fafc);
-  border-radius: 12px;
-  padding: 10px 4px;
-
-  .wa-stat-val { font-size: 1.4rem; font-weight: 700; color: var(--ion-text-color); }
-  .wa-stat-lbl { font-size: 0.72rem; color: var(--ion-color-medium); }
-
-  &.wa-stat-green { .wa-stat-val { color: #16a34a; } }
-  &.wa-stat-orange { .wa-stat-val { color: #ea580c; } }
-}
-
-// Liste clients
-.wa-search {
-  margin-bottom: 8px;
-}
-
-.wa-clients-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.wa-client-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--ion-color-light, #f8fafc);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.wa-client-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #25D366;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  align-self: flex-start;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 700;
-  font-size: 1rem;
-  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-sizing: border-box;
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--blue    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-muted); box-shadow: inset 0 0 0 1px var(--gl-border); }
 }
 
-.wa-client-info {
-  flex: 1;
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
   min-width: 0;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, transform 0.12s;
 
-  .wa-client-nom {
-    font-weight: 600;
-    font-size: 0.9rem;
+  ion-icon { font-size: 20px; flex-shrink: 0; }
+  ion-spinner { width: 18px; height: 18px; color: currentColor; }
+
+  &:active:not(:disabled) { transform: scale(0.98); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  &--primary {
+    background: var(--gl-action);
+    border-color: var(--gl-action);
+    color: #ffffff;
+    &:active:not(:disabled) { background: var(--gl-action-press); }
+  }
+  &--secondary {
+    color: var(--gl-link);
+    border-color: var(--gl-blue-line);
+    &:active:not(:disabled) { background: var(--gl-blue-soft); }
+  }
+  &--warn-solid {
+    background: var(--gl-warn-soft);
+    border-color: var(--gl-warn-soft);
+    color: var(--gl-warn);
+  }
+  &--ok-tonal {
+    background: var(--gl-ok-soft);
+    border-color: var(--gl-ok-soft);
+    color: var(--gl-ok);
+  }
+  &--block { width: 100%; }
+  &--sm {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    ion-icon { font-size: 18px; }
+  }
+}
+
+// ═══════════════ SUGGESTIONS PROMO FLASH ═══════════════
+.sugg-card { padding: 14px 0 14px; }
+
+.sugg-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 12px;
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gl-warn-soft);
+    color: var(--gl-warn);
+    ion-icon { font-size: 20px; }
+  }
+
+  &__text { min-width: 0; }
+  &__title { margin: 0; font-size: 15px; font-weight: 700; color: var(--gl-text); }
+  &__sub { margin: 2px 0 0; font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+}
+
+// Une ligne qui défile horizontalement (comme les puces), fondu à droite
+.sugg-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 28px 2px 16px;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  &::-webkit-scrollbar { display: none; }
+}
+
+.sugg-item {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  box-sizing: border-box;
+
+  &__name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gl-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .wa-client-tel {
-    font-size: 0.78rem;
-    color: var(--ion-color-medium);
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gl-muted);
+    ion-icon { font-size: 14px; flex-shrink: 0; }
+  }
+
+  .gl-btn { margin-top: 4px; width: 100%; }
+}
+
+// ═══════════════ LISTE ═══════════════
+.promo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gl-list-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  overflow: hidden;
+
+  &--muted { opacity: 0.8; }
+}
+
+.glc-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.glc-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  ion-icon { font-size: 20px; }
+
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--bad  { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+}
+
+.glc-info { flex: 1; min-width: 0; }
+
+.glc-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gl-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-sub {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--gl-muted);
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.glc-amount {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--gl-link);
+  font-variant-numeric: tabular-nums;
+
+  &__suffix { font-size: 13px; font-weight: 600; color: var(--gl-text-2); }
+}
+
+.glc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-text-2);
+
+  > ion-icon { font-size: 16px; color: var(--gl-muted); flex-shrink: 0; }
+}
+
+// Pied de carte : actions écrites (icône + libellé)
+.glc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -1px;
+}
+
+.glc-action {
+  flex: 1 1 33%;
+  min-width: 96px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gl-border);
+  border-right: 1px solid var(--gl-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--gl-text-2);
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  &:active { background: var(--gl-surface-2); }
+
+  &--link { color: var(--gl-link); &:active { background: var(--gl-blue-soft); } }
+  &--ok   { color: var(--gl-ok);   &:active { background: var(--gl-ok-soft); } }
+  &--bad  { color: var(--gl-bad);  &:active { background: var(--gl-bad-soft); } }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MODALES CENTRÉES (design-premium : fixed + overlay + centrage)
+// ══════════════════════════════════════════════════════════════════
+.md-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.md-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 22, 72, 0.55);
+  animation: md-fade 0.18s ease;
+}
+
+.md-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(8, 22, 72, 0.28);
+  animation: md-zoom 0.2s ease;
+
+  // Interrupteurs : pistes lisibles en sombre (valeurs globales figées en clair)
+  ion-toggle {
+    --track-background: var(--gl-border);
+    --track-background-checked: var(--gl-blue-line);
+    --handle-background-checked: var(--gl-action);
   }
 }
 
-.wa-send-link {
-  text-decoration: none;
-  flex-shrink: 0;
-}
+@keyframes md-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes md-zoom { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 
-// Bulle promo enrichie
-.wa-bubble--promo {
-  border-left: 3px solid #25D366;
-}
-
-.wa-promo-badge {
-  font-weight: 800;
-  font-size: 0.88rem;
-  color: #16a34a;
-  text-align: center;
-  margin-bottom: 8px;
-  letter-spacing: 0.3px;
-}
-
-.wa-promo-msg {
-  font-size: 0.85rem;
-  color: #14532d;
-  margin-bottom: 8px;
-  white-space: pre-line;
-}
-
-.wa-boutique-sig {
-  font-size: 0.8rem;
-  color: #166534;
-  line-height: 1.6;
-  border-top: 1px solid rgba(22,163,74,0.2);
-  padding-top: 8px;
-  margin-top: 4px;
-}
-
-.wa-shop-hint {
-  font-style: italic;
-  color: #4ade80;
-  font-size: 0.75rem;
-}
-
-// Envoi automatique toggle row
-.wa-auto-row {
+.md-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f0fdf4;
-  border: 1.5px solid #bbf7d0;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--gl-border);
+  flex-shrink: 0;
+}
+
+.md-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  .wa-auto-label {
-    flex: 1;
-    strong { display: block; font-size: 0.9rem; color: #15803d; }
-    span { font-size: 0.78rem; color: #4ade80; }
-  }
+  ion-icon { font-size: 20px; }
+
+  &--info { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--ok   { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn { background: var(--gl-warn-soft); color: var(--gl-warn); }
 }
 
-.wa-auto-btn-row {
-  margin-bottom: 12px;
+.md-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gl-text);
+  margin: 0;
 }
 
-// Sélecteur type promo (Globale / Par produits)
-.promo-type-section {
-  padding: 12px 16px 4px;
+.md-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gl-text-2);
+  flex-shrink: 0;
 
-  .promo-type-label {
-    font-size: 0.82rem;
+  ion-icon { font-size: 22px; }
+}
+
+.md-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.md-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  flex-shrink: 0;
+
+  .gl-btn { flex: 1 1 0; }
+}
+
+.md-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.md-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+
+  ion-icon { font-size: 14px; color: var(--gl-link); }
+}
+
+.md-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Rangée : flex uniquement ici (jamais sur un champ d'une colonne)
+.md-row {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+.md-grow { flex: 1 1 0; }
+
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  > span {
+    font-size: 13px;
     font-weight: 600;
-    color: var(--ion-color-medium);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: var(--gl-text-2);
   }
 
-  .promo-type-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  input, textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 12px;
+    background: var(--gl-surface);
+    border: 1.5px solid var(--gl-border);
+    border-radius: 12px;
+    color: var(--gl-text);
+    color-scheme: var(--gl-color-scheme);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &::placeholder { color: var(--gl-muted); opacity: 1; }
+    &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
   }
 
-  .promo-type-btn {
-    display: flex;
+  input[type="date"] { padding: 0 10px; }
+
+  textarea {
+    height: auto;
+    min-height: 88px;
+    padding: 12px;
+    resize: none;
+    line-height: 1.4;
+  }
+
+  .md-input-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+}
+
+.md-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+
+  > span { font-size: 15px; font-weight: 500; color: var(--gl-text); }
+
+  &--card {
+    padding: 8px 12px;
+    border: 1px solid var(--gl-border);
+    border-radius: 12px;
+    background: var(--gl-surface-2);
+  }
+}
+
+.md-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  strong { font-size: 14px; font-weight: 700; color: var(--gl-text); }
+  small  { font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+}
+
+// Choix exclusif (type de réduction / application)
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  small { font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+
+  &--tall {
     flex-direction: column;
-    align-items: center;
     gap: 4px;
-    padding: 12px 8px;
-    border-radius: 12px;
-    border: 2px solid var(--ion-color-light-shade, #e2e8f0);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
+    min-height: 88px;
+    ion-icon { font-size: 22px; }
+    span { font-size: 14px; font-weight: 700; }
+  }
 
-    ion-icon { font-size: 1.5rem; color: var(--ion-color-medium); }
-    span { font-size: 0.88rem; font-weight: 700; color: var(--ion-color-medium); }
-    small { font-size: 0.72rem; color: var(--ion-color-medium); }
-
-    &.active {
-      border-color: var(--ion-color-primary);
-      background: rgba(var(--ion-color-primary-rgb), 0.07);
-      ion-icon { color: var(--ion-color-primary); }
-      span { color: var(--ion-color-primary); }
-      small { color: var(--ion-color-primary); }
-    }
+  &--on {
+    border-color: var(--gl-action);
+    background: var(--gl-blue-soft);
+    color: var(--gl-link);
   }
 }
 
-// Sélecteur produits pour promo spécifique
-.produit-selector {
-  padding: 8px 16px 12px;
+// Sélecteur de produits
+.prod-sel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  background: var(--gl-surface-2);
 
-  .produit-selector-label {
+  &__label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.85rem;
+    margin: 0;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--ion-color-medium);
-    margin-bottom: 8px;
-    ion-icon { font-size: 1rem; }
-
-    .produit-count {
-      margin-left: auto;
-      background: var(--ion-color-primary);
-      color: white;
-      border-radius: 20px;
-      padding: 2px 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-  }
-
-  .produits-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 8px;
-
-    .produit-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(var(--ion-color-primary-rgb), 0.12);
-      color: var(--ion-color-primary);
-      border-radius: 20px;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-      font-weight: 600;
-
-      ion-icon { font-size: 1rem; cursor: pointer; }
-    }
-  }
-
-  .produit-searchbar {
-    --border-radius: 10px;
-    --box-shadow: none;
-    --background: var(--ion-color-light);
-    padding: 0;
-    margin-bottom: 4px;
-  }
-
-  .produit-dropdown {
-    background: var(--ion-background-color, #fff);
-    border: 1.5px solid var(--ion-color-light-shade, #e2e8f0);
-    border-radius: 12px;
-    max-height: 220px;
-    overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
-    .produit-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--ion-color-light, #f1f5f9);
-
-      &:last-child { border-bottom: none; }
-      &.selected { background: rgba(var(--ion-color-primary-rgb), 0.05); }
-
-      span:first-of-type { flex: 1; font-size: 0.88rem; }
-      .produit-prix { font-size: 0.78rem; color: var(--ion-color-medium); }
-    }
-
-    .produit-dropdown-close {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--ion-color-primary);
-      cursor: pointer;
-      border-top: 1.5px solid var(--ion-color-light-shade);
-      background: rgba(var(--ion-color-primary-rgb), 0.04);
-    }
+    color: var(--gl-text-2);
+    ion-icon { font-size: 16px; color: var(--gl-link); }
+    .gl-pill { margin-left: auto; align-self: center; }
   }
 }
 
-// ══════════════════════════════════════════════════
-//  MODE SOMBRE AUTOMATIQUE (prefers-color-scheme)
-//  La majorité de cette page utilise déjà les variables Ionic (--ion-text-color,
-//  --ion-color-medium, --ion-card-background...) qui suivent le thème sombre
-//  automatiquement. Seule la bulle de prévisualisation WhatsApp (vert fixe,
-//  façon "chat bubble") est codée en dur : on l'assombrit légèrement pour
-//  rester cohérent avec le reste de la page en mode sombre.
-// ══════════════════════════════════════════════════
-@media (prefers-color-scheme: dark) {
-  .wa-preview {
-    background: rgba(22,163,74,0.12);
+.prod-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prod-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 0 0 12px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--gl-blue-line);
+  border-radius: 12px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link);
+  font-size: 13px;
+  font-weight: 600;
+
+  &__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  &__del {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    color: var(--gl-link);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    ion-icon { font-size: 18px; }
   }
-  .wa-bubble {
-    background: rgba(22,163,74,0.18);
-    color: #d1fae5;
+}
+
+.md-dropdown {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.md-drop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--gl-border);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:active { background: var(--gl-blue-soft); }
+  &--on { background: var(--gl-blue-soft); }
+}
+
+.md-drop-check { font-size: 20px; flex-shrink: 0; color: var(--gl-muted); }
+.md-drop-item--on .md-drop-check { color: var(--gl-link); }
+.md-drop-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--gl-text); }
+.md-drop-price { flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--gl-muted); font-variant-numeric: tabular-nums; }
+
+.md-drop-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  background: var(--gl-surface-2);
+  color: var(--gl-link);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  ion-icon { font-size: 18px; }
+}
+
+.md-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  color: var(--gl-muted);
+  ion-spinner { color: var(--gl-ok); }
+  p { margin: 0; font-size: 13px; font-weight: 500; }
+}
+
+.md-hint {
+  margin: 0;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gl-muted);
+}
+
+// ── Modale WhatsApp ──
+.wa-bubble {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--gl-ok-soft);
+  color: var(--gl-text);
+
+  p { margin: 0; }
+  &__badge { font-size: 13px; font-weight: 700; color: var(--gl-ok); margin-bottom: 6px !important; }
+  &__msg { font-size: 14px; font-weight: 500; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+  &__sig { margin-top: 8px !important; font-size: 12px; font-weight: 500; color: var(--gl-text-2); }
+  &__hint { font-style: italic; color: var(--gl-ok); }
+}
+
+.wa-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wa-stat {
+  min-width: 0;
+  padding: 10px 6px;
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  text-align: center;
+
+  p { margin: 0; }
+  &__val { font-size: 17px; font-weight: 800; color: var(--gl-text); font-variant-numeric: tabular-nums; }
+  &__val--ok { color: var(--gl-ok); }
+  &__val--warn { color: var(--gl-warn); }
+  &__lbl { margin-top: 2px !important; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gl-muted); }
+}
+
+.wa-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wa-client {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 8px 6px 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--gl-border);
+  &:last-child { border-bottom: none; }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gl-ok-soft);
+    color: var(--gl-ok);
+    font-size: 14px;
+    font-weight: 800;
   }
-  .wa-promo-badge { color: #4ade80; }
-  .wa-promo-msg   { color: #d1fae5; }
-  .wa-boutique-sig {
-    color: #86efac;
-    border-top-color: rgba(22,163,74,0.3);
+
+  &__info { flex: 1; min-width: 0; }
+  &__nom { margin: 0; font-size: 14px; font-weight: 600; color: var(--gl-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__tel { margin: 2px 0 0; font-size: 12px; font-weight: 500; color: var(--gl-muted); }
+}
+
+// ── Tablette (720px+) ──
+@media (min-width: 720px) {
+  .promo-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: start;
   }
-  .wa-auto-row {
-    background: rgba(22,163,74,0.12);
-    border-color: rgba(22,163,74,0.4);
-    .wa-auto-label strong { color: #86efac; }
-    .wa-auto-label span   { color: #4ade80; }
-  }
+}
+
+// ── Grand écran (1024px+) ──
+@media (min-width: 1024px) {
+  .promo-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

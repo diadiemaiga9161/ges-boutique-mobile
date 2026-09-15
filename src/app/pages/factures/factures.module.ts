@@ -7,9 +7,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { FacturesPageRoutingModule } from './factures-routing.module';
 import { FacturesPage } from './factures.page';
 import { MontantInputDirective } from '../../directives/montant-input.directive';
+import { SharedComponentsModule } from '../../components/shared-components.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, IonicModule, HttpClientModule, TranslateModule, FacturesPageRoutingModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, IonicModule, HttpClientModule, TranslateModule, FacturesPageRoutingModule, MontantInputDirective, SharedComponentsModule],
   declarations: [FacturesPage]
 })
 export class FacturesPageModule {}

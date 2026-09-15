@@ -5,113 +5,109 @@
     </ion-buttons>
     <ion-title>{{ 'EXPENSES.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="ouvrirGestionTypes()" fill="solid" color="light" size="small" style="--border-radius:8px;margin-right:2px">
+      <ion-button (click)="ouvrirGestionTypes()" fill="clear">
         <ion-icon name="pricetag-outline" slot="start"></ion-icon>
         Types
       </ion-button>
       <ion-button (click)="ouvrirPdfDepenses()" title="{{ 'COMMON.DOWNLOAD' | translate }} PDF">
         <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button (click)="startCreate()">
+      <ion-button (click)="startCreate()" [attr.aria-label]="'EXPENSES.NEW' | translate">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="dep-content">
   <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
+  <!-- ═══ BANDEAU HÉROS : total des dépenses (+ total filtré si filtre actif) ═══ -->
+  <div class="dep-hero">
+    <div class="hero-bg-deco"></div>
+    <div class="hero-main">
+      <p class="hero-eyebrow">{{ 'EXPENSES.TOTAL' | translate }}</p>
+      <h1 class="hero-amount">{{ money(totalDepenses) }}</h1>
+      <p class="hero-sub">{{ toutesDepenses.length }} {{ 'EXPENSES.RESULTS' | translate }}</p>
+    </div>
+    <div class="hero-minis" *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
+      <div class="hero-mini">
+        <ion-icon name="funnel-outline"></ion-icon>
+        <p class="hmc-label">{{ 'EXPENSES.PERIOD_TOTAL' | translate }}</p>
+        <p class="hmc-val">{{ money(totalFiltre) }}</p>
+      </div>
+      <div class="hero-mini">
+        <ion-icon name="list-outline"></ion-icon>
+        <p class="hmc-label">{{ 'EXPENSES.RESULTS' | translate }}</p>
+        <p class="hmc-val">{{ depensesFiltrees.length }}</p>
+      </div>
+    </div>
+  </div>
+
   <div class="page-pad stack">
 
-    <!-- === Carte total principal === -->
-    <ion-card class="stat-card stat-card--red">
-      <ion-card-content>
-        <div class="stat-inner">
-          <div>
-            <p class="stat-label">{{ 'EXPENSES.TOTAL' | translate }}</p>
-            <p class="stat-value">{{ money(totalDepenses) }}</p>
-            <p class="stat-sub">{{ toutesDepenses.length }} {{ 'EXPENSES.RESULTS' | translate }}</p>
-          </div>
-          <ion-icon name="trending-down-outline" class="stat-icon"></ion-icon>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- Carte total filtré (affiché seulement si filtre actif) -->
-    <ion-card class="stat-card stat-card--blue"
-              *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
-      <ion-card-content>
-        <div class="stat-inner">
-          <div>
-            <p class="stat-label">{{ 'EXPENSES.PERIOD_TOTAL' | translate }}</p>
-            <p class="stat-value">{{ money(totalFiltre) }}</p>
-            <p class="stat-sub">{{ depensesFiltrees.length }} {{ 'EXPENSES.RESULTS' | translate }}</p>
-          </div>
-          <ion-icon name="funnel-outline" class="stat-icon"></ion-icon>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- === Filtres === -->
+    <!-- ═══ FILTRES ═══ -->
     <div class="filter-zone">
-      <!-- Type de dépense -->
-      <div class="fz-select-wrap">
-        <ion-icon name="pricetag-outline"></ion-icon>
-        <ion-select
-          [(ngModel)]="typeDepenseFiltreSelectionne"
-          (ionChange)="filtrerPeriode()"
-          placeholder="{{ 'EXPENSES.FILTER_TYPE' | translate }}"
-          interface="action-sheet">
-          <ion-select-option value="">{{ 'COMMON.ALL' | translate }}</ion-select-option>
-          <ion-select-option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</ion-select-option>
-        </ion-select>
+      <!-- Type de dépense : puces (mêmes valeurs / même modèle / même déclenchement que l'ancienne liste) -->
+      <div class="chip-row">
+        <ion-icon name="pricetag-outline" class="chip-row__icon" aria-hidden="true"></ion-icon>
+        <div class="fz-chips">
+          <button type="button" class="fz-chip" [class.fz-chip--active]="!typeDepenseFiltreSelectionne" (click)="choisirTypeFiltre('')">
+            {{ 'COMMON.ALL' | translate }}
+          </button>
+          <button type="button" class="fz-chip" *ngFor="let t of typesDepense"
+                  [class.fz-chip--active]="typeDepenseFiltreSelectionne === t.nom"
+                  (click)="choisirTypeFiltre(t.nom)">
+            <ion-icon [name]="getIconeType(t.nom)"></ion-icon>
+            {{ t.nom }}
+          </button>
+        </div>
       </div>
 
       <!-- Filtre mois -->
-      <div class="fz-date-wrap">
-        <label>{{ 'EXPENSES.FILTER_MONTH' | translate }}</label>
-        <input type="month" [(ngModel)]="moisFiltre" (change)="filtrerPeriode()" />
-      </div>
+      <label class="gl-field">
+        <span class="gl-label">{{ 'EXPENSES.FILTER_MONTH' | translate }}</span>
+        <input type="month" class="gl-input" [(ngModel)]="moisFiltre" (change)="filtrerPeriode()" />
+      </label>
 
       <!-- Période du/au -->
-      <div class="fz-row">
-        <div class="fz-date-wrap">
-          <label>{{ 'EXPENSES.DATE_FROM' | translate }}</label>
-          <input type="date" [(ngModel)]="dateDebut" (change)="filtrerPeriode()" />
+      <div class="filter-dates">
+        <div class="date-field">
+          <label class="gl-label">{{ 'EXPENSES.DATE_FROM' | translate }}</label>
+          <input type="date" class="gl-input" [(ngModel)]="dateDebut" (change)="filtrerPeriode()" [attr.aria-label]="'EXPENSES.DATE_FROM' | translate" />
         </div>
-        <div class="fz-date-wrap">
-          <label>{{ 'EXPENSES.DATE_TO' | translate }}</label>
-          <input type="date" [(ngModel)]="dateFin" (change)="filtrerPeriode()" />
+        <div class="date-sep">→</div>
+        <div class="date-field">
+          <label class="gl-label">{{ 'EXPENSES.DATE_TO' | translate }}</label>
+          <input type="date" class="gl-input" [(ngModel)]="dateFin" (change)="filtrerPeriode()" [attr.aria-label]="'EXPENSES.DATE_TO' | translate" />
         </div>
-        <button class="fz-chip" style="margin-top:auto" (click)="reinitialiser()">
+      </div>
+
+      <div class="results-bar">
+        <p class="fz-count" *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
+          <strong>{{ depensesFiltrees.length }}</strong> {{ 'EXPENSES.RESULTS' | translate }}
+        </p>
+        <button type="button" class="link-btn results-bar__end" (click)="reinitialiser()">
           <ion-icon name="refresh-outline"></ion-icon>
+          {{ 'EXPENSES.RESET' | translate }}
         </button>
       </div>
-
-      <p class="fz-count" *ngIf="typeDepenseFiltreSelectionne || moisFiltre || dateDebut">
-        <strong>{{ depensesFiltrees.length }}</strong> {{ 'EXPENSES.RESULTS' | translate }}
-      </p>
     </div>
 
-    <!-- === Résumé par type === -->
-    <div class="type-summary-card" *ngIf="totauxParType.length > 0">
-      <p class="ts-title">
-        <ion-icon name="pie-chart-outline" style="vertical-align:middle;margin-right:4px"></ion-icon>
-        {{ 'EXPENSES.BY_TYPE' | translate }}
-      </p>
-      <div class="ts-chips">
-        <ion-chip *ngFor="let t of totauxParType" color="danger" outline="true">
-          <ion-icon [name]="getIconeType(t.type)" style="font-size:14px;margin-right:4px"></ion-icon>
-          <ion-label><strong>{{ t.type }}</strong> — {{ money(t.total) }}</ion-label>
-        </ion-chip>
+    <!-- ═══ RÉPARTITION PAR TYPE ═══ -->
+    <div class="gl-card type-card" *ngIf="totauxParType.length > 0">
+      <p class="gl-overline"><ion-icon name="pie-chart-outline"></ion-icon> {{ 'EXPENSES.BY_TYPE' | translate }}</p>
+      <div class="type-row" *ngFor="let t of totauxParType">
+        <span class="type-row__icon"><ion-icon [name]="getIconeType(t.type)"></ion-icon></span>
+        <span class="type-row__name">{{ t.type }}</span>
+        <span class="type-row__val">{{ money(t.total) }}</span>
       </div>
     </div>
 
-    <!-- === Skeleton loader === -->
-    <div class="sk-list" *ngIf="loading">
+    <!-- ═══ CHARGEMENT ═══ -->
+    <div class="sk-list sk-list--flush" *ngIf="loading">
       <div class="sk-card" *ngFor="let i of [1,2,3,4,5]">
         <div class="skeleton sk-avatar"></div>
         <div class="sk-card-body">
@@ -122,285 +118,277 @@
       </div>
     </div>
 
-    <!-- === État vide === -->
-    <div class="empty-v2" *ngIf="!loading && depensesFiltrees.length === 0">
-      <div class="empty-v2__icon"><ion-icon name="trending-down-outline"></ion-icon></div>
-      <p class="empty-v2__title">{{ 'EXPENSES.EMPTY' | translate }}</p>
-      <p class="empty-v2__text">{{ 'EXPENSES.NEW' | translate }}</p>
-      <ion-button size="small" (click)="startCreate()">
-        <ion-icon name="add-outline" slot="start"></ion-icon>
-        {{ 'EXPENSES.NEW' | translate }}
-      </ion-button>
-    </div>
+    <!-- ═══ VIDE ═══ -->
+    <gl-empty-state
+      *ngIf="!loading && depensesFiltrees.length === 0"
+      icon="trending-down-outline"
+      [title]="'EXPENSES.EMPTY' | translate"
+      [ctaLabel]="'EXPENSES.NEW' | translate"
+      (ctaClick)="startCreate()">
+    </gl-empty-state>
 
     <!-- Info filtre actif -->
-    <p class="filtre-info" *ngIf="!loading && (typeDepenseFiltreSelectionne || moisFiltre) && depensesFiltrees.length > 0">
-      {{ depensesFiltrees.length }} {{ 'EXPENSES.RESULTS' | translate }}
-      <ion-button fill="clear" size="small" color="medium" (click)="reinitialiser()">
-        <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+    <div class="results-bar" *ngIf="!loading && (typeDepenseFiltreSelectionne || moisFiltre) && depensesFiltrees.length > 0">
+      <span class="gl-overline">{{ depensesFiltrees.length }} {{ 'EXPENSES.RESULTS' | translate }}</span>
+      <button type="button" class="link-btn" (click)="reinitialiser()">
+        <ion-icon name="close-circle-outline"></ion-icon>
         {{ 'EXPENSES.RESET' | translate }}
-      </ion-button>
-    </p>
-
-    <!-- === Liste — cartes ion-card === -->
-    <section class="stack animate-cards">
-    <ion-card class="dep-card"
-              *ngFor="let d of depensesPaginees; trackBy: trackById"
-              [class.dep-card--salary]="d.sourceExterne"
-              color="light">
-
-      <!-- En-tête de carte : type + date + montant -->
-      <div class="dep-card-header">
-        <div class="dep-card-header-left">
-          <div class="dep-icon-wrap" [class.dep-icon-wrap--salary]="d.sourceExterne">
-            <ion-icon [name]="d.sourceExterne ? 'people-outline' : getIconeType(d.typeDepense || '')"></ion-icon>
-          </div>
-          <div>
-            <p class="dep-nom">{{ d.nom }}</p>
-            <div class="dep-badges">
-              <span class="dep-type-badge">{{ (d.typeDepense || 'Non défini') }}</span>
-              <span class="dep-salary-badge" *ngIf="d.sourceExterne">Via Employés</span>
-            </div>
-          </div>
-        </div>
-        <div class="dep-card-header-right">
-          <p class="dep-date">{{ d.date }}</p>
-          <p class="dep-montant">{{ money(d.montant) }}</p>
-        </div>
-      </div>
-
-      <!-- Corps : description/motif -->
-      <div class="dep-card-body" *ngIf="d.motif || d.periodeDebut">
-        <ion-icon name="chatbubble-ellipses-outline" class="dep-body-icon"></ion-icon>
-        <span class="dep-motif">
-          {{ d.motif || '' }}
-          <span *ngIf="d.periodeDebut">
-            {{ d.motif ? ' · ' : '' }}{{ d.periodeDebut }}<span *ngIf="d.periodeFin"> → {{ d.periodeFin }}</span>
-          </span>
-        </span>
-      </div>
-
-      <!-- Footer : actions -->
-      <div class="dep-card-footer">
-        <div class="dep-footer-left">
-          <ion-chip class="dep-mode-chip" outline="true" [color]="d.sourceExterne ? 'warning' : 'danger'">
-            <ion-icon [name]="d.sourceExterne ? 'people-outline' : 'cash-outline'" style="margin-right:3px;font-size:12px"></ion-icon>
-            <ion-label style="font-size:11px">{{ d.sourceExterne ? 'Salaire' : (d.typeDepense || 'Dépense') }}</ion-label>
-          </ion-chip>
-        </div>
-        <div class="dep-actions">
-          <ng-container *ngIf="!d.sourceExterne && isAdmin">
-            <ion-button fill="outline" size="small" color="warning" (click)="startEdit(d)">
-              <ion-icon name="create-outline" slot="start"></ion-icon>
-              Modifier
-            </ion-button>
-            <ion-button fill="outline" size="small" color="danger" (click)="supprimer(d)">
-              <ion-icon name="trash-outline" slot="start"></ion-icon>
-              Supprimer
-            </ion-button>
-          </ng-container>
-          <ion-button *ngIf="d.sourceExterne" fill="outline" size="small" color="success"
-                      (click)="telechargerRecuSalaire(d)">
-            <ion-icon name="document-text-outline" slot="start"></ion-icon>
-            Reçu
-          </ion-button>
-          <ion-button *ngIf="d.sourceExterne" fill="solid" size="small" style="--background:#25D366;--color:#fff"
-                      (click)="envoyerRecuWhatsApp(d)">
-            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
-            WhatsApp
-          </ion-button>
-        </div>
-      </div>
-
-    </ion-card>
-    </section>
-
-    <!-- === Pagination === -->
-    <div class="pagination-bar" *ngIf="!loading && depensesFiltrees.length > itemsParPage">
-      <ion-button fill="outline" size="small" color="medium"
-                  [disabled]="pageActuelle <= 1"
-                  (click)="pagePrecedente()">
-        <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-      <span class="pagination-info">{{ pageActuelle }} / {{ totalPages }}</span>
-      <ion-button fill="outline" size="small" color="medium"
-                  [disabled]="pageActuelle >= totalPages"
-                  (click)="pageSuivante()">
-        <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
-      </ion-button>
+      </button>
     </div>
 
-    <!-- Espace bas pour le FAB -->
-    <div style="height: 80px"></div>
+    <!-- ═══ LISTE ═══ -->
+    <section class="dep-list animate-cards" *ngIf="!loading && depensesPaginees.length > 0">
+      <article class="gl-list-card" *ngFor="let d of depensesPaginees; trackBy: trackById">
+        <div class="glc-body">
+          <div class="glc-head">
+            <div class="glc-icon" [class.glc-icon--warn]="d.sourceExterne" [class.glc-icon--bad]="!d.sourceExterne">
+              <ion-icon [name]="d.sourceExterne ? 'people-outline' : getIconeType(d.typeDepense || '')"></ion-icon>
+            </div>
+            <div class="glc-info">
+              <p class="glc-title">{{ d.nom }}</p>
+              <p class="glc-sub">{{ d.date }}</p>
+            </div>
+            <p class="glc-amount glc-amount--bad">{{ money(d.montant) }}</p>
+          </div>
+
+          <div class="glc-pills">
+            <span class="gl-pill gl-pill--neutral">{{ (d.typeDepense || 'Non défini') }}</span>
+            <span class="gl-pill gl-pill--warn" *ngIf="d.sourceExterne">
+              <ion-icon name="people-outline"></ion-icon> Via Employés
+            </span>
+          </div>
+
+          <!-- Description / motif -->
+          <div class="glc-row" *ngIf="d.motif || d.periodeDebut">
+            <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+            <span class="glc-note">
+              {{ d.motif || '' }}
+              <span *ngIf="d.periodeDebut">
+                {{ d.motif ? ' · ' : '' }}{{ d.periodeDebut }}<span *ngIf="d.periodeFin"> → {{ d.periodeFin }}</span>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions écrites en pied de carte (mêmes conditions de rôle) -->
+        <div class="glc-actions" *ngIf="(!d.sourceExterne && isAdmin) || d.sourceExterne">
+          <ng-container *ngIf="!d.sourceExterne && isAdmin">
+            <button type="button" class="glc-action glc-action--link" (click)="startEdit(d)">
+              <ion-icon name="create-outline"></ion-icon>
+              <span>Modifier</span>
+            </button>
+            <button type="button" class="glc-action glc-action--bad" (click)="supprimer(d)">
+              <ion-icon name="trash-outline"></ion-icon>
+              <span>Supprimer</span>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="d.sourceExterne">
+            <button type="button" class="glc-action glc-action--ok" (click)="telechargerRecuSalaire(d)">
+              <ion-icon name="document-text-outline"></ion-icon>
+              <span>Reçu</span>
+            </button>
+            <button type="button" class="glc-action glc-action--ok" (click)="envoyerRecuWhatsApp(d)">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+              <span>WhatsApp</span>
+            </button>
+          </ng-container>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═══ PAGINATION ═══ -->
+    <nav class="pager" *ngIf="!loading && depensesFiltrees.length > itemsParPage">
+      <button type="button" class="pager-btn" [disabled]="pageActuelle <= 1" (click)="pagePrecedente()" aria-label="Page précédente">
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+      <span class="pager-info">{{ pageActuelle }} / {{ totalPages }}</span>
+      <button type="button" class="pager-btn" [disabled]="pageActuelle >= totalPages" (click)="pageSuivante()" aria-label="Page suivante">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </nav>
 
   </div>
 </ion-content>
 
-<!-- FAB -->
+<!-- Bouton flottant étendu (même condition de rôle que l'ancien FAB) -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="isAdmin">
-  <ion-fab-button (click)="startCreate()" color="danger">
-    <ion-icon name="add-outline"></ion-icon>
-  </ion-fab-button>
+  <button type="button" class="gl-fab-extended" (click)="startCreate()">
+    <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+    {{ 'EXPENSES.NEW' | translate }}
+  </button>
 </ion-fab>
 
-<!-- Modal Gestion Types -->
-<ion-modal [isOpen]="showTypesModal" (didDismiss)="fermerGestionTypes()" [breakpoints]="[0, 0.85, 1]" [initialBreakpoint]="0.85">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="danger">
-        <ion-title>
-          <ion-icon name="pricetag-outline" style="vertical-align:middle;margin-right:6px"></ion-icon>
-          Types de dépenses
-        </ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="fermerGestionTypes()" fill="clear" color="light">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
+<!-- ════════════════════════════════════════════════════
+     MODALE CENTRÉE — FORMULAIRE DÉPENSE
+════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="showForm">
+  <div class="md-backdrop" (click)="showForm = false"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
 
-      <!-- Erreur -->
-      <div class="types-error-box" *ngIf="typesError">
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        {{ typesError }}
+    <div class="md-header">
+      <div class="md-icon" [class.md-icon--warn]="editing" [class.md-icon--info]="!editing">
+        <ion-icon [name]="editing ? 'create-outline' : 'trending-down-outline'"></ion-icon>
       </div>
+      <h2 class="md-title">{{ editing ? ('EXPENSES.EDIT' | translate) : ('EXPENSES.NEW' | translate) }}</h2>
+      <button type="button" class="md-close" (click)="showForm = false" [attr.aria-label]="'COMMON.CLOSE' | translate">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
 
-      <!-- Zone ajout nouveau type -->
-      <div class="types-add-box">
-        <p class="types-add-label">
-          <ion-icon name="add-circle-outline" style="vertical-align:middle;margin-right:4px"></ion-icon>
-          Ajouter un nouveau type
-        </p>
-        <div class="types-add-row">
-          <ion-input
-            [(ngModel)]="newTypeName"
-            placeholder="Ex: Loyer, Transport, Fournitures..."
-            fill="outline"
-            [clearInput]="true"
-            (keyup.enter)="ajouterType()"
-            class="types-add-input">
-          </ion-input>
-          <ion-button (click)="ajouterType()" [disabled]="!newTypeName.trim()" color="danger" expand="block" style="min-width:90px">
-            <ion-icon name="add-outline" slot="start"></ion-icon>
-            Ajouter
-          </ion-button>
-        </div>
-      </div>
+    <div class="md-body">
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="document-text-outline"></ion-icon> Informations</p>
+        <div class="md-fields">
+          <label class="md-field">
+            <span>{{ 'EXPENSES.NAME' | translate }} *</span>
+            <input type="text" [(ngModel)]="form.nom" placeholder="Ex: Electricite, Transport..." />
+          </label>
 
-      <!-- Compteur -->
-      <div class="types-count-bar" *ngIf="typesDepense.length > 0">
-        <ion-icon name="list-outline"></ion-icon>
-        {{ typesDepense.length }} type(s) enregistré(s)
-      </div>
-
-      <!-- Liste des types -->
-      <div class="types-list">
-
-        <!-- État vide -->
-        <div class="types-empty" *ngIf="typesDepense.length === 0">
-          <ion-icon name="pricetag-outline"></ion-icon>
-          <p>Aucun type créé</p>
-          <p class="types-empty-sub">Utilisez le champ ci-dessus pour créer votre premier type</p>
-        </div>
-
-        <!-- Item type -->
-        <div class="type-item" *ngFor="let t of typesDepense">
-
-          <!-- Mode lecture -->
-          <ng-container *ngIf="editingTypeId !== t.id">
-            <div class="type-item-icon">
-              <ion-icon [name]="getIconeType(t.nom)"></ion-icon>
+          <div class="md-field">
+            <span>{{ 'EXPENSES.TYPE' | translate }}</span>
+            <div class="md-field-row">
+              <select [(ngModel)]="form.typeDepense" [attr.aria-label]="'EXPENSES.TYPE' | translate">
+                <option [ngValue]="''" disabled>{{ 'EXPENSES.SELECT_TYPE' | translate }}</option>
+                <option *ngFor="let t of typesDepense" [ngValue]="t.nom">{{ t.nom }}</option>
+              </select>
+              <button type="button" class="md-icon-btn" (click)="ouvrirGestionTypes()" aria-label="Types de dépenses">
+                <ion-icon name="settings-outline"></ion-icon>
+              </button>
             </div>
-            <span class="type-item-name">{{ t.nom }}</span>
-            <ion-button fill="clear" size="small" color="primary" (click)="startEditType(t)">
-              <ion-icon name="pencil-outline" slot="start"></ion-icon>
-              Modifier
-            </ion-button>
-            <ion-button fill="clear" size="small" color="danger" (click)="supprimerType(t)">
-              <ion-icon name="trash-outline" slot="start"></ion-icon>
-              Supprimer
-            </ion-button>
-          </ng-container>
+          </div>
 
-          <!-- Mode édition inline -->
-          <ng-container *ngIf="editingTypeId === t.id">
-            <ion-input [(ngModel)]="editingTypeName" fill="outline" style="flex:1" (keyup.enter)="saveEditType()"></ion-input>
-            <ion-button fill="solid" size="small" color="success" (click)="saveEditType()">
-              <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-              OK
-            </ion-button>
-            <ion-button fill="clear" size="small" color="medium" (click)="cancelEditType()">
-              <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-          </ng-container>
-
+          <label class="md-field">
+            <span>{{ 'EXPENSES.REASON' | translate }}</span>
+            <textarea [(ngModel)]="form.motif" rows="2" [placeholder]="'EXPENSES.REASON_PLACEHOLDER' | translate"></textarea>
+          </label>
         </div>
-      </div>
+      </section>
 
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-<!-- Modal Formulaire -->
-<ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar [color]="editing ? 'warning' : 'danger'">
-        <ion-title>{{ editing ? ('EXPENSES.EDIT' | translate) : ('EXPENSES.NEW' | translate) }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showForm = false">
-            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div class="stack">
-
-        <ion-item>
-          <ion-input label="{{ 'EXPENSES.NAME' | translate }} *" labelPlacement="floating"
-            [(ngModel)]="form.nom" placeholder="Ex: Electricite, Transport..."></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-select label="{{ 'EXPENSES.TYPE' | translate }}" labelPlacement="floating"
-            [(ngModel)]="form.typeDepense" placeholder="{{ 'EXPENSES.SELECT_TYPE' | translate }}">
-            <ion-select-option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</ion-select-option>
-          </ion-select>
-          <ion-button fill="outline" size="small" (click)="ouvrirGestionTypes()" slot="end">
-            <ion-icon name="settings-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-item>
-
-        <ion-item>
-          <ion-textarea label="{{ 'EXPENSES.REASON' | translate }}" labelPlacement="floating"
-            [(ngModel)]="form.motif" rows="2" placeholder="{{ 'EXPENSES.REASON_PLACEHOLDER' | translate }}"></ion-textarea>
-        </ion-item>
-
-        <ion-item>
-          <ion-input label="{{ 'COMMON.DATE' | translate }} *" labelPlacement="floating"
-            type="date" [(ngModel)]="form.date"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-input label="{{ 'EXPENSES.AMOUNT_LABEL' | translate }} *" labelPlacement="floating"
-            type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.montant" placeholder="0"></ion-input>
-        </ion-item>
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="cash-outline"></ion-icon> Montant et date</p>
+        <div class="md-fields">
+          <label class="md-field">
+            <span>{{ 'EXPENSES.AMOUNT_LABEL' | translate }} *</span>
+            <input type="text" inputmode="numeric" appMontantInput class="md-input-amount" [(ngModel)]="form.montant" placeholder="0" />
+          </label>
+          <label class="md-field">
+            <span>{{ 'COMMON.DATE' | translate }} *</span>
+            <input type="date" [(ngModel)]="form.date" />
+          </label>
+        </div>
 
         <div class="info-box" [class.info-box--warn]="editing">
           <ion-icon [name]="editing ? 'warning-outline' : 'information-circle-outline'"></ion-icon>
           <span *ngIf="!editing">{{ 'EXPENSES.DEDUCT_INFO' | translate }}</span>
           <span *ngIf="editing">{{ 'EXPENSES.ADJUST_INFO' | translate }}</span>
         </div>
+      </section>
+    </div>
 
-        <ion-button expand="block" [color]="editing ? 'warning' : 'primary'" (click)="save()" style="margin-top: 8px">
-          <ion-icon name="save-outline" slot="start"></ion-icon>
-          {{ editing ? ('COMMON.EDIT' | translate) : ('COMMON.ADD' | translate) }}
-        </ion-button>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="showForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
+      <button type="button" class="gl-btn gl-btn--primary" (click)="save()">
+        <ion-icon name="save-outline"></ion-icon>
+        {{ editing ? ('COMMON.EDIT' | translate) : ('COMMON.ADD' | translate) }}
+      </button>
+    </div>
+  </div>
+</div>
 
+<!-- ════════════════════════════════════════════════════
+     MODALE CENTRÉE — GESTION DES TYPES
+     (après le formulaire dans le DOM : s'affiche au-dessus quand ouverte depuis celui-ci)
+════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="showTypesModal">
+  <div class="md-backdrop" (click)="fermerGestionTypes()"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+
+    <div class="md-header">
+      <div class="md-icon md-icon--info">
+        <ion-icon name="pricetag-outline"></ion-icon>
       </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      <h2 class="md-title">Types de dépenses</h2>
+      <button type="button" class="md-close" (click)="fermerGestionTypes()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="md-body">
+
+      <!-- Erreur -->
+      <div class="md-error-box" *ngIf="typesError">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>{{ typesError }}</span>
+      </div>
+
+      <!-- Zone ajout nouveau type -->
+      <section class="md-section">
+        <p class="md-section-title"><ion-icon name="add-circle-outline"></ion-icon> Ajouter un nouveau type</p>
+        <div class="md-field-row">
+          <div class="fz-search md-grow">
+            <input class="fz-input" type="text" [(ngModel)]="newTypeName"
+                   placeholder="Ex: Loyer, Transport, Fournitures..."
+                   (keyup.enter)="ajouterType()" />
+            <button type="button" class="fz-clear" *ngIf="newTypeName" (click)="newTypeName = ''" [attr.aria-label]="'COMMON.CLOSE' | translate">
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          </div>
+          <button type="button" class="gl-btn gl-btn--primary md-add" (click)="ajouterType()" [disabled]="!newTypeName.trim()">
+            <ion-icon name="add-outline"></ion-icon>
+            Ajouter
+          </button>
+        </div>
+      </section>
+
+      <!-- Liste des types -->
+      <section class="md-section">
+        <p class="md-section-title" *ngIf="typesDepense.length > 0">
+          <ion-icon name="list-outline"></ion-icon>
+          {{ typesDepense.length }} type(s) enregistré(s)
+        </p>
+
+        <div class="empty-inline" *ngIf="typesDepense.length === 0">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          <p class="empty-inline__title">Aucun type créé</p>
+          <p>Utilisez le champ ci-dessus pour créer votre premier type</p>
+        </div>
+
+        <div class="type-list" *ngIf="typesDepense.length > 0">
+          <div class="type-item" *ngFor="let t of typesDepense">
+
+            <!-- Mode lecture -->
+            <ng-container *ngIf="editingTypeId !== t.id">
+              <div class="type-item__head">
+                <span class="type-row__icon"><ion-icon [name]="getIconeType(t.nom)"></ion-icon></span>
+                <span class="type-item__name">{{ t.nom }}</span>
+              </div>
+              <div class="type-item__actions">
+                <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" (click)="startEditType(t)">
+                  <ion-icon name="create-outline"></ion-icon>
+                  Modifier
+                </button>
+                <button type="button" class="gl-btn gl-btn--danger gl-btn--sm" (click)="supprimerType(t)">
+                  <ion-icon name="trash-outline"></ion-icon>
+                  Supprimer
+                </button>
+              </div>
+            </ng-container>
+
+            <!-- Mode édition inline -->
+            <div class="md-field-row type-item__edit" *ngIf="editingTypeId === t.id">
+              <input class="gl-input md-grow" [(ngModel)]="editingTypeName" (keyup.enter)="saveEditType()" aria-label="Nom du type" />
+              <button type="button" class="gl-btn gl-btn--ok-solid gl-btn--sm" (click)="saveEditType()">
+                <ion-icon name="checkmark-outline"></ion-icon>
+                OK
+              </button>
+              <button type="button" class="md-icon-btn" (click)="cancelEditType()" [attr.aria-label]="'COMMON.CANCEL' | translate">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
