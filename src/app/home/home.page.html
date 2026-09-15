@@ -45,7 +45,7 @@
       <p class="home-hero__ca-val">{{ money(stats?.chiffreAffaire?.journalier) }}</p>
       <div class="home-hero__ca-sub">
         <ion-icon name="receipt-outline"></ion-icon>
-        <span>{{ stats?.chiffreAffaire?.totalVentes || 0 }} vente(s) aujourd'hui</span>
+        <span>{{ nbVentesJour ?? 0 }} vente(s) aujourd'hui</span>
       </div>
     </div>
   </div>
@@ -57,7 +57,7 @@
       <gl-stat-card
         icon="receipt-outline"
         label="Ventes du jour"
-        [value]="count(stats?.chiffreAffaire?.totalVentes)"
+        [value]="count(nbVentesJour)"
         variant="slate"
         [tappable]="true"
         (cardClick)="go('/tabs/sales')">

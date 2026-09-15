@@ -15,7 +15,7 @@
      (annulerPaiementFournisseur / annulerReglement) après confirmation.
 ═══════════════════════════════════════════════════════════════════ -->
 <ion-content [fullscreen]="true" class="ap-content">
-  <ion-refresher slot="fixed" (ionRefresh)="charger()">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 

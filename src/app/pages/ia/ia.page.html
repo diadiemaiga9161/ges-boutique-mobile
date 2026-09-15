@@ -190,9 +190,9 @@
           <gl-section-header [title]="'IA.ALERTS' | translate"></gl-section-header>
           <article *ngFor="let alerte of analyse.alertes" class="gl-card ia-alert">
             <div class="glc-icon"
-                 [class.glc-icon--bad]="alerte.niveau === 'DANGER'"
-                 [class.glc-icon--warn]="alerte.niveau !== 'DANGER'">
-              <ion-icon [name]="alerte.niveau === 'DANGER' ? 'alert-circle-outline' : 'warning-outline'"></ion-icon>
+                 [class.glc-icon--bad]="(alerte.severite === 'CRITIQUE' || alerte.niveau === 'DANGER')"
+                 [class.glc-icon--warn]="!(alerte.severite === 'CRITIQUE' || alerte.niveau === 'DANGER')">
+              <ion-icon [name]="(alerte.severite === 'CRITIQUE' || alerte.niveau === 'DANGER') ? 'alert-circle-outline' : 'warning-outline'"></ion-icon>
             </div>
             <div class="glc-info">
               <p class="glc-title" *ngIf="alerte.titre">{{ alerte.titre }}</p>

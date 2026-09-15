@@ -9,6 +9,7 @@ import { IAService } from '../services/ia.service';
 import { TransfertService } from '../services/transfert.service';
 import { BeneficeService, BeneficeData } from '../services/benefice.service';
 import { CaisseService } from '../services/caisse.service';
+import { VenteService } from '../services/vente.service';
 
 @Component({
   selector: 'app-home',
@@ -20,6 +21,9 @@ export class HomePage implements OnDestroy {
   stats?: StatistiquesGenerales;
   beneficeJour?: BeneficeData;
   soldeCaisse?: { solde: number; soldeSysteme: number };
+  /** Ventes d'aujourd'hui (GET /ventes/aujourdhui). stats.chiffreAffaire.totalVentes compte
+   *  TOUTES les ventes depuis le début : l'accueil affichait « 23 ventes aujourd'hui » pour 0 FCFA. */
+  nbVentesJour?: number;
   alertesStock: any[] = [];
   nbTransfertsEnAttente: number = 0;
   private wsSub?: Subscription;
@@ -47,7 +51,8 @@ export class HomePage implements OnDestroy {
     private iaService: IAService,
     private transfertService: TransfertService,
     private beneficeService: BeneficeService,
-    private caisseService: CaisseService
+    private caisseService: CaisseService,
+    private venteService: VenteService
   ) {}
 
   ionViewWillEnter(): void {
@@ -114,6 +119,14 @@ export class HomePage implements OnDestroy {
     });
   }
 
+  private chargerVentesJour(): void {
+    this.venteService.getVentesDuJour().pipe(
+      catchError(() => of(undefined))
+    ).subscribe(res => {
+      this.nbVentesJour = res ? res.ventes.length : undefined;
+    });
+  }
+
   private chargerSoldeCaisse(): void {
     this.caisseService.getSolde().pipe(
       catchError(() => of(undefined))
@@ -137,6 +150,7 @@ export class HomePage implements OnDestroy {
     });
     this.chargerBeneficeJour();
     this.chargerSoldeCaisse();
+    this.chargerVentesJour();
   }
 
   go(route: string): void {

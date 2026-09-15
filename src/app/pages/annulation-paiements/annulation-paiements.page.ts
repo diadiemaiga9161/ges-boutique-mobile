@@ -41,7 +41,8 @@ export class AnnulationPaiementsPage {
     this.charger();
   }
 
-  charger(): void {
+  charger(event?: any): void {
+    if (event) this.rafraichissement = event;
     this.loading = true;
     if (this.onglet === 'fournisseur') {
       this.chargerPaiementsFournisseur();
@@ -50,15 +51,23 @@ export class AnnulationPaiementsPage {
     }
   }
 
+  // « Tirer pour actualiser » : l'indicateur tournait sans fin car complete() n'était
+  // jamais appelé. On le termine à chaque fin de chargement (succès ou erreur).
+  private rafraichissement?: any;
+  private terminerRafraichissement(): void {
+    this.rafraichissement?.target?.complete();
+    this.rafraichissement = undefined;
+  }
+
   chargerPaiementsFournisseur(): void {
     this.productService.getPaiementsParPeriode(this.dateDebut || undefined, this.dateFin || undefined).subscribe({
       next: data => {
         this.paiementsFournisseur = data;
         this.appliquerFiltres();
-        this.loading = false;
+        this.loading = false; this.terminerRafraichissement();
       },
       error: () => {
-        this.loading = false;
+        this.loading = false; this.terminerRafraichissement();
         this.toast('Chargement impossible', 'danger');
       }
     });
@@ -69,10 +78,10 @@ export class AnnulationPaiementsPage {
       next: data => {
         this.reglements = data;
         this.appliquerFiltres();
-        this.loading = false;
+        this.loading = false; this.terminerRafraichissement();
       },
       error: () => {
-        this.loading = false;
+        this.loading = false; this.terminerRafraichissement();
         this.toast('Chargement impossible', 'danger');
       }
     });

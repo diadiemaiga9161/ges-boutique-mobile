@@ -18,6 +18,8 @@ export interface RecommandationIA {
 export interface AlerteIA {
   message?: string;
   niveau?: string;
+  /** Champ réellement envoyé par le serveur (AlerteIA.java) : CRITIQUE, ATTENTION, INFO. */
+  severite?: string;
   titre?: string;
 }
 

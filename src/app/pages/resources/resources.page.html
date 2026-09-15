@@ -177,7 +177,7 @@
           <div class="fz-search">
             <ion-icon name="search-outline" class="fz-icon"></ion-icon>
             <input class="fz-input" [(ngModel)]="query" (keyup.enter)="load()" placeholder="Rechercher" aria-label="Rechercher" />
-            <button type="button" class="fz-clear" *ngIf="query" (click)="query = ''" aria-label="Effacer">
+            <button type="button" class="fz-clear" *ngIf="query" (click)="query = ''; load()" aria-label="Effacer">
               <ion-icon name="close-circle-outline"></ion-icon>
             </button>
           </div>

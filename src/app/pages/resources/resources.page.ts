@@ -194,17 +194,17 @@ export class ResourcesPage {
           .subscribe({ next: items => { this.items = items; done(); }, error: fail });
         break;
       case 'comptes':
-        this.compteService.getTousLesComptes().subscribe({ next: items => { this.items = items; this.comptes = items; done(); }, error: fail });
+        this.compteService.getTousLesComptes().subscribe({ next: items => { this.items = this.filtrerLocal(items); this.comptes = items; done(); }, error: fail });
         break;
       case 'dettes':
         (this.query ? this.detteService.rechercherDettes(this.query) : this.detteService.getAllDettes())
           .subscribe({ next: items => { this.items = items; done(); }, error: fail });
         break;
       case 'employes':
-        this.employeService.getTous().subscribe({ next: items => { this.items = items; this.employees = items; done(); }, error: fail });
+        this.employeService.getTous().subscribe({ next: items => { this.items = this.filtrerLocal(items); this.employees = items; done(); }, error: fail });
         break;
       case 'paiement-employe':
-        this.paiementEmployeService.getTous().subscribe({ next: items => { this.items = items; done(); }, error: fail });
+        this.paiementEmployeService.getTous().subscribe({ next: items => { this.items = this.filtrerLocal(items); done(); }, error: fail });
         break;
       case 'fournisseurs':
         (this.query ? this.productService.searchFournisseurs(this.query) : this.productService.getAllFournisseurs())
@@ -225,13 +225,27 @@ export class ResourcesPage {
         break;
       case 'objectifs-fournisseur':
         this.objectifFournisseurService.getTous()
-          .subscribe({ next: items => { this.items = items; done(); }, error: fail });
+          .subscribe({ next: items => { this.items = this.filtrerLocal(items); done(); }, error: fail });
         break;
       case 'objectifs-vendeur':
         this.objectifVendeurService.getTous()
-          .subscribe({ next: items => { this.items = items; done(); }, error: fail });
+          .subscribe({ next: items => { this.items = this.filtrerLocal(items); done(); }, error: fail });
         break;
     }
+  }
+
+  /** Recherche locale pour les listes que le serveur ne filtre pas (comptes, employés,
+   *  paiements employés, objectifs) : la saisie était ignorée et la liste restait complète.
+   *  Garde les éléments dont un texte (jusqu'à 2 niveaux, ex. employe.nom) contient la saisie. */
+  private filtrerLocal<T>(items: T[]): T[] {
+    const q = (this.query || '').trim().toLowerCase();
+    if (!q || !Array.isArray(items)) return items;
+    const textes = (v: any, profondeur = 0): string[] => {
+      if (typeof v === 'string') return [v];
+      if (v && typeof v === 'object' && profondeur < 2) return Object.values(v).reduce((acc: string[], x: any) => acc.concat(textes(x, profondeur + 1)), [] as string[]);
+      return [];
+    };
+    return items.filter(item => textes(item).some(t => t.toLowerCase().includes(q)));
   }
 
   startCreate(): void {

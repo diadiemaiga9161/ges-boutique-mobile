@@ -508,3 +508,37 @@
     </div>
   </div>
 </div>
+
+<!-- ════════════════════════════════════════════════════
+     MODALE CENTRÉE — QR CODE D'UNE FACTURE (bouton QR des cartes)
+════════════════════════════════════════════════════ -->
+<div class="md-overlay" *ngIf="showQrModal">
+  <div class="md-backdrop" (click)="fermerQr()"></div>
+  <div class="md-sheet" role="dialog" aria-modal="true">
+    <div class="md-header">
+      <div class="md-icon md-icon--info">
+        <ion-icon name="qr-code-outline"></ion-icon>
+      </div>
+      <h2 class="md-title">{{ factureForQr?.numeroFacture }}</h2>
+      <button type="button" class="md-close" (click)="fermerQr()" [attr.aria-label]="'COMMON.CLOSE' | translate">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="md-body fact-qr-body">
+      <ion-spinner name="crescent" *ngIf="qrLoading"></ion-spinner>
+      <img *ngIf="!qrLoading && qrDataUrl" [src]="qrDataUrl" alt="QR code de la facture" class="fact-qr-img" />
+      <p class="fact-qr-hint" *ngIf="!qrLoading && qrDataUrl">Scannez ce code pour obtenir la facture</p>
+      <p class="fact-qr-hint" *ngIf="!qrLoading && !qrDataUrl">QR code indisponible pour cette facture.</p>
+    </div>
+    <div class="md-footer">
+      <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerQr()">
+        <ion-icon name="close-outline"></ion-icon>
+        Fermer
+      </button>
+      <button type="button" class="gl-btn gl-btn--primary" *ngIf="factureForQr" (click)="telechargerPdf(factureForQr)">
+        <ion-icon name="download-outline"></ion-icon>
+        PDF
+      </button>
+    </div>
+  </div>
+</div>

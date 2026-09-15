@@ -76,6 +76,7 @@ export class FacturesPage {
   // comme la croix et le clic sur l'overlay — affichage uniquement.
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.showQrModal) this.fermerQr();
     if (this.showCreateModal) this.showCreateModal = false;
     if (this.showDetailModal) this.closeDetail();
   }
@@ -176,8 +177,15 @@ export class FacturesPage {
   }
 
   // ── QR modal standalone ──────────────────────────────────
-  ouvrirQr(f: Facture): void { this.factureForQr = f; this.showQrModal = true; }
-  fermerQr(): void { this.showQrModal = false; this.factureForQr = undefined; }
+  // Le bouton QR ouvrait showQrModal, mais aucune fenêtre n'existait dans le template :
+  // le bouton ne faisait rien. Le QR est chargé en blob (jeton requis), comme dans le détail.
+  ouvrirQr(f: Facture): void {
+    this.factureForQr = f;
+    this.qrDataUrl = null;
+    this.showQrModal = true;
+    this.loadQrBlob(f.id);
+  }
+  fermerQr(): void { this.showQrModal = false; this.factureForQr = undefined; this.qrDataUrl = null; }
 
   getQrUrl(f?: Facture): string {
     return f ? `/api/caisse/factures/${f.id}/qrcode` : '';

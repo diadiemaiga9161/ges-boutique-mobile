@@ -663,3 +663,28 @@
 @media (min-width: 1024px) {
   .fact-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+
+// ── Modale QR code (bouton QR des cartes) ──────────────────────────
+.fact-qr-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-block: 8px;
+}
+.fact-qr-img {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--gl-border);
+  background: #ffffff; // un QR reste noir sur blanc pour être lisible par les scanners
+}
+.fact-qr-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gl-muted);
+  text-align: center;
+}
