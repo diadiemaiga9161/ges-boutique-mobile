@@ -992,7 +992,14 @@
               </div>
               <p class="glc-note" *ngIf="item.observation">{{ item.observation }}</p>
             </div>
-            <div class="glc-actions" *ngIf="item.statut !== 'ANNULE'">
+            <!-- Pied de carte : Reçu PDF + WhatsApp + Annuler (≡ CardFoot empilé RN, masqué si annulé) -->
+            <div class="glc-actions glc-actions--stacked" *ngIf="item.statut !== 'ANNULE'">
+              <button type="button" class="glc-action" (click)="imprimerRecuSalaire(item)">
+                <ion-icon name="document-text-outline"></ion-icon><span>Reçu PDF</span>
+              </button>
+              <button type="button" class="glc-action glc-action--ok" (click)="envoyerRecuWhatsApp(item)">
+                <ion-icon name="logo-whatsapp"></ion-icon><span>WhatsApp</span>
+              </button>
               <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'cancel-paie')">
                 <ion-icon name="close-circle-outline"></ion-icon><span>Annuler</span>
               </button>

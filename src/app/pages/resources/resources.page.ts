@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { BoutiqueService } from '../../services/boutique.service';
 import { Client, ClientService } from '../../services/client.service';
 import { Compte, CompteService, TypeOperationCompte } from '../../services/compte.service';
 import { DetteAncienne, DetteAncienneService } from '../../services/dette-ancienne.service';
@@ -152,7 +153,8 @@ export class ResourcesPage {
     public objectifFournisseurService: ObjectifFournisseurService,
     public objectifVendeurService: ObjectifVendeurService,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private boutiqueService: BoutiqueService
   ) {}
 
   // Modales centrées (design commun) : fermeture à la touche Échap, en plus du X et
@@ -1093,6 +1095,171 @@ export class ResourcesPage {
         }
       ]
     });
+    await alert.present();
+  }
+
+  // ==================== PAIEMENTS EMPLOYÉS : REÇU PDF + WHATSAPP ====================
+  // Parité React Native (PaiementsEmployeScreen.tsx : imprimerRecuSalaire() →
+  // buildRecuSalaireHtml() + printHtmlRN(), et envoyerRecuWhatsApp()). Aucun appel
+  // serveur : nom / poste / salaire viennent du paiement déjà chargé (le backend les lit
+  // en direct sur la fiche employé, comme les paramètres de route RN) et le numéro vient
+  // de la fiche employé (this.employees, déjà chargée par loadSupportData()).
+
+  private employeDuPaiement(p: PaiementEmploye): Employe | undefined {
+    return this.employees.find(e => e.id === Number(p.employeId));
+  }
+
+  /** Reçu de salaire imprimable / enregistrable en PDF — même contenu que le reçu RN. */
+  imprimerRecuSalaire(p: PaiementEmploye): void {
+    try {
+      const employe = this.employeDuPaiement(p);
+      const nom = p.employeNomComplet || employe?.nomComplet || 'Employe';
+      const poste = p.employePoste || employe?.poste || '';
+      const salaireMensuel = p.salaireMensuel ?? employe?.salaireMensuel ?? 0;
+      const nomBoutique = this.boutiqueService.getInfo()?.nom || 'Ges Boutique';
+
+      const qrData = encodeURIComponent(
+        `SALAIRE\nEmployé: ${nom}\nPoste: ${poste}\nMontant: ${p.montant} FCFA\nDate: ${p.datePaiement || ''}`
+      );
+      const montantFmt = (p.montant || 0).toLocaleString('fr-FR');
+      const salaireFmt = (salaireMensuel || 0).toLocaleString('fr-FR');
+      const periode = `${p.periodeDebut || '—'}${p.periodeFin && p.periodeFin !== p.periodeDebut ? ' → ' + p.periodeFin : ''}`;
+      const datePaiement = p.datePaiement
+        ? new Date(p.datePaiement).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : '—';
+      const e = (v: unknown) => this.echapperHtml(v);
+
+      const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Reçu paiement — ${e(nom)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;font-size:13px;color:#1e293b}
+.sheet{background:#fff;max-width:540px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(5,80,40,.12)}
+.hdr{background:linear-gradient(135deg,#064e3b,#10b981);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-size:18px;font-weight:900}.hdr-sub{font-size:11px;opacity:.7;margin-top:3px}
+.recu-label{text-align:center;padding:14px;font-size:12px;font-weight:700;letter-spacing:2px;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0}
+.body{padding:18px 24px}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f1f5f9}
+.row:last-child{border-bottom:none}
+.lbl{color:#64748b;font-size:12px}.val{font-weight:700;color:#1e293b;font-size:12px;text-align:right}
+.montant-box{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:12px;padding:18px;text-align:center;margin:16px 0}
+.montant-val{font-size:1.8rem;font-weight:900;color:#166534}
+.montant-lbl{font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.stamp{display:inline-block;border:3px solid #10b981;border-radius:8px;padding:5px 14px;color:#064e3b;font-weight:900;font-size:13px;letter-spacing:2px;transform:rotate(-3deg);margin:8px auto}
+.ftr{background:linear-gradient(135deg,#064e3b,#10b981);color:rgba(255,255,255,.6);text-align:center;padding:10px;font-size:10px}
+@media print{body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}
+</style></head><body>
+<div class="sheet">
+  <div class="hdr">
+    <div><div class="hdr-title">REÇU DE PAIEMENT</div><div class="hdr-sub">${e(nomBoutique)} — Paiement Employé</div></div>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=68x68&data=${qrData}" width="68" height="68" style="border-radius:8px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'">
+  </div>
+  <div class="recu-label">Reçu de salaire</div>
+  <div class="body">
+    <div class="row"><span class="lbl">Employé</span><span class="val">${e(nom)}</span></div>
+    <div class="row"><span class="lbl">Poste</span><span class="val">${e(poste || '—')}</span></div>
+    ${salaireMensuel ? `<div class="row"><span class="lbl">Salaire mensuel</span><span class="val">${salaireFmt} FCFA</span></div>` : ''}
+    <div class="row"><span class="lbl">Nombre de mois</span><span class="val">${e(p.nombreMois || 1)} mois</span></div>
+    <div class="row"><span class="lbl">Période</span><span class="val">${e(periode)}</span></div>
+    <div class="row"><span class="lbl">Date de paiement</span><span class="val">${datePaiement}</span></div>
+    <div class="montant-box">
+      <div class="montant-lbl">Montant payé</div>
+      <div class="montant-val">${montantFmt} FCFA</div>
+    </div>
+    <div style="text-align:center"><div class="stamp">✓ PAYÉ</div></div>
+  </div>
+  <div class="ftr">${e(nomBoutique)} · Reçu généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+</div>
+</body></html>`;
+
+      this.ouvrirApercuImpression(html);
+    } catch {
+      void this.alerteInfo('Erreur', 'Impossible de générer le reçu');
+    }
+  }
+
+  /** Envoi du reçu de paiement par WhatsApp directement au numéro enregistré sur la fiche employé. */
+  envoyerRecuWhatsApp(p: PaiementEmploye): void {
+    const employe = this.employeDuPaiement(p);
+    const nomComplet = p.employeNomComplet || employe?.nomComplet || 'Employe';
+    const telPropre = String(employe?.telephone || '').replace(/\D/g, '');
+    if (!telPropre) {
+      void this.alerteInfo('Aucun numéro enregistré', `Ajoutez un numéro de téléphone à la fiche de ${nomComplet} pour activer l'envoi WhatsApp.`);
+      return;
+    }
+    const boutique = this.boutiqueService.getInfo();
+    const periodeLabel = p.periodeFin && p.periodeFin !== p.periodeDebut ? `${p.periodeDebut} à ${p.periodeFin}` : p.periodeDebut;
+    const lignes = [
+      `*${boutique?.nom || 'Ges Boutique'}*`,
+      `Reçu de paiement de salaire`,
+      `Employé : ${nomComplet}`,
+      `Date : ${p.datePaiement ? this.date(p.datePaiement) : '—'}`,
+      ``,
+      `Poste : ${p.employePoste || employe?.poste || '—'}`,
+      `Période : ${periodeLabel || '—'}`,
+      `Nombre de mois : ${p.nombreMois || 1}`,
+      ``,
+      `Montant payé : ${this.money(p.montant)}`,
+      ``,
+      `Merci de votre confiance.`,
+    ];
+    if (boutique?.telephone) lignes.push(`${boutique.nom} — ${boutique.telephone}`);
+    window.open(`https://wa.me/${telPropre}?text=${encodeURIComponent(lignes.join('\n'))}`, '_blank');
+  }
+
+  /** Visualiseur plein écran du reçu (iframe) + barre Fermer / Imprimer, impression lancée
+   *  à l'ouverture — même mécanisme que FactureService.openOverlay(html, true) (protégé,
+   *  donc recopié ici comme dans depenses.page.ts) et que printHtmlRN() côté RN web. */
+  private ouvrirApercuImpression(html: string): void {
+    document.getElementById('inv-overlay-root')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-overlay-root';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+
+    const btnFloat = document.createElement('button');
+    btnFloat.textContent = '✕';
+    btnFloat.setAttribute('aria-label', 'Fermer');
+    btnFloat.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;font-weight:700;cursor:pointer;z-index:2;line-height:1';
+    btnFloat.addEventListener('click', () => overlay.remove());
+    overlay.appendChild(btnFloat);
+
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-shrink:0;box-shadow:0 -2px 8px rgba(0,0,0,.3);flex-wrap:wrap';
+
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnClose.addEventListener('click', () => overlay.remove());
+
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer';
+    btnPrint.style.cssText = 'background:#fff;color:#1a56db;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+    overlay.appendChild(frame);
+    overlay.appendChild(bar);
+    document.body.appendChild(overlay);
+
+    frame.addEventListener('load', () => setTimeout(() => {
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+    }, 400));
+  }
+
+  /** Les noms (employé, boutique, poste) sont insérés dans le HTML du reçu : on neutralise
+   *  < > & " ' pour qu'un nom ne puisse pas injecter de balise (rendu identique sinon). */
+  private echapperHtml(v: unknown): string {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(v ?? '').replace(/[&<>"']/g, c => map[c]);
+  }
+
+  private async alerteInfo(header: string, message: string): Promise<void> {
+    const alert = await this.alertCtrl.create({ header, message, buttons: ['OK'] });
     await alert.present();
   }
 
