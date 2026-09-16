@@ -478,15 +478,25 @@
                 <span class="rl-pu" *ngIf="ligne.prixUnitaire != null">{{ money(ligne.prixUnitaire) }}</span>
               </div>
 
-              <!-- Ligne VERSEMENT : ventes réglées (un paiement groupé reste une seule ligne, avec le détail) -->
+              <!-- Ligne VERSEMENT : produits payés (versement simple) ; un paiement groupé reste une ligne
+                   courte, la liste de ses ventes ne s'affiche qu'à la demande. -->
               <div class="rl-reglees" *ngIf="ligne.type === 'VERSEMENT' && ligne.ventesReglees?.length">
-                <div class="rl-reglee" *ngFor="let v of ligne.ventesReglees">
-                  <div class="rl-reglee-head" *ngIf="(ligne.ventesReglees?.length || 0) > 1">
-                    <span class="rl-reglee-num">{{ v.numeroVente || '—' }}</span>
-                    <span class="rl-reglee-montant">{{ money(v.montantApplique) }}</span>
-                  </div>
-                  <p class="rl-reglee-produits">{{ produitsVenteReglee(v) }}</p>
-                </div>
+                <p class="rl-reglee-produits" *ngIf="ligne.ventesReglees?.length === 1">{{ produitsVenteReglee(ligne.ventesReglees![0]) }}</p>
+                <ng-container *ngIf="(ligne.ventesReglees?.length || 0) > 1">
+                  <button type="button" class="rl-reglees-toggle" (click)="basculerVentesReglees(ligne)" [attr.aria-expanded]="ventesRegleesOuvertes.has(ligne)">
+                    <ion-icon [name]="ventesRegleesOuvertes.has(ligne) ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
+                    {{ (ventesRegleesOuvertes.has(ligne) ? 'RELEVE.HIDE_SALES' : 'RELEVE.SHOW_SALES') | translate: { count: ligne.ventesReglees?.length } }}
+                  </button>
+                  <ng-container *ngIf="ventesRegleesOuvertes.has(ligne)">
+                    <div class="rl-reglee" *ngFor="let v of ligne.ventesReglees">
+                      <div class="rl-reglee-head">
+                        <span class="rl-reglee-num">{{ v.numeroVente || '—' }}</span>
+                        <span class="rl-reglee-montant">{{ money(v.montantApplique) }}</span>
+                      </div>
+                      <p class="rl-reglee-produits">{{ produitsVenteReglee(v) }}</p>
+                    </div>
+                  </ng-container>
+                </ng-container>
               </div>
 
               <div class="rl-montants">

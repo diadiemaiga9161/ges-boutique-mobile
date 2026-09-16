@@ -77,6 +77,8 @@ export class ClientsPage {
   releveTypeFilter: '' | 'VENTE' | 'VERSEMENT' = '';
   relevePage = 0;
   releveSize = 20;
+  /** Paiements groupés dont la liste des ventes réglées est dépliée (ligne courte par défaut). */
+  ventesRegleesOuvertes = new Set<ClientReleveLigne>();
 
   design: DesignFacture = 1;
 
@@ -381,7 +383,7 @@ export class ClientsPage {
       this.selectedClientForReleve.id, this.relevePage, this.releveSize,
       dd || undefined, df || undefined, this.releveTypeFilter || undefined
     ).subscribe({
-      next: data => { this.releveData = data; this.loadingReleve = false; },
+      next: data => { this.releveData = data; this.ventesRegleesOuvertes.clear(); this.loadingReleve = false; },
       error: error => { this.loadingReleve = false; this.presentToast(error.message || 'Chargement du relevé impossible', 'danger'); }
     });
   }
@@ -478,6 +480,14 @@ export class ClientsPage {
   formatHeure(value: string): string {
     if (!value) return '—';
     return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  basculerVentesReglees(ligne: ClientReleveLigne): void {
+    if (this.ventesRegleesOuvertes.has(ligne)) {
+      this.ventesRegleesOuvertes.delete(ligne);
+    } else {
+      this.ventesRegleesOuvertes.add(ligne);
+    }
   }
 
   /** Produits d'une vente réglée par un versement, ex. "Coca-Cola 1.5L ×8, Eau minérale ×1". */

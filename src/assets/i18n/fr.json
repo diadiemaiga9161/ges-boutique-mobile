@@ -266,7 +266,9 @@
     "PREVIOUS": "Précédent",
     "NEXT": "Suivant",
     "PAGE": "Page",
-    "OF": "sur"
+    "OF": "sur",
+    "SHOW_SALES": "Voir les {{count}} ventes",
+    "HIDE_SALES": "Masquer les ventes"
   },
   "CAISSE": {
     "TITLE": "Caisse",

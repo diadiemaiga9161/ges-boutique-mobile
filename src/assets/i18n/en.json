@@ -150,7 +150,9 @@
     "PREVIOUS": "Previous",
     "NEXT": "Next",
     "PAGE": "Page",
-    "OF": "of"
+    "OF": "of",
+    "SHOW_SALES": "Show the {{count}} sales",
+    "HIDE_SALES": "Hide sales"
   },
   "CAISSE": {
     "TITLE": "Cash Register", "BALANCE": "Current balance", "INCOME": "Income",
