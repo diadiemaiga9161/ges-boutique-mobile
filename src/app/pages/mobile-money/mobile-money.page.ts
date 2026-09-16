@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ToastController } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { AuthService } from '../../services/auth.service';
 
 interface OperationMM {
@@ -89,17 +92,52 @@ export class MobileMoneyPage implements OnInit {
   onPeriodeChange(p: string) { this.periode = p; this.chargerDonnees(); }
 
   // Téléchargement CSV par opérateur ou tous
+  /** Le serveur exige le jeton sur cette adresse : on demande le fichier avec HttpClient
+   *  (comme les autres appels de la page) puis on l'enregistre. Avant, un lien direct
+   *  partait sans jeton et le téléchargement échouait. */
   exportCsv(operateur?: string) {
     const type = operateur || this.type;
-    const url = `/api/mobile-money/export/csv?type=${type}&periode=${this.periode}`;
-    const link = document.createElement('a');
-    link.href = url;
     const nom = operateur ? operateur.toLowerCase().replace('_money', '') : 'tous';
-    link.setAttribute('download', `mobile-money-${nom}-${this.periode.toLowerCase()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const nomFichier = `mobile-money-${nom}-${this.periode.toLowerCase()}.csv`;
     this.presentToast(`Téléchargement ${this.operateurLabel(type)} en cours...`);
+    this.http.get(`/api/mobile-money/export/csv?type=${type}&periode=${this.periode}`,
+      { headers: this.headers(), responseType: 'blob' })
+      .subscribe({
+        next: (blob) => this.enregistrerFichier(blob, nomFichier),
+        error: () => this.presentToast('Téléchargement impossible.', 'danger'),
+      });
+  }
+
+  /** Enregistre le fichier reçu : partage du fichier sur téléphone, téléchargement
+   *  du navigateur sur web (≡ backup.service.telechargerEtPartager). */
+  private async enregistrerFichier(blob: Blob, nomFichier: string): Promise<void> {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const base64 = await this.blobToBase64(blob);
+        const resultat = await Filesystem.writeFile({ path: nomFichier, data: base64, directory: Directory.Cache });
+        await Share.share({ title: nomFichier, url: resultat.uri, dialogTitle: nomFichier });
+      } else {
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = nomFichier;
+        document.body.appendChild(lien);
+        lien.click();
+        document.body.removeChild(lien);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch {
+      this.presentToast('Enregistrement du fichier impossible.', 'danger');
+    }
+  }
+
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(((reader.result as string) || '').split(',')[1] || '');
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
   }
 
   operateurLabel(type: string): string {
@@ -134,8 +172,8 @@ export class MobileMoneyPage implements OnInit {
     return 'medium';
   }
 
-  private async presentToast(message: string) {
-    const toast = await this.toastCtrl.create({ message, duration: 2000, position: 'bottom', color: 'success' });
+  private async presentToast(message: string, color: 'success' | 'danger' = 'success') {
+    const toast = await this.toastCtrl.create({ message, duration: 2000, position: 'bottom', color });
     await toast.present();
   }
 }

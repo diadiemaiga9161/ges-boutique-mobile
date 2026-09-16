@@ -48,6 +48,7 @@ export class SalesPage implements OnDestroy {
     { value: 'ESPECES', label: 'Espèces' },
     { value: 'ORANGE_MONEY', label: 'Orange Money' },
     { value: 'MOOV_MONEY', label: 'Moov Money' },
+    { value: 'WAVE_MONEY', label: 'Wave' },
     { value: 'CARTE_BANCAIRE', label: 'Carte' },
     { value: 'VIREMENT', label: 'Virement' },
   ];

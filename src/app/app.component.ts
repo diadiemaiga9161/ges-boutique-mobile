@@ -24,6 +24,9 @@ import { canShowMenuItem, MenuVisibilityContext } from './config/menu-visibility
 export class AppComponent implements OnInit, OnDestroy {
   private authSub?: Subscription;
   userPhoto: string | null = null;
+  /** Nom de la boutique affiché sous « Ges Lafia » dans le menu (≡ DrawerContent RN,
+   *  qui affiche boutiqueNom avec « Maïga Consulting » en secours). */
+  boutiqueNom: string | null = null;
 
   // ==================== COMMANDES VITRINE EN ATTENTE ====================
   // Même principe que côté Angular (header-sidebar-large.component.ts) : le topic
@@ -71,6 +74,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.appUpdateService.init();
     this.boutiqueService.info$.subscribe(info => {
       this.featureTransfertsActif = info.featureTransfertsActif !== false;
+      this.boutiqueNom = info?.nom || null;
     });
     this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
       this.fonctionnalitesDesactivees = new Set(liste.filter(f => !f.actif).map(f => f.cle));
