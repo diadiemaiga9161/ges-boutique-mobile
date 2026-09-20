@@ -117,6 +117,33 @@
             (ionChange)="toggleConditionnement($event)">
           </ion-toggle>
         </div>
+
+        <!-- Petite imprimante (ticket 58/80mm) — propre à cet appareil, ajouté le 20/09/2026 -->
+        <div class="gls-row">
+          <span class="gls-icon"><ion-icon name="receipt-outline"></ion-icon></span>
+          <span class="gls-text">
+            <span class="gls-label">Imprimante ticket</span>
+            <span class="gls-desc">Ce poste a une petite imprimante (58/80mm) : adapte le format des documents imprimés</span>
+          </span>
+          <ion-toggle
+            aria-label="Imprimante ticket"
+            [checked]="imprimanteTicketActive"
+            (ionChange)="toggleImprimanteTicket($event)">
+          </ion-toggle>
+        </div>
+
+        <div class="gls-row" *ngIf="imprimanteTicketActive">
+          <span class="gls-icon"><ion-icon name="print-outline"></ion-icon></span>
+          <span class="gls-text">
+            <span class="gls-label">Impression automatique</span>
+            <span class="gls-desc">Imprimer le ticket tout seul dès qu'une vente est validée</span>
+          </span>
+          <ion-toggle
+            aria-label="Impression automatique"
+            [checked]="impressionAutoActive"
+            (ionChange)="toggleImpressionAuto($event)">
+          </ion-toggle>
+        </div>
       </div>
     </section>
 

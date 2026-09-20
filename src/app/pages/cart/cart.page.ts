@@ -819,6 +819,13 @@ export class CartPage implements OnInit {
         this.submitting = false;
         this.derniereVente = vente;
         this.presentSaleSuccess(`Vente ${vente.numeroVente || vente.id} enregistrée`);
+        // Ticket automatique sur petite imprimante — ajouté le 20/09/2026, purement
+        // optionnel et additif : ne se déclenche QUE si l'appareil a coché les deux
+        // réglages dans Paramètres boutique (désactivés par défaut). N'affecte jamais
+        // le flux de vente existant sinon (voir imprimerDernierRecu ci-dessous, inchangé).
+        if (this.fonctionnalite.isImprimanteTicketActif() && this.fonctionnalite.isImpressionAutoActif()) {
+          try { this.venteService.imprimerTicket(vente); } catch { /* jamais bloquant */ }
+        }
         this.confirmationVocale.annoncerMontant(this.totalAvecFidelite());
         // Débit réel du solde de points — seulement une fois la vente créée avec succès.
         // Si ce débit échoue, la vente reste valide : on avertit juste le vendeur qu'il

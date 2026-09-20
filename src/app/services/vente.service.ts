@@ -514,6 +514,86 @@ export class VenteService {
     this.openOverlay(this.buildFactureHtml(vente), false);
   }
 
+  // ── Ticket 80mm (petite imprimante) ─────────────────────────────────────
+  // Ajouté le 20/09/2026 à la demande de l'utilisateur, à côté de
+  // buildFactureHtml/imprimerFacture/ouvrirFacture ci-dessus (format A4,
+  // INCHANGÉS) : une mise en page étroite, une seule colonne, pensée pour un
+  // rouleau de 80mm — jamais utilisée sauf si l'appareil a explicitement
+  // activé « Imprimante ticket » dans Paramètres boutique
+  // (FonctionnaliteService.isImprimanteTicketActif()).
+
+  imprimerTicket(vente: VenteMap): void {
+    this.openOverlay(this.buildTicketHtml(vente), true);
+  }
+
+  ouvrirTicket(vente: VenteMap): void {
+    this.openOverlay(this.buildTicketHtml(vente), false);
+  }
+
+  private buildTicketHtml(vente: VenteMap): string {
+    const shop = this.boutiqueService.getInfo();
+    const nom = shop.nom || 'Ges Boutique';
+    const adr = [shop.adresse, shop.ville].filter(Boolean).join(', ');
+    const tel = shop.telephone || '';
+    const client = [vente.clientNom, vente.clientPrenom].filter(Boolean).join(' ') || 'Client divers';
+
+    const lignes = vente.produits || vente.lignes || [];
+    const rowsHtml = lignes.map((item: any) => {
+      const nomProduit = this.echapper(item.produitNom || item.designation || 'Produit');
+      const sousTotal = item.sousTotal ?? (item.quantite * item.prixUnitaire);
+      return `<div class="tk-ligne">${nomProduit}</div>
+        <div class="tk-detail"><span>${item.quantite} x ${this.formatPrice(item.prixUnitaire)}</span><span>${this.formatPrice(sousTotal)}</span></div>`;
+    }).join('');
+
+    const sousTotal = (vente.montantTotal || 0) + (vente.montantRemiseTotal || 0);
+    const hasRemise = vente.montantRemiseTotal > 0;
+    const totalAPayer = vente.montantApresRemise || vente.montantTotal;
+
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Ticket ${this.echapper(vente.numeroVente)}</title>
+<style>
+  @page { size: 80mm auto; margin: 3mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Courier New', monospace; width: 74mm; margin: 0 auto; padding: 6px 4px; font-size: 12px; color: #000; background: #fff; }
+  .tk-center { text-align: center; }
+  .tk-bold { font-weight: 700; }
+  .tk-nom { font-size: 15px; }
+  .tk-sep { border-top: 1px dashed #000; margin: 6px 0; }
+  .tk-ligne-info { display: flex; justify-content: space-between; font-size: 11px; }
+  .tk-ligne { padding-top: 4px; }
+  .tk-detail { display: flex; justify-content: space-between; font-size: 11px; color: #333; padding-left: 6px; }
+  .tk-total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .tk-total-final { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding-top: 4px; }
+  .tk-footer { text-align: center; font-size: 10px; margin-top: 10px; }
+  @media print { body { width: auto } }
+</style></head>
+<body>
+  <div class="tk-center tk-bold tk-nom">${this.echapper(nom)}</div>
+  ${adr ? `<div class="tk-center">${this.echapper(adr)}</div>` : ''}
+  ${tel ? `<div class="tk-center">Tél : ${this.echapper(tel)}</div>` : ''}
+  <div class="tk-sep"></div>
+  <div class="tk-ligne-info"><span>${this.echapper(vente.numeroVente)}</span><span>${this.formatDate(vente.dateVente)}</span></div>
+  <div class="tk-ligne-info"><span>Client</span><span>${this.echapper(client)}</span></div>
+  <div class="tk-sep"></div>
+  ${rowsHtml}
+  <div class="tk-sep"></div>
+  <div class="tk-total-row"><span>Sous-total</span><span>${this.formatPrice(sousTotal)}</span></div>
+  ${hasRemise ? `<div class="tk-total-row"><span>Remise</span><span>- ${this.formatPrice(vente.montantRemiseTotal)}</span></div>` : ''}
+  <div class="tk-total-final"><span>TOTAL</span><span>${this.formatPrice(totalAPayer)}</span></div>
+  ${vente.estCredit && !vente.creditRegle ? `
+  <div class="tk-total-row"><span>Versé</span><span>${this.formatPrice(vente.montantVerse || 0)}</span></div>
+  <div class="tk-total-row tk-bold"><span>Reste à payer</span><span>${this.formatPrice(vente.montantRestant || 0)}</span></div>` : ''}
+  <div class="tk-sep"></div>
+  <div class="tk-center tk-footer">Merci de votre visite !<br>${nom}</div>
+</body></html>`;
+  }
+
+  /** Un nom de client ou de produit est inséré tel quel dans le HTML du ticket :
+   *  neutralise < > & " ' pour ne jamais laisser une donnée injecter de balise. */
+  private echapper(v: unknown): string {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(v ?? '').replace(/[&<>"']/g, c => map[c]);
+  }
+
   private openOverlay(html: string, autoprint: boolean): void {
     document.getElementById('inv-overlay-root')?.remove();
     const overlay = document.createElement('div');

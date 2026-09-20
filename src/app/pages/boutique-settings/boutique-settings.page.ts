@@ -17,6 +17,10 @@ export class BoutiqueSettingsPage implements OnInit {
   saving = false;
   uploadingLogo = false;
   conditionnementActif = false;
+  // Réglages « petite imprimante », propres à cet appareil (ajoutés le
+  // 20/09/2026) — voir FonctionnaliteService pour le détail des clés.
+  imprimanteTicketActive = false;
+  impressionAutoActive = false;
   // Permission vendeur "Inventaire en lecture seule" (système générique séparé —
   // décision d'un admin normal, pas besoin de super admin).
   inventaireLectureActive = false;
@@ -39,10 +43,14 @@ export class BoutiqueSettingsPage implements OnInit {
 
   ngOnInit(): void {
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
+    this.imprimanteTicketActive = this.fonctionnalite.isImprimanteTicketActif();
+    this.impressionAutoActive = this.fonctionnalite.isImpressionAutoActif();
   }
 
   ionViewWillEnter(): void {
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
+    this.imprimanteTicketActive = this.fonctionnalite.isImprimanteTicketActif();
+    this.impressionAutoActive = this.fonctionnalite.isImpressionAutoActif();
     this.boutique.refreshBoutique().subscribe(info => {
       this.form = { ...info };
       this.previewLogo = info.logoUrl || info.logoPath || '';
@@ -82,6 +90,26 @@ export class BoutiqueSettingsPage implements OnInit {
     this.fonctionnalite.setConditionnement(actif);
     this.conditionnementActif = actif;
     this.presentToast(actif ? 'Conditionnement activé' : 'Conditionnement désactivé');
+  }
+
+  toggleImprimanteTicket(event: any): void {
+    const actif = event.detail.checked;
+    this.fonctionnalite.setImprimanteTicket(actif);
+    this.imprimanteTicketActive = actif;
+    if (!actif) {
+      // Sans imprimante ticket, l'impression automatique n'a plus de sens —
+      // on la désactive aussi pour éviter un réglage incohérent.
+      this.fonctionnalite.setImpressionAuto(false);
+      this.impressionAutoActive = false;
+    }
+    this.presentToast(actif ? 'Imprimante ticket activée' : 'Imprimante ticket désactivée');
+  }
+
+  toggleImpressionAuto(event: any): void {
+    const actif = event.detail.checked;
+    this.fonctionnalite.setImpressionAuto(actif);
+    this.impressionAutoActive = actif;
+    this.presentToast(actif ? 'Impression automatique activée' : 'Impression automatique désactivée');
   }
 
   toggleInventaireLecture(event: any): void {
