@@ -413,6 +413,34 @@
           <p class="muted" style="margin-top:8px">{{ 'PRODUCTS.NO_LEVELS' | translate }}</p>
         </div>
 
+        <!-- Tuto avec exemple concret — affiché tant qu'aucun niveau n'existe pour ce
+             produit (première utilisation), ajouté le 20/09/2026 à la demande de
+             l'utilisateur. Texte en dur en français, comme les autres ajouts récents. -->
+        <div *ngIf="niveauxChaine.length === 0" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:16px;margin:0 0 20px">
+          <p style="display:flex;align-items:center;gap:6px;font-weight:800;color:#1a56db;font-size:0.9rem;margin:0 0 10px">
+            <ion-icon name="bulb-outline"></ion-icon> Comment ça marche : un exemple
+          </p>
+          <p style="font-size:0.85rem;color:#334155;margin:0 0 10px;line-height:1.5">
+            <strong>{{ produitNiveaux?.nom || 'Ce produit' }}</strong> est le <strong>plus grand emballage</strong> —
+            le gros. Les niveaux que tu ajoutes en dessous sont les emballages plus petits — le détail.
+          </p>
+          <div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px">
+            <p style="font-size:0.72rem;font-weight:700;color:#475569;text-transform:uppercase;margin:0 0 8px">Exemple : un carton de boissons</p>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.85rem">
+              <span style="background:#1a56db;color:#fff;border-radius:8px;padding:4px 10px;font-weight:700">Carton</span>
+              <ion-icon name="arrow-forward-outline" style="color:#64748b"></ion-icon>
+              <span style="background:#eff6ff;color:#1a56db;border-radius:8px;padding:4px 10px;font-weight:600">Pack de 6 <em style="color:#475569;font-style:normal">— 4 par carton</em></span>
+              <ion-icon name="arrow-forward-outline" style="color:#64748b"></ion-icon>
+              <span style="background:#eff6ff;color:#1a56db;border-radius:8px;padding:4px 10px;font-weight:600">Bouteille <em style="color:#475569;font-style:normal">— 6 par pack</em></span>
+            </div>
+          </div>
+          <p style="font-size:0.78rem;color:#475569;margin:0;line-height:1.5">
+            💡 <strong>Astuce pour nommer un niveau</strong> : écris toujours
+            « [Nom] — [combien] par [niveau du dessus] », comme dans l'exemple. N'importe qui comprend
+            directement, même sans avoir vu l'app avant.
+          </p>
+        </div>
+
         <div *ngIf="niveauxChaine.length > 0">
           <div *ngFor="let n of niveauxChaine; let i = index">
 
