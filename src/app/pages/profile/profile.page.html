@@ -185,6 +185,11 @@
       </div>
     </section>
 
+    <button type="button" class="gl-btn gl-btn--secondary" *ngIf="peutChangerBoutique" (click)="changerBoutique()">
+      <ion-icon name="swap-horizontal-outline"></ion-icon>
+      Changer de boutique
+    </button>
+
     <button type="button" class="gl-btn gl-btn--danger" (click)="logout()">
       <ion-icon name="log-out-outline"></ion-icon>
       {{ 'PROFILE.LOGOUT' | translate }}

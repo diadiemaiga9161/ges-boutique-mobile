@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { AuthService, User } from '../../services/auth.service';
 import { Language, LanguageService, LANGUAGES } from '../../services/language.service';
 import { ThemeService, ThemeMode } from '../../services/theme.service';
 import { ConfirmationVocaleService } from '../../services/confirmation-vocale.service';
 import { TutorielVendeurService } from '../../services/tutoriel-vendeur.service';
+import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { environment } from '../../../environments/environment';
 
 export const COUNTRY_CODES = [
   { code: '+223', flag: '🇲🇱', name: 'Mali' },
@@ -68,11 +71,28 @@ export class ProfilePage implements OnInit {
     private toastCtrl: ToastController,
     private themeService: ThemeService,
     private confirmationVocale: ConfirmationVocaleService,
-    private tutorielVendeur: TutorielVendeurService
+    private tutorielVendeur: TutorielVendeurService,
+    private boutiqueConfig: BoutiqueConfigService,
+    private router: Router
   ) {}
 
   revoirTutoriel(): void {
     this.tutorielVendeur.demanderAffichage();
+  }
+
+  // Visible seulement sur l'appli native (Capacitor) — sur le web, une boutique
+  // = un déploiement séparé, il n'y a rien à "changer" au sens mobile du terme.
+  get peutChangerBoutique(): boolean {
+    return environment.isCapacitor;
+  }
+
+  // Reprend exactement le mécanisme déjà en place sur React Native
+  // (handleChangeBoutique) : efface la boutique choisie + la session, puis
+  // renvoie vers l'écran de choix de boutique.
+  async changerBoutique(): Promise<void> {
+    await this.boutiqueConfig.clearBoutique();
+    this.auth.signout();
+    this.router.navigateByUrl('/boutique-select', { replaceUrl: true });
   }
 
   get themeMode(): ThemeMode {

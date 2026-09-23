@@ -321,6 +321,13 @@
     &:active { background: var(--gl-surface-2); }
   }
 
+  &--secondary {
+    background: transparent;
+    color: var(--gl-action);
+    border: 1.5px solid var(--gl-ring);
+    &:active { background: var(--gl-surface-2); }
+  }
+
   &:disabled { opacity: 0.55; cursor: default; }
 }
 
