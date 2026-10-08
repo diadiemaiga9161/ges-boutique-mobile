@@ -314,7 +314,7 @@
           <div class="expand-products">
             <div class="expand-line" *ngFor="let line of sale.produits">
               <div class="expand-line-left">
-                <span class="expand-qty">×{{ line.quantite }}</span>
+                <span class="expand-qty">{{ qteLigne(line).includes(' ') ? qteLigne(line) : '×' + qteLigne(line) }}</span>
                 <span class="expand-name">{{ line.produitNom }}</span>
               </div>
               <span class="expand-subtotal">{{ money(line.sousTotal) }}</span>
@@ -456,8 +456,8 @@
             <tbody>
               <tr *ngFor="let p of selectedVente.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
                 <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-center">{{ qteLigne(p) }}</td>
+                <td class="fd-right">{{ puLigne(p) }}</td>
                 <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
               </tr>
             </tbody>
@@ -507,8 +507,8 @@
             <tbody>
               <tr *ngFor="let p of selectedVente.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
                 <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-center">{{ qteLigne(p) }}</td>
+                <td class="fd-right">{{ puLigne(p) }}</td>
                 <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
               </tr>
             </tbody>
@@ -559,8 +559,8 @@
             <tbody>
               <tr *ngFor="let p of selectedVente.produits">
                 <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                <td class="fd-center">{{ qteLigne(p) }}</td>
+                <td class="fd-right">{{ puLigne(p) }}</td>
                 <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
               </tr>
             </tbody>
@@ -665,6 +665,7 @@
         </div>
         <!-- Contrôles quantité / prix -->
         <div class="ml-controls">
+          <ng-container *ngIf="!line.modeMesure">
           <div class="ml-qty">
             <button class="ml-qty-btn" (click)="line.quantite = line.quantite > 1 ? line.quantite - 1 : 1; updateModifyLine(i)">−</button>
             <span class="ml-qty-val">{{ line.quantite }}</span>
@@ -674,6 +675,18 @@
             <label class="ml-price-label">Prix unitaire</label>
             <ion-input class="ml-price-input" type="text" inputmode="numeric" appMontantInput [(ngModel)]="line.prixUnitaire" (ionChange)="updateModifyLine(i)"></ion-input>
           </div>
+          </ng-container>
+          <!-- Vente à la mesure : quantité en kg et prix au kg -->
+          <ng-container *ngIf="line.modeMesure">
+          <div class="ml-price-wrap">
+            <label class="ml-price-label">Quantité ({{ qteLigne(line).split(' ')[1] }})</label>
+            <ion-input class="ml-price-input" type="text" inputmode="decimal" [ngModel]="qteModifAffichee(line)" (ngModelChange)="majQteModif(i, $event)"></ion-input>
+          </div>
+          <div class="ml-price-wrap">
+            <label class="ml-price-label">Prix / {{ qteLigne(line).split(' ')[1] }}</label>
+            <ion-input class="ml-price-input" type="text" inputmode="decimal" [ngModel]="prixModifAffiche(line)" (ngModelChange)="majPrixModif(i, $event)"></ion-input>
+          </div>
+          </ng-container>
           <div class="ml-subtotal">
             <label class="ml-price-label">Sous-total</label>
             <strong class="ml-subtotal-val">{{ money(line.sousTotal) }}</strong>
@@ -809,10 +822,17 @@
           <span class="retour-line-prix">{{ money(l.prixUnitaire) }} / unité</span>
         </div>
         <div class="retour-line-qty" *ngIf="l.selected">
+          <ng-container *ngIf="!l.modeMesure">
           <button class="retour-qty-btn" (click)="l.quantiteRetournee = l.quantiteRetournee > 1 ? l.quantiteRetournee - 1 : 1">−</button>
           <span class="retour-qty-val">{{ l.quantiteRetournee }}</span>
           <button class="retour-qty-btn" (click)="l.quantiteRetournee = l.quantiteRetournee < l.quantiteMax ? l.quantiteRetournee + 1 : l.quantiteMax">+</button>
           <span class="retour-qty-max">/ {{ l.quantiteMax }}</span>
+          </ng-container>
+          <!-- Vente à la mesure : quantité retournée en kg/L/m -->
+          <ng-container *ngIf="l.modeMesure">
+            <input class="retour-qty-input" type="text" inputmode="decimal" [ngModel]="qteRetourAffichee(l)" (ngModelChange)="majQteRetour(l, $event)" aria-label="Quantité retournée">
+            <span class="retour-qty-max">/ {{ qteLigne(l, l.quantiteMax) }}</span>
+          </ng-container>
         </div>
         <div class="retour-line-total" *ngIf="l.selected">
           <strong>{{ money(l.quantiteRetournee * l.prixUnitaire) }}</strong>

@@ -6,6 +6,9 @@ import { Categorie, ProductService, Produit } from '../../services/product.servi
 import { WebSocketService } from '../../services/websocket.service';
 import { BarcodeService } from '../../services/barcode.service';
 import { AuthService } from '../../services/auth.service';
+import { RoleService } from '../../services/role.service';
+
+import { infoMesure, qteAffichee, qteStockee, texteQte } from '../../utils/mesure.util';
 
 @Component({
   selector: 'app-inventory',
@@ -32,6 +35,17 @@ export class InventoryPage {
   dateDebut = '';
   dateFin = '';
 
+  // Vente à la mesure : produit choisi dans le formulaire (quantités saisies en kg/L/m).
+  produitForm: any = null;
+
+  uniteForm(): string {
+    return infoMesure(this.produitForm)?.unite || '';
+  }
+
+  stockTexte(p: any): string {
+    return texteQte(p, p?.quantite);
+  }
+
   form = {
     produitId: 0,
     quantite: 1,
@@ -52,13 +66,22 @@ export class InventoryPage {
     private toastCtrl: ToastController,
     private ws: WebSocketService,
     private barcodeService: BarcodeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private roleService: RoleService
   ) {}
 
   get isVendeur(): boolean { return this.authService.isVendeur(); }
 
+  /** Onglet Mouvement (entrée / sortie / ajustement) : le gérant (si son rôle a « Inventaire »
+   *  Modifier), ou un vendeur dont le rôle a « Inventaire » sur Modifier ou Tout (rôles
+   *  personnalisés activés). Même règle que le serveur. */
+  get peutMouvementer(): boolean {
+    const droit = this.roleService.peut('STOCK', 'GERER');
+    return this.isVendeur ? (this.roleService.rolesActifs && droit) : droit;
+  }
+
   ionViewWillEnter(): void {
-    if (this.isVendeur) this.segment = 'low';
+    if (!this.peutMouvementer) this.segment = 'low';
     // Par défaut, ne charger que les mouvements du jour pour ne pas ralentir
     // l'ouverture de la page — l'utilisateur peut élargir via les boutons
     // Semaine/Mois ou une période personnalisée (filterByPeriod / dateDebut/dateFin).
@@ -200,7 +223,8 @@ export class InventoryPage {
   selectProduct(product: Produit): void {
     this.form.produitId = product.id;
     this.form.searchProduit = product.nom;
-    this.form.nouvelleQuantite = product.quantite;
+    this.form.nouvelleQuantite = qteAffichee(product as any, product.quantite);
+    this.produitForm = product;
     this.filteredProductsForForm = [];
   }
 
@@ -233,15 +257,16 @@ export class InventoryPage {
     }
 
     const request = this.typeMouvement === TypeMouvement.ENTREE
-      ? this.inventory.entreeStock({ produitId: this.form.produitId, quantite: this.form.quantite, motif: this.form.motif })
+      ? this.inventory.entreeStock({ produitId: this.form.produitId, quantite: qteStockee(this.produitForm, this.form.quantite), motif: this.form.motif })
       : this.typeMouvement === TypeMouvement.SORTIE
-        ? this.inventory.sortieStock({ produitId: this.form.produitId, quantite: this.form.quantite, motif: this.form.motif })
-        : this.inventory.ajusterStock({ produitId: this.form.produitId, nouvelleQuantite: this.form.nouvelleQuantite, motif: this.form.motif });
+        ? this.inventory.sortieStock({ produitId: this.form.produitId, quantite: qteStockee(this.produitForm, this.form.quantite), motif: this.form.motif })
+        : this.inventory.ajusterStock({ produitId: this.form.produitId, nouvelleQuantite: qteStockee(this.produitForm, this.form.nouvelleQuantite), motif: this.form.motif });
 
     request.subscribe({
       next: () => {
         this.presentToast('Stock mis à jour');
         this.form = { produitId: 0, quantite: 1, nouvelleQuantite: 0, motif: '', searchProduit: '' };
+        this.produitForm = null;
         this.load();
       },
       error: error => this.presentToast(error.message || 'Mouvement impossible', 'danger')
@@ -250,7 +275,9 @@ export class InventoryPage {
 
   getVariation(m: MouvementStock): string {
     const v = (m.quantiteApres || 0) - (m.quantiteAvant || 0);
-    return v >= 0 ? `+${v}` : `${v}`;
+    // Vente à la mesure : "+1,8 kg" au lieu de "+1800"
+    const texte = texteQte(m as any, v);
+    return v >= 0 ? `+${texte}` : texte;
   }
 
   isVariationPositive(m: MouvementStock): boolean {

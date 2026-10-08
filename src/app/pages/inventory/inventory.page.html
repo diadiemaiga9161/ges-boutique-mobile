@@ -42,15 +42,25 @@
       </gl-stat-card>
     </section>
 
+    <!-- Comptage d'inventaire (compter, voir les écarts, corriger le stock d'un coup) -->
+    <a class="inv-comptage" routerLink="/comptage" *ngIf="peutMouvementer">
+      <ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>
+      <span class="inv-comptage__texte">
+        <strong>Comptage d'inventaire</strong>
+        <span>Compter les produits et corriger les écarts</span>
+      </span>
+      <ion-icon name="chevron-forward-outline" class="inv-comptage__fleche" aria-hidden="true"></ion-icon>
+    </a>
+
     <!-- Onglets internes (Mouvement masqué au vendeur : lecture seule) -->
     <ion-segment [(ngModel)]="segment">
-      <ion-segment-button value="move" *ngIf="!isVendeur">Mouvement</ion-segment-button>
+      <ion-segment-button value="move" *ngIf="peutMouvementer">Mouvement</ion-segment-button>
       <ion-segment-button value="low">Alertes</ion-segment-button>
       <ion-segment-button value="history">Historique</ion-segment-button>
     </ion-segment>
 
     <!-- ══ Onglet Mouvement : admin seulement ══ -->
-    <section class="gl-form-card" *ngIf="segment === 'move' && !isVendeur">
+    <section class="gl-form-card" *ngIf="segment === 'move' && peutMouvementer">
       <ion-segment [(ngModel)]="typeMouvement">
         <ion-segment-button value="ENTREE">Entrée</ion-segment-button>
         <ion-segment-button value="SORTIE">Sortie</ion-segment-button>
@@ -70,7 +80,7 @@
         </div>
         <div *ngIf="filteredProductsForForm.length && form.searchProduit" class="gl-dropdown">
           <button type="button" *ngFor="let p of filteredProductsForForm" class="gl-dropdown__item" (click)="selectProduct(p)">
-            <strong>{{ p.nom }}</strong> · Stock: {{ p.quantite }} · {{ money(p.prixVente) }}
+            <strong>{{ p.nom }}</strong> · Stock: {{ stockTexte(p) }} · {{ money(p.prixVente) }}
           </button>
         </div>
       </div>
@@ -81,17 +91,17 @@
       </p>
 
       <label class="gl-field" *ngIf="typeMouvement !== 'AJUSTEMENT'">
-        <span class="gl-field__label">Quantité</span>
+        <span class="gl-field__label">Quantité<ng-container *ngIf="uniteForm()"> ({{ uniteForm() }})</ng-container></span>
         <span class="gl-input">
           <ion-icon name="cube-outline"></ion-icon>
-          <input type="number" [(ngModel)]="form.quantite" />
+          <input type="number" [step]="uniteForm() ? 'any' : '1'" [(ngModel)]="form.quantite" />
         </span>
       </label>
       <label class="gl-field" *ngIf="typeMouvement === TypeMouvement.AJUSTEMENT">
-        <span class="gl-field__label">Nouvelle quantité</span>
+        <span class="gl-field__label">Nouvelle quantité<ng-container *ngIf="uniteForm()"> ({{ uniteForm() }})</ng-container></span>
         <span class="gl-input">
           <ion-icon name="cube-outline"></ion-icon>
-          <input type="number" [(ngModel)]="form.nouvelleQuantite" />
+          <input type="number" [step]="uniteForm() ? 'any' : '1'" [(ngModel)]="form.nouvelleQuantite" />
         </span>
       </label>
       <label class="gl-field">
@@ -210,7 +220,7 @@
           <div class="glc-meta">
             <span class="glc-meta__item">
               <ion-icon name="swap-horizontal-outline"></ion-icon>
-              {{ m.quantiteAvant || 0 }} → {{ m.quantiteApres || 0 }}
+              {{ m | mesureQte: (m.quantiteAvant || 0) }} → {{ m | mesureQte: (m.quantiteApres || 0) }}
             </span>
             <span class="gl-pill gl-pill--info" *ngIf="m.niveauNom">{{ m.niveauNom }}</span>
             <span class="glc-meta__item" *ngIf="m.utilisateur?.nomComplet">

@@ -1451,3 +1451,16 @@
 
   .hero-amount { font-size: 42px; }
 }
+
+// Vente à la mesure : quantité retournée saisie en kg/L/m
+.retour-qty-input {
+  width: 84px;
+  min-height: 40px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 10px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  text-align: center;
+  font: inherit;
+  font-weight: 700;
+}

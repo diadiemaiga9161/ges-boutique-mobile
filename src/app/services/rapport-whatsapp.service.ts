@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BoutiqueService } from './boutique.service';
 import { RapportJournalier, RapportHebdomadaire, RapportMensuel } from './rapport.service';
+import { qteDoc } from '../utils/mesure.util';
 
 @Injectable({ providedIn: 'root' })
 export class RapportWhatsappService {
@@ -27,7 +28,7 @@ export class RapportWhatsappService {
     if (rapport.topProduits?.length) {
       lignes.push(``, `🏆 *Top produits :*`);
       rapport.topProduits.slice(0, 3).forEach((p, i) => {
-        lignes.push(`  ${i + 1}. ${p.nom} — ${p.quantite} vendu(s)`);
+        lignes.push(`  ${i + 1}. ${p.nom} — ${qteDoc(p)} vendu(s)`);
       });
     }
     this.envoyer(lignes.join('\n'));
@@ -50,7 +51,7 @@ export class RapportWhatsappService {
     if (rapport.topProduits?.length) {
       lignes.push(``, `🏆 *Top produits :*`);
       rapport.topProduits.slice(0, 3).forEach((p, i) => {
-        lignes.push(`  ${i + 1}. ${p.nom} — ${p.quantite} vendu(s)`);
+        lignes.push(`  ${i + 1}. ${p.nom} — ${qteDoc(p)} vendu(s)`);
       });
     }
     this.envoyer(lignes.join('\n'));
@@ -72,7 +73,7 @@ export class RapportWhatsappService {
     if (rapport.topProduits?.length) {
       lignes.push(``, `🏆 *Top produits :*`);
       rapport.topProduits.slice(0, 3).forEach((p, i) => {
-        lignes.push(`  ${i + 1}. ${p.nom} — ${p.quantite} vendu(s)`);
+        lignes.push(`  ${i + 1}. ${p.nom} — ${qteDoc(p)} vendu(s)`);
       });
     }
     this.envoyer(lignes.join('\n'));

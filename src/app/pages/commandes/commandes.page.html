@@ -101,10 +101,11 @@
             </div>
             <div class="glc-pills">
               <span class="gl-pill"
-                [class.gl-pill--ok]="c.statut === StatutCommande.VALIDEE"
+                [class.gl-pill--ok]="c.statut === StatutCommande.VALIDEE && c.etapeLivraison !== 'PRETE'"
+                [class.gl-pill--info]="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'"
                 [class.gl-pill--bad]="c.statut === StatutCommande.ANNULEE"
                 [class.gl-pill--neutral]="c.statut === StatutCommande.BROUILLON">
-                {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : (c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon') }}
+                {{ libelleStatut(c) }}
               </span>
               <span class="gl-pill gl-pill--warn" *ngIf="c.estCredit && c.montantRestant > 0">Crédit</span>
               <span class="gl-pill gl-pill--info" *ngIf="c.origine === 'VITRINE'" title="Reçue via la vitrine en ligne">
@@ -175,6 +176,16 @@
             *ngIf="c.statut === StatutCommande.BROUILLON">
             <ion-icon name="checkmark-circle-outline"></ion-icon>
             <span>Valider</span>
+          </button>
+          <button type="button" class="glc-action glc-action--link" (click)="marquerEtape(c, 'PRETE')"
+            *ngIf="c.statut === StatutCommande.VALIDEE && !c.etapeLivraison">
+            <ion-icon name="cube-outline"></ion-icon>
+            <span>Prête</span>
+          </button>
+          <button type="button" class="glc-action glc-action--ok" (click)="marquerEtape(c, 'LIVREE')"
+            *ngIf="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'">
+            <ion-icon name="bicycle-outline"></ion-icon>
+            <span>Livrée</span>
           </button>
           <button type="button" class="glc-action glc-action--warn" (click)="ouvrirReglementIndividuel(c)"
             *ngIf="c.estCredit && c.montantRestant > 0">
@@ -276,7 +287,7 @@
           <div class="md-dropdown" *ngIf="showProduitDropdown && produitsFiltres.length > 0">
             <div class="md-drop-item" *ngFor="let p of produitsFiltres" (mousedown)="selectionnerProduit(p)">
               <div class="md-drop-name">{{ p.nom }}</div>
-              <div class="md-drop-sub">{{ formatMontant(p.prixVente) }} · Stock : {{ p.quantite }}</div>
+              <div class="md-drop-sub">{{ formatMontant(p.prixVente) }} · Stock : {{ p | mesureQte }}</div>
             </div>
           </div>
         </div>
@@ -294,7 +305,7 @@
                 <button type="button" class="md-qty-btn" (click)="changerQuantite(l, -1)" aria-label="Diminuer">
                   <ion-icon name="remove-outline"></ion-icon>
                 </button>
-                <span class="md-qty-val">{{ l.quantite }}</span>
+                <span class="md-qty-val">{{ l | mesureQte }}</span>
                 <button type="button" class="md-qty-btn" (click)="changerQuantite(l, 1)" aria-label="Augmenter">
                   <ion-icon name="add-outline"></ion-icon>
                 </button>
@@ -310,7 +321,7 @@
             </div>
             <div class="md-ligne-total">
               <span class="md-ligne-total-label">
-                {{ l.quantite }} × {{ formatMontant(l.prixUnitaire) }}
+                {{ l | mesureQte }} × {{ formatMontant((l | mesurePu)) }}{{ l | mesureSuffixe }}
                 <ng-container *ngIf="l.remise > 0"> − {{ l.remise }}%</ng-container>
               </span>
               <strong>{{ formatMontant(prixLigne(l)) }}</strong>

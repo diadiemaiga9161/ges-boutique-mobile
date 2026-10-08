@@ -1332,7 +1332,133 @@
   .cart-modes { grid-template-columns: repeat(4, 1fr); }
 }
 
-@media (min-width: 1024px) {
-  .cart-wrapper { max-width: 1000px; }
-  .cart-bar { padding-inline: max(16px, calc((100% - 1000px) / 2)); }
+// Téléphone couché (écran peu haut) : barre du bas sur une seule ligne, sinon elle
+// prend presque la moitié de l'écran.
+@media (orientation: landscape) and (max-height: 500px) {
+  .cart-bar {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cart-bar__top { flex: 1; min-width: 0; }
+  .cart-bar__amount { font-size: 24px; }
+
+  .cart-bar > .cart-btn--primary {
+    width: auto;
+    min-width: 220px;
+    flex-shrink: 0;
+  }
+}
+
+// Colonnes : invisibles sur téléphone et tablette debout (les blocs restent empilés).
+.cart-col { display: contents; }
+
+// ── Grand écran (caisse 1024×768, tablette couchée) ─────────────────────────
+// Produits à gauche, panier + paiement à droite : chaque colonne défile seule,
+// le panier reste toujours visible. Barre du bas sur une seule ligne (hauteur 768).
+@media (min-width: 1000px) {
+  .cart-wrapper {
+    max-width: none;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .cart-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .cart-col--produits {
+    > .cart-block { flex: 1; min-height: 0; }
+    .cart-search-card { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  }
+
+  .cart-col--panier {
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+
+  // Produits en tuiles sur 2 colonnes, qui remplissent la hauteur disponible
+  .cart-products {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 10px;
+  }
+
+  .cart-product { min-height: 72px; gap: 10px; }
+
+  // Tuile étroite : le nom passe sur 2 lignes au lieu d'être coupé, le prix reste
+  // sur une ligne ; le « + » rond disparaît (toute la tuile est déjà le bouton).
+  .cart-product__name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.25;
+  }
+
+  .cart-product__price { white-space: nowrap; }
+  .cart-product__add { display: none; }
+
+  .cart-bar {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding-inline: 16px;
+  }
+
+  .cart-bar__top { flex: 1; min-width: 0; }
+
+  // « Payer » fait défiler jusqu'au paiement : inutile, le paiement est déjà à l'écran.
+  .cart-bar__pay { display: none; }
+
+  .cart-bar > .cart-btn--primary {
+    width: auto;
+    min-width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1400px) {
+  .cart-products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+// Vente à la mesure : bouton de quantité pesée (ouvre la pesée)
+.cart-pesee {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--gl-action);
+  background: var(--gl-blue-soft);
+  color: var(--gl-action);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  ion-icon { font-size: 18px; }
+}
+
+// Photo du produit (IMAGES_PRODUITS) dans la vignette, à la place de l'icône
+.cart-product__icon,
+.cart-line__avatar {
+  overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }

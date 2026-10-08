@@ -417,6 +417,43 @@ export class CommandesPage {
     window.open(`https://wa.me/${clean}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
+  // ─── Livraison : Prête → Livrée (commande confirmée) + message WhatsApp au client ──
+
+  libelleStatut(c: Commande): string {
+    if (c.statut === StatutCommande.VALIDEE) {
+      if (c.etapeLivraison === 'LIVREE') return 'Livrée';
+      if (c.etapeLivraison === 'PRETE') return 'Prête';
+      return 'Validée';
+    }
+    return c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon';
+  }
+
+  marquerEtape(c: Commande, etape: 'PRETE' | 'LIVREE'): void {
+    this.commandeService.changerEtapeLivraison(c.id!, etape).subscribe({
+      next: async () => {
+        c.etapeLivraison = etape;
+        const nom = (c.clientPrenom || c.clientNom || '').trim();
+        const message = [
+          nom ? `Bonjour ${nom},` : 'Bonjour,',
+          etape === 'PRETE'
+            ? `Votre commande N°${c.numeroCommande} est prête.`
+            : `Votre commande N°${c.numeroCommande} a été livrée.`,
+          etape === 'PRETE' ? 'Merci de votre confiance !' : 'Merci et à bientôt !'
+        ].join('\n');
+        const alerte = await this.alertCtrl.create({
+          header: etape === 'PRETE' ? 'Commande prête' : 'Commande livrée',
+          message: c.clientTelephone ? 'Prévenir le client par WhatsApp ?' : 'Aucun numéro de téléphone pour ce client.',
+          buttons: c.clientTelephone
+            ? [{ text: 'Plus tard', role: 'cancel' },
+               { text: 'WhatsApp', handler: () => this.ouvrirWhatsapp(c.clientTelephone!, message) }]
+            : ['OK']
+        });
+        await alerte.present();
+      },
+      error: e => this.toast(e?.error?.message || "Impossible de changer l'étape de la commande", 'danger')
+    });
+  }
+
   // ─── Annuler ───────────────────────────────────────────────────────────────
 
   async annuler(commande: Commande): Promise<void> {

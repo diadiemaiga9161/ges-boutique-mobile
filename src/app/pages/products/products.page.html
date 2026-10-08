@@ -110,6 +110,10 @@
       <article class="product-card" *ngFor="let product of filtered; trackBy: trackById">
         <div class="product-card-body">
           <div class="product-card-header">
+            <span class="product-vignette" *ngIf="photos.estActif" aria-hidden="true">
+              <img *ngIf="urlPhoto(product) as src" [src]="src" alt="" loading="lazy" width="48" height="48">
+              <ion-icon *ngIf="!urlPhoto(product)" name="image-outline"></ion-icon>
+            </span>
             <div class="product-info">
               <div class="product-name">
                 {{ product.nom }}
@@ -121,21 +125,22 @@
               </div>
             </div>
             <!-- Pastille : nom réel du niveau défini par le produit (uniteBase) -->
-            <gl-stock-badge [stock]="product.quantite" [seuil]="product.seuilAlerte" [unite]="product.uniteBase"></gl-stock-badge>
+            <gl-stock-badge *ngIf="!estMesure(product)" [stock]="product.quantite" [seuil]="product.seuilAlerte" [unite]="product.uniteBase"></gl-stock-badge>
+            <gl-stock-badge *ngIf="estMesure(product)" [stock]="qteAff(product, product.quantite)" [seuil]="qteAff(product, product.seuilAlerte)" [unite]="uniteMesure(product)"></gl-stock-badge>
           </div>
 
           <div class="price-row">
             <div>
               <p class="price-label">{{ 'PRODUCTS.PRICE_SELL' | translate }}</p>
-              <p class="price-value price-value--sell">{{ money(product.prixVente) }}</p>
+              <p class="price-value price-value--sell">{{ prixTexte(product, product.prixVente) }}</p>
             </div>
             <div *ngIf="auth.isAdmin()">
               <p class="price-label">{{ 'PRODUCTS.PRICE_BUY' | translate }}</p>
-              <p class="price-value">{{ money(product.prixAchat) }}</p>
+              <p class="price-value">{{ prixTexte(product, product.prixAchat) }}</p>
             </div>
             <div>
               <p class="price-label">{{ 'PRODUCTS.ALERT_THRESHOLD' | translate }}</p>
-              <p class="price-value">{{ product.seuilAlerte }}</p>
+              <p class="price-value">{{ estMesure(product) ? qteTexte(product, product.seuilAlerte) : product.seuilAlerte }}</p>
             </div>
           </div>
 
@@ -207,6 +212,29 @@
     <ion-content class="ion-padding">
       <div class="modal-form stack">
 
+        <!-- Photo (facultative, fonctionnalité IMAGES_PRODUITS) -->
+        <div class="modal-section photo-zone" *ngIf="photos.estActif">
+          <div class="photo-cadre">
+            <img *ngIf="editing && urlPhoto(editing, 'grande') as src" [src]="src" [alt]="'Photo de ' + editing.nom">
+            <img *ngIf="!editing && photoApercu" [src]="photoApercu" alt="Aperçu de la photo">
+            <ion-icon *ngIf="editing ? !urlPhoto(editing) : !photoApercu" name="image-outline" aria-hidden="true"></ion-icon>
+            <ion-spinner *ngIf="photoEnvoiEnCours" name="crescent"></ion-spinner>
+          </div>
+          <div class="photo-texte">
+            <strong>Photo du produit</strong>
+            <span>Facultatif · réduite automatiquement</span>
+            <div class="photo-actions">
+              <label class="photo-bouton">
+                <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
+                {{ (editing ? urlPhoto(editing) : photoApercu) ? 'Changer' : 'Ajouter une photo' }}
+                <input type="file" accept="image/*" hidden (change)="choisirPhoto($event)" [disabled]="photoEnvoiEnCours">
+              </label>
+              <ion-button size="small" fill="clear" color="danger" *ngIf="editing && urlPhoto(editing)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</ion-button>
+              <ion-button size="small" fill="clear" color="danger" *ngIf="!editing && photoApercu" (click)="oublierPhotoEnAttente()">Retirer</ion-button>
+            </div>
+          </div>
+        </div>
+
         <!-- Infos de base -->
         <div class="modal-section">
           <p class="modal-section-title">{{ 'PRODUCTS.SECTION_INFO' | translate }}</p>
@@ -240,9 +268,29 @@
           </ion-item>
         </div>
 
+        <!-- Vente à la mesure (VENTE_A_LA_MESURE) : façon de vendre -->
+        <div class="modal-section" *ngIf="mesureActif || modeMesureForm">
+          <p class="modal-section-title">Façon de vendre</p>
+          <div class="fz-chips" role="radiogroup" *ngIf="!editing">
+            <button type="button" class="fz-chip" role="radio" [attr.aria-checked]="!modeMesureForm" [class.fz-chip--active]="!modeMesureForm" (click)="modeMesureForm = null">À l'unité</button>
+            <button type="button" class="fz-chip" role="radio" *ngFor="let m of modesMesure" [attr.aria-checked]="modeMesureForm === m"
+                    [class.fz-chip--active]="modeMesureForm === m" (click)="modeMesureForm = m">{{ $any(mesures)[m].libelle }}</button>
+          </div>
+          <div class="mesure-bascule" *ngIf="editing">
+            <span>{{ modeMesureForm ? $any(mesures)[modeMesureForm].libelle : "À l'unité" }}</span>
+            <ng-container *ngIf="mesureActif">
+              <ion-button size="small" fill="outline" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">Remettre à l'unité</ion-button>
+              <ng-container *ngIf="!modeMesureForm">
+                <ion-button size="small" fill="outline" *ngFor="let m of modesMesure" (click)="changerModeMesure(m)" [disabled]="changementModeEnCours">{{ $any(mesures)[m].unite }}</ion-button>
+              </ng-container>
+            </ng-container>
+          </div>
+          <p class="mesure-aide" *ngIf="modeMesureForm">Prix et stock en {{ $any(mesures)[modeMesureForm].unite }} : ex. 600 F le {{ $any(mesures)[modeMesureForm].unite }}, stock 25,5.</p>
+        </div>
+
         <!-- Prix & Stock -->
         <div class="modal-section">
-          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_PRICE' | translate }}</p>
+          <p class="modal-section-title">{{ 'PRODUCTS.SECTION_PRICE' | translate }}<span *ngIf="infoMesureForm"> (par {{ infoMesureForm.unite }})</span></p>
           <div class="two-cols">
             <ion-item>
               <ion-input [label]="'PRODUCTS.PRICE_BUY' | translate" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="form.prixAchat"></ion-input>
@@ -253,10 +301,10 @@
           </div>
           <div class="two-cols">
             <ion-item>
-              <ion-input [label]="'PRODUCTS.QUANTITY' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.quantite"></ion-input>
+              <ion-input [label]="('PRODUCTS.QUANTITY' | translate) + (infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '')" labelPlacement="floating" type="number" [step]="infoMesureForm ? 'any' : '1'" [(ngModel)]="form.quantite"></ion-input>
             </ion-item>
             <ion-item>
-              <ion-input [label]="'PRODUCTS.ALERT_THRESHOLD' | translate" labelPlacement="floating" type="number" [(ngModel)]="form.seuilAlerte"></ion-input>
+              <ion-input [label]="('PRODUCTS.ALERT_THRESHOLD' | translate) + (infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '')" labelPlacement="floating" type="number" [step]="infoMesureForm ? 'any' : '1'" [(ngModel)]="form.seuilAlerte"></ion-input>
             </ion-item>
           </div>
         </div>

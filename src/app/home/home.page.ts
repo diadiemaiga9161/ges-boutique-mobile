@@ -9,6 +9,7 @@ import { IAService } from '../services/ia.service';
 import { TransfertService } from '../services/transfert.service';
 import { BeneficeService, BeneficeData } from '../services/benefice.service';
 import { CaisseService } from '../services/caisse.service';
+import { RoleService } from '../services/role.service';
 import { VenteService } from '../services/vente.service';
 
 @Component({
@@ -52,7 +53,8 @@ export class HomePage implements OnDestroy {
     private transfertService: TransfertService,
     private beneficeService: BeneficeService,
     private caisseService: CaisseService,
-    private venteService: VenteService
+    private venteService: VenteService,
+    private roleService: RoleService
   ) {}
 
   ionViewWillEnter(): void {
@@ -111,6 +113,9 @@ export class HomePage implements OnDestroy {
   }
 
   private chargerBeneficeJour(): void {
+    // Réservé au gérant (ou rôle basé sur Gérant avec « Finances ») : le serveur le refuse
+    // aux autres, inutile de l'appeler.
+    if (!this.auth.isAdmin() || !this.roleService.peut('FINANCES')) return;
     const dateJour = new Date().toISOString().split('T')[0];
     this.beneficeService.journalier(dateJour).pipe(
       catchError(() => of(undefined))
@@ -128,6 +133,7 @@ export class HomePage implements OnDestroy {
   }
 
   private chargerSoldeCaisse(): void {
+    if (!this.auth.isAdmin() || !this.roleService.peut('CAISSE')) return;
     this.caisseService.getSolde().pipe(
       catchError(() => of(undefined))
     ).subscribe(solde => {

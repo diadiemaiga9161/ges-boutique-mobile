@@ -201,7 +201,7 @@
           <ng-container *ngIf="!chargementProduitsDest">
             <div class="md-list-row" *ngFor="let p of produitsBoutiqueDestinee.slice(0, 10)">
               <span class="md-list-row__name">{{ p.nom }}</span>
-              <span class="gl-pill gl-pill--neutral">{{ p.quantite }}</span>
+              <span class="gl-pill gl-pill--neutral">{{ p | mesureQte }}</span>
             </div>
             <p class="md-muted" *ngIf="produitsBoutiqueDestinee.length === 0">Boutique inaccessible ou vide</p>
             <p class="md-muted" *ngIf="produitsBoutiqueDestinee.length > 10">+ {{ produitsBoutiqueDestinee.length - 10 }} autres produits</p>
@@ -226,7 +226,7 @@
               <div class="md-select">
                 <ion-select [(ngModel)]="l.produitId" (ionChange)="onProduitChange(i)" placeholder="Choisir…" aria-label="Produit">
                   <ion-select-option *ngFor="let p of produits" [value]="p.id">
-                    {{ p.nom }} ({{ p.quantite }})
+                    {{ p.nom }} ({{ p | mesureQte }})
                   </ion-select-option>
                 </ion-select>
               </div>
@@ -311,7 +311,7 @@
         <div class="md-box">
           <div class="md-list-row" *ngFor="let ligne of transfertEnCours.lignes">
             <span class="md-list-row__name">{{ ligne.produitNom }}</span>
-            <span class="gl-pill gl-pill--info">× {{ ligne.quantite }}</span>
+            <span class="gl-pill gl-pill--info">× {{ ligne | mesureQte }}</span>
           </div>
         </div>
       </section>
@@ -399,7 +399,7 @@
             <div class="md-list-row__content">
               <span class="md-list-row__name">{{ l.produitNom }}</span>
               <span class="md-list-row__sub">
-                Qté : {{ l.quantite }}
+                Qté : {{ l | mesureQte }}
                 <ng-container *ngIf="l.prixUnitaire"> · {{ l.prixUnitaire | number:'1.0-0' }} FCFA/u</ng-container>
               </span>
             </div>
@@ -419,7 +419,7 @@
               <div class="md-select">
                 <ion-select [(ngModel)]="l.produitId" (ionChange)="onProduitChangeModal(i)" placeholder="Choisir…" interface="action-sheet" aria-label="Produit">
                   <ion-select-option *ngFor="let p of produits" [value]="p.id">
-                    {{ p.nom }} (stock: {{ p.quantite }})
+                    {{ p.nom }} (stock: {{ p | mesureQte }})
                   </ion-select-option>
                 </ion-select>
               </div>

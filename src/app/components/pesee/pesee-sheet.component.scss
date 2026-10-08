@@ -1,0 +1,92 @@
+// Pesée — 100 % tokens --gl-* (clair, sombre Auto et sombre forcé).
+.ps-content { --background: var(--gl-bg); }
+
+.ps-page {
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ps-prix { margin: 0; font-size: 13px; color: var(--gl-text-2); }
+
+.ps-segment {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  button {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-radius: 9px;
+    background: none;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gl-muted);
+    &.actif { background: var(--gl-surface); color: var(--gl-action); box-shadow: var(--gl-shadow-sm); }
+  }
+}
+
+.ps-label { font-size: 13px; font-weight: 700; color: var(--gl-text-2); margin: 4px 2px -4px; }
+
+.ps-champ {
+  display: flex;
+  align-items: center;
+  border: 2px solid var(--gl-border);
+  border-radius: 16px;
+  padding: 0 16px;
+  background: var(--gl-surface);
+  &:focus-within { border-color: var(--gl-action); }
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 30px;
+    font-weight: 800;
+    padding: 12px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  span { font-size: 18px; font-weight: 700; color: var(--gl-muted); }
+}
+
+.ps-rapides {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  button {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--gl-border);
+    background: var(--gl-surface);
+    color: var(--gl-text);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    &:active { background: var(--gl-blue-soft); border-color: var(--gl-action); }
+  }
+}
+
+.ps-resultat {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--gl-blue-soft);
+  p { margin: 4px 0 0; font-size: 13px; color: var(--gl-text-2); font-variant-numeric: tabular-nums; }
+}
+.ps-resultat__ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--gl-text-2); }
+  strong { font-size: 26px; font-weight: 800; color: var(--gl-action); font-variant-numeric: tabular-nums; }
+}
+
+.ps-erreur { margin: 0; font-size: 14px; color: var(--gl-bad); }
+.ps-valider { margin-top: 4px; --border-radius: 14px; min-height: 52px; font-weight: 700; }

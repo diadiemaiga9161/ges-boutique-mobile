@@ -211,8 +211,8 @@
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes; let even = even" [class.fd-row-even]="even">
               <td>{{ l.designation || l.produitNom || 'Produit' }}</td>
-              <td class="fd-center">{{ l.quantite }}</td>
-              <td class="fd-right">{{ money(l.prixUnitaire) }}</td>
+              <td class="fd-center">{{ qteLigne(l) }}</td>
+              <td class="fd-right">{{ puLigne(l) }}</td>
               <td class="fd-right fd-bold">{{ money(l.sousTotal || l.quantite * l.prixUnitaire) }}</td>
             </tr>
           </tbody>
@@ -271,8 +271,8 @@
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes">
               <td>{{ l.designation || l.produitNom || 'Produit' }}</td>
-              <td class="fd-center">{{ l.quantite }}</td>
-              <td class="fd-right">{{ money(l.prixUnitaire) }}</td>
+              <td class="fd-center">{{ qteLigne(l) }}</td>
+              <td class="fd-right">{{ puLigne(l) }}</td>
               <td class="fd-right fd-bold fd-gold-text">{{ money(l.sousTotal || l.quantite * l.prixUnitaire) }}</td>
             </tr>
           </tbody>
@@ -336,8 +336,8 @@
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes">
               <td>{{ l.designation || l.produitNom || 'Produit' }}</td>
-              <td class="fd-center">{{ l.quantite }}</td>
-              <td class="fd-right">{{ money(l.prixUnitaire) }}</td>
+              <td class="fd-center">{{ qteLigne(l) }}</td>
+              <td class="fd-right">{{ puLigne(l) }}</td>
               <td class="fd-right fd-bold">{{ money(l.sousTotal || l.quantite * l.prixUnitaire) }}</td>
             </tr>
           </tbody>
@@ -475,7 +475,7 @@
         <div class="md-lignes" *ngIf="proformaLignes.length">
           <div class="md-ligne" *ngFor="let l of proformaLignes; let i = index">
             <span class="md-ligne-nom">{{ l.designation }}</span>
-            <span class="md-ligne-qty">x{{ l.quantite }}</span>
+            <span class="md-ligne-qty">x{{ l | mesureQte }}</span>
             <strong class="md-ligne-total">{{ money(l.quantite * l.prixUnitaire) }}</strong>
             <button type="button" class="md-ligne-del" (click)="removeProformaLine(i)" aria-label="Supprimer">
               <ion-icon name="trash-outline"></ion-icon>

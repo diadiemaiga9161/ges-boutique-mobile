@@ -43,6 +43,10 @@
             </div>
             <ion-icon name="chevron-forward-outline" class="boutique-item__arrow"></ion-icon>
           </button>
+
+          <p class="select-card__sub" *ngIf="!boutiques.length">
+            Aucune autre boutique configurée. Ajoute-en depuis Transferts → Boutiques partenaires.
+          </p>
         </div>
 
         <p class="select-version">Ges Lafia · Maïga Consulting</p>

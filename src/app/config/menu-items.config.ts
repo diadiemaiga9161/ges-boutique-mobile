@@ -76,6 +76,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     items: [
       { titleKey: 'NAV.EMPLOYEES', icon: 'person-add-outline', route: '/resources/employes', adminOnly: true },
       { titleKey: 'NAV.EMPLOYEE_PAY', icon: 'wallet-outline', route: '/resources/paiement-employe', adminOnly: true },
+      { title: 'Primes sur produits', icon: 'ribbon-outline', route: '/primes-produits', adminOnly: true, featureFlagKey: 'PRIMES_PRODUITS' },
     ]
   },
   {
@@ -87,6 +88,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { titleKey: 'NAV.SELLER_BONUS', icon: 'cash-outline', route: '/resources/objectifs-vendeur', adminOnly: true, featureFlagKey: 'OBJECTIFS_VENDEUR' },
       { titleKey: 'NAV.SELLERS', icon: 'people-circle-outline', route: '/resources/vendeurs', adminOnly: true },
       { titleKey: 'NAV.SHOP', icon: 'storefront-outline', route: '/boutique', adminOnly: true },
+      { title: 'Rôles et permissions', icon: 'key-outline', route: '/roles', adminOnly: true, featureFlagKey: 'ROLES_PERSONNALISES' },
       { title: 'Fonctionnalités (super admin)', icon: 'shield-checkmark-outline', route: '/super-admin-fonctionnalites', superAdminOnly: true },
       { titleKey: 'NAV.INVOICE_DESIGN', icon: 'color-palette-outline', route: '/facture-design', adminOnly: true },
       { titleKey: 'LANG.SELECT', icon: 'language-outline', route: '/langue', adminOnly: true },
@@ -128,6 +130,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     // du ng-container admin, contrairement aux autres séparateurs).
     items: [
       { titleKey: 'PROFILE.TITLE', icon: 'person-circle-outline', route: '/profile' },
+      { title: 'Mes primes', icon: 'gift-outline', route: '/mes-primes', featureFlagKey: 'PRIMES_PRODUITS' },
       { titleKey: 'RESSOURCES.TITRE', icon: 'information-circle-outline', route: '/a-propos' },
     ]
   }

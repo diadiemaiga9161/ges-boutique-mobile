@@ -326,3 +326,33 @@ gl-stock-badge { flex-shrink: 0; max-width: 55%; }
   .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .gl-form-card { max-width: 720px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 }
+
+// Lien vers le comptage d'inventaire
+.inv-comptage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  box-shadow: var(--gl-card-shadow);
+  color: var(--gl-text);
+  text-decoration: none;
+
+  > ion-icon:first-child { font-size: 24px; color: var(--gl-action); flex-shrink: 0; }
+  &:active { background: var(--gl-blue-soft); }
+}
+
+.inv-comptage__texte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  strong { font-size: 15px; }
+  span { font-size: 12px; color: var(--gl-muted); }
+}
+
+.inv-comptage__fleche { color: var(--gl-muted); font-size: 18px; }

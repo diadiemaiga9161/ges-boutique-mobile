@@ -16,6 +16,7 @@ import { DepenseService, Depense } from '../../services/depense.service';
 import { EmployeService, Employe } from '../../services/employe.service';
 import { CaisseService, CreditInfo } from '../../services/caisse.service';
 import { TransfertService, TransfertStock } from '../../services/transfert.service';
+import { qteDoc } from '../../utils/mesure.util';
 
 type CategorieExportKey = 'CLIENTS' | 'PRODUITS' | 'VENTES' | 'FOURNISSEURS' | 'DEPENSES' | 'EMPLOYES' | 'CREDITS' | 'TRANSFERTS';
 
@@ -269,7 +270,7 @@ export class ExportDonneesPage {
         p.fournisseurNom || '-',
         this.money(p.prixAchat),
         this.money(p.prixVente),
-        String(p.quantite),
+        qteDoc(p),
         String(p.seuilAlerte),
         p.perime ? 'Périmé' : (p.stockFaible ? 'Stock faible' : 'OK')
       ]),

@@ -27,6 +27,11 @@ export class StockBadgeComponent {
   /** Nom réel du niveau/unité du produit (Produit.uniteBase). Optionnel. */
   @Input() unite?: string | null;
 
+  /** Entier affiché tel quel (inchangé) ; décimal (vente à la mesure) à la française : 47,917. */
+  get stockAffiche(): string | number {
+    return Number.isInteger(this.stock) ? this.stock : this.stock.toLocaleString('fr-FR', { maximumFractionDigits: 3 });
+  }
+
   get status(): GlStockStatus {
     if (this.stock <= 0) return 'out';
     if (this.stock <= this.seuil) return 'low';

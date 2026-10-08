@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface BoutiqueInfo {
@@ -111,12 +111,41 @@ export class BoutiqueService {
   }
 
   uploadLogo(file: File): Observable<string> {
-    const formData = new FormData();
-    formData.append('logo', file, file.name);
-    return this.http.post<any>(`${this.apiUrl}/upload-logo`, formData).pipe(
+    return from(this.reduireLogo(file)).pipe(
+      switchMap(blob => {
+        const formData = new FormData();
+        formData.append('logo', blob, file.name);
+        return this.http.post<any>(`${this.apiUrl}/upload-logo`, formData);
+      }),
       map(response => response?.logo || response?.logoPath || response?.logoUrl || response?.url || ''),
       tap(logoUrl => this.persist({ ...this.getInfo(), logoUrl }))
     );
+  }
+
+  /** Réduit le logo (côté le plus long : 512 px) avant l'envoi : une photo de téléphone
+   *  (3-5 Mo) dépasse la limite du serveur (2 Mo), et le logo est rechargé partout.
+   *  PNG/WebP restent en PNG (transparence gardée) ; le SVG part tel quel. */
+  private reduireLogo(fichier: File): Promise<Blob> {
+    if (fichier.type === 'image/svg+xml') return Promise.resolve(fichier);
+    return new Promise(resolve => {
+      const img = new Image();
+      const lien = URL.createObjectURL(fichier);
+      img.onload = () => {
+        URL.revokeObjectURL(lien);
+        const ratio = Math.min(1, 512 / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * ratio));
+        canvas.height = Math.max(1, Math.round(img.height * ratio));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(fichier); return; }
+        const png = fichier.type === 'image/png' || fichier.type === 'image/webp';
+        if (!png) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(b => resolve(b || fichier), png ? 'image/png' : 'image/jpeg', 0.88);
+      };
+      img.onerror = () => { URL.revokeObjectURL(lien); resolve(fichier); };
+      img.src = lien;
+    });
   }
 
   resetToDefaults(): Observable<BoutiqueInfo> {

@@ -3,6 +3,7 @@ import { MenuController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 import { LoadingService } from '../services/loading.service';
+import { RoleService } from '../services/role.service';
 
 @Component({
   selector: 'app-tabs',
@@ -15,7 +16,9 @@ export class TabsPage {
     public auth: AuthService,
     private menuCtrl: MenuController,
     public notifService: NotificationService,
-    public loadingService: LoadingService
+    public loadingService: LoadingService,
+    // Rôles personnalisés : un onglet que le rôle ne permet pas de voir est masqué.
+    public roles: RoleService
   ) {}
 
   // Le 5e onglet "Menu" n'est pas une route : il ouvre le tiroir latéral existant

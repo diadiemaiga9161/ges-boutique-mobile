@@ -104,6 +104,23 @@ const routes: Routes = [
     loadChildren: () => import('./pages/resultat-net/resultat-net.module').then(m => m.ResultatNetPageModule)
   },
   {
+    path: 'roles',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/roles/roles.module').then(m => m.RolesPageModule)
+  },
+  {
+    path: 'primes-produits',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/primes-produits/primes-produits.module').then(m => m.PrimesProduitsPageModule)
+  },
+  {
+    path: 'mes-primes',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
+  },
+  {
     path: 'historique-vendeur',
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },
@@ -143,6 +160,13 @@ const routes: Routes = [
     path: 'commandes',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/commandes/commandes.module').then(m => m.CommandesPageModule)
+  },
+  {
+    // Comptage d'inventaire : accès contrôlé par la page (droit « Inventaire » Modifier/Tout)
+    // et par le serveur (même règle que les entrées/sorties de stock).
+    path: 'comptage',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/comptage/comptage.module').then(m => m.ComptagePageModule)
   },
   {
     path: 'sorties',

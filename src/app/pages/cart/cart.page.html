@@ -21,6 +21,9 @@
 ═══════════════════════════════════════════════════════════════════ -->
 <ion-content [fullscreen]="true" class="cart-content">
   <div class="cart-wrapper">
+    <!-- Colonnes : sans effet sur téléphone (display: contents) ; sur grand écran
+         (caisse 1024×768, tablette couchée) produits à gauche, panier + paiement à droite. -->
+    <div class="cart-col cart-col--produits">
 
     <!-- Reçu de la dernière vente validée (fonctionnalité IMPRESSION_TICKET) —
          action optionnelle et séparée, même condition qu'avant. -->
@@ -50,6 +53,7 @@
               placeholder="Produit ou code-barres..."
               aria-label="Produit ou code-barres"
               (ionInput)="applySearch()"
+              (keyup.enter)="ajouterParSaisie()"
               clearInput="true">
             </ion-input>
           </div>
@@ -64,15 +68,18 @@
             type="button"
             class="cart-product"
             *ngFor="let product of filteredProducts"
-            (click)="add(product)"
+            (click)="ajouter(product)"
             [class.out-of-stock]="product.quantite <= 0">
-            <span class="cart-product__icon"><ion-icon name="cube-outline"></ion-icon></span>
+            <span class="cart-product__icon">
+              <img *ngIf="photos.url(product) as src" [src]="src" alt="" loading="lazy" width="48" height="48">
+              <ion-icon *ngIf="!photos.url(product)" name="cube-outline"></ion-icon>
+            </span>
             <span class="cart-product__info">
               <span class="cart-product__name">{{ product.nom }}</span>
-              <span class="cart-product__price">{{ money(product.prixVente) }}</span>
+              <span class="cart-product__price">{{ prixCatalogue(product) }}</span>
             </span>
             <span class="cart-pill" [class.cart-pill--ok]="product.quantite > 5" [class.cart-pill--warn]="product.quantite <= 5">
-              {{ product.quantite }}
+              {{ stockCatalogue(product) }}
             </span>
             <span class="cart-product__add" aria-hidden="true"><ion-icon name="add-outline"></ion-icon></span>
           </button>
@@ -85,7 +92,9 @@
         </gl-empty-state>
       </div>
     </section>
+    </div>
 
+    <div class="cart-col cart-col--panier">
     <!-- ══════════ 2 — PANIER ══════════ -->
     <section class="cart-block">
       <div class="cart-head">
@@ -98,14 +107,17 @@
 
       <!-- Panier vide -->
       <div class="cart-card" *ngIf="!items.length">
-        <gl-empty-state icon="cart-outline" title="Aucun article — sélectionnez des produits ci-dessus"></gl-empty-state>
+        <gl-empty-state icon="cart-outline" title="Aucun article — touchez ou scannez un produit"></gl-empty-state>
       </div>
 
       <!-- Lignes du panier -->
       <div class="cart-lines" *ngIf="items.length">
-        <article class="cart-card cart-line" *ngFor="let item of items">
+        <article class="cart-card cart-line" *ngFor="let item of items" [attr.data-produit]="item.product.id">
           <div class="cart-line__top">
-            <span class="cart-line__avatar"><ion-icon name="cube-outline"></ion-icon></span>
+            <span class="cart-line__avatar">
+              <img *ngIf="photos.url(item.product) as src" [src]="src" alt="" loading="lazy" width="48" height="48">
+              <ion-icon *ngIf="!photos.url(item.product)" name="cube-outline"></ion-icon>
+            </span>
             <div class="cart-line__info">
               <p class="cart-line__name">{{ item.product.nom }}</p>
               <div class="cart-line__badges" *ngIf="item.niveauNom || item.promo">
@@ -129,7 +141,8 @@
           <!-- Prix de vente (modifiable) -->
           <div class="cart-line__price">
             <p class="cart-line__unit">
-              {{ money(item.customPrice) }} / unité
+              <ng-container *ngIf="!estMesure(item.product)">{{ money(item.customPrice) }} / unité</ng-container>
+              <ng-container *ngIf="estMesure(item.product)">{{ money(prixItemAffiche(item)) }} / {{ uniteMesure(item.product) }}</ng-container>
               <span *ngIf="item.customPrice !== item.product.prixVente && !item.promo" class="cart-pill cart-pill--warn">modifié</span>
             </p>
             <button type="button" class="cart-icon-btn" title="Modifier le prix" (click)="toggleEditPrice(item)" [class.cart-icon-btn--active]="item.editingPrice"
@@ -137,7 +150,13 @@
               <ion-icon [name]="item.editingPrice ? 'close-outline' : 'create-outline'"></ion-icon>
             </button>
           </div>
-          <div *ngIf="item.editingPrice" class="cart-field cart-field--inline">
+          <div *ngIf="item.editingPrice && estMesure(item.product)" class="cart-field cart-field--inline">
+            <ion-icon name="cash-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
+            <ion-input class="cart-field__input" type="text" inputmode="decimal" aria-label="Prix par unité de mesure"
+              [ngModel]="prixItemAffiche(item)" (ngModelChange)="majPrixMesure(item, $event)"></ion-input>
+            <span class="cart-field__suffix">F/{{ uniteMesure(item.product) }}</span>
+          </div>
+          <div *ngIf="item.editingPrice && !estMesure(item.product)" class="cart-field cart-field--inline">
             <ion-icon name="cash-outline" class="cart-field__icon" aria-hidden="true"></ion-icon>
             <ion-input
               class="cart-field__input"
@@ -159,7 +178,7 @@
               <strong>{{ money(getBeneficeLigneAbs(item)) }}</strong>
             </div>
             <div class="cart-benefice__meta">
-              <span>Achat {{ money(getPrixAchatEffectif(item)) }}</span>
+              <span>Achat {{ estMesure(item.product) ? money(prixItemAffiche(item, getPrixAchatEffectif(item))) + '/' + uniteMesure(item.product) : money(getPrixAchatEffectif(item)) }}</span>
             </div>
             <p class="cart-benefice__alert" *ngIf="isVenteSousPrixAchat(item)">
               Prix de vente inférieur au prix d'achat
@@ -183,7 +202,13 @@
 
           <!-- Pied de carte : quantité (+/− 44px) et retrait -->
           <div class="cart-line__foot">
-            <div class="cart-qty" [class.cart-qty--maxed]="item.quantity >= getStockMax(item)">
+            <!-- Vente à la mesure : quantité pesée, modifiable en touchant le bouton -->
+            <button type="button" class="cart-pesee" *ngIf="estMesure(item.product)" (click)="ouvrirPesee(item.product, item)">
+              <ion-icon name="scale-outline" aria-hidden="true"></ion-icon>
+              {{ qteItem(item) }}
+              <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+            </button>
+            <div class="cart-qty" *ngIf="!estMesure(item.product)" [class.cart-qty--maxed]="item.quantity >= getStockMax(item)">
               <button type="button" class="cart-qty__btn" aria-label="Diminuer" (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null">
                 <ion-icon name="remove-outline"></ion-icon>
               </button>
@@ -204,7 +229,7 @@
                 <ion-icon name="add-outline"></ion-icon>
               </button>
             </div>
-            <span class="cart-pill"
+            <span class="cart-pill" *ngIf="!estMesure(item.product)"
               [class.cart-pill--ok]="item.quantity < getStockMax(item)"
               [class.cart-pill--bad]="item.quantity >= getStockMax(item)">
               {{ item.quantity }}/{{ getStockMax(item) }}
@@ -503,6 +528,7 @@
 
       </div>
     </section>
+    </div>
 
   </div>
 </ion-content>
@@ -665,3 +691,11 @@
     </div>
   </div>
 </div>
+
+<!-- Vente à la mesure : pesée (kg, L, m) -->
+<ion-modal [isOpen]="peseeOuverte" (didDismiss)="peseeFermee()">
+  <ng-template>
+    <gl-pesee-sheet *ngIf="peseeProduit" [produit]="$any(peseeProduit)" [quantiteInitiale]="peseeItem?.quantity ?? null"
+                    (valider)="validerPesee($event)" (annuler)="fermerPesee()"></gl-pesee-sheet>
+  </ng-template>
+</ion-modal>

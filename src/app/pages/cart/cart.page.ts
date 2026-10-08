@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { Client, ClientService } from '../../services/client.service';
@@ -17,6 +17,9 @@ import { BoutiqueService } from '../../services/boutique.service';
 import { FideliteService, SoldeFidelite } from '../../services/fidelite.service';
 import { ImpressionRecuService } from '../../services/impression-recu.service';
 import { VenteMap } from '../../services/vente.service';
+
+import { infoMesure, prixAffiche, prixStocke, qteDoc, texteQte } from '../../utils/mesure.util';
+import { ProduitImageService } from '../../services/produit-image.service';
 
 interface CartItem {
   product: Produit;
@@ -130,15 +133,14 @@ export class CartPage implements OnInit {
     private boutiqueService: BoutiqueService,
     private fideliteService: FideliteService,
     private impressionRecuService: ImpressionRecuService,
+    public photos: ProduitImageService
   ) {}
 
   async scanPourVente(): Promise<void> {
     const code = await this.barcodeService.scan();
     if (!code) return;
 
-    const produit = this.products.find(p =>
-      p.codeBarre === code || p.codeBarre?.trim() === code.trim()
-    );
+    const produit = this.produitParCode(code);
 
     if (produit) {
       this.add(produit);
@@ -181,6 +183,87 @@ export class CartPage implements OnInit {
 
   ionViewWillEnter(): void {
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
+    this.pageActive = true;
+  }
+
+  ionViewWillLeave(): void {
+    this.pageActive = false;
+  }
+
+  // ---------------------------------------------------------------- douchette (caisse)
+  // Une douchette USB se comporte comme un clavier : elle tape le code puis « Entrée ».
+
+  private produitParCode(code: string): Produit | undefined {
+    const c = code.trim();
+    return this.products.find(p => p.codeBarre === code || p.codeBarre?.trim() === c);
+  }
+
+  /** « Entrée » dans la recherche : code-barres exact → ajouté directement ; sinon, s'il
+   *  ne reste qu'un produit affiché, c'est lui qui est ajouté. La case est vidée pour le
+   *  scan suivant (le curseur y reste). */
+  ajouterParSaisie(): void {
+    const saisie = this.query.trim();
+    if (!saisie) return;
+    const produit = this.produitParCode(saisie)
+      ?? (this.filteredProducts.length === 1 ? this.filteredProducts[0] : undefined);
+    if (produit) {
+      this.ajouter(produit);
+      this.query = '';
+      this.applySearch();
+    } else if (/^\d{6,}$/.test(saisie)) {
+      // Code inconnu : on vide quand même, sinon le scan suivant s'écrirait à la suite.
+      this.signalerCodeInconnu(saisie);
+      this.query = '';
+      this.applySearch();
+    }
+  }
+
+  /** Ajoute puis, sur grand écran (panier dans la colonne de droite), fait apparaître
+   *  la ligne du produit : un produit scanné en bas du panier resterait hors de vue. */
+  ajouter(produit: Produit): void {
+    this.add(produit);
+    if (!window.matchMedia('(min-width: 1000px)').matches) return;
+    setTimeout(() => {
+      document.querySelector(`.cart-col--panier .cart-line[data-produit="${produit.id}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+  }
+
+  private pageActive = false;
+  private tamponDouchette = '';
+  private dernierAppuiDouchette = 0;
+
+  /** Scan alors qu'aucune case n'a le curseur (ex : juste après avoir touché un produit) :
+   *  les touches tapées très vite puis « Entrée » sont lues comme un code-barres. */
+  @HostListener('document:keydown', ['$event'])
+  lireDouchette(e: KeyboardEvent): void {
+    if (!this.pageActive || this.showNiveauxVenteModal || this.showUniteVenteModal || this.peseeProduit) return;
+    const cible = e.target as HTMLElement | null;
+    if (cible?.closest('input, textarea, select, ion-input, ion-textarea, ion-searchbar, ion-alert, [contenteditable]')) return;
+
+    const maintenant = Date.now();
+    if (maintenant - this.dernierAppuiDouchette > 80) this.tamponDouchette = '';
+    this.dernierAppuiDouchette = maintenant;
+
+    if (e.key === 'Enter') {
+      const code = this.tamponDouchette;
+      this.tamponDouchette = '';
+      if (code.length < 4) return;
+      e.preventDefault();
+      const produit = this.produitParCode(code);
+      if (produit) this.ajouter(produit);
+      else this.signalerCodeInconnu(code);
+    } else if (e.key.length === 1) {
+      this.tamponDouchette += e.key;
+    }
+  }
+
+  private async signalerCodeInconnu(code: string): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message: `Produit introuvable pour le code : ${code}`,
+      color: 'warning', duration: 2500, position: 'top'
+    });
+    await toast.present();
   }
 
   loadClients(): void {
@@ -269,9 +352,87 @@ export class CartPage implements OnInit {
       .slice(0, 20);
   }
 
+  // ---------------------------------------------------------------- vente à la mesure
+  // Produit vendu au kg/L/m : la pesée remplace le +1 (quantité en g, prix au g).
+  peseeProduit: Produit | null = null;
+  peseeItem: CartItem | null = null;
+  /** Ouverture de la pesée, séparée du produit : le produit reste en place pendant
+   *  l'animation de fermeture (sinon la fenêtre se redessine sans produit). */
+  peseeOuverte = false;
+
+  estMesure(p: any): boolean {
+    return !!infoMesure(p);
+  }
+
+  uniteMesure(p: any): string {
+    return infoMesure(p)?.unite || '';
+  }
+
+  prixCatalogue(p: Produit): string {
+    const info = infoMesure(p as any);
+    return info ? `${this.money(prixAffiche(p as any, p.prixVente))}/${info.unite}` : this.money(p.prixVente);
+  }
+
+  stockCatalogue(p: Produit): string {
+    return infoMesure(p as any) ? texteQte(p as any, p.quantite) : qteDoc(p);
+  }
+
+  qteItem(item: CartItem): string {
+    return texteQte(item.product as any, item.quantity);
+  }
+
+  /** Prix d'une ligne à la mesure, par kg/L/m (arrondi au centime pour la saisie). */
+  prixItemAffiche(item: CartItem, prix?: number): number {
+    return Math.round(prixAffiche(item.product as any, prix ?? item.customPrice) * 100) / 100;
+  }
+
+  majPrixMesure(item: CartItem, valeur: any): void {
+    const v = parseFloat(String(valeur ?? '').replace(',', '.'));
+    item.customPrice = prixStocke(item.product as any, isNaN(v) ? 0 : v);
+  }
+
+  ouvrirPesee(product: Produit, item: CartItem | null = null): void {
+    this.peseeProduit = product;
+    this.peseeItem = item;
+    this.peseeOuverte = true;
+  }
+
+  /** Demande la fermeture (bouton Annuler, validation, glissement vers le bas). */
+  fermerPesee(): void {
+    this.peseeOuverte = false;
+  }
+
+  /** Fin de l'animation de fermeture : on peut oublier le produit. */
+  peseeFermee(): void {
+    this.peseeOuverte = false;
+    this.peseeProduit = null;
+    this.peseeItem = null;
+  }
+
+  validerPesee(res: { quantite: number; montant: number | null }): void {
+    const product = this.peseeProduit;
+    if (!product) return;
+    // "Pour 500 F" : poids arrondi au gramme, prix ajusté pour tomber juste sur la somme.
+    const prix = res.montant && res.quantite > 0 ? res.montant / res.quantite : null;
+    if (this.peseeItem) {
+      this.peseeItem.quantity = res.quantite;
+      if (prix != null) this.peseeItem.customPrice = prix;
+    } else {
+      this.items = [...this.items, {
+        product, quantity: res.quantite, remisePourcentage: 0,
+        customPrice: prix ?? product.prixVente, editingPrice: false
+      }];
+    }
+    this.fermerPesee();
+  }
+
   add(product: Produit): void {
     if (product.quantite <= 0) {
       this.presentToast('Produit en rupture de stock', 'danger');
+      return;
+    }
+    if (infoMesure(product as any)) {
+      this.ouvrirPesee(product, this.items.find(item => item.product.id === product.id) || null);
       return;
     }
     const existing = this.items.find(item => item.product.id === product.id);
@@ -279,7 +440,7 @@ export class CartPage implements OnInit {
       if (existing.quantity < product.quantite) {
         existing.quantity++;
       } else {
-        this.presentToast(`Stock maximum atteint : ${product.quantite} unité(s)`, 'danger');
+        this.presentToast(`Stock maximum atteint : ${qteDoc(product)} unité(s)`, 'danger');
       }
       return;
     }

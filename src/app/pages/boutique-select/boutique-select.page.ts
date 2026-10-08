@@ -11,7 +11,11 @@ import { environment } from '../../../environments/environment';
   standalone: false,
 })
 export class BoutiqueSelectPage {
-  boutiques = environment.boutiques;
+  // Priorité à la liste "Boutiques partenaires" de la boutique qu'on vient de quitter
+  // (gérée par l'utilisateur lui-même, voir changerBoutique() dans profile.page.ts) —
+  // la liste figée du code ne sert plus que de secours au tout premier lancement, quand
+  // aucune boutique n'a encore été configurée et qu'il n'y a donc aucun partenaire à lire.
+  boutiques = this.boutiqueConfig.getPartenairesCache() || environment.boutiques;
   isLoading = false;
 
   constructor(
@@ -21,7 +25,25 @@ export class BoutiqueSelectPage {
     private toastCtrl: ToastController
   ) {}
 
-  async selectBoutique(boutique: { nom: string; url: string }): Promise<void> {
+  async selectBoutique(choix: { nom: string; url: string }): Promise<void> {
+    // Seulement une adresse http(s) : jamais "javascript:..." ou autre (sécurité).
+    const url = BoutiqueConfigService.adresseSure(choix.url);
+    if (!url) {
+      const t = await this.toastCtrl.create({ message: 'Adresse de boutique invalide', color: 'danger', duration: 2500 });
+      await t.present();
+      return;
+    }
+    const boutique = { nom: choix.nom, url };
+
+    // Web/PWA : chaque boutique est un site séparé (origine différente) — on ne
+    // peut pas juste "repointer" l'API comme sur natif, il faut une vraie
+    // navigation de page vers le /mobile/ de l'autre boutique (sinon les appels
+    // API suivants seraient bloqués par le CORS du serveur de destination).
+    if (!environment.isCapacitor) {
+      window.location.href = `${boutique.url}/mobile/`;
+      return;
+    }
+
     const loading = await this.loadingCtrl.create({ message: 'Connexion...', spinner: 'crescent' });
     await loading.present();
     this.isLoading = true;

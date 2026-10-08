@@ -7,6 +7,7 @@ import { BoutiqueService } from './boutique.service';
 import { FactureDesignService } from './facture-design.service';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 export type FactureStatut = 'BROUILLON' | 'VALIDE' | 'PAYEE' | 'ANNULEE';
 export type FactureRemiseType = 'POURCENTAGE' | 'MONTANT_FIXE';
@@ -620,8 +621,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;fon
         : (line.remiseMontant ? this.formatPrice(line.remiseMontant) : '—');
       return `<tr class="${i % 2 === 0 ? 'even' : ''}">
         <td class="td-name">${line.designation || line.produitNom || 'Produit'}</td>
-        <td class="td-center">${line.quantite}</td>
-        <td class="td-right">${this.formatPrice(line.prixUnitaire)}</td>
+        <td class="td-center">${qteDoc(line)}</td>
+        <td class="td-right">${puDoc(line, v => this.formatPrice(v))}</td>
         <td class="td-center td-remise">${remise}</td>
         <td class="td-right td-bold">${this.formatPrice(sous)}</td>
       </tr>`;

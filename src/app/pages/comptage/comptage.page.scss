@@ -1,0 +1,386 @@
+// Comptage d'inventaire — mêmes éléments que la page Inventaire (champs, boutons, pastilles),
+// recopiés ici comme dans chaque page du projet, + la mise en page propre au comptage.
+
+.cp-content { --background: var(--gl-bg); }
+
+.gl-form-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+// -------- Champ (libellé au-dessus, input 48, radius 12) --------
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  position: relative;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gl-text-2);
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.gl-input,
+.gl-date {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  border: 1.5px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface);
+  color: var(--gl-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+// flex:1 uniquement dans une rangée (.gl-field__row) : directement dans .gl-field (colonne),
+// sa base à 0 écrasait la hauteur des champs Quantité / Motif à une fine barre.
+.gl-field__row > .gl-input { flex: 1 1 auto; }
+
+.gl-input {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+
+  ion-icon { font-size: 18px; color: var(--gl-muted); flex-shrink: 0; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gl-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+  }
+
+  &:focus-within { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.gl-date {
+  padding: 0 12px;
+  color-scheme: var(--gl-color-scheme);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+
+  &:focus { border-color: var(--gl-action); box-shadow: 0 0 0 4px var(--gl-ring); }
+}
+
+.gl-icon-btn {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--gl-action);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  ion-icon { font-size: 22px; }
+  &:active { background: var(--gl-action-press); }
+}
+
+.gl-dropdown {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  box-shadow: var(--gl-card-shadow);
+  max-height: 220px;
+  overflow-y: auto;
+
+  &__item {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gl-border);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gl-text-2);
+    cursor: pointer;
+
+    strong { color: var(--gl-text); font-weight: 700; }
+    &:last-child { border-bottom: none; }
+    &:active { background: var(--gl-blue-soft); }
+  }
+}
+
+.gl-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--gl-ok-soft);
+  color: var(--gl-ok);
+  font-size: 13px;
+  font-weight: 600;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+  strong { font-weight: 700; }
+}
+
+// -------- Boutons --------
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+
+  &--primary {
+    background: var(--gl-action);
+    color: #ffffff;
+    &:active { background: var(--gl-action-press); }
+  }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+
+.gl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--gl-surface-2);
+  color: var(--gl-text-2);
+
+  &--ok      { background: var(--gl-ok-soft);   color: var(--gl-ok); }
+  &--warn    { background: var(--gl-warn-soft); color: var(--gl-warn); }
+  &--bad     { background: var(--gl-bad-soft);  color: var(--gl-bad); }
+  &--info    { background: var(--gl-blue-soft); color: var(--gl-link); }
+  &--neutral { background: var(--gl-surface-2); color: var(--gl-text-2); }
+}
+
+.gl-btn--secondary {
+  background: transparent;
+  color: var(--gl-bad);
+  border: 1.5px solid var(--gl-border);
+  &:active { background: var(--gl-surface-2); }
+}
+
+.gl-card {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: 16px;
+  box-shadow: var(--gl-card-shadow);
+}
+
+.gl-overline {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--gl-muted);
+}
+
+// ── Comptage ──
+.cp-sk { height: 72px; border-radius: 16px; }
+
+.cp-info {
+  flex-direction: row;
+  align-items: flex-start;
+  ion-icon { font-size: 24px; color: var(--gl-warn); flex-shrink: 0; }
+  p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--gl-text); }
+}
+
+.cp-titre { margin: 0; font-size: 17px; font-weight: 700; color: var(--gl-text); }
+.cp-meta { margin: -8px 0 0; font-size: 12px; color: var(--gl-muted); }
+.cp-sous-titre { margin: 4px 4px 0; }
+
+.cp-etapes {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--gl-text-2);
+}
+
+.gl-input select {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--gl-text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+}
+
+.cp-historique { gap: 0; padding: 4px 16px; }
+
+.cp-hist {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gl-border);
+  &:last-child { border-bottom: none; }
+}
+
+.cp-hist__texte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  strong { font-size: 14px; color: var(--gl-text); }
+  span { font-size: 12px; color: var(--gl-muted); }
+}
+
+.cp-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--gl-surface-2);
+  }
+  strong { font-size: 17px; color: var(--gl-text); font-variant-numeric: tabular-nums; }
+  span { font-size: 12px; color: var(--gl-muted); }
+  .bad strong { color: var(--gl-bad); }
+  .ok strong { color: var(--gl-ok); }
+}
+
+.cp-choisi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--gl-blue-soft);
+
+  > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  strong { font-size: 15px; color: var(--gl-text); }
+  span { font-size: 13px; color: var(--gl-text-2); }
+  .gl-icon-btn { width: 40px; height: 40px; background: var(--gl-surface); color: var(--gl-text-2); }
+}
+
+.cp-entete-liste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 4px 0;
+  flex-wrap: wrap;
+}
+
+.cp-lignes { display: flex; flex-direction: column; gap: 10px; }
+
+.cp-ligne {
+  padding: 12px 14px 0;
+  overflow: hidden;
+
+  &--gros { border-color: var(--gl-bad); box-shadow: 0 0 0 1px var(--gl-bad); }
+}
+
+.cp-ligne__haut {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  strong { font-size: 15px; color: var(--gl-text); }
+}
+
+.cp-ligne__detail { margin: 6px 0 8px; font-size: 13px; color: var(--gl-text-2); }
+
+.cp-ligne__alerte {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gl-bad);
+}
+
+.cp-ligne__actions {
+  display: flex;
+  margin: 0 -14px;
+}
+
+.glc-action {
+  flex: 1 1 50%;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gl-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gl-text-2);
+  cursor: pointer;
+
+  & + & { border-left: 1px solid var(--gl-border); }
+  ion-icon { font-size: 18px; }
+  &--link { color: var(--gl-link); }
+  &--bad { color: var(--gl-bad); }
+  &:active { background: var(--gl-surface-2); }
+}
+
+.cp-note { margin: 0 4px; font-size: 12px; color: var(--gl-muted); text-align: center; }
+
+.cp-boutons { display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+
+@media (min-width: 720px) {
+  .cp-page { max-width: 720px; margin: 0 auto; }
+  .cp-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

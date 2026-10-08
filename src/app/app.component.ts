@@ -14,6 +14,7 @@ import { environment } from '../environments/environment';
 import { Subscription } from 'rxjs';
 import { MENU_SECTIONS, MenuSection } from './config/menu-items.config';
 import { canShowMenuItem, MenuVisibilityContext } from './config/menu-visibility.util';
+import { RoleService } from './services/role.service';
 
 @Component({
   selector: 'app-root',
@@ -61,6 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private syncService: SyncService,
     private appUpdateService: AppUpdateService,
     private themeService: ThemeService,
+    private roleService: RoleService,
   ) {}
 
   ngOnInit(): void {
@@ -202,7 +204,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   getRole(): string {
-    return this.auth.getFormattedRole() || '';
+    // Rôles personnalisés actifs : nom réel du rôle (ex: CAISSIER) plutôt que la base technique.
+    return this.roleService.nomRoleAffiche.toUpperCase() || this.auth.getFormattedRole() || '';
   }
 
   /** Sections du tiroir latéral déjà filtrées par permission/flag (canShowMenuItem),
@@ -214,7 +217,9 @@ export class AppComponent implements OnInit, OnDestroy {
       isSuperAdmin: this.auth.isSuperAdmin(),
       fonctionnalitesDesactivees: this.fonctionnalitesDesactivees,
       permissionInventaireLectureActive: this.permissionInventaireLectureActive,
+      stockGererActif: this.roleService.rolesActifs && this.roleService.peut('STOCK', 'GERER'),
       featureTransfertsActif: this.featureTransfertsActif,
+      peutVoirPage: route => this.roleService.peutVoirPage(route),
     };
     return MENU_SECTIONS
       .map(section => ({ ...section, items: section.items.filter(item => canShowMenuItem(item, ctx)) }))

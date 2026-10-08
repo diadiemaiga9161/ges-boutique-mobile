@@ -1,0 +1,168 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Rôles et permissions</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="rl-content">
+  <ion-refresher slot="fixed" (ionRefresh)="rafraichir($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="rl-page">
+    <p class="rl-intro">Choisissez ce que chaque rôle peut voir et faire. Le Gérant garde toujours tous les droits.</p>
+
+    <div class="rl-carte" *ngIf="chargement" aria-busy="true">
+      <div class="rl-sk" *ngFor="let i of [1,2,3]"></div>
+    </div>
+
+    <div class="rl-carte rl-erreur" *ngIf="!chargement && erreur" role="alert">
+      <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+      <p>{{ erreur }}</p>
+      <ion-button size="small" fill="outline" (click)="charger()">Réessayer</ion-button>
+    </div>
+
+    <ng-container *ngIf="!chargement && !erreur">
+      <!-- Rôles -->
+      <div class="rl-carte rl-liste">
+        <button type="button" class="rl-role" *ngFor="let r of roles" (click)="ouvrir(r)">
+          <span class="rl-role__icone" [class.gerant]="r.roleBase === 'ADMIN'" aria-hidden="true">
+            <ion-icon [name]="r.verrouille ? 'star-outline' : (r.roleBase === 'ADMIN' ? 'briefcase-outline' : 'person-outline')"></ion-icon>
+          </span>
+          <span class="rl-role__texte">
+            <strong>{{ r.nom }}</strong>
+            <span>{{ libelleBase(r.roleBase) }} · {{ r.nombreUtilisateurs }} personne(s)</span>
+          </span>
+          <ion-icon [name]="r.verrouille ? 'lock-closed-outline' : 'chevron-forward-outline'" class="rl-role__fleche" aria-hidden="true"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Attribution -->
+      <h2 class="rl-titre">Qui a quel rôle ?</h2>
+      <div class="rl-carte" *ngIf="!personnes.length">
+        <gl-empty-state icon="people-outline" title="Personne d'autre dans la boutique pour le moment."></gl-empty-state>
+      </div>
+      <div class="rl-carte rl-liste" *ngIf="personnes.length">
+        <div class="rl-personne" *ngFor="let p of personnes">
+          <span class="rl-avatar" aria-hidden="true">{{ (p.nomComplet || p.username).charAt(0) | uppercase }}</span>
+          <span class="rl-personne__texte">
+            <strong>{{ p.nomComplet }}</strong>
+            <span>{{ p.username }}<ng-container *ngIf="!p.actif"> · gelé</ng-container></span>
+          </span>
+          <ion-select class="rl-select" interface="action-sheet" [value]="roleDe(p)" (ionChange)="attribuer(p, $event.detail.value)"
+                      [disabled]="attributionEnCours === p.id" [attr.aria-label]="'Rôle de ' + p.nomComplet" cancelText="Annuler">
+            <ion-select-option *ngFor="let r of roles" [value]="r.id">{{ r.nom }}</ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+      <p class="rl-note">Votre propre rôle ne peut pas être changé ici. Le changement s'applique dès la prochaine action de la personne.</p>
+    </ng-container>
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="!chargement && !erreur">
+    <ion-fab-button (click)="nouveauRole()" aria-label="Nouveau rôle">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Éditeur de rôle -->
+  <ion-modal [isOpen]="!!brouillon" (didDismiss)="fermer()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="fermer()">Fermer</ion-button>
+          </ion-buttons>
+          <ion-title>{{ brouillon?.id ? brouillon?.nom : 'Nouveau rôle' }}</ion-title>
+          <ion-buttons slot="end" *ngIf="brouillon && !brouillon.verrouille">
+            <ion-button (click)="enregistrer()" [disabled]="enregistrement" strong="true">Enregistrer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="rl-content" *ngIf="brouillon">
+        <div class="rl-page">
+          <!-- Nouveau rôle : partir d'un modèle prêt, puis ajuster -->
+          <div class="rl-carte" *ngIf="!brouillon.id">
+            <span class="rl-label">Partir d'un modèle</span>
+            <div class="rl-modeles">
+              <button type="button" class="rl-modele" *ngFor="let mo of modeles" (click)="appliquerModele(mo)"
+                      [class.rl-modele--actif]="brouillon.nom === mo.nom">
+                <ion-icon [name]="mo.icone" aria-hidden="true"></ion-icon>
+                <span class="rl-modele__texte">
+                  <strong>{{ mo.nom }}</strong>
+                  <span>{{ mo.description }}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="rl-carte">
+            <label class="rl-label" for="rl-nom">Nom du rôle</label>
+            <ion-input id="rl-nom" class="rl-input" [(ngModel)]="brouillon.nom" maxlength="60" placeholder="ex : Caissier" [disabled]="brouillon.systeme"></ion-input>
+            <label class="rl-label" for="rl-desc">Description (facultatif)</label>
+            <ion-input id="rl-desc" class="rl-input" [(ngModel)]="brouillon.description" maxlength="255" placeholder="ex : encaisse les ventes" [disabled]="brouillon.systeme"></ion-input>
+
+            <ng-container *ngIf="!brouillon.systeme">
+              <span class="rl-label">Basé sur</span>
+              <div class="fz-chips" role="radiogroup">
+                <button type="button" class="fz-chip" role="radio" [attr.aria-checked]="brouillon.roleBase === 'VENDEUR'"
+                        [class.fz-chip--active]="brouillon.roleBase === 'VENDEUR'" (click)="changerBase('VENDEUR')">
+                  <ion-icon name="person-outline" aria-hidden="true"></ion-icon> Vendeur
+                </button>
+                <button type="button" class="fz-chip" role="radio" [attr.aria-checked]="brouillon.roleBase === 'ADMIN'"
+                        [class.fz-chip--active]="brouillon.roleBase === 'ADMIN'" (click)="changerBase('ADMIN')">
+                  <ion-icon name="briefcase-outline" aria-hidden="true"></ion-icon> Gérant
+                </button>
+              </div>
+            </ng-container>
+
+            <p class="rl-aide">
+              <ion-icon [name]="brouillon.verrouille ? 'lock-closed-outline' : 'information-circle-outline'" aria-hidden="true"></ion-icon>
+              <span *ngIf="brouillon.verrouille">Le Gérant garde toujours tous les droits, pour que la boutique ne puisse jamais se bloquer elle-même.</span>
+              <span *ngIf="!brouillon.verrouille && brouillon.roleBase === 'VENDEUR'">Un rôle basé sur Vendeur ne dépasse jamais les droits d'un vendeur.</span>
+              <span *ngIf="!brouillon.verrouille && brouillon.roleBase === 'ADMIN'">Un rôle basé sur Gérant donne accès aux pages de gestion : cochez seulement le nécessaire.</span>
+            </p>
+          </div>
+
+          <!-- En résumé : le rôle en une phrase -->
+          <div class="rl-carte rl-resume" aria-live="polite">
+            <p><ion-icon name="checkmark-circle" class="ok" aria-hidden="true"></ion-icon>
+              <span><strong>Peut :</strong> {{ resume().peut }}</span></p>
+            <p *ngIf="resume().nePeutPas"><ion-icon name="close-circle" class="non" aria-hidden="true"></ion-icon>
+              <span><strong>Ne voit pas :</strong> {{ resume().nePeutPas }}</span></p>
+          </div>
+
+          <p class="rl-aide rl-aide--niveaux">
+            <strong>Voir</strong> : consulter seulement · <strong>Modifier</strong> : ajouter et modifier ·
+            <strong>Tout</strong> : aussi supprimer et annuler
+          </p>
+
+          <div class="rl-outils" *ngIf="!brouillon.verrouille">
+            <ion-button size="small" fill="clear" (click)="toutCocher(true)">Tout autoriser</ion-button>
+            <ion-button size="small" fill="clear" (click)="toutCocher(false)">Tout retirer</ion-button>
+          </div>
+
+          <div class="rl-carte rl-module" *ngFor="let m of modulesAffiches">
+            <strong class="rl-module__titre" [id]="'rl-m-' + m.module">{{ m.libelle }}</strong>
+            <div class="rl-niveaux" role="radiogroup" [attr.aria-labelledby]="'rl-m-' + m.module">
+              <button type="button" class="rl-niveau" *ngFor="let n of niveauxDe(m)" role="radio"
+                      [attr.aria-checked]="niveau(m) === n" [disabled]="brouillon.verrouille"
+                      [class.rl-niveau--actif]="niveau(m) === n" [class.rl-niveau--aucun]="n === 'AUCUN'"
+                      (click)="definirNiveau(m, n)">
+                {{ libellesNiveaux[n] }}
+              </button>
+            </div>
+          </div>
+
+          <ion-button expand="block" color="danger" fill="outline" class="rl-supprimer"
+                      *ngIf="brouillon.id && !brouillon.systeme" (click)="supprimer()">
+            <ion-icon name="trash-outline" slot="start"></ion-icon> Supprimer ce rôle
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

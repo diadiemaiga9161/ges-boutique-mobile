@@ -35,6 +35,12 @@
           <ion-icon name="close-circle-outline"></ion-icon>
         </button>
       </div>
+      <button type="button" class="filtre-portail" *ngIf="portailIds.size"
+              [class.filtre-portail--actif]="filtrePortail" [attr.aria-pressed]="filtrePortail"
+              (click)="basculerFiltrePortail()">
+        <ion-icon name="globe-outline" aria-hidden="true"></ion-icon>
+        Clients du portail ({{ portailIds.size }})
+      </button>
     </div>
 
     <p class="gl-overline list-count">
@@ -62,7 +68,12 @@
               {{ (client.prenom || client.nom || '?')[0].toUpperCase() }}
             </div>
             <div class="client-info">
-              <h2 class="client-name">{{ clientService.getFullName(client) }}</h2>
+              <h2 class="client-name">
+                {{ clientService.getFullName(client) }}
+                <span class="badge-portail" *ngIf="estClientPortail(client)">
+                  <ion-icon name="globe-outline" aria-hidden="true"></ion-icon> En ligne
+                </span>
+              </h2>
               <p class="client-meta">
                 <ion-icon name="call-outline"></ion-icon>
                 <span>{{ client.telephone || client.numeroTelephone || 'Pas de téléphone' }}</span>
@@ -348,7 +359,7 @@
             <!-- Produits (aperçu) -->
             <div class="vente-products" *ngIf="vente.produits?.length">
               <div class="prod-line" *ngFor="let p of (vente.produits | slice:0:2)">
-                <span class="prod-qty">×{{ p.quantite }}</span>
+                <span class="prod-qty">×{{ p | mesureQte }}</span>
                 <span class="prod-name">{{ p.produitNom }}</span>
                 <span class="prod-total">{{ money(p.sousTotal) }}</span>
               </div>
@@ -473,9 +484,9 @@
 
               <!-- Ligne VENTE : produit -->
               <div class="prod-line rl-produit" *ngIf="ligne.type === 'VENTE'">
-                <span class="prod-qty">×{{ ligne.quantite }}</span>
+                <span class="prod-qty">×{{ ligne | mesureQte }}</span>
                 <span class="prod-name">{{ ligne.produitNom }}</span>
-                <span class="rl-pu" *ngIf="ligne.prixUnitaire != null">{{ money(ligne.prixUnitaire) }}</span>
+                <span class="rl-pu" *ngIf="ligne.prixUnitaire != null">{{ money((ligne | mesurePu)) }}{{ ligne | mesureSuffixe }}</span>
               </div>
 
               <!-- Ligne VERSEMENT : produits payés (versement simple) ; un paiement groupé reste une ligne
@@ -599,8 +610,8 @@
               <tbody>
                 <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
                   <td>{{ p.produitNom }}</td>
-                  <td class="fd-center">{{ p.quantite }}</td>
-                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-center">{{ p | mesureQte }}</td>
+                  <td class="fd-right">{{ money((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
                   <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
                 </tr>
               </tbody>
@@ -645,8 +656,8 @@
               <tbody>
                 <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
                   <td>{{ p.produitNom }}</td>
-                  <td class="fd-center">{{ p.quantite }}</td>
-                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-center">{{ p | mesureQte }}</td>
+                  <td class="fd-right">{{ money((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
                   <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
                 </tr>
               </tbody>
@@ -692,8 +703,8 @@
               <tbody>
                 <tr *ngFor="let p of selectedVenteDetail.produits">
                   <td>{{ p.produitNom }}</td>
-                  <td class="fd-center">{{ p.quantite }}</td>
-                  <td class="fd-right">{{ money(p.prixUnitaire) }}</td>
+                  <td class="fd-center">{{ p | mesureQte }}</td>
+                  <td class="fd-right">{{ money((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
                   <td class="fd-right fd-bold">{{ money(p.sousTotal) }}</td>
                 </tr>
               </tbody>

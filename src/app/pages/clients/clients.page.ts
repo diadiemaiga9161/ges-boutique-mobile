@@ -144,8 +144,22 @@ export class ClientsPage {
     });
   }
 
+  // Clients ayant commandé depuis le portail : badge « En ligne » + filtre (affichage seul).
+  portailIds = new Set<number>();
+  filtrePortail = false;
+
+  estClientPortail(client: Client): boolean {
+    return client.id != null && this.portailIds.has(client.id);
+  }
+
+  basculerFiltrePortail(): void {
+    this.filtrePortail = !this.filtrePortail;
+    this.applyFilter();
+  }
+
   load(event?: any): void {
     this.loading = true;
+    this.clientService.getPortailIds().subscribe(ids => { this.portailIds = new Set(ids); this.applyFilter(); });
     this.clientService.getAll().subscribe({
       next: clients => {
         this.clients = clients;
@@ -207,7 +221,8 @@ export class ClientsPage {
     const term = this.query.trim().toLowerCase();
     this.filtered = this.clients.filter(c => !term || [
       c.nom, c.prenom, c.telephone, c.numeroTelephone, c.email
-    ].filter(Boolean).some(v => `${v}`.toLowerCase().includes(term)));
+    ].filter(Boolean).some(v => `${v}`.toLowerCase().includes(term)))
+      .filter(c => !this.filtrePortail || this.estClientPortail(c));
   }
 
   startCreate(): void { this.editing = undefined; this.form = this.emptyForm(); this.showForm = true; }

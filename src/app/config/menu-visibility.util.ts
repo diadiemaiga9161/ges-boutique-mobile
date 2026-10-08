@@ -7,7 +7,11 @@ export interface MenuVisibilityContext {
   isSuperAdmin: boolean;
   fonctionnalitesDesactivees: Set<string>;
   permissionInventaireLectureActive: boolean;
+  /** Rôle (rôles personnalisés activés) qui fait les entrées/sorties de stock. */
+  stockGererActif?: boolean;
   featureTransfertsActif: boolean;
+  /** Rôles personnalisés (Caissier...) : la page est-elle permise au rôle connecté ? */
+  peutVoirPage?: (route: string) => boolean;
 }
 
 /** Seule source de vérité pour l'affichage d'un item de menu — remplace les
@@ -16,8 +20,10 @@ export interface MenuVisibilityContext {
 export function canShowMenuItem(item: MenuItem, ctx: MenuVisibilityContext): boolean {
   if (item.superAdminOnly) return ctx.isSuperAdmin;
 
+  if (ctx.peutVoirPage && !ctx.peutVoirPage(item.route)) return false;
+
   if (item.requiresInventairePermission) {
-    return ctx.isAdmin || ctx.permissionInventaireLectureActive;
+    return ctx.isAdmin || ctx.permissionInventaireLectureActive || !!ctx.stockGererActif;
   }
 
   if (item.adminOnly && !ctx.isAdmin) return false;

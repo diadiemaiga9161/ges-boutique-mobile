@@ -11,7 +11,7 @@
     </ion-tab-button>
 
     <!-- Ventes (historique) — tous -->
-    <ion-tab-button tab="sales" class="tab-btn">
+    <ion-tab-button tab="sales" class="tab-btn" *ngIf="roles.peutVoirPage('/tabs/sales')">
       <div class="tab-icon-wrap">
         <ion-icon name="receipt-outline"></ion-icon>
       </div>
@@ -19,7 +19,7 @@
     </ion-tab-button>
 
     <!-- Produits — tous -->
-    <ion-tab-button tab="products" class="tab-btn">
+    <ion-tab-button tab="products" class="tab-btn" *ngIf="roles.peutVoirPage('/tabs/products')">
       <div class="tab-icon-wrap">
         <ion-icon name="cube-outline"></ion-icon>
       </div>
@@ -27,7 +27,7 @@
     </ion-tab-button>
 
     <!-- Clients — tous -->
-    <ion-tab-button tab="clients" class="tab-btn">
+    <ion-tab-button tab="clients" class="tab-btn" *ngIf="roles.peutVoirPage('/tabs/clients')">
       <div class="tab-icon-wrap">
         <ion-icon name="people-outline"></ion-icon>
       </div>

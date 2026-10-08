@@ -12,6 +12,10 @@ import { ProduitNiveau, ProduitNiveauService } from '../../services/produit-nive
 import { OfflineSyncService } from '../../services/offline-sync.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { UniteVente, UniteVenteRequest, UniteVenteService } from '../../services/unite-vente.service';
+import { ProduitImageService } from '../../services/produit-image.service';
+import { MESURES, contenanceDepuisNom, infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../utils/mesure.util';
+import { environment } from '../../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-products',
@@ -88,8 +92,199 @@ export class ProductsPage implements OnInit {
     private uniteVenteService: UniteVenteService,
     private offlineSync: OfflineSyncService,
     private networkStatus: NetworkStatusService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    public photos: ProduitImageService,
+    private http: HttpClient
   ) {}
+
+  // ---------------------------------------------------------------- vente à la mesure
+  // Fonctionnalité VENTE_A_LA_MESURE : produit vendu au kg / L / m, choisi produit par
+  // produit. Le formulaire montre des kg et des prix au kg ; conversion en g et prix au g
+  // seulement à l'envoi (y compris dans la file hors ligne).
+  mesureActif = false;
+  readonly mesures = MESURES;
+  readonly modesMesure = ['KG', 'L', 'M'];
+  modeMesureForm: string | null = null;
+  changementModeEnCours = false;
+
+  get infoMesureForm() {
+    return infoMesure({ modeMesure: this.modeMesureForm });
+  }
+
+  estMesure(p: any): boolean {
+    return !!infoMesure(p);
+  }
+
+  uniteMesure(p: any): string {
+    return infoMesure(p)?.unite || '';
+  }
+
+  prixTexte(p: any, prix: number | null | undefined): string {
+    const info = infoMesure(p);
+    return info ? `${this.money(prixAffiche(p, prix))}/${info.unite}` : this.money(prix || 0);
+  }
+
+  qteAff(p: any, q: number | null | undefined): number {
+    return Math.round(qteAffichee(p, q) * 1000) / 1000;
+  }
+
+  qteTexte(p: any, q: number | null | undefined): string {
+    return texteQte(p, q);
+  }
+
+  private requeteProduit(creation: boolean): any {
+    const f: any = { ...this.form };
+    const m = { modeMesure: this.modeMesureForm };
+    const info = infoMesure(m);
+    if (info) {
+      f.prixAchat = prixStocke(m, Number(f.prixAchat));
+      f.prixVente = prixStocke(m, Number(f.prixVente));
+      f.quantite = qteStockee(m, Number(String(f.quantite).replace(',', '.')));
+      f.seuilAlerte = f.seuilAlerte != null ? qteStockee(m, Number(String(f.seuilAlerte).replace(',', '.'))) : f.seuilAlerte;
+      f.uniteBase = info.petiteUnite;
+      if (creation) f.modeMesure = this.modeMesureForm;
+    }
+    return f;
+  }
+
+  /** Passer un produit existant au kg/L/m (ou le remettre à l'unité). On demande combien de
+   *  kg (L, m) contient UNE unité du produit : un sac de 50 kg -> 50 (stock et prix convertis). */
+  async changerModeMesure(mode: string | null): Promise<void> {
+    const produit: any = this.editing;
+    if (!produit) return;
+    if (!this.networkStatus.isOnline()) {
+      this.presentToast('Ce changement demande une connexion internet', 'danger');
+      return;
+    }
+    const info = infoMesure({ modeMesure: mode });
+    const unite = (info || infoMesure(produit))!.unite;
+    const proposition = info ? contenanceDepuisNom(produit.nom, mode) : contenanceDepuisNom(produit.nom, produit.modeMesure);
+    const fmt = (v: number) => (Math.round(v * 1000) / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 3 });
+    const exemple = info
+      ? `Ex : avec ${fmt(proposition)}, ${qteDoc(produit)} en stock deviennent ${fmt(produit.quantite * proposition)} ${unite} et ${this.money(produit.prixVente)} devient ${this.money(produit.prixVente / proposition)}/${unite}.`
+      : `Ex : avec ${fmt(proposition)}, le stock (${texteQte(produit, produit.quantite)}) devient ${Math.round(qteAffichee(produit, produit.quantite) / proposition)} unité(s).`;
+    const alert = await this.alertCtrl.create({
+      header: info ? `Vendre ${info.libelle.toLowerCase()}` : "Remettre à l'unité",
+      subHeader: `Combien de ${unite} dans 1 unité de « ${produit.nom} » ?`,
+      message: `50 pour un sac de 50 ${unite}, 1 pour un paquet de 1 ${unite}. ${exemple}`,
+      inputs: [{ name: 'contenance', type: 'text', value: fmt(proposition), attributes: { inputmode: 'decimal' } }],
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Convertir',
+          handler: (d: { contenance: string }) => {
+            const contenance = lireNombre(d.contenance);
+            if (!(contenance > 0)) {
+              this.presentToast('Indiquez un nombre supérieur à 0', 'danger');
+              return false;
+            }
+            this.changementModeEnCours = true;
+            this.http.put<any>(`${environment.apiUrl}/produits/${produit.id}/mode-mesure`, { modeMesure: mode, contenance }).subscribe({
+              next: () => {
+                this.changementModeEnCours = false;
+                this.showForm = false;
+                this.presentToast(info ? `${produit.nom} est vendu au ${info.unite} — vérifiez le prix de vente` : `${produit.nom} est vendu à l'unité`);
+                this.load();
+              },
+              error: err => {
+                this.changementModeEnCours = false;
+                this.presentToast(err?.error?.message || 'Changement impossible', 'danger');
+              }
+            });
+            return true;
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // ---------------------------------------------------------------- photo du produit
+  // Fonctionnalité IMAGES_PRODUITS (activée par le super admin) : facultative, rien ne
+  // change pour les boutiques qui ne l'ont pas. Envoi seulement en ligne.
+  photoEnvoiEnCours = false;
+  /** Photo choisie pendant la création, envoyée juste après l'enregistrement du produit. */
+  photoEnAttente: File | null = null;
+  photoApercu: string | null = null;
+
+  urlPhoto(p: any, taille: 'mini' | 'grande' = 'mini'): string | null {
+    return this.photos.url(p, taille);
+  }
+
+  choisirPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const fichier = input.files?.[0];
+    input.value = '';
+    if (!fichier) return;
+    if (!fichier.type.startsWith('image/')) {
+      this.presentToast("Ce fichier n'est pas une photo", 'danger');
+      return;
+    }
+    if (!this.networkStatus.isOnline()) {
+      this.presentToast('La photo demande une connexion internet', 'danger');
+      return;
+    }
+    if (this.editing) {
+      this.envoyerPhoto(this.editing, fichier);
+    } else {
+      this.oublierPhotoEnAttente();
+      this.photoEnAttente = fichier;
+      this.photoApercu = URL.createObjectURL(fichier);
+    }
+  }
+
+  oublierPhotoEnAttente(): void {
+    if (this.photoApercu) URL.revokeObjectURL(this.photoApercu);
+    this.photoEnAttente = null;
+    this.photoApercu = null;
+  }
+
+  private envoyerPhoto(produit: any, fichier: File, apres?: () => void): void {
+    this.photoEnvoiEnCours = true;
+    this.photos.envoyer(produit.id, fichier).subscribe({
+      next: version => {
+        this.photoEnvoiEnCours = false;
+        this.majVersionPhoto(produit.id, version);
+        apres?.();
+      },
+      error: err => {
+        this.photoEnvoiEnCours = false;
+        this.presentToast(err?.error?.message || err?.message || 'Photo non enregistrée', 'danger');
+        apres?.();
+      }
+    });
+  }
+
+  async retirerPhoto(): Promise<void> {
+    const produit: any = this.editing;
+    if (!produit) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Retirer la photo ?',
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Retirer', role: 'destructive',
+          handler: () => {
+            this.photoEnvoiEnCours = true;
+            this.photos.supprimer(produit.id).subscribe({
+              next: () => { this.photoEnvoiEnCours = false; this.majVersionPhoto(produit.id, null); },
+              error: err => { this.photoEnvoiEnCours = false; this.presentToast(err?.error?.message || 'Impossible', 'danger'); }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  /** Met à jour la photo affichée sans recharger toute la liste. */
+  private majVersionPhoto(id: number, version: number | null): void {
+    const maj = (p: any) => (p && p.id === id ? { ...p, imageVersion: version } : p);
+    this.allProducts = this.allProducts.map(maj);
+    this.products = this.products.map(maj);
+    this.filtered = this.filtered.map(maj);
+    if (this.editing && (this.editing as any).id === id) this.editing = maj(this.editing);
+  }
 
   async scanCodeBarre(): Promise<void> {
     const code = await this.barcodeService.scan();
@@ -101,6 +296,7 @@ export class ProductsPage implements OnInit {
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+      this.mesureActif = liste.find(f => f.cle === 'VENTE_A_LA_MESURE')?.actif === true;
     });
     this.load();
   }
@@ -187,6 +383,8 @@ export class ProductsPage implements OnInit {
 
   startCreate(): void {
     this.editing = undefined;
+    this.modeMesureForm = null;
+    this.oublierPhotoEnAttente();
     this.form = this.emptyForm();
     this.showForm = true;
   }
@@ -208,6 +406,13 @@ export class ProductsPage implements OnInit {
       typeVente: product.typeVente || 'UNITE',
       uniteBase: product.uniteBase || 'Unité'
     };
+    this.modeMesureForm = (product as any).modeMesure ?? null;
+    if (infoMesure(product as any)) {
+      this.form.prixAchat = Math.round(prixAffiche(product as any, product.prixAchat) * 100) / 100;
+      this.form.prixVente = Math.round(prixAffiche(product as any, product.prixVente) * 100) / 100;
+      this.form.quantite = this.qteAff(product, product.quantite);
+      this.form.seuilAlerte = this.qteAff(product, product.seuilAlerte);
+    }
     this.showForm = true;
   }
 
@@ -221,6 +426,7 @@ export class ProductsPage implements OnInit {
       return;
     }
 
+    const corps = this.requeteProduit(!this.editing);
     const endpoint = this.editing ? `/api/produits/${this.editing.id}` : '/api/produits';
 
     if (!this.networkStatus.isOnline()) {
@@ -229,7 +435,7 @@ export class ProductsPage implements OnInit {
         this.editing ? 'PRODUIT_UPDATE' : 'PRODUIT_CREATE',
         endpoint,
         this.editing ? 'PUT' : 'POST',
-        this.form
+        corps
       );
       this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne — sera synchronisée' : '📡 Produit créé hors ligne — sera synchronisé');
       this.showForm = false;
@@ -237,14 +443,21 @@ export class ProductsPage implements OnInit {
     }
 
     const request = this.editing
-      ? this.productsService.updateProduct(this.editing.id, this.form)
-      : this.productsService.createProduct(this.form);
+      ? this.productsService.updateProduct(this.editing.id, corps)
+      : this.productsService.createProduct(corps);
 
     request.subscribe({
-      next: () => {
+      next: (cree: any) => {
         this.presentToast(this.editing ? 'Produit modifié' : 'Produit créé');
         this.showForm = false;
-        this.load();
+        const produitCree = cree?.data ?? cree;
+        if (!this.editing && this.photoEnAttente && this.photos.estActif && produitCree?.id) {
+          const fichier = this.photoEnAttente;
+          this.oublierPhotoEnAttente();
+          this.envoyerPhoto(produitCree, fichier, () => this.load());
+        } else {
+          this.load();
+        }
       },
       error: async error => {
         if (error.status === 0) {
@@ -253,7 +466,7 @@ export class ProductsPage implements OnInit {
             this.editing ? 'PRODUIT_UPDATE' : 'PRODUIT_CREATE',
             endpoint,
             this.editing ? 'PUT' : 'POST',
-            this.form
+            corps
           );
           this.presentToast(this.editing ? '📡 Modification enregistrée hors ligne' : '📡 Produit créé hors ligne');
           this.showForm = false;
@@ -269,7 +482,7 @@ export class ProductsPage implements OnInit {
   async confirmDelete(product: Produit): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Supprimer le produit',
-      message: `${product.nom} sera supprimé définitivement. Stock: ${product.quantite}`,
+      message: `${product.nom} sera supprimé définitivement. Stock: ${qteDoc(product)}`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

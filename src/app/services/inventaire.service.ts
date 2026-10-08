@@ -88,6 +88,37 @@ export interface StatistiquesInventaire {
   variationNet: number;
 }
 
+
+/** Comptage d'inventaire (voir ComptageInventaireController côté serveur). */
+export interface LigneComptage {
+  produitId: number;
+  produitNom: string;
+  quantiteComptee: number;
+  stockAuComptage: number;
+  ecart: number;
+  valeurEcart: number;
+  comptePar?: string;
+  dateComptage: string;
+}
+
+export interface Comptage {
+  id: number;
+  statut: 'EN_COURS' | 'VALIDE' | 'ABANDONNE';
+  categorieId?: number | null;
+  categorieNom?: string | null;
+  commencePar?: string;
+  dateDebut: string;
+  terminePar?: string | null;
+  dateFin?: string | null;
+  lignes?: LigneComptage[];
+  nbComptes: number;
+  nbEcarts: number;
+  valeurManquants?: number;
+  valeurSurplus?: number;
+  valeurNette: number;
+  nbProduitsACompter?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -133,6 +164,35 @@ export class InventaireService {
       AUTRE: 'Autre'
     };
     return labels[type] || type;
+  }
+
+  // ---------------------------------------------------------------- comptage d'inventaire
+
+  /** Comptage en cours (null s'il n'y en a pas). */
+  comptageEnCours(): Observable<Comptage | null> {
+    return this.http.get<Comptage>(`${this.apiUrl}/comptages/en-cours`, { observe: 'response' })
+      .pipe(map(r => r.status === 204 ? null : r.body));
+  }
+
+  historiqueComptages(): Observable<Comptage[]> {
+    return this.http.get<Comptage[]>(`${this.apiUrl}/comptages`);
+  }
+
+  demarrerComptage(categorieId: number | null): Observable<Comptage> {
+    return this.http.post<Comptage>(`${this.apiUrl}/comptages`, categorieId ? { categorieId } : {});
+  }
+
+  /** Quantité dans l'unité de stock (pièces, ou g/ml/cm). null = retirer le produit du comptage. */
+  compterProduit(comptageId: number, produitId: number, quantite: number | null): Observable<Comptage> {
+    return this.http.put<Comptage>(`${this.apiUrl}/comptages/${comptageId}/lignes`, { produitId, quantite });
+  }
+
+  validerComptage(comptageId: number): Observable<Comptage> {
+    return this.http.post<Comptage>(`${this.apiUrl}/comptages/${comptageId}/valider`, {});
+  }
+
+  abandonnerComptage(comptageId: number): Observable<Comptage> {
+    return this.http.post<Comptage>(`${this.apiUrl}/comptages/${comptageId}/abandonner`, {});
   }
 
   ajusterStock(ajustement: AjustementRequest): Observable<void> {

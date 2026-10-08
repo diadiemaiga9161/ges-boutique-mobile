@@ -148,7 +148,7 @@
         <div class="top-produit-row" *ngFor="let p of (stats?.produitsPlusVendus || []).slice(0, 5)">
           <div class="top-produit-row__info">
             <p class="top-produit-row__nom">{{ p.nom }}</p>
-            <p class="top-produit-row__qte">{{ p.quantiteVendue }} vendu(s)</p>
+            <p class="top-produit-row__qte">{{ $any(p).quantiteTexte || p.quantiteVendue }} vendu(s)</p>
           </div>
           <p class="top-produit-row__ca">{{ money(p.chiffreAffaire) }}</p>
         </div>

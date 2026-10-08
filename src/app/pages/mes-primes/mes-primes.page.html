@@ -1,0 +1,93 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Mes primes</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="mp-content">
+  <ion-refresher slot="fixed" (ionRefresh)="rafraichir($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Bandeau : gagné sur la période -->
+  <div class="mp-hero">
+    <p class="mp-hero__eyebrow">Gagné sur la période</p>
+    <h1 class="mp-hero__montant">{{ chargement ? '…' : cs.fmt(donnees?.resume?.primePeriode) }}</h1>
+    <div class="mp-hero__ligne" *ngIf="!chargement && donnees">
+      <span><ion-icon name="hourglass-outline" aria-hidden="true"></ion-icon> À recevoir : {{ cs.fmt(donnees.resume?.resteAPayer) }}</span>
+      <span><ion-icon name="wallet-outline" aria-hidden="true"></ion-icon> Reçu : {{ cs.fmt(donnees.resume?.payeTotal) }}</span>
+    </div>
+  </div>
+
+  <div class="mp-page">
+    <div class="fz-chips" role="group" aria-label="Période">
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'mois'" (click)="choisir('mois')">Ce mois</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'mois-dernier'" (click)="choisir('mois-dernier')">Mois dernier</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'annee'" (click)="choisir('annee')">Cette année</button>
+    </div>
+
+    <div class="mp-carte" *ngIf="chargement" aria-busy="true">
+      <div class="mp-sk" *ngFor="let i of [1,2,3]"></div>
+    </div>
+
+    <div class="mp-carte mp-erreur" *ngIf="!chargement && erreur" role="alert">
+      <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+      <p>{{ erreur }}</p>
+      <ion-button size="small" fill="outline" (click)="choisir(periode)">Réessayer</ion-button>
+    </div>
+
+    <ng-container *ngIf="!chargement && !erreur && donnees">
+      <h2 class="mp-titre">Ce qui vous rapporte en ce moment</h2>
+      <div class="mp-carte" *ngIf="!donnees.reglesEnCours.length">
+        <gl-empty-state icon="gift-outline" title="Aucune prime en cours" message="Le gérant peut en ajouter à tout moment."></gl-empty-state>
+      </div>
+
+      <article class="mp-carte" *ngFor="let r of donnees.reglesEnCours">
+        <div class="mp-regle">
+          <span class="mp-pastille" aria-hidden="true"><ion-icon [name]="icone(r)"></ion-icon></span>
+          <div class="mp-regle__texte">
+            <strong>{{ cible(r) }}</strong>
+            <span>{{ cs.decrire(r) }}</span>
+          </div>
+        </div>
+        <ng-container *ngIf="r.type === 'OBJECTIF'">
+          <div class="mp-barre" role="progressbar" [attr.aria-valuenow]="progression(r)" aria-valuemin="0" aria-valuemax="100">
+            <div class="mp-barre__rempli" [class.atteint]="r.objectifAtteint" [style.transform]="'scaleX(' + progression(r) / 100 + ')'"></div>
+          </div>
+          <div class="mp-pied">
+            <span>{{ r.quantiteVendue | number:'1.0-0' }} / {{ r.quantiteObjectif }} {{ (r.uniteBase || 'unité') | lowercase }}(s)</span>
+            <span *ngIf="r.objectifAtteint" class="mp-bravo">Objectif atteint ! Comptée le {{ r.dateFin | date:'dd/MM' }}</span>
+            <span *ngIf="!r.objectifAtteint">encore {{ reste(r) | number:'1.0-0' }} avant le {{ r.dateFin | date:'dd/MM' }}</span>
+          </div>
+        </ng-container>
+        <div class="mp-pied" *ngIf="r.type !== 'OBJECTIF'">
+          <span>{{ r.dateFin ? ('Jusqu\'au ' + (r.dateFin | date:'dd/MM/yyyy')) : 'Sans date de fin' }}</span>
+        </div>
+      </article>
+
+      <ng-container *ngIf="donnees.resume?.details?.length">
+        <h2 class="mp-titre">Détail de la période</h2>
+        <div class="mp-carte mp-liste">
+          <div class="mp-ligne" *ngFor="let d of donnees.resume!.details">
+            <div class="mp-ligne__texte"><strong>{{ cible(d) }}</strong><span>{{ d.quantiteVendue | number:'1.0-0' }} vendu(s)</span></div>
+            <span class="mp-ligne__montant">{{ cs.fmt(d.prime) }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <h2 class="mp-titre">Primes reçues</h2>
+      <div class="mp-carte" *ngIf="!donnees.paiements.length">
+        <p class="mp-vide">Aucun paiement reçu pour l'instant.</p>
+      </div>
+      <div class="mp-carte mp-liste" *ngIf="donnees.paiements.length">
+        <div class="mp-ligne" *ngFor="let p of donnees.paiements">
+          <div class="mp-ligne__texte"><strong>{{ p.datePaiement | date:'dd/MM/yyyy' }}</strong><span>{{ p.note || 'Paiement de prime' }}</span></div>
+          <span class="mp-ligne__montant">{{ cs.fmt(p.montant) }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</ion-content>

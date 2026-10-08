@@ -302,11 +302,11 @@
           </ion-select>
         </ion-item>
         <div class="two-cols">
-          <ion-item><ion-input label="Quantité" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
-          <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
+          <ion-item><ion-input [label]="'Quantité' + (uniteAchat ? ' (' + uniteAchat + ')' : '')" labelPlacement="floating" type="number" [(ngModel)]="achatForm.quantite"></ion-input></ion-item>
+          <ion-item><ion-input [label]="'Prix achat' + (uniteAchat ? ' / ' + uniteAchat : '')" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixAchatUnitaire"></ion-input></ion-item>
         </div>
         <div class="two-cols">
-          <ion-item><ion-input label="Prix vente" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
+          <ion-item><ion-input [label]="'Prix vente' + (uniteAchat ? ' / ' + uniteAchat : '')" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
           <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
         </div>
         <ion-button expand="block" (click)="saveAchatFournisseur()">Enregistrer achat</ion-button>
@@ -354,8 +354,8 @@
           </ion-item>
         </div>
         <div class="two-cols">
-          <ion-item><ion-input label="Quantité retournée" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.quantiteRetournee"></ion-input></ion-item>
-          <ion-item><ion-input label="Prix achat" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
+          <ion-item><ion-input [label]="'Quantité retournée' + (uniteRetour ? ' (' + uniteRetour + ')' : '')" labelPlacement="floating" type="number" [(ngModel)]="retourAchatForm.quantiteRetournee"></ion-input></ion-item>
+          <ion-item><ion-input [label]="'Prix achat' + (uniteRetour ? ' / ' + uniteRetour : '')" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
         </div>
         <ion-item><ion-textarea label="Motif" labelPlacement="floating" [(ngModel)]="retourAchatForm.motif"></ion-textarea></ion-item>
         <ion-button expand="block" fill="outline" (click)="saveRetourAchat()">Enregistrer retour achat</ion-button>
@@ -1178,7 +1178,7 @@
             <div class="fl-line" *ngFor="let l of factureLines; let i = index">
               <div class="fl-line__info">
                 <span class="fl-line__name">{{ getFactureLigneLabel(l) }}</span>
-                <span class="fl-line__detail">{{ l.quantite }} × {{ l.prixUnitaire | number:'1.0-0' }} FCFA<span *ngIf="l.remisePourcentage"> (−{{ l.remisePourcentage }}%)</span></span>
+                <span class="fl-line__detail">{{ l | mesureQte }} × {{ l.prixUnitaire | number:'1.0-0' }} FCFA<span *ngIf="l.remisePourcentage"> (−{{ l.remisePourcentage }}%)</span></span>
               </div>
               <strong class="fl-line__total">{{ ((l.prixUnitaire * (1 - (l.remisePourcentage || 0)/100)) * l.quantite) | number:'1.0-0' }} F</strong>
               <button type="button" class="fl-remove" (click)="removeFactureLigne(i)" aria-label="Supprimer l'article">
@@ -1339,11 +1339,24 @@
           </label>
           <div class="md-field">
             <span>Rôle</span>
-            <div class="fz-chips">
-              <button type="button" class="fz-chip" [class.fz-chip--active]="userForm.role === 'VENDEUR'" (click)="userForm.role = 'VENDEUR'">Vendeur</button>
-              <button type="button" class="fz-chip" [class.fz-chip--active]="userForm.role === 'ADMIN'" (click)="userForm.role = 'ADMIN'">Admin</button>
+            <!-- Rôles personnalisés activés : tous les rôles de la boutique -->
+            <div class="role-choix" *ngIf="rolesBoutique.length; else rolesDeBase" role="radiogroup" aria-label="Rôle">
+              <button type="button" class="role-choix__item" *ngFor="let r of rolesBoutique"
+                      role="radio" [attr.aria-checked]="roleChoisiId === r.id"
+                      [class.role-choix__item--actif]="roleChoisiId === r.id" (click)="choisirRole(r)">
+                <ion-icon [name]="roleChoisiId === r.id ? 'radio-button-on' : 'radio-button-off'" aria-hidden="true"></ion-icon>
+                <span class="role-choix__nom">{{ r.nom }}</span>
+                <span class="role-choix__base">basé sur {{ r.roleBase === 'ADMIN' ? 'Gérant' : 'Vendeur' }}</span>
+              </button>
             </div>
+            <ng-template #rolesDeBase>
+              <div class="fz-chips">
+                <button type="button" class="fz-chip" [class.fz-chip--active]="userForm.role === 'VENDEUR'" (click)="userForm.role = 'VENDEUR'">Vendeur</button>
+                <button type="button" class="fz-chip" [class.fz-chip--active]="userForm.role === 'ADMIN'" (click)="userForm.role = 'ADMIN'">Admin</button>
+              </div>
+            </ng-template>
           </div>
+          <p class="md-hint" *ngIf="userForm.id">Mot de passe : laissez vide pour garder l'actuel.</p>
         </section>
       </ng-container>
 
@@ -1616,22 +1629,22 @@
         <label class="md-field">
           <span>Produit *</span>
           <select [(ngModel)]="achatForm.produitId">
-            <option *ngFor="let p of products" [ngValue]="p.id">{{ p.nom }} · Stock: {{ p.quantite }}</option>
+            <option *ngFor="let p of products" [ngValue]="p.id">{{ p.nom }} · Stock: {{ p | mesureQte }}</option>
           </select>
         </label>
         <div class="md-two">
           <label class="md-field">
-            <span>Quantité *</span>
-            <input type="number" [(ngModel)]="achatForm.quantite" />
+            <span>Quantité{{ uniteAchat ? ' (' + uniteAchat + ')' : '' }} *</span>
+            <input type="number" [attr.step]="uniteAchat ? 'any' : 1" [(ngModel)]="achatForm.quantite" />
           </label>
           <label class="md-field md-field--amount">
-            <span>Prix achat *</span>
+            <span>Prix achat{{ uniteAchat ? ' / ' + uniteAchat : '' }} *</span>
             <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixAchatUnitaire" />
           </label>
         </div>
         <div class="md-two">
           <label class="md-field md-field--amount">
-            <span>Prix vente</span>
+            <span>Prix vente{{ uniteAchat ? ' / ' + uniteAchat : '' }}</span>
             <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente" />
           </label>
           <label class="md-field md-field--amount">

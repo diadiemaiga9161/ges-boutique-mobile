@@ -9,6 +9,38 @@ export class BoutiqueConfigService {
   private currentUrl: string = '';
   private currentNom: string = '';
 
+  // Liste "Boutiques partenaires" de la boutique quittée, capturée juste avant la
+  // déconnexion (changerBoutique()) pour que l'écran de sélection puisse l'afficher
+  // sans session valide. Purement en mémoire : jamais persistée, jamais nécessaire
+  // au tout premier lancement (fallback sur environment.boutiques dans ce cas).
+  private partenairesCache: { nom: string; url: string }[] | null = null;
+
+  /**
+   * Adresse de boutique sûre : seulement http(s), sinon null. Les adresses des boutiques
+   * partenaires sont saisies dans l'appli : sans ce contrôle, une adresse "javascript:..."
+   * serait exécutée au moment de changer de boutique.
+   */
+  static adresseSure(url: string | null | undefined): string | null {
+    try {
+      const u = new URL(String(url ?? '').trim());
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+      return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+    } catch {
+      return null;
+    }
+  }
+
+  setPartenairesCache(liste: { nom: string; url: string }[]): void {
+    // Les adresses non http(s) sont écartées dès la mise en cache.
+    this.partenairesCache = liste
+      .map(p => ({ nom: p.nom, url: BoutiqueConfigService.adresseSure(p.url) }))
+      .filter((p): p is { nom: string; url: string } => !!p.url);
+  }
+
+  getPartenairesCache(): { nom: string; url: string }[] | null {
+    return this.partenairesCache;
+  }
+
   async init(): Promise<void> {
     if (!environment.isCapacitor) return;
 

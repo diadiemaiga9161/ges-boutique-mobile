@@ -43,6 +43,10 @@ export interface FournisseurRequest {
 export interface Produit {
   id: number;
   nom: string;
+  /** Vente à la mesure : 'KG' | 'L' | 'M' (quantite en g/ml/cm, prix par g/ml/cm), sinon absent. */
+  modeMesure?: string | null;
+  /** Photo du produit (IMAGES_PRODUITS) : numéro de version, absent si pas de photo. */
+  imageVersion?: number | null;
   description?: string;
   categorie?: Categorie;
   categorieId?: number;
@@ -491,7 +495,7 @@ export class ProductService {
 
   annulerAchatFournisseur(achatId: number, utilisateurId?: number): Observable<any> {
     const params = utilisateurId ? new HttpParams().set('utilisateurId', String(utilisateurId)) : undefined;
-    return this.http.delete<any>(`${this.fournisseurAchatApiUrl}/achat/${achatId}`, { params }).pipe(
+    return this.http.post<any>(`${this.fournisseurAchatApiUrl}/achat/${achatId}/annuler`, {}, { params }).pipe(
       catchError(error => this.handleError(error, "annuler l'achat fournisseur"))
     );
   }
@@ -673,7 +677,11 @@ export class ProductService {
   }
 
   private extractOne<T>(response: any): T {
-    return response?.data || response?.produit || response?.categorie || response?.fournisseur || response;
+    // Un produit renvoyé tel quel contient lui-même `categorie`/`fournisseur` : s'il a son
+    // propre id, c'est lui l'objet (sinon on prenait sa catégorie → photo collée au mauvais produit).
+    if (response?.data || response?.produit) return response.data || response.produit;
+    if (response?.id != null) return response;
+    return response?.categorie || response?.fournisseur || response;
   }
 
   private handleError(error: any, context: string): Observable<never> {

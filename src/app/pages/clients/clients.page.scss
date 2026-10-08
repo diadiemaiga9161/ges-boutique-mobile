@@ -871,3 +871,40 @@ ion-segment { flex-shrink: 0; }
 @media (min-width: 1024px) {
   .client-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+// ── Clients ayant commandé depuis le portail (badge + filtre) ──
+.filtre-portail {
+  margin-top: 10px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--gl-ok);
+  background: transparent;
+  color: var(--gl-ok);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  ion-icon { font-size: 16px; }
+
+  &--actif { background: var(--gl-ok); color: #fff; }
+}
+
+.badge-portail {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+  background: var(--gl-ok-soft);
+  color: var(--gl-ok);
+
+  ion-icon { font-size: 12px; }
+}

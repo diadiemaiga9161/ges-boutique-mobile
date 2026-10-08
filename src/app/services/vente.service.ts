@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { BoutiqueService } from './boutique.service';
 import { FactureDesignService } from './facture-design.service';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 export enum ModePaiement {
   ESPECES = 'ESPECES',
@@ -111,6 +112,8 @@ export interface LigneVenteDto {
   remiseMontant?: number;
   prixApresRemise?: number;
   sousTotal: number;
+  /** Vente à la mesure : 'KG' | 'L' | 'M', sinon absent. */
+  modeMesure?: string | null;
 }
 
 export interface VenteMap {
@@ -542,7 +545,7 @@ export class VenteService {
       const nomProduit = this.echapper(item.produitNom || item.designation || 'Produit');
       const sousTotal = item.sousTotal ?? (item.quantite * item.prixUnitaire);
       return `<div class="tk-ligne">${nomProduit}</div>
-        <div class="tk-detail"><span>${item.quantite} x ${this.formatPrice(item.prixUnitaire)}</span><span>${this.formatPrice(sousTotal)}</span></div>`;
+        <div class="tk-detail"><span>${qteDoc(item)} x ${puDoc(item, v => this.formatPrice(v))}</span><span>${this.formatPrice(sousTotal)}</span></div>`;
     }).join('');
 
     const sousTotal = (vente.montantTotal || 0) + (vente.montantRemiseTotal || 0);
@@ -614,6 +617,9 @@ export class VenteService {
     document.body.appendChild(overlay);
     if (autoprint) {
       frame.addEventListener('load', () => setTimeout(() => {
+        // Ticket automatique (caisse) : l'aperçu se ferme une fois la fenêtre
+        // « Imprimer » refermée, le caissier n'a plus à toucher « Fermer ».
+        frame.contentWindow?.addEventListener('afterprint', () => overlay.remove(), { once: true });
         frame.contentWindow?.focus();
         frame.contentWindow?.print();
       }, 400));
@@ -732,6 +738,8 @@ export class VenteService {
         produitId: Number(line.produitId ?? product.id ?? 0),
         produitNom: line.produitNom || product.nom || line.nom || 'Produit',
         quantite,
+        // Vente à la mesure : indispensable pour afficher "1,25 kg" au lieu de 1250.
+        modeMesure: line.modeMesure ?? product.modeMesure ?? null,
         prixUnitaire,
         prixAchat: Number(line.prixAchat ?? product.prixAchat ?? 0),
         remisePourcentage: Number(line.remisePourcentage || 0),
@@ -778,8 +786,8 @@ export class VenteService {
         : item.remiseMontant ? this.formatPrice(item.remiseMontant) : '—';
       return `<tr class="${i % 2 === 0 ? 'even' : ''}">
         <td class="td-name">${item.produitNom || item.designation || 'Produit'}</td>
-        <td class="td-center">${item.quantite}</td>
-        <td class="td-right">${this.formatPrice(item.prixUnitaire)}</td>
+        <td class="td-center">${qteDoc(item)}</td>
+        <td class="td-right">${puDoc(item, v => this.formatPrice(v))}</td>
         <td class="td-center td-remise">${remise}</td>
         <td class="td-right td-bold">${this.formatPrice(item.sousTotal ?? (item.quantite * item.prixUnitaire))}</td>
       </tr>`;

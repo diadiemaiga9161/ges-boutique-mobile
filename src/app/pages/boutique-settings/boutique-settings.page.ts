@@ -130,8 +130,9 @@ export class BoutiqueSettingsPage implements OnInit {
     const file: File = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      this.presentToast('Logo trop volumineux (max 5MB)', 'danger');
+    // Réduit avant l'envoi (BoutiqueService.uploadLogo) : une photo de téléphone passe.
+    if (file.size > 15 * 1024 * 1024) {
+      this.presentToast('Logo trop volumineux (max 15 Mo)', 'danger');
       return;
     }
 
@@ -161,7 +162,7 @@ export class BoutiqueSettingsPage implements OnInit {
       },
       error: error => {
         this.uploadingLogo = false;
-        this.presentToast(error.message || 'Upload impossible', 'danger');
+        this.presentToast(error?.error?.message || 'Envoi du logo impossible', 'danger');
       }
     });
   }

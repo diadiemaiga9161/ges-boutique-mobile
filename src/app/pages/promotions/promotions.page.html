@@ -46,7 +46,7 @@
           </span>
           <p class="sugg-item__meta">
             <ion-icon name="cube-outline"></ion-icon>
-            {{ s.quantite }} {{ s.uniteMesure }}
+            {{ s | mesureQte }}<ng-container *ngIf="!s.modeMesure"> {{ s.uniteMesure }}</ng-container>
           </p>
           <p class="sugg-item__meta">
             <ion-icon name="calendar-outline"></ion-icon>

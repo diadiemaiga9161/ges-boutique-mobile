@@ -7,7 +7,9 @@ import { ThemeService, ThemeMode } from '../../services/theme.service';
 import { ConfirmationVocaleService } from '../../services/confirmation-vocale.service';
 import { TutorielVendeurService } from '../../services/tutoriel-vendeur.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { TransfertService } from '../../services/transfert.service';
 import { environment } from '../../../environments/environment';
+import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 
 export const COUNTRY_CODES = [
   { code: '+223', flag: '🇲🇱', name: 'Mali' },
@@ -73,6 +75,7 @@ export class ProfilePage implements OnInit {
     private confirmationVocale: ConfirmationVocaleService,
     private tutorielVendeur: TutorielVendeurService,
     private boutiqueConfig: BoutiqueConfigService,
+    private transfertService: TransfertService,
     private router: Router
   ) {}
 
@@ -80,16 +83,44 @@ export class ProfilePage implements OnInit {
     this.tutorielVendeur.demanderAffichage();
   }
 
-  // Visible seulement sur l'appli native (Capacitor) — sur le web, une boutique
-  // = un déploiement séparé, il n'y a rien à "changer" au sens mobile du terme.
+  // Visible partout (natif ET web/PWA) — voir changerBoutique() pour le
+  // comportement différent selon le contexte.
   get peutChangerBoutique(): boolean {
-    return environment.isCapacitor;
+    return true;
   }
 
-  // Reprend exactement le mécanisme déjà en place sur React Native
-  // (handleChangeBoutique) : efface la boutique choisie + la session, puis
-  // renvoie vers l'écran de choix de boutique.
+  // Natif (Capacitor) : reprend exactement le mécanisme déjà en place sur React
+  // Native (handleChangeBoutique) — efface la boutique choisie + la session, puis
+  // renvoie vers l'écran de choix de boutique (un seul "shell" d'appli, qui
+  // repointe juste vers un autre serveur).
+  // Web/PWA : chaque boutique est un site séparé (origine différente), donc pas
+  // de session à effacer à l'avance — la sélection fera une vraie navigation de
+  // page (voir boutique-select.page.ts), qui change d'origine toute seule.
   async changerBoutique(): Promise<void> {
+    // Récupère la liste "Boutiques partenaires" de CETTE boutique avant de perdre la
+    // session côté natif (gérée par l'utilisateur lui-même depuis Transferts, plus
+    // figée dans le code) — timeout court et jamais bloquant : en cas d'échec on ne
+    // touche pas au cache (reste null), l'écran de sélection retombe alors sur la
+    // liste de secours (premier lancement), plutôt que d'afficher à tort une liste vide.
+    const partenaires = await firstValueFrom(
+      this.transfertService.getPartenaires().pipe(
+        timeout(4000),
+        catchError(() => of(null))
+      )
+    );
+    if (partenaires) {
+      this.boutiqueConfig.setPartenairesCache(
+        partenaires.filter(p => p.actif).map(p => ({ nom: p.nom, url: p.url }))
+      );
+    }
+
+    if (!environment.isCapacitor) {
+      // Web : on garde la session active tant que rien n'est choisi (retour en
+      // arrière possible sans être déconnecté pour rien).
+      this.router.navigateByUrl('/boutique-select');
+      return;
+    }
+
     await this.boutiqueConfig.clearBoutique();
     this.auth.signout();
     this.router.navigateByUrl('/boutique-select', { replaceUrl: true });

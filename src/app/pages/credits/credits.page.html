@@ -482,7 +482,7 @@
         <div class="gl-info" *ngIf="!loadingDetail && detailVente">
           <div class="prod-row" *ngFor="let l of (detailVente.produits || detailVente.lignes || [])">
             <span class="prod-name">{{ l.produitNom }}</span>
-            <span class="prod-qty-txt">× {{ l.quantite }}</span>
+            <span class="prod-qty-txt">× {{ l | mesureQte }}</span>
             <span class="prod-price">{{ money(l.sousTotal) }}</span>
           </div>
           <div class="prod-row" *ngIf="(detailVente.produits || detailVente.lignes || []).length === 0">
@@ -710,7 +710,7 @@
         <div class="gl-info" *ngIf="!loadingVente && selectedVente">
           <div class="prod-row" *ngFor="let l of (selectedVente.produits || selectedVente.lignes || [])">
             <span class="prod-name">{{ l.produitNom }}</span>
-            <span class="prod-qty-txt">× {{ l.quantite }}</span>
+            <span class="prod-qty-txt">× {{ l | mesureQte }}</span>
             <span class="prod-price">{{ money(l.sousTotal) }}</span>
           </div>
         </div>

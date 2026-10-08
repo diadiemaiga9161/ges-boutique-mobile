@@ -203,7 +203,7 @@
                   <ion-icon name="cube-outline"></ion-icon>
                   <div class="glc-line__info">
                     <span class="glc-line__name">{{ l.produitNom || l.produit?.nom || '—' }}</span>
-                    <span class="glc-line__sub">{{ l.quantite }} x {{ money(l.prixAchatUnitaire) }}</span>
+                    <span class="glc-line__sub">{{ l | mesureQte }} x {{ money(l.prixAchatUnitaire) }}</span>
                   </div>
                   <strong class="glc-line__total">{{ money((l.quantite || 0) * (l.prixAchatUnitaire || 0)) }}</strong>
                 </div>
@@ -400,7 +400,7 @@
                   <div class="glc-kv__item"><span>{{ 'SUPPLIERS.REMAINING' | translate }}</span><strong class="is-bad">{{ money(a.montantRestant) }}</strong></div>
                 </div>
                 <div class="glc-tags" *ngIf="(a.lignes || []).length">
-                  <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produit?.nom || l.produitNom }} x{{ l.quantite }}</span>
+                  <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produit?.nom || l.produitNom }} x{{ l | mesureQte }}</span>
                 </div>
               </div>
               <div class="glc-actions">
@@ -426,7 +426,7 @@
                     <span class="rank" [class.rank--first]="i === 0">{{ i + 1 }}</span>
                     {{ tp.nom }}
                   </span>
-                  <strong>{{ tp.quantite }} {{ 'SUPPLIERS.UNITS' | translate }}</strong>
+                  <strong>{{ tp | mesureQte }} {{ 'SUPPLIERS.UNITS' | translate }}</strong>
                 </div>
               </div>
             </article>
@@ -453,7 +453,7 @@
                 <div class="glc-kv__item" *ngIf="(a.montantRestant || 0) > 0"><span>{{ 'SUPPLIERS.REMAINING' | translate }}</span><strong class="is-bad">{{ money(a.montantRestant) }}</strong></div>
               </div>
               <div class="glc-tags" *ngIf="(a.lignes || []).length">
-                <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produitNom || l.produit?.nom }} x{{ l.quantite }}</span>
+                <span class="gl-pill gl-pill--neutral" *ngFor="let l of (a.lignes || []); trackBy: trackById">{{ l.produitNom || l.produit?.nom }} x{{ l | mesureQte }}</span>
               </div>
             </div>
           </article>
@@ -590,16 +590,16 @@
           </select>
         </label>
         <label class="md-field">
-          <span>{{ 'SUPPLIERS.QUANTITY' | translate }} *</span>
-          <input [(ngModel)]="achatForm.quantite" type="number" min="1" />
+          <span>{{ 'SUPPLIERS.QUANTITY' | translate }}<ng-container *ngIf="uniteAchat"> ({{ uniteAchat }})</ng-container> *</span>
+          <input [(ngModel)]="achatForm.quantite" type="number" [attr.min]="uniteAchat ? 0 : 1" [attr.step]="uniteAchat ? 'any' : 1" />
         </label>
         <div class="md-two">
           <label class="md-field">
-            <span>{{ 'SUPPLIERS.UNIT_PRICE' | translate }} *</span>
+            <span>{{ 'SUPPLIERS.UNIT_PRICE' | translate }}<ng-container *ngIf="uniteAchat"> / {{ uniteAchat }}</ng-container> *</span>
             <input [(ngModel)]="achatForm.prixAchatUnitaire" type="text" inputmode="numeric" appMontantInput />
           </label>
           <label class="md-field">
-            <span>{{ 'SUPPLIERS.SALE_PRICE' | translate }}</span>
+            <span>{{ 'SUPPLIERS.SALE_PRICE' | translate }}<ng-container *ngIf="uniteAchat"> / {{ uniteAchat }}</ng-container></span>
             <input [(ngModel)]="achatForm.prixVente" type="text" inputmode="numeric" appMontantInput />
           </label>
         </div>

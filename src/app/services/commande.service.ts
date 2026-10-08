@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 export enum StatutCommande {
   BROUILLON = 'BROUILLON',
@@ -50,6 +51,9 @@ export interface Commande {
   fraisLivraison?: number;
   chauffeurNom?: string;
   chauffeurTelephone?: string;
+  /** Après confirmation : PRETE puis LIVREE (absent = pas encore prête). */
+  etapeLivraison?: 'PRETE' | 'LIVREE' | null;
+  dateEtapeLivraison?: string | null;
 }
 
 export interface CommandeRequest {
@@ -110,6 +114,11 @@ export class CommandeService {
     return this.http.patch<any>(`${this.apiUrl}/${id}/payer-credit`, { montant });
   }
 
+  /** Commande confirmée → Prête → Livrée (null = revenir à « confirmée »). */
+  changerEtapeLivraison(id: number, etape: 'PRETE' | 'LIVREE' | null): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}/livraison`, { etape });
+  }
+
   payerCreditsGroupes(ids: number[], montantTotal: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/payer-credits-groupes`, { ids, montantTotal });
   }
@@ -153,8 +162,8 @@ export class CommandeService {
       <tr>
         <td>${i + 1}</td>
         <td>${l.produit?.nom || l.produitNom || ''}</td>
-        <td style="text-align:center">${l.quantite}</td>
-        <td style="text-align:right">${this.formatMontant(l.prixUnitaire)}</td>
+        <td style="text-align:center">${qteDoc(l)}</td>
+        <td style="text-align:right">${puDoc(l, v => this.formatMontant(v))}</td>
         <td style="text-align:right">${this.formatMontant(l.sousTotal || l.prixUnitaire * l.quantite)}</td>
       </tr>`).join('');
     const creditHtml = commande.estCredit ? `

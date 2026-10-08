@@ -335,7 +335,7 @@
           <div *ngFor="let p of topProduits" class="rpt-mini-produit">
             <div class="rpt-mini-produit__row">
               <span class="rpt-mini-produit__name">{{ p.produitNom }}</span>
-              <span class="rpt-mini-produit__qty">{{ p.quantiteVendue }}</span>
+              <span class="rpt-mini-produit__qty">{{ $any(p).quantiteTexte || p.quantiteVendue }}</span>
             </div>
             <div class="rpt-bar">
               <div [style.width.%]="pct(p.quantiteVendue, maxQte)" class="rpt-bar__fill"></div>
@@ -455,7 +455,7 @@
                 [style.width.%]="produits[0].chiffreAffaire > 0 ? (p.chiffreAffaire / produits[0].chiffreAffaire * 100) : 0">
               </div>
             </div>
-            <p class="rpt-row__meta">{{ p.quantite }} unité(s) vendue(s)</p>
+            <p class="rpt-row__meta">{{ $any(p).quantiteTexte || (p.quantite + ' unité(s)') }} vendue(s)</p>
           </div>
           <p class="rpt-amount" *ngIf="!isVendeur">{{ money(p.chiffreAffaire) }}</p>
         </article>

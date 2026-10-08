@@ -1,0 +1,56 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start"><ion-button (click)="annuler.emit()">Annuler</ion-button></ion-buttons>
+    <ion-title>{{ produit?.nom }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ps-content">
+  <div class="ps-page">
+    <p class="ps-prix">{{ fmtPrix(prixParUnite) }} / {{ info.unite }} · stock {{ stockAffiche }}</p>
+
+    <div class="ps-segment" role="radiogroup" aria-label="Façon de vendre">
+      <button type="button" role="radio" [attr.aria-checked]="mode === 'poids'" [class.actif]="mode === 'poids'" (click)="mode = 'poids'; erreur = ''">
+        Par quantité ({{ info.unite }})
+      </button>
+      <button type="button" role="radio" [attr.aria-checked]="mode === 'montant'" [class.actif]="mode === 'montant'" (click)="mode = 'montant'; erreur = ''">
+        Par montant (F)
+      </button>
+    </div>
+
+    <ng-container *ngIf="mode === 'poids'">
+      <label class="ps-label" for="ps-poids">Quantité vendue</label>
+      <div class="ps-champ">
+        <input id="ps-poids" type="text" inputmode="decimal" autocomplete="off" [(ngModel)]="saisiePoids"
+               (ngModelChange)="erreur = ''" (keydown.enter)="confirmer()" placeholder="ex : 1,25">
+        <span>{{ info.unite }}</span>
+      </div>
+      <div class="ps-rapides" role="group" aria-label="Quantités rapides">
+        <button type="button" *ngFor="let r of info.rapides" (click)="rapide(r)">{{ formater(r) }} {{ info.unite }}</button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="mode === 'montant'">
+      <label class="ps-label" for="ps-montant">Le client demande pour</label>
+      <div class="ps-champ">
+        <input id="ps-montant" type="text" inputmode="numeric" autocomplete="off" [(ngModel)]="saisieMontant"
+               (ngModelChange)="erreur = ''" (keydown.enter)="confirmer()" placeholder="ex : 500">
+        <span>F</span>
+      </div>
+    </ng-container>
+
+    <div class="ps-resultat" aria-live="polite">
+      <div class="ps-resultat__ligne">
+        <span>{{ mode === 'poids' ? 'À payer' : 'À servir' }}</span>
+        <strong>{{ mode === 'poids' ? fmtPrix(montant) : poidsTexte }}</strong>
+      </div>
+      <p *ngIf="quantite > 0">{{ poidsTexte }} × {{ fmtPrix(prixParUnite) }}/{{ info.unite }} = {{ fmtPrix(montant) }}</p>
+    </div>
+
+    <p class="ps-erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+    <ion-button expand="block" class="ps-valider" (click)="confirmer()">
+      {{ quantiteInitiale ? 'Modifier' : 'Ajouter au panier' }}
+    </ion-button>
+  </div>
+</ion-content>

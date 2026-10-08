@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 // apiUrl = /api/clients  |  avancesUrl = /api/avances (endpoint séparé côté backend)
@@ -104,6 +104,15 @@ export class ClientService {
     return this.http.get<any>(this.apiUrl).pipe(
       map(response => this.extractList(response).map(client => this.normalize(client))),
       catchError(error => this.handleError(error, 'récupérer les clients'))
+    );
+  }
+
+  /** Ids des clients ayant déjà commandé depuis le portail (badge « En ligne »).
+   *  Jamais bloquant : en cas d'erreur, liste vide. */
+  getPortailIds(): Observable<number[]> {
+    return this.http.get<any>(`${this.apiUrl}/portail-ids`).pipe(
+      map(response => (response?.clientIds || []) as number[]),
+      catchError(() => of([]))
     );
   }
 

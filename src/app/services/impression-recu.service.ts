@@ -38,6 +38,8 @@ const LF = 0x0a;
  * toutes les erreurs sont interceptées et affichées en toast/alerte, jamais relancées vers
  * l'écran appelant.
  */
+import { infoMesure, lireNombre, prixAffiche, puDoc, qteAffichee, qteDoc, qteStockee, texteQte } from '../utils/mesure.util';
+
 @Injectable({ providedIn: 'root' })
 export class ImpressionRecuService {
 
@@ -285,7 +287,13 @@ export class ImpressionRecuService {
     const lignes = (vente.lignes?.length ? vente.lignes : vente.produits) || [];
     for (const l of lignes) {
       ligneTexte(l.produitNom || 'Produit');
-      const qtePrix = `  ${l.quantite} x ${this.money(l.prixUnitaire)}`;
+      // Vente à la mesure : "1,25 kg x 600 F/kg" plutôt que "1250 x 0,6".
+      const la: any = l;
+      const m = { modeMesure: la.modeMesure ?? la.produit?.modeMesure ?? null };
+      const info = infoMesure(m);
+      const qtePrix = info
+        ? `  ${texteQte(m, l.quantite)} x ${this.money(prixAffiche(m, l.prixUnitaire))}/${info.unite}`
+        : `  ${qteDoc(l)} x ${puDoc(l, v => this.money(v))}`;
       const total = this.money(l.sousTotal ?? (l.quantite * l.prixUnitaire));
       ligneTexte(this.deuxColonnes(qtePrix, total, largeur));
     }

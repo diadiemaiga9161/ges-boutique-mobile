@@ -11,6 +11,7 @@ import { Facture, FactureService, LigneFactureRequest } from '../../services/fac
 import { PaiementEmploye, PaiementEmployeService } from '../../services/paiement-employe.service';
 import { Fournisseur, ProductService, Produit } from '../../services/product.service';
 import { AppUser, UserService } from '../../services/user.service';
+import { RoleBoutique, RoleService } from '../../services/role.service';
 import { MobileResourceService, ResourceConfig } from '../../services/mobile-resource.service';
 import { DepotClient, DepotClientRequest, DepotGarde, DepotGardeService, RetraitDepotRequest } from '../../services/depot-garde.service';
 import { ObjectifFournisseur, ObjectifFournisseurService, ObjectifFournisseurRequest, MOIS_LABELS } from '../../services/objectif-fournisseur.service';
@@ -28,6 +29,8 @@ function getCurrentIsoWeekYear(): { semaine: number; annee: number } {
   const semaine = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return { semaine, annee: d.getUTCFullYear() };
 }
+
+import { infoMesure, prixStocke, qteStockee } from '../../utils/mesure.util';
 
 @Component({
   selector: 'app-resources',
@@ -154,8 +157,34 @@ export class ResourcesPage {
     public objectifVendeurService: ObjectifVendeurService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private roleService: RoleService
   ) {}
+
+  // ── Rôle d'une personne : tous les rôles (Gérant, Vendeur + rôles créés) quand les
+  //    rôles personnalisés sont activés ; sinon les deux choix d'origine.
+  rolesBoutique: RoleBoutique[] = [];
+  roleChoisiId: number | null = null;
+  private roleInitialId: number | null = null;
+
+  private chargerRoles(apres?: () => void): void {
+    if (!this.roleService.rolesActifs || !this.auth.isAdmin()) { this.rolesBoutique = []; apres?.(); return; }
+    this.roleService.lister().subscribe({
+      next: roles => { this.rolesBoutique = roles; apres?.(); },
+      error: () => { this.rolesBoutique = []; apres?.(); }
+    });
+  }
+
+  /** Rôle actuel d'une personne : son rôle créé, sinon le rôle système de sa base. */
+  private roleIdDe(u: { role?: string; roleBoutiqueId?: number | null }): number | null {
+    if (u.roleBoutiqueId) return u.roleBoutiqueId;
+    return this.rolesBoutique.find(r => r.systeme && r.roleBase === (u.role || 'VENDEUR'))?.id ?? null;
+  }
+
+  choisirRole(r: RoleBoutique): void {
+    this.roleChoisiId = r.id;
+    this.userForm.role = r.roleBase;
+  }
 
   // Modales centrées (design commun) : fermeture à la touche Échap, en plus du X et
   // de l'overlay — même effet que l'ancien bouton X / (didDismiss)="showXxx = false".
@@ -258,6 +287,9 @@ export class ResourcesPage {
     this.selected = undefined;
     this.resetForms();
     this.showForm = true;
+    if (this.type === 'vendeurs') {
+      this.chargerRoles(() => { this.roleInitialId = null; this.roleChoisiId = this.roleIdDe({ role: 'VENDEUR' }); });
+    }
   }
 
   edit(item: any): void {
@@ -268,7 +300,10 @@ export class ResourcesPage {
     if (this.type === 'dettes') this.detteForm = { id: item.id, clientId: item.clientId || 0, montant: item.montantInitial || item.montant || 0, dateCredit: this.toDateInput(item.dateCredit), description: item.description || '' };
     if (this.type === 'employes') this.employeForm = { id: item.id, nom: item.nom || '', prenom: item.prenom || '', poste: item.poste || '', salaireMensuel: item.salaireMensuel || 0, telephone: item.telephone || '', observation: item.observation || '', statut: item.statut || 'ACTIF', dateEmbauche: this.toDateInput(item.dateEmbauche) };
     if (this.type === 'fournisseurs') this.fournisseurForm = { id: item.id, nom: item.nom || '', code: item.code || '', adresse: item.adresse || '', telephone: item.telephone || '', email: item.email || '', description: item.description || '', actif: item.actif !== false };
-    if (this.type === 'vendeurs') this.userForm = { id: item.id, username: item.username || '', password: '', nomComplet: item.nomComplet || '', email: item.email || '', telephone: item.telephone || '', role: item.role || 'VENDEUR' };
+    if (this.type === 'vendeurs') {
+      this.userForm = { id: item.id, username: item.username || '', password: '', nomComplet: item.nomComplet || '', email: item.email || '', telephone: item.telephone || '', role: item.role || 'VENDEUR' };
+      this.chargerRoles(() => { this.roleChoisiId = this.roleInitialId = this.roleIdDe(item); });
+    }
     if (this.type === 'depots-garde') this.depotForm = { id: item.id, depotClientId: item.depotClientId || undefined, nom: item.nom || '', prenom: item.prenom || '', numero: item.numero || '', montant: item.montantInitial || 0, observation: item.observation || '' };
     if (this.type === 'objectifs-fournisseur') this.objectifForm = { id: item.id, fournisseurId: item.fournisseurId || 0, produitId: item.produitId || undefined, mois: item.mois || new Date().getMonth() + 1, annee: item.annee || new Date().getFullYear(), objectifQuantite: item.objectifQuantite || 0, bonusParUnite: item.bonusParUnite || 0, quantiteAtteinte: item.quantiteAtteinte || 0, quantiteBonusRecue: item.quantiteBonusRecue || 0, observation: item.observation || '' };
     if (this.type === 'objectifs-vendeur') {
@@ -335,15 +370,31 @@ export class ResourcesPage {
     });
   }
 
+  /** Unité (kg, L, m) du produit choisi, s'il est vendu à la mesure. */
+  get uniteAchat(): string | null {
+    return infoMesure(this.products.find(p => p.id === this.achatForm.produitId) as any)?.unite ?? null;
+  }
+
+  /** Ligne d'achat envoyée au serveur : kg et prix au kg convertis en g et prix au g. */
+  private ligneAchatEnvoyee(): any {
+    const m: any = this.products.find(p => p.id === this.achatForm.produitId);
+    const mesure = infoMesure(m) ? m : null;
+    return {
+      produitId: this.achatForm.produitId,
+      quantite: mesure ? qteStockee(mesure, Number(this.achatForm.quantite)) : this.achatForm.quantite,
+      prixAchatUnitaire: mesure ? prixStocke(mesure, Number(this.achatForm.prixAchatUnitaire)) : this.achatForm.prixAchatUnitaire,
+      prixVente: mesure && this.achatForm.prixVente ? prixStocke(mesure, Number(this.achatForm.prixVente)) : this.achatForm.prixVente
+    };
+  }
+
+  get uniteRetour(): string | null {
+    return infoMesure(this.products.find(p => p.id === this.retourAchatForm.produitId) as any)?.unite ?? null;
+  }
+
   saveAchatFournisseur(): void {
     this.productService.creerAchat({
       fournisseurId: this.achatForm.fournisseurId,
-      lignes: [{
-        produitId: this.achatForm.produitId,
-        quantite: this.achatForm.quantite,
-        prixAchatUnitaire: this.achatForm.prixAchatUnitaire,
-        prixVente: this.achatForm.prixVente
-      }],
+      lignes: [this.ligneAchatEnvoyee()],
       montantPaye: this.achatForm.montantPaye,
       commentaire: this.achatForm.commentaire,
       utilisateurId: this.auth.getUserId(),
@@ -396,6 +447,8 @@ export class ResourcesPage {
   }
 
   saveRetourAchat(): void {
+    const m: any = (this.products as any[]).find(p => p.id === this.retourAchatForm.produitId);
+    const mesure = infoMesure(m) ? m : null;
     this.productService.effectuerRetourAchat({
       achatId: this.retourAchatForm.achatId,
       motif: this.retourAchatForm.motif,
@@ -403,8 +456,8 @@ export class ResourcesPage {
       utilisateurId: this.auth.getUserId(),
       lignes: [{
         produitId: this.retourAchatForm.produitId,
-        quantiteRetournee: this.retourAchatForm.quantiteRetournee,
-        prixUnitaire: this.retourAchatForm.prixAchatUnitaire
+        quantiteRetournee: mesure ? qteStockee(mesure, Number(this.retourAchatForm.quantiteRetournee)) : this.retourAchatForm.quantiteRetournee,
+        prixUnitaire: mesure ? prixStocke(mesure, Number(this.retourAchatForm.prixAchatUnitaire)) : this.retourAchatForm.prixAchatUnitaire
       }]
     }).subscribe({
       next: () => this.afterAction('Retour achat enregistré'),
@@ -716,10 +769,27 @@ export class ResourcesPage {
       this.presentToast('Le nom complet est obligatoire', 'danger'); return;
     }
     const { id: userId, ...userPayload } = this.userForm;
+    // Modification : case mot de passe vide = on garde l'ancien (sinon il était effacé).
+    if (userId && !userPayload.password?.trim()) delete (userPayload as any).password;
     const request = userId
       ? this.userService.updateUser(userId, userPayload)
       : this.userService.createUser(userPayload);
-    request.subscribe({ next: () => this.afterAction('Utilisateur enregistré'), error: error => this.presentToast(error?.error?.message || error.message || 'Utilisateur impossible', 'danger') });
+    const erreur = (error: any) => this.presentToast(error?.error?.message || error.message || 'Utilisateur impossible', 'danger');
+    request.subscribe({
+      next: (enregistre: AppUser) => {
+        // Rôle créé choisi (ou changé) : attribué après l'enregistrement de la personne.
+        const id = userId || enregistre?.id;
+        if (this.rolesBoutique.length && id && this.roleChoisiId && this.roleChoisiId !== this.roleInitialId) {
+          this.roleService.attribuer(id, this.roleChoisiId).subscribe({
+            next: () => this.afterAction('Utilisateur enregistré'),
+            error: erreur
+          });
+        } else {
+          this.afterAction('Utilisateur enregistré');
+        }
+      },
+      error: erreur
+    });
   }
 
   private fillFacture(facture: Facture): void {
@@ -1052,7 +1122,7 @@ export class ResourcesPage {
     this.detteForm.id = 0;
     this.employeForm.id = 0;
     this.fournisseurForm.id = 0;
-    this.userForm.id = 0;
+    this.userForm = { id: 0, username: '', password: '', nomComplet: '', email: '', telephone: '', role: 'VENDEUR' };
     this.depotForm = { id: 0, depotClientId: undefined, nom: '', prenom: '', numero: '', montant: 0, observation: '' };
     this.selectedDepotClient = undefined;
     this.depotClientSearch = '';
@@ -1325,7 +1395,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
     }
     this.productService.creerAchat({
       fournisseurId: this.achatForm.fournisseurId,
-      lignes: [{ produitId: this.achatForm.produitId, quantite: this.achatForm.quantite, prixAchatUnitaire: this.achatForm.prixAchatUnitaire, prixVente: this.achatForm.prixVente }],
+      lignes: [this.ligneAchatEnvoyee()],
       montantPaye: this.achatForm.montantPaye,
       utilisateurId: this.auth.getUserId()
     }).subscribe({

@@ -1,4 +1,6 @@
 import { NgModule } from '@angular/core';
+import { PeseeSheetComponent } from './pesee/pesee-sheet.component';
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../pipes/mesure.pipe';
 
 import { StatCardComponent } from './stat-card/stat-card.component';
 import { ProductCardComponent } from './product-card/product-card.component';
@@ -26,7 +28,11 @@ import { ConfirmSheetComponent } from './confirm-sheet/confirm-sheet.component';
     SectionHeaderComponent,
     QuickActionComponent,
     BottomSheetComponent,
-    ConfirmSheetComponent
+    ConfirmSheetComponent,
+    PeseeSheetComponent,
+    MesureQtePipe,
+    MesurePuPipe,
+    MesureSuffixePipe
   ],
   exports: [
     StatCardComponent,
@@ -37,7 +43,11 @@ import { ConfirmSheetComponent } from './confirm-sheet/confirm-sheet.component';
     SectionHeaderComponent,
     QuickActionComponent,
     BottomSheetComponent,
-    ConfirmSheetComponent
+    ConfirmSheetComponent,
+    PeseeSheetComponent,
+    MesureQtePipe,
+    MesurePuPipe,
+    MesureSuffixePipe
   ]
 })
 export class SharedComponentsModule {}

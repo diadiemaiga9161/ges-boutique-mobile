@@ -95,7 +95,7 @@
               <p class="glc-sub">{{ formatDate(s.dateMouvement) }}</p>
             </div>
             <div class="glc-right">
-              <p class="glc-amount glc-amount--bad">-{{ s.quantite }}</p>
+              <p class="glc-amount glc-amount--bad">-{{ s | mesureQte }}</p>
               <span class="gl-pill" [ngClass]="'gl-pill--' + toneTypeSortie(s.typeSortie || '')">
                 {{ inventaireService.getTypeSortieLabel(s.typeSortie || 'AUTRE') }}
               </span>
@@ -105,7 +105,7 @@
           <div class="glc-meta">
             <span class="glc-meta__item">
               <ion-icon name="swap-horizontal-outline"></ion-icon>
-              {{ s.quantiteAvant }} → {{ s.quantiteApres }}
+              {{ s | mesureQte: s.quantiteAvant }} → {{ s | mesureQte: s.quantiteApres }}
             </span>
             <span class="glc-meta__item" *ngIf="s.utilisateur?.nomComplet">
               <ion-icon name="person-outline"></ion-icon>

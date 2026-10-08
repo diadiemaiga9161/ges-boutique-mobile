@@ -1,0 +1,202 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Primes sur produits</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="reglages()" aria-label="Types de primes utilisés">
+        <ion-icon name="options-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pp-content">
+  <ion-refresher slot="fixed" (ionRefresh)="rafraichir($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="pp-hero">
+    <p class="pp-hero__eyebrow">Primes gagnées sur la période</p>
+    <h1 class="pp-hero__montant">{{ chargement ? '…' : cs.fmt(calcul?.totalPeriode) }}</h1>
+    <p class="pp-hero__sub" *ngIf="!chargement && calcul">
+      <ion-icon name="hourglass-outline" aria-hidden="true"></ion-icon> Reste à payer : {{ cs.fmt(calcul.totalResteAPayer) }}
+    </p>
+  </div>
+
+  <div class="pp-page">
+    <div class="fz-chips" role="group" aria-label="Période">
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'mois'" (click)="choisirPeriode('mois')">Ce mois</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'mois-dernier'" (click)="choisirPeriode('mois-dernier')">Mois dernier</button>
+      <button type="button" class="fz-chip" [class.fz-chip--active]="periode === 'annee'" (click)="choisirPeriode('annee')">Cette année</button>
+    </div>
+
+    <ion-segment [(ngModel)]="onglet" class="pp-segment">
+      <ion-segment-button value="vendeurs"><ion-label>Vendeurs</ion-label></ion-segment-button>
+      <ion-segment-button value="regles"><ion-label>Conditions ({{ regles.length }})</ion-label></ion-segment-button>
+      <ion-segment-button value="paiements"><ion-label>Paiements</ion-label></ion-segment-button>
+    </ion-segment>
+
+    <!-- ================= Vendeurs ================= -->
+    <ng-container *ngIf="onglet === 'vendeurs'">
+      <div class="pp-carte" *ngIf="chargement" aria-busy="true"><div class="pp-sk" *ngFor="let i of [1,2,3]"></div></div>
+      <div class="pp-carte pp-erreur" *ngIf="!chargement && erreur" role="alert">
+        <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+        <p>{{ erreur }}</p>
+        <ion-button size="small" fill="outline" (click)="chargerCalcul()">Réessayer</ion-button>
+      </div>
+      <div class="pp-carte" *ngIf="!chargement && !erreur && !calcul?.vendeurs?.length">
+        <gl-empty-state icon="ribbon-outline"
+                        [title]="regles.length ? 'Aucune prime gagnée sur cette période.' : 'Aucune condition de prime pour le moment.'"
+                        [ctaLabel]="regles.length ? undefined : 'Créer une condition'" (ctaClick)="nouvelleRegle()"></gl-empty-state>
+      </div>
+
+      <div class="pp-carte pp-vendeur" *ngFor="let v of (chargement || erreur ? [] : calcul?.vendeurs || [])">
+        <button type="button" class="pp-vendeur__entete" (click)="basculerDetail(v)" [attr.aria-expanded]="ouvert === v.vendeurId">
+          <span class="pp-avatar" aria-hidden="true">{{ v.vendeurNom.charAt(0) | uppercase }}</span>
+          <span class="pp-vendeur__nom">{{ v.vendeurNom }}</span>
+          <ion-icon [name]="ouvert === v.vendeurId ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
+        </button>
+        <div class="pp-chiffres">
+          <div><span>Gagné</span><strong class="ok">{{ cs.fmt(v.primePeriode) }}</strong></div>
+          <div><span>Payé</span><strong>{{ cs.fmt(v.payeTotal) }}</strong></div>
+          <div><span>Reste</span><strong [class.warn]="v.resteAPayer > 0">{{ cs.fmt(v.resteAPayer) }}</strong></div>
+        </div>
+        <div class="pp-details" *ngIf="ouvert === v.vendeurId">
+          <p class="pp-petit" *ngIf="!v.details.length">Rien de vendu sur les produits concernés pendant cette période.</p>
+          <div class="pp-detail" *ngFor="let d of v.details">
+            <div class="pp-detail__texte">
+              <strong>{{ cible(d) }}</strong>
+              <span>{{ cs.decrire(d) }}</span>
+              <span>{{ d.quantiteVendue | number:'1.0-0' }} vendu(s)<ng-container *ngIf="d.type === 'OBJECTIF'"> / {{ d.quantiteObjectif }}
+                · {{ d.objectifAtteint ? 'objectif atteint' : 'pas encore atteint' }}</ng-container></span>
+            </div>
+            <span class="pp-detail__prime" *ngIf="!(d.type === 'OBJECTIF' && d.objectifAtteint && !d.prime)">{{ cs.fmt(d.prime) }}</span>
+            <span class="pp-detail__prime attente" *ngIf="d.type === 'OBJECTIF' && d.objectifAtteint && !d.prime">
+              {{ cs.fmt(d.valeur) }}<small>le {{ d.dateFin | date:'dd/MM' }}</small>
+            </span>
+          </div>
+        </div>
+        <ion-button expand="block" size="small" (click)="payer(v)" [disabled]="v.resteAPayer <= 0">
+          <ion-icon name="wallet-outline" slot="start"></ion-icon> Payer
+        </ion-button>
+      </div>
+    </ng-container>
+
+    <!-- ================= Conditions ================= -->
+    <ng-container *ngIf="onglet === 'regles'">
+      <div class="pp-carte" *ngIf="!regles.length">
+        <gl-empty-state icon="list-outline" title="Aucune condition" message="Exemple : « 100 FCFA pour chaque carton de lait vendu »."
+                        ctaLabel="Créer une condition" (ctaClick)="nouvelleRegle()"></gl-empty-state>
+      </div>
+      <div class="pp-carte pp-regle" *ngFor="let r of regles">
+        <div class="pp-regle__haut">
+          <div class="pp-regle__texte">
+            <strong>{{ cible(r) }}</strong>
+            <span>{{ cs.decrire(r) }}</span>
+          </div>
+          <span class="pp-statut" [ngClass]="'pp-statut--' + r.statut">{{ libelleStatut(r.statut) }}</span>
+        </div>
+        <p class="pp-petit">
+          {{ r.vendeurNom || 'Tous les vendeurs' }} · {{ r.dateDebut | date:'dd/MM/yyyy' }} → {{ r.dateFin ? (r.dateFin | date:'dd/MM/yyyy') : 'sans fin' }}
+        </p>
+        <div class="pp-actions">
+          <ion-button size="small" fill="outline" (click)="modifierRegle(r)"><ion-icon name="create-outline" slot="start"></ion-icon> Modifier</ion-button>
+          <ion-button size="small" fill="outline" color="medium" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)">Arrêter</ion-button>
+          <ion-button size="small" fill="clear" color="danger" (click)="supprimerRegle(r)" aria-label="Supprimer"><ion-icon name="trash-outline" slot="icon-only"></ion-icon></ion-button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ================= Paiements ================= -->
+    <ng-container *ngIf="onglet === 'paiements'">
+      <div class="pp-carte" *ngIf="!paiements.length">
+        <gl-empty-state icon="receipt-outline" title="Aucun paiement de prime enregistré."></gl-empty-state>
+      </div>
+      <div class="pp-carte pp-liste" *ngIf="paiements.length">
+        <div class="pp-ligne" *ngFor="let p of paiements">
+          <div class="pp-ligne__texte">
+            <strong>{{ p.vendeurNom }}</strong>
+            <span>{{ p.datePaiement | date:'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="p.note"> · {{ p.note }}</ng-container></span>
+          </div>
+          <span class="pp-ligne__montant">{{ cs.fmt(p.montant) }}</span>
+          <ion-button fill="clear" color="danger" size="small" (click)="supprimerPaiement(p)" aria-label="Supprimer ce paiement">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="nouvelleRegle()" aria-label="Nouvelle condition">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- ================= Formulaire condition ================= -->
+  <ion-modal [isOpen]="!!formRegle" (didDismiss)="formRegle = null">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start"><ion-button (click)="formRegle = null">Annuler</ion-button></ion-buttons>
+          <ion-title>{{ formRegle?.id ? 'Modifier' : 'Nouvelle condition' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button strong="true" (click)="enregistrerRegle()" [disabled]="enregistrement">Enregistrer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="pp-content" *ngIf="formRegle">
+        <div class="pp-page">
+          <span class="pp-label">Type de prime</span>
+          <div class="pp-types">
+            <button type="button" *ngFor="let t of typesActifs" class="pp-type" [class.actif]="formRegle.type === t.type"
+                    (click)="choisirType(t.type)" [attr.aria-pressed]="formRegle.type === t.type">
+              <ion-icon [name]="libellesTypes[t.type].icone" aria-hidden="true"></ion-icon>
+              <strong>{{ libellesTypes[t.type].titre }}</strong>
+              <span>{{ libellesTypes[t.type].exemple }}</span>
+            </button>
+          </div>
+
+          <span class="pp-label">Sur quoi ?</span>
+          <ion-segment [(ngModel)]="formRegle.cible">
+            <ion-segment-button value="produit"><ion-label>Un produit</ion-label></ion-segment-button>
+            <ion-segment-button value="categorie"><ion-label>Une catégorie</ion-label></ion-segment-button>
+          </ion-segment>
+          <div class="pp-carte" *ngIf="formRegle.cible === 'produit'">
+            <ion-searchbar [(ngModel)]="rechercheProduit" placeholder="Rechercher un produit" [debounce]="200" class="pp-search"></ion-searchbar>
+            <ion-select label="Produit" labelPlacement="stacked" [(ngModel)]="formRegle.produitId" interface="action-sheet"
+                        placeholder="Choisir le produit" cancelText="Annuler">
+              <ion-select-option *ngFor="let p of produitsFiltres" [value]="p.id">{{ p.nom }}</ion-select-option>
+            </ion-select>
+          </div>
+          <div class="pp-carte" *ngIf="formRegle.cible === 'categorie'">
+            <ion-select label="Catégorie" labelPlacement="stacked" [(ngModel)]="formRegle.categorieId" interface="action-sheet"
+                        placeholder="Choisir la catégorie" cancelText="Annuler">
+              <ion-select-option *ngFor="let c of categories" [value]="c.id">{{ c.nom }}</ion-select-option>
+            </ion-select>
+          </div>
+
+          <div class="pp-carte">
+            <ion-input *ngIf="formRegle.type === 'OBJECTIF'" type="number" inputmode="numeric" min="1" labelPlacement="stacked"
+                       [label]="'Quantité à vendre (' + (formRegle.cible === 'produit' ? uniteChoisie : 'unités') + ')'"
+                       [(ngModel)]="formRegle.quantiteObjectif" placeholder="ex : 50"></ion-input>
+            <ion-input type="number" inputmode="decimal" labelPlacement="stacked"
+                       [label]="formRegle.type === 'MONTANT_FIXE' ? 'Montant par ' + (formRegle.cible === 'produit' ? uniteChoisie : 'unité') + ' vendue (FCFA)'
+                                : formRegle.type === 'POURCENTAGE' ? 'Pourcentage du montant vendu (%)' : 'Prime si objectif atteint (FCFA)'"
+                       [(ngModel)]="formRegle.valeur" [placeholder]="formRegle.type === 'POURCENTAGE' ? 'ex : 5' : 'ex : 100'"></ion-input>
+            <ion-input type="date" label="À partir du" labelPlacement="stacked" [(ngModel)]="formRegle.dateDebut"></ion-input>
+            <ion-input type="date" labelPlacement="stacked" [label]="formRegle.type === 'OBJECTIF' ? 'Jusqu\'au' : 'Jusqu\'au (vide = sans fin)'"
+                       [(ngModel)]="formRegle.dateFin"></ion-input>
+            <ion-select label="Pour quel vendeur ?" labelPlacement="stacked" [(ngModel)]="formRegle.vendeurId" interface="action-sheet" cancelText="Annuler">
+              <ion-select-option [value]="null">Tous les vendeurs</ion-select-option>
+              <ion-select-option *ngFor="let v of vendeurs" [value]="v.id">{{ v.nomComplet }}</ion-select-option>
+            </ion-select>
+            <ion-input label="Nom (facultatif)" labelPlacement="stacked" [(ngModel)]="formRegle.nom" maxlength="120" placeholder="ex : Challenge riz de juin"></ion-input>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

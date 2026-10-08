@@ -6,7 +6,9 @@ import { tap } from 'rxjs/operators';
 interface CacheEntry { response: HttpResponse<unknown>; expiresAt: number; }
 
 const TTL_MS = 5 * 60 * 1000;
-const SKIP_PATTERNS = ['/auth/', '/notifications', '/ws', '/caisse', '/vente'];
+// /roles, /commissions, /permissions-vendeur et /inventaire/comptages : jamais en cache (permissions propres à la personne connectée,
+// listes modifiées depuis l'écran lui-même).
+const SKIP_PATTERNS = ['/auth/', '/notifications', '/ws', '/caisse', '/vente', '/roles', '/commissions', '/permissions-vendeur', '/inventaire/comptages'];
 
 @Injectable()
 export class CacheInterceptor implements HttpInterceptor {

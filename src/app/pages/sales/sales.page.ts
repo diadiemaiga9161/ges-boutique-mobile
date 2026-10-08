@@ -15,6 +15,8 @@ import { ImpressionRecuService } from '../../services/impression-recu.service';
 import { BottomSheetService } from '../../services/bottom-sheet.service';
 import { SaleActionKey, SaleActionsSheetComponent } from './sale-actions-sheet/sale-actions-sheet.component';
 
+import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../utils/mesure.util';
+
 @Component({
   selector: 'app-sales',
   templateUrl: './sales.page.html',
@@ -63,14 +65,14 @@ export class SalesPage implements OnDestroy {
   showQrSaleModal = false;
   showRetourModal = false;
   selectedVentePourRetour?: VenteMap;
-  retourLignes: { ligneVenteId?: number; produitId: number; produitNom: string; prixUnitaire: number; quantiteMax: number; quantiteRetournee: number; selected: boolean }[] = [];
+  retourLignes: { ligneVenteId?: number; produitId: number; produitNom: string; prixUnitaire: number; quantiteMax: number; quantiteRetournee: number; selected: boolean; modeMesure?: string | null }[] = [];
   retourMotif = '';
   selectedVente?: VenteMap;
   selectedSaleForQr?: VenteMap;
   qrSaleDataUrl: SafeUrl | null = null;
   private qrSaleBlobUrl: string | null = null;
   venteAModifier?: VenteMap;
-  modifyLines: { produitId: number; produitNom: string; quantite: number; prixUnitaire: number; sousTotal: number; original: any }[] = [];
+  modifyLines: { produitId: number; produitNom: string; quantite: number; prixUnitaire: number; sousTotal: number; original: any; modeMesure?: string | null }[] = [];
   modificationMotif = '';
   produits: Produit[] = [];
   stats?: Statistiques;
@@ -292,6 +294,35 @@ export class SalesPage implements OnDestroy {
   countComptant(): number { return this.filtered.filter(v => !v.estCredit).length; }
   totalCredit(): number  { return this.filtered.filter(v => v.estCredit && !v.creditRegle).reduce((s, v) => s + Number(v.montantRestant || 0), 0); }
 
+
+  // ---------------------------------------------------------------- vente à la mesure
+  /** Mode de mesure d'une ligne enregistrée (DTO de vente ou ligne de facture). */
+  private mesureLigne(l: any): { modeMesure?: string | null } {
+    return { modeMesure: l?.modeMesure ?? l?.produit?.modeMesure ?? null };
+  }
+
+  /** "1,25 kg" pour la mesure, sinon le nombre. */
+  qteLigne(l: any, quantite?: number): string {
+    return texteQte(this.mesureLigne(l), quantite ?? l?.quantite);
+  }
+
+  /** "600 F/kg" pour la mesure, sinon le prix. */
+  puLigne(l: any, prix?: number): string {
+    const m = this.mesureLigne(l);
+    const info = infoMesure(m);
+    const p = prix ?? l?.prixUnitaire ?? 0;
+    return info ? `${this.money(prixAffiche(m, p))}/${info.unite}` : this.money(p);
+  }
+
+  /** Retour d'une ligne à la mesure : saisie en kg, gardée en g. */
+  qteRetourAffichee(l: any): number {
+    return Math.round(qteAffichee(l, l.quantiteRetournee) * 1000) / 1000;
+  }
+
+  majQteRetour(l: any, valeur: any): void {
+    l.quantiteRetournee = Math.max(1, Math.min(l.quantiteMax, qteStockee(l, lireNombre(valeur))));
+  }
+
   money(v: number): string { return this.venteService.formatPrice(v); }
   isCreditEnRetard(v: VenteMap): boolean { return this.venteService.isCreditEnRetard(v); }
 
@@ -466,7 +497,7 @@ export class SalesPage implements OnDestroy {
       `👤 Client : ${nomClient}`,
       `📅 ${this.venteService.formatDate(vente.dateVente)}`,
       ``,
-      ...lignesVente.map(l => `${l.produitNom} ×${l.quantite} — ${this.money(l.sousTotal || l.quantite * l.prixUnitaire)}`),
+      ...lignesVente.map(l => `${l.produitNom} ×${qteDoc(l)} — ${this.money(l.sousTotal || l.quantite * l.prixUnitaire)}`),
       ``,
       `💰 Montant total : ${this.money(vente.montantTotal)}`
     ];
@@ -623,7 +654,8 @@ export class SalesPage implements OnDestroy {
       quantite: p.quantite,
       prixUnitaire: p.prixUnitaire,
       sousTotal: p.quantite * p.prixUnitaire,
-      original: p
+      original: p,
+      modeMesure: (p as any).modeMesure ?? (this.produits.find(x => x.id === p.produitId) as any)?.modeMesure ?? null
     }));
     this.showModifyModal = true;
   }
@@ -634,8 +666,30 @@ export class SalesPage implements OnDestroy {
       this.modifyLines[index].produitId = produit.id;
       this.modifyLines[index].produitNom = produit.nom;
       this.modifyLines[index].prixUnitaire = produit.prixVente || 0;
+      this.modifyLines[index].modeMesure = (produit as any).modeMesure ?? null;
       this.modifyLines[index].sousTotal = this.modifyLines[index].quantite * (produit.prixVente || 0);
     }
+  }
+
+  /** Ligne à la mesure : quantité saisie en kg, prix au kg (gardés en g et prix au g). */
+  qteModifAffichee(line: any): number {
+    return Math.round(qteAffichee(line, line.quantite) * 1000) / 1000;
+  }
+
+  prixModifAffiche(line: any): number {
+    return Math.round(prixAffiche(line, line.prixUnitaire) * 100) / 100;
+  }
+
+  majQteModif(index: number, valeur: any): void {
+    const line = this.modifyLines[index];
+    line.quantite = Math.max(1, qteStockee(line, lireNombre(valeur)));
+    this.updateModifyLine(index);
+  }
+
+  majPrixModif(index: number, valeur: any): void {
+    const line = this.modifyLines[index];
+    line.prixUnitaire = prixStocke(line, lireNombre(valeur));
+    this.updateModifyLine(index);
   }
 
   updateModifyLine(index: number): void {
@@ -720,6 +774,7 @@ export class SalesPage implements OnDestroy {
       prixUnitaire: p.prixApresRemise || p.prixUnitaire || 0,
       quantiteMax: p.quantite || 1,
       quantiteRetournee: p.quantite || 1,
+      modeMesure: p.modeMesure ?? p.produit?.modeMesure ?? null,
       selected: true
     }));
     this.showRetourModal = true;

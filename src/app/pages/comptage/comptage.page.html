@@ -1,0 +1,181 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/inventory" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Comptage d'inventaire</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="cp-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="page-pad stack cp-page">
+
+    <!-- Pas le droit -->
+    <section class="gl-form-card cp-info" *ngIf="!autorise">
+      <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+      <p>Votre rôle ne permet pas de faire un comptage. Il faut « Inventaire » sur Modifier ou Tout. Demandez au gérant.</p>
+    </section>
+
+    <ng-container *ngIf="autorise">
+      <div class="sk-list" *ngIf="chargement">
+        <div class="skeleton cp-sk" *ngFor="let i of [1,2,3]"></div>
+      </div>
+
+      <!-- ══════════ Aucun comptage en cours : en commencer un ══════════ -->
+      <ng-container *ngIf="!chargement && !comptage">
+        <section class="gl-form-card">
+          <p class="cp-titre">Nouveau comptage</p>
+          <ol class="cp-etapes">
+            <li>Scannez ou cherchez un produit, tapez la quantité trouvée.</li>
+            <li>L'appli montre les écarts avec le stock enregistré.</li>
+            <li>Validez : le stock est corrigé d'un coup. Les produits non comptés ne changent pas.</li>
+          </ol>
+          <label class="gl-field">
+            <span class="gl-field__label">Que voulez-vous compter ?</span>
+            <span class="gl-input">
+              <ion-icon name="pricetags-outline" aria-hidden="true"></ion-icon>
+              <select [(ngModel)]="categorieChoisie" aria-label="Catégorie à compter">
+                <option [ngValue]="null">Tous les produits</option>
+                <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
+              </select>
+            </span>
+          </label>
+          <button type="button" class="gl-btn gl-btn--primary" (click)="demarrer()" [disabled]="envoi">
+            <ion-icon name="play-outline" aria-hidden="true"></ion-icon>
+            Commencer le comptage
+          </button>
+        </section>
+
+        <ng-container *ngIf="historique.length">
+          <p class="gl-overline cp-sous-titre">Derniers comptages</p>
+          <section class="gl-form-card cp-historique">
+            <div class="cp-hist" *ngFor="let h of historique">
+              <div class="cp-hist__texte">
+                <strong>{{ h.dateDebut | date:'dd/MM/yyyy HH:mm' }} · {{ h.categorieNom || 'Tous les produits' }}</strong>
+                <span>{{ h.nbComptes }} produit(s) compté(s) · {{ h.nbEcarts }} écart(s) · {{ h.commencePar }}</span>
+              </div>
+              <span class="gl-pill" [class.gl-pill--ok]="h.statut === 'VALIDE'" [class.gl-pill--neutral]="h.statut === 'ABANDONNE'"
+                    [class.gl-pill--info]="h.statut === 'EN_COURS'">
+                {{ h.statut === 'VALIDE' ? 'Validé' : (h.statut === 'ABANDONNE' ? 'Abandonné' : 'En cours') }}
+              </span>
+            </div>
+          </section>
+        </ng-container>
+      </ng-container>
+
+      <!-- ══════════ Comptage en cours ══════════ -->
+      <ng-container *ngIf="!chargement && comptage as c">
+        <section class="gl-form-card cp-resume">
+          <p class="cp-titre">{{ c.categorieNom || 'Tous les produits' }}</p>
+          <p class="cp-meta">Commencé par {{ c.commencePar }} le {{ c.dateDebut | date:'dd/MM à HH:mm' }}</p>
+          <div class="cp-kpis">
+            <div><strong>{{ c.nbComptes }}</strong><span>compté(s) sur {{ c.nbProduitsACompter }}</span></div>
+            <div><strong>{{ c.nbEcarts }}</strong><span>écart(s)</span></div>
+            <div class="bad"><strong>{{ money(c.valeurManquants || 0) }}</strong><span>manquants</span></div>
+            <div class="ok"><strong>{{ money(c.valeurSurplus || 0) }}</strong><span>en trop</span></div>
+          </div>
+        </section>
+
+        <!-- Saisie -->
+        <section class="gl-form-card">
+          <div class="gl-field" *ngIf="!produitChoisi">
+            <span class="gl-field__label">Produit à compter</span>
+            <div class="gl-field__row">
+              <div class="gl-input">
+                <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+                <input [(ngModel)]="recherche" (input)="chercher()" (keyup.enter)="validerRecherche()"
+                       placeholder="Nom ou code-barres" aria-label="Produit à compter" />
+              </div>
+              <button type="button" class="gl-icon-btn" (click)="scanner()" aria-label="Scanner un code-barres">
+                <ion-icon name="scan-outline"></ion-icon>
+              </button>
+            </div>
+            <div *ngIf="resultats.length" class="gl-dropdown">
+              <button type="button" *ngFor="let p of resultats" class="gl-dropdown__item" (click)="choisir(p)">
+                <strong>{{ p.nom }}</strong> · stock enregistré : {{ stockTexte(p) }}
+                <ng-container *ngIf="ligneDe(p.id)"> · déjà compté</ng-container>
+              </button>
+            </div>
+          </div>
+
+          <ng-container *ngIf="produitChoisi as p">
+            <div class="cp-choisi">
+              <div>
+                <strong>{{ p.nom }}</strong>
+                <span>Stock enregistré : {{ stockTexte(p) }}</span>
+              </div>
+              <button type="button" class="gl-icon-btn" (click)="produitChoisi = null" aria-label="Choisir un autre produit">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+            <label class="gl-field">
+              <span class="gl-field__label">Quantité trouvée ({{ unite(p) }})</span>
+              <span class="gl-input">
+                <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
+                <input #champQuantite type="text" inputmode="decimal" [(ngModel)]="quantiteSaisie"
+                       (keyup.enter)="enregistrerQuantite()" placeholder="ex : 42" aria-label="Quantité trouvée" />
+              </span>
+            </label>
+            <button type="button" class="gl-btn gl-btn--primary" (click)="enregistrerQuantite()" [disabled]="envoi">
+              <ion-icon name="checkmark-outline" aria-hidden="true"></ion-icon>
+              Enregistrer
+            </button>
+          </ng-container>
+        </section>
+
+        <!-- Produits comptés -->
+        <div class="cp-entete-liste" *ngIf="c.lignes?.length">
+          <p class="gl-overline">Produits comptés</p>
+          <div class="fz-chips" role="radiogroup" aria-label="Filtrer les produits comptés">
+            <button type="button" class="fz-chip" role="radio" [attr.aria-checked]="filtreLignes === 'tous'"
+                    [class.fz-chip--active]="filtreLignes === 'tous'" (click)="filtreLignes = 'tous'">Tous</button>
+            <button type="button" class="fz-chip" role="radio" [attr.aria-checked]="filtreLignes === 'ecarts'"
+                    [class.fz-chip--active]="filtreLignes === 'ecarts'" (click)="filtreLignes = 'ecarts'">Écarts ({{ c.nbEcarts }})</button>
+          </div>
+        </div>
+
+        <section class="cp-lignes">
+          <article class="gl-card cp-ligne" *ngFor="let l of lignesAffichees"
+                   [class.cp-ligne--gros]="grosEcart(l)">
+            <div class="cp-ligne__haut">
+              <strong>{{ l.produitNom }}</strong>
+              <span class="gl-pill" [class.gl-pill--ok]="l.ecart === 0" [class.gl-pill--bad]="l.ecart < 0"
+                    [class.gl-pill--warn]="l.ecart > 0">{{ ecartTexte(l) }}</span>
+            </div>
+            <p class="cp-ligne__detail">
+              Enregistré {{ qte(l.produitId, l.stockAuComptage) }} → compté <strong>{{ qte(l.produitId, l.quantiteComptee) }}</strong>
+              <ng-container *ngIf="l.ecart !== 0"> · {{ money(l.valeurEcart) }}</ng-container>
+            </p>
+            <p class="cp-ligne__alerte" *ngIf="grosEcart(l)">
+              <ion-icon name="warning-outline" aria-hidden="true"></ion-icon> Gros écart : vérifiez avant de valider.
+            </p>
+            <div class="cp-ligne__actions">
+              <button type="button" class="glc-action glc-action--link" (click)="modifier(l)">
+                <ion-icon name="create-outline" aria-hidden="true"></ion-icon><span>Recompter</span>
+              </button>
+              <button type="button" class="glc-action glc-action--bad" (click)="retirer(l)">
+                <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon><span>Retirer</span>
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <p class="cp-note">Les produits non comptés ne changent pas. Les ventes faites pendant le comptage restent justes.</p>
+
+        <div class="cp-boutons">
+          <button type="button" class="gl-btn gl-btn--primary" (click)="valider()" [disabled]="envoi || !c.nbComptes">
+            <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+            Valider et corriger le stock
+          </button>
+          <button type="button" class="gl-btn gl-btn--secondary cp-abandon" (click)="abandonner()" [disabled]="envoi">
+            Abandonner
+          </button>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+</ion-content>

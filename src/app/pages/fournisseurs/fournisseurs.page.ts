@@ -9,6 +9,7 @@ import {
 import { FactureService } from '../../services/facture.service';
 import { BoutiqueService } from '../../services/boutique.service';
 import { CompteService, Compte } from '../../services/compte.service';
+import { infoMesure, prixStocke, puDoc, qteDoc, qteStockee } from '../../utils/mesure.util';
 
 @Component({
   selector: 'app-fournisseurs',
@@ -280,6 +281,11 @@ export class FournisseursPage {
     this.showAchatModal = true;
   }
 
+  /** Unité (kg, L, m) du produit choisi dans l'achat, s'il est vendu à la mesure. */
+  get uniteAchat(): string | null {
+    return infoMesure(this.produits.find(p => p.id === this.achatForm.produitId) as any)?.unite ?? null;
+  }
+
   async saveAchat(): Promise<void> {
     if (!this.achatForm.produitId) { this.toast('Sélectionnez un produit', 'danger'); return; }
     if (!this.achatForm.quantite || this.achatForm.quantite <= 0) { this.toast('Quantité invalide', 'danger'); return; }
@@ -294,21 +300,28 @@ export class FournisseursPage {
     // React Native envoie déjà le bon nom ; on aligne Ionic dessus.
     let nouveauPrixAchat: number | undefined;
 
-    if (produit && Number(produit.prixAchat) !== Number(this.achatForm.prixAchatUnitaire)) {
+    // Vente à la mesure : saisie en kg et prix au kg, gardés en g et prix au g.
+    const mesure = produit && infoMesure(produit as any) ? produit : null;
+    const qteEnvoyee = mesure ? qteStockee(mesure as any, Number(this.achatForm.quantite)) : this.achatForm.quantite;
+    const prixEnvoye = mesure ? prixStocke(mesure as any, Number(this.achatForm.prixAchatUnitaire)) : this.achatForm.prixAchatUnitaire;
+    const prixVenteEnvoye = mesure && this.achatForm.prixVente ? prixStocke(mesure as any, Number(this.achatForm.prixVente)) : this.achatForm.prixVente;
+
+    if (produit && Number(produit.prixAchat) !== Number(prixEnvoye)) {
       const stockActuel = Number(produit.quantite) || 0;
-      const quantiteEntree = Number(this.achatForm.quantite);
-      const prixEntree = Number(this.achatForm.prixAchatUnitaire);
+      const quantiteEntree = Number(qteEnvoyee);
+      const prixEntree = Number(prixEnvoye);
       const cump = stockActuel > 0
         ? (stockActuel * Number(produit.prixAchat) + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree)
         : prixEntree;
 
       const confirme = await this.confirmerCump(produit, stockActuel, quantiteEntree, prixEntree, cump);
       if (confirme) {
-        nouveauPrixAchat = Math.round(cump);
+        // Pas d'arrondi au franc pour la mesure : le prix est au gramme (0,55 F).
+        nouveauPrixAchat = mesure ? cump : Math.round(cump);
       }
     }
 
-    const ligne: any = { produitId: this.achatForm.produitId, quantite: this.achatForm.quantite, prixAchatUnitaire: this.achatForm.prixAchatUnitaire, prixVente: this.achatForm.prixVente };
+    const ligne: any = { produitId: this.achatForm.produitId, quantite: qteEnvoyee, prixAchatUnitaire: prixEnvoye, prixVente: prixVenteEnvoye };
     if (nouveauPrixAchat !== undefined) {
       ligne.nouveauPrixAchat = nouveauPrixAchat;
     }
@@ -338,11 +351,11 @@ export class FournisseursPage {
     const escapeHtml = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const message =
       `<strong>${escapeHtml(produit.nom)}</strong><br>` +
-      `Le prix d'achat saisi (${this.money(prixEntree)}) diffère du prix d'achat actuel (${this.money(ancienPrix)}).<br><br>` +
-      `Stock actuel : ${stockActuel} × ${this.money(ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
-      `Entrée : ${quantiteEntree} × ${this.money(prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
+      `Le prix d'achat saisi (${puDoc(produit, v => this.money(v), prixEntree)}) diffère du prix d'achat actuel (${puDoc(produit, v => this.money(v), ancienPrix)}).<br><br>` +
+      `Stock actuel : ${qteDoc(produit, stockActuel)} × ${puDoc(produit, v => this.money(v), ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
+      `Entrée : ${qteDoc(produit, quantiteEntree)} × ${puDoc(produit, v => this.money(v), prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
       `CUMP = (Stock × Ancien prix + Qté entrée × Prix entrée) / (Stock + Qté entrée)<br><br>` +
-      `Nouveau prix d'achat proposé : <strong>${this.money(cump)}</strong><br><br>` +
+      `Nouveau prix d'achat proposé : <strong>${puDoc(produit, v => this.money(v), cump)}</strong><br><br>` +
       `Appliquer ce nouveau prix d'achat au produit ?`;
 
     return new Promise<boolean>(resolve => {
@@ -518,7 +531,7 @@ export class FournisseursPage {
       const produitDetails = (a.lignes || []).map((l: any) =>
         `<tr style="background:#f1f5f9">
           <td colspan="3" style="padding:4px 24px;font-size:11px;color:#475569">
-            &bull; ${l.produitNom || l.produit?.nom || '?'} &times;${l.quantite} @ ${this.money(l.prixAchatUnitaire)}
+            &bull; ${l.produitNom || l.produit?.nom || '?'} &times;${qteDoc(l)} @ ${this.money(l.prixAchatUnitaire)}
           </td>
           <td style="padding:4px 8px;font-size:11px;color:#0f172a;text-align:right">${this.money((l.quantite || 0) * (l.prixAchatUnitaire || 0))}</td>
         </tr>`
@@ -544,7 +557,7 @@ export class FournisseursPage {
       `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
         <td style="padding:7px 8px;border:1px solid #eee;font-size:12px;font-weight:700;color:#1a56db">${i + 1}</td>
         <td style="padding:7px 8px;border:1px solid #eee;font-size:12px;font-weight:600">${t.nom}</td>
-        <td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;font-weight:700">${t.quantite}</td>
+        <td style="padding:7px 8px;border:1px solid #eee;font-size:12px;text-align:right;font-weight:700">${qteDoc(t)}</td>
       </tr>`
     ).join('');
 

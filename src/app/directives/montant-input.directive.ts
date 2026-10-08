@@ -108,6 +108,11 @@ export class MontantInputDirective implements OnInit, OnDestroy {
     if (value === null || value === undefined) {
       return '';
     }
+    // Valeur venue du serveur (nombre) : peut avoir des décimales (ex: prix d'achat moyen
+    // 572.2222). Retirer le point la transformerait en 5722222... → on arrondit au franc.
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? String(Math.round(Math.abs(value))) : '';
+    }
     return String(value).replace(/[^\d]/g, '');
   }
 

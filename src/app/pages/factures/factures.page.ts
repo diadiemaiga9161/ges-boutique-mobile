@@ -8,6 +8,8 @@ import { ProductService, Produit } from '../../services/product.service';
 import { FactureDesignService, DesignFacture } from '../../services/facture-design.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
 
+import { infoMesure, lireNombre, prixAffiche, qteAffichee, qteStockee, texteQte } from '../../utils/mesure.util';
+
 @Component({
   selector: 'app-factures',
   templateUrl: './factures.page.html',
@@ -293,6 +295,26 @@ export class FacturesPage {
   }
 
   // ── Utilitaires ─────────────────────────────────────────
+
+  // ---------------------------------------------------------------- vente à la mesure
+  /** Mode de mesure d'une ligne enregistrée (DTO de vente ou ligne de facture). */
+  private mesureLigne(l: any): { modeMesure?: string | null } {
+    return { modeMesure: l?.modeMesure ?? l?.produit?.modeMesure ?? null };
+  }
+
+  /** "1,25 kg" pour la mesure, sinon le nombre. */
+  qteLigne(l: any, quantite?: number): string {
+    return texteQte(this.mesureLigne(l), quantite ?? l?.quantite);
+  }
+
+  /** "600 F/kg" pour la mesure, sinon le prix. */
+  puLigne(l: any, prix?: number): string {
+    const m = this.mesureLigne(l);
+    const info = infoMesure(m);
+    const p = prix ?? l?.prixUnitaire ?? 0;
+    return info ? `${this.money(prixAffiche(m, p))}/${info.unite}` : this.money(p);
+  }
+
   money(v: number): string {
     const n = Math.round(v || 0);
     return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;

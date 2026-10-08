@@ -29,8 +29,9 @@ const routes: Routes = [
         loadChildren: () => import('../pages/factures/factures.module').then(m => m.FacturesPageModule)
       },
       {
+        // Vendeur : accès en lecture si le gérant a coché « Consultation de l'inventaire »
+        // (vérifié par AuthGuard).
         path: 'inventory',
-        data: { roles: ['ADMIN'] },
         loadChildren: () => import('../pages/inventory/inventory.module').then(m => m.InventoryPageModule)
       },
       {
