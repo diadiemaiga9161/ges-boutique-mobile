@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface BoutiqueInfo {
@@ -81,8 +81,17 @@ export class BoutiqueService {
     return this.getInfo().logoUrl || 'assets/icon/favicon.png';
   }
 
+  /** Demande en cours : un 2e appel pendant ce temps reçoit la même réponse (au démarrage,
+   *  le préchargement et l'accueil demandaient les infos de la boutique en même temps). */
+  private refreshEnCours?: Observable<BoutiqueInfo>;
+  /** Heure de la dernière réponse reçue : moins d'une minute après, on la réutilise (au
+   *  démarrage, l'accueil redemandait juste après le préchargement). */
+  private derniereReponse = 0;
+
   refreshBoutique(): Observable<BoutiqueInfo> {
-    return this.http.get<any>(this.apiUrl).pipe(
+    if (Date.now() - this.derniereReponse < 60000) return of(this.getInfo());
+    if (this.refreshEnCours) return this.refreshEnCours;
+    this.refreshEnCours = this.http.get<any>(this.apiUrl).pipe(
       map(response => {
         const info = response?.boutique || response?.data || response || DEFAULT_BOUTIQUE;
         return {
@@ -90,9 +99,12 @@ export class BoutiqueService {
           logoUrl: info.logo || info.logoPath || info.logoUrl || ''
         };
       }),
-      tap(info => this.persist(info)),
-      catchError(() => of(this.getInfo()))
+      tap(info => { this.persist(info); this.derniereReponse = Date.now(); }),
+      catchError(() => of(this.getInfo())),
+      finalize(() => { this.refreshEnCours = undefined; }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    return this.refreshEnCours;
   }
 
   getBoutique(): Observable<BoutiqueInfo> {
@@ -148,7 +160,13 @@ export class BoutiqueService {
     });
   }
 
+  /** À appeler quand on change de boutique : la prochaine demande repart au serveur. */
+  oublierDerniereReponse(): void {
+    this.derniereReponse = 0;
+  }
+
   resetToDefaults(): Observable<BoutiqueInfo> {
+    this.derniereReponse = 0;
     this.persist(DEFAULT_BOUTIQUE);
     return of(DEFAULT_BOUTIQUE);
   }

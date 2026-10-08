@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
+import { BoutiqueService } from '../../services/boutique.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -20,6 +21,7 @@ export class BoutiqueSelectPage {
 
   constructor(
     private boutiqueConfig: BoutiqueConfigService,
+    private boutiqueService: BoutiqueService,
     private router: Router,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
@@ -55,6 +57,7 @@ export class BoutiqueSelectPage {
       }).catch(() => null);
 
       await this.boutiqueConfig.setBoutique(boutique.nom, boutique.url);
+      this.boutiqueService.oublierDerniereReponse();
       await loading.dismiss();
       this.isLoading = false;
       this.router.navigateByUrl('/login', { replaceUrl: true });
@@ -62,6 +65,7 @@ export class BoutiqueSelectPage {
       await loading.dismiss();
       this.isLoading = false;
       await this.boutiqueConfig.setBoutique(boutique.nom, boutique.url);
+      this.boutiqueService.oublierDerniereReponse();
       this.router.navigateByUrl('/login', { replaceUrl: true });
     }
   }

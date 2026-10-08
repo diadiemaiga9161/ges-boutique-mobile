@@ -30,11 +30,14 @@ export class CaissePage implements OnDestroy {
   credits: CreditInfo[] = [];
   creditsEnRetard: CreditInfo[] = [];
   statsJour?: StatistiquesCaisse;
-  // Bénéfice du mois : dernier mois CLÔTURÉ (le précédent, entièrement terminé), pas le mois
+  // Mois dernier : dernier mois CLÔTURÉ (le précédent, entièrement terminé), pas le mois
   // en cours — même logique et même raison que côté Angular (toutes les entrées ET sorties
   // du mois affiché sont déjà connues, donc le chiffre est fiable et non un instantané partiel).
   statsMois?: StatistiquesCaisse;
   moisAffiche?: Date;
+  /** Cette semaine (depuis lundi) et ce mois-ci (depuis le 1er), jusqu'à aujourd'hui. */
+  statsSemaine?: StatistiquesCaisse;
+  statsMoisCourant?: StatistiquesCaisse;
   comptes: Compte[] = [];
   segment: 'etat' | 'credits' | 'operations' | 'stats' | 'reconciliation' = 'etat';
   loadingStats = false;
@@ -135,6 +138,7 @@ export class CaissePage implements OnDestroy {
     });
     this.loadStatsJour();
     this.loadStatsMois();
+    this.loadStatsSemaineEtMoisCourant();
     this.loadReconciliation();
   }
 
@@ -161,6 +165,33 @@ export class CaissePage implements OnDestroy {
     });
   }
 
+  loadStatsSemaineEtMoisCourant(): void {
+    const aujourdhui = new Date();
+    const lundi = new Date(aujourdhui);
+    lundi.setDate(aujourdhui.getDate() - ((aujourdhui.getDay() + 6) % 7));
+    const premierDuMois = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1);
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    this.caisseService.getStatistiquesParPeriode(fmt(lundi), fmt(aujourdhui)).subscribe({
+      next: stats => { this.statsSemaine = stats; },
+      error: () => {}
+    });
+    this.caisseService.getStatistiquesParPeriode(fmt(premierDuMois), fmt(aujourdhui)).subscribe({
+      next: stats => { this.statsMoisCourant = stats; },
+      error: () => {}
+    });
+  }
+
+  /** Lignes du tableau « Argent entré et sorti » : la période est écrite en toutes lettres. */
+  get lignesPeriodes(): Array<{ libelle: string; stats?: StatistiquesCaisse }> {
+    const mois = (d: Date) => d.toLocaleDateString('fr-FR', { month: 'long' });
+    return [
+      { libelle: "Aujourd'hui", stats: this.statsJour },
+      { libelle: 'Cette semaine', stats: this.statsSemaine },
+      { libelle: `Ce mois-ci (${mois(new Date())})`, stats: this.statsMoisCourant },
+      { libelle: `Mois dernier (${mois(this.moisAffiche || new Date())})`, stats: this.statsMois }
+    ];
+  }
+
   /** Rapport en lecture seule : total par vendeur (ventes espèces/crédit, règlements
    * crédit encaissés, montant total à remettre) pour la date sélectionnée. */
   loadReconciliation(): void {
@@ -174,13 +205,6 @@ export class CaissePage implements OnDestroy {
   // ── Cartes KPI (mêmes calculs que la page Caisse Angular) ─────────────────
 
   get ecart(): number { return this.caisse?.ecart || 0; }
-
-  get profitNetMois(): number { return this.statsMois?.soldeNetPeriode ?? 0; }
-  get isPerteMois(): boolean { return this.profitNetMois < 0; }
-  get labelBilanceMois(): string { return this.isPerteMois ? 'Perte nette' : 'Bénéfice net'; }
-  get nomMoisCourant(): string {
-    return (this.moisAffiche || new Date()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  }
 
   get montantTotalCredits(): number {
     return this.credits.reduce((sum, c) => sum + (c.montantRestant || 0), 0);

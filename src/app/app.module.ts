@@ -32,7 +32,9 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
   return async () => {
     lang.init();
     await boutiqueConfig.init();
-    await preload.preload();
+    // Sans attendre : l'appli s'affiche tout de suite, les listes se chargent en arrière-plan
+    // (avant, rien ne s'affichait tant que produits et clients n'étaient pas téléchargés).
+    preload.preload().catch(() => undefined);
   };
 }
 

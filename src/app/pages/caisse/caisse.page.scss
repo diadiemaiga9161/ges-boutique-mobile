@@ -840,3 +840,47 @@
   .caisse-kpis { grid-template-columns: repeat(3, 1fr); }
   .caisse-kpis__full { grid-column: auto; }
 }
+
+// ══════════════════════════════════════════════════
+//  ARGENT ENTRÉ / SORTI PAR PÉRIODE (aujourd'hui, semaine, mois, mois dernier)
+// ══════════════════════════════════════════════════
+.caisse-periodes { gap: 6px; }
+
+.caisse-periodes__ligne {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 1fr));
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--gl-border);
+
+  &--entete {
+    padding-top: 0;
+    border-top: none;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gl-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.caisse-periodes__periode {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gl-text);
+}
+
+.caisse-periodes__montant {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+
+  &--ok   { color: var(--gl-ok); }
+  &--bad  { color: var(--gl-bad); }
+  &--fort { font-weight: 800; color: var(--gl-text); }
+}

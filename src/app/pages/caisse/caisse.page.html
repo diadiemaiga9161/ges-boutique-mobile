@@ -27,44 +27,40 @@
   <div class="caisse-hero">
     <div class="caisse-hero__deco" aria-hidden="true"></div>
     <div class="caisse-hero__content">
-      <p class="caisse-hero__eyebrow">Solde actuel</p>
+      <p class="caisse-hero__eyebrow">Argent dans la caisse maintenant</p>
       <h1 class="caisse-hero__amount">{{ caisseService.formatPrice(caisse?.soldeActuel || 0) }}</h1>
       <p class="caisse-hero__sub">
         <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
-        {{ ecart === 0 ? 'Aucun écart' : (ecart > 0 ? '+' : '') + caisseService.formatPrice(ecart) + ' d\'écart' }}
+        {{ ecart === 0 ? 'Caisse juste : rien en plus, rien en moins' : caisseService.formatPrice(ecart > 0 ? ecart : -ecart) + (ecart > 0 ? ' de plus que prévu' : ' de moins que prévu') }}
       </p>
     </div>
   </div>
 
   <div class="caisse-page">
 
-    <!-- ══════════ TUILES KPI (mêmes chiffres qu'avant) ══════════ -->
+    <!-- ══════════ ARGENT ENTRÉ ET SORTI, PAR PÉRIODE ══════════ -->
+    <section class="caisse-card caisse-periodes" aria-label="Argent entré et sorti">
+      <p class="caisse-overline">Argent entré et sorti de la caisse</p>
+      <div class="caisse-periodes__ligne caisse-periodes__ligne--entete" aria-hidden="true">
+        <span></span><span>Entré</span><span>Sorti</span><span>Différence</span>
+      </div>
+      <div class="caisse-periodes__ligne" *ngFor="let l of lignesPeriodes">
+        <span class="caisse-periodes__periode">{{ l.libelle }}</span>
+        <span class="caisse-periodes__montant caisse-periodes__montant--ok">{{ l.stats ? caisseService.formatPrice(l.stats.totalEntrees || 0) : '…' }}</span>
+        <span class="caisse-periodes__montant caisse-periodes__montant--bad">{{ l.stats ? caisseService.formatPrice(l.stats.totalSorties || 0) : '…' }}</span>
+        <span class="caisse-periodes__montant caisse-periodes__montant--fort">{{ l.stats ? caisseService.formatPrice(l.stats.soldeNetPeriode || 0) : '…' }}</span>
+      </div>
+      <p class="caisse-note">« Différence » = de combien l'argent de la caisse a vraiment augmenté (ou baissé) sur la période. Les dépôts à la banque ne comptent pas. Ce n'est pas le bénéfice.</p>
+    </section>
+
+    <!-- Crédits clients -->
     <div class="caisse-kpis">
-      <!-- Caisse du jour -->
-      <gl-stat-card
-        icon="calendar-outline"
-        label="Caisse du jour"
-        [value]="caisseService.formatPrice(statsJour?.soldeNetPeriode || 0)"
-        [sub]="'↑ ' + caisseService.formatPrice(statsJour?.totalEntrees || 0) + ' · ↓ ' + caisseService.formatPrice(statsJour?.totalSorties || 0)"
-        variant="green">
-      </gl-stat-card>
-
-      <!-- Bénéfice / perte nette du mois clôturé -->
-      <gl-stat-card
-        [icon]="isPerteMois ? 'trending-down-outline' : 'trending-up-outline'"
-        [label]="labelBilanceMois + ' · ' + nomMoisCourant"
-        [value]="(isPerteMois ? '-' : '+') + caisseService.formatPrice(Math.abs(profitNetMois))"
-        sub="Mois clôturé"
-        [variant]="isPerteMois ? 'red' : 'blue'">
-      </gl-stat-card>
-
-      <!-- Crédits clients -->
       <gl-stat-card
         class="caisse-kpis__full"
         icon="card-outline"
-        label="Crédits clients"
-        [value]="'' + credits.length"
-        [sub]="'Reste à payer : ' + caisseService.formatPrice(montantTotalCredits)"
+        label="Crédits pas encore payés"
+        [value]="credits.length + ' crédit(s)'"
+        [sub]="'Argent à récupérer : ' + caisseService.formatPrice(montantTotalCredits)"
         variant="orange">
       </gl-stat-card>
     </div>
