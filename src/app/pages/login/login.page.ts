@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertController, LoadingController, ToastController } from '@ionic/angular';
+import { LoadingController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { BoutiqueService } from '../../services/boutique.service';
@@ -29,7 +29,6 @@ export class LoginPage implements OnInit {
     private boutique: BoutiqueService,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController,
     private router: Router,
     public langService: LanguageService,
     private translate: TranslateService
@@ -83,16 +82,18 @@ export class LoginPage implements OnInit {
         const roleLabel = role === 'ADMIN' ? '👑 Administrateur' : '🛒 Vendeur';
         const boutique = this.boutique.getInfo().nom || 'Boutique';
 
-        const alert = await this.alertCtrl.create({
+        // L'accueil s'ouvre tout de suite ; le bienvenue est un petit message qui ne bloque
+        // pas l'écran (avant : rien ne se chargeait tant qu'on n'avait pas touché « OK »).
+        this.router.navigateByUrl('/tabs');
+        const toast = await this.toastCtrl.create({
           header: this.translate.instant('LOGIN.WELCOME', { name: nom }),
-          message: `${roleLabel}\n${boutique}`,
-          // alert-pre-line : sans elle, le \n ci-dessus ne produit aucun retour à la
-          // ligne visible (white-space par défaut d'Ionic) et affiche tout sur une
-          // seule ligne — voir les autres popups corrigés pour le même problème.
-          cssClass: ['welcome-alert', 'alert-pre-line'],
-          buttons: [{ text: 'OK', cssClass: 'alert-btn-primary', handler: () => this.router.navigateByUrl('/tabs') }]
+          message: `${roleLabel} · ${boutique}`,
+          color: 'success',
+          duration: 3000,
+          position: 'top',
+          cssClass: 'welcome-toast'
         });
-        await alert.present();
+        await toast.present();
       },
       error: async error => {
         this.isLoading = false;

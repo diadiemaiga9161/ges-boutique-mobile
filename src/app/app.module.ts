@@ -41,7 +41,9 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
   imports: [
     BrowserModule,
     HttpClientModule,
-    IonicModule.forRoot(),
+    // Pas de retour en glissant depuis le bord de l'écran (iPhone) : il se déclenchait
+    // par erreur (pendant une vente, en faisant défiler). Retour par la flèche ou les onglets.
+    IonicModule.forRoot({ swipeBackEnabled: false }),
     IonicStorageModule.forRoot(),
     TranslateModule.forRoot({
       defaultLanguage: 'fr',

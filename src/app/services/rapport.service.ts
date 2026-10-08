@@ -4,7 +4,6 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CaisseService } from './caisse.service';
 import { ProductService, Produit } from './product.service';
-import { VenteMap, VenteService } from './vente.service';
 import { FactureService } from './facture.service';
 import { environment } from '../../environments/environment';
 
@@ -20,9 +19,27 @@ export interface VenteParVendeurJour {
   nbVentesTotal: number;
 }
 
+/** Réponse de GET /api/ventes/statistiques/periode : totaux d'une période calculés par le
+ *  serveur, sans la liste des ventes (léger même sur une année entière). */
+export interface ResumePeriode {
+  dateDebut: string;
+  dateFin: string;
+  nombreVentes: number;
+  chiffreAffaireTotal: number;
+  montantRemisesTotal: number;
+  panierMoyen: number;
+  beneficeTotal: number;
+  topProduits: Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }>;
+  modePaiementStats: Array<{ mode: string; montant: number; pourcentage: number }>;
+}
+
 export interface StatistiquesGenerales {
+  /** Période des chiffres « mensuel », « totalVentes », « panierMoyen » et des produits
+   *  les plus vendus : le mois en cours. */
+  periode: { dateDebut: string; dateFin: string; libelle: string };
   chiffreAffaire: {
     journalier: number;
+    nombreVentesJour: number;
     mensuel: number;
     totalVentes: number;
     panierMoyen: number;
@@ -42,6 +59,7 @@ export interface StatistiquesGenerales {
   produitsPlusVendus: Array<{
     nom: string;
     quantiteVendue: number;
+    quantiteTexte?: string;
     chiffreAffaire: number;
   }>;
   modePaiementStats?: Array<{ mode: string; montant: number; pourcentage: number }>;
@@ -61,7 +79,7 @@ export interface RapportHebdomadaire {
   chiffreAffaireTotal: number;
   nombreVentes: number;
   montantRemisesTotal: number;
-  topProduits: Array<{ nom: string; quantite: number; chiffreAffaire: number }>;
+  topProduits: Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }>;
   modePaiementStats?: Array<{ mode: string; montant: number; pourcentage: number }>;
 }
 
@@ -73,7 +91,7 @@ export interface RapportMensuel {
   chiffreAffaireTotal: number;
   nombreVentes: number;
   montantRemisesTotal: number;
-  topProduits: Array<{ nom: string; quantite: number; chiffreAffaire: number }>;
+  topProduits: Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }>;
   modePaiementStats?: Array<{ mode: string; montant: number; pourcentage: number }>;
 }
 
@@ -88,6 +106,7 @@ export interface RapportJournalier {
   topProduits: Array<{
     nom: string;
     quantite: number;
+    quantiteTexte?: string;
     chiffreAffaire: number;
   }>;
 }
@@ -124,81 +143,80 @@ export interface RapportComplet {
 export class RapportService {
   constructor(
     private http: HttpClient,
-    private ventes: VenteService,
     private products: ProductService,
     private caisse: CaisseService,
     private factureService: FactureService
   ) {}
 
+  /** Totaux d'une période calculés par le serveur (jamais la liste des ventes). */
+  getResumePeriode(dateDebut: string, dateFin: string, top = 8): Observable<ResumePeriode> {
+    return this.http.get<ResumePeriode>(`${environment.apiUrl}/ventes/statistiques/periode`, {
+      params: { dateDebut, dateFin, top: String(top) }
+    });
+  }
+
+  /** Vue d'ensemble : chiffres du jour, du mois en cours (libellé fourni pour l'écran),
+   *  stock et crédits. Ne télécharge plus l'historique des ventes. */
   obtenirStatistiquesGenerales(): Observable<StatistiquesGenerales> {
+    const aujourdhui = new Date();
+    const jour = this.formaterDate(aujourdhui);
+    const debutMois = this.formaterDate(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1));
+    const libelle = aujourdhui.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
     return forkJoin({
-      ventes: this.ventes.getAllVentes().pipe(catchError(() => of([]))),
+      resumeJour: this.getResumePeriode(jour, jour, 1).pipe(catchError(() => of(null))),
+      resumeMois: this.getResumePeriode(debutMois, jour).pipe(catchError(() => of(null))),
       produits: this.products.getProducts().pipe(catchError(() => of([]))),
       situationCredits: this.caisse.getSituationCredits().pipe(catchError(() => of(null))),
       creditsRetard: this.caisse.getCreditsEnRetard().pipe(catchError(() => of([])))
     }).pipe(
-      map(({ ventes, produits, situationCredits, creditsRetard }) => {
-        const total = this.totalVentes(ventes);
-        const today = new Date().toISOString().split('T')[0];
-        const ventesJour = ventes.filter(vente => vente.dateVente?.startsWith(today));
-        const valeurStock = produits.reduce((sum, p) => sum + (Number(p.prixAchat || 0) * Number(p.quantite || 0)), 0);
-
-        return {
-          chiffreAffaire: {
-            journalier: this.totalVentes(ventesJour),
-            mensuel: total,
-            totalVentes: ventes.length,
-            panierMoyen: ventes.length ? total / ventes.length : 0
-          },
-          inventaire: {
-            valeurTotale: valeurStock,
-            produitsStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
-            produitsRupture: produits.filter(p => Number(p.quantite || 0) <= 0).length,
-            totalProduits: produits.length
-          },
-          credits: {
-            totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
-            montantTotalCredits: situationCredits?.montantTotalCredits || situationCredits?.montantRestantTotal || 0,
-            creditsEnRetard: creditsRetard.length,
-            montantCreditsEnRetard: creditsRetard.reduce((sum, credit) => sum + Number(credit.montantRestant || 0), 0)
-          },
-          produitsPlusVendus: this.calculerTopProduits(ventes).slice(0, 8)
-        };
-      })
+      map(({ resumeJour, resumeMois, produits, situationCredits, creditsRetard }) => ({
+        periode: { dateDebut: debutMois, dateFin: jour, libelle },
+        chiffreAffaire: {
+          journalier: resumeJour?.chiffreAffaireTotal || 0,
+          nombreVentesJour: resumeJour?.nombreVentes || 0,
+          mensuel: resumeMois?.chiffreAffaireTotal || 0,
+          totalVentes: resumeMois?.nombreVentes || 0,
+          panierMoyen: resumeMois?.panierMoyen || 0
+        },
+        inventaire: {
+          valeurTotale: this.valeurStock(produits),
+          produitsStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
+          produitsRupture: produits.filter(p => Number(p.quantite || 0) <= 0).length,
+          totalProduits: produits.length
+        },
+        credits: {
+          totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
+          montantTotalCredits: situationCredits?.montantTotalCredits || situationCredits?.montantRestantTotal || 0,
+          creditsEnRetard: creditsRetard.length,
+          montantCreditsEnRetard: creditsRetard.reduce((sum, credit) => sum + Number(credit.montantRestant || 0), 0)
+        },
+        produitsPlusVendus: (resumeMois?.topProduits || []).map(p => ({
+          nom: p.nom,
+          quantiteVendue: p.quantite,
+          quantiteTexte: p.quantiteTexte,
+          chiffreAffaire: p.chiffreAffaire
+        })),
+        modePaiementStats: resumeMois?.modePaiementStats || []
+      }))
     );
   }
 
   genererRapportJournalier(date: string): Observable<RapportJournalier> {
     return forkJoin({
-      ventes: this.ventes.getVentesParPeriode(date, date).pipe(catchError(() => of([]))),
+      resume: this.getResumePeriode(date, date).pipe(catchError(() => of(null))),
       produits: this.products.getProducts().pipe(catchError(() => of([])))
     }).pipe(
-      map(({ ventes, produits }) => {
-        const beneficeTotal = ventes.reduce((total, vente) => {
-          if (!Array.isArray(vente.produits)) return total;
-          return total + vente.produits.reduce((sum, ligne) => {
-            const produit = produits.find(p => p.id === ligne.produitId);
-            const prixAchat = Number(produit?.prixAchat || 0);
-            const prixVente = Number(ligne.prixApresRemise ?? ligne.prixUnitaire ?? 0);
-            return sum + (prixVente - prixAchat) * Number(ligne.quantite || 0);
-          }, 0);
-        }, 0);
-
-        return {
-          date,
-          chiffreAffaireTotal: this.totalVentes(ventes),
-          beneficeTotal,
-          nombreVentes: ventes.length,
-          montantRemisesTotal: ventes.reduce((sum, vente) => sum + Number(vente.montantRemiseTotal || 0), 0),
-          produitsEnStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
-          valeurStockTotale: this.valeurStock(produits),
-          topProduits: this.calculerTopProduits(ventes).slice(0, 8).map(item => ({
-            nom: item.nom,
-            quantite: item.quantiteVendue,
-            chiffreAffaire: item.chiffreAffaire
-          }))
-        };
-      })
+      map(({ resume, produits }) => ({
+        date,
+        chiffreAffaireTotal: resume?.chiffreAffaireTotal || 0,
+        beneficeTotal: resume?.beneficeTotal || 0,
+        nombreVentes: resume?.nombreVentes || 0,
+        montantRemisesTotal: resume?.montantRemisesTotal || 0,
+        produitsEnStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
+        valeurStockTotale: this.valeurStock(produits),
+        topProduits: this.topProduitsResume(resume)
+      }))
     );
   }
 
@@ -210,16 +228,16 @@ export class RapportService {
     const debut = this.formaterDate(monday);
     const fin = this.formaterDate(today);
 
-    return this.ventes.getVentesParPeriode(debut, fin).pipe(
-      catchError(() => of([])),
-      map(ventesListe => ({
+    return this.getResumePeriode(debut, fin).pipe(
+      catchError(() => of(null)),
+      map(resume => ({
         debutSemaine: debut,
         finSemaine: fin,
-        chiffreAffaireTotal: this.totalVentes(ventesListe),
-        nombreVentes: ventesListe.length,
-        montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
-        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
-        modePaiementStats: this.calcModePaiementStats(ventesListe)
+        chiffreAffaireTotal: resume?.chiffreAffaireTotal || 0,
+        nombreVentes: resume?.nombreVentes || 0,
+        montantRemisesTotal: resume?.montantRemisesTotal || 0,
+        topProduits: this.topProduitsResume(resume),
+        modePaiementStats: resume?.modePaiementStats || []
       }))
     );
   }
@@ -230,41 +248,53 @@ export class RapportService {
     const fin = this.formaterDate(today);
     const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-    return this.ventes.getVentesParPeriode(debut, fin).pipe(
-      catchError(() => of([])),
-      map(ventesListe => ({
+    return this.getResumePeriode(debut, fin).pipe(
+      catchError(() => of(null)),
+      map(resume => ({
         mois: moisNoms[today.getMonth()],
         annee: today.getFullYear(),
         dateDebut: debut,
         dateFin: fin,
-        chiffreAffaireTotal: this.totalVentes(ventesListe),
-        nombreVentes: ventesListe.length,
-        montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
-        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
-        modePaiementStats: this.calcModePaiementStats(ventesListe)
+        chiffreAffaireTotal: resume?.chiffreAffaireTotal || 0,
+        nombreVentes: resume?.nombreVentes || 0,
+        montantRemisesTotal: resume?.montantRemisesTotal || 0,
+        topProduits: this.topProduitsResume(resume),
+        modePaiementStats: resume?.modePaiementStats || []
       }))
     );
   }
 
   genererRapportPeriodique(dateDebut: string, dateFin: string): Observable<any> {
-    return this.ventes.getVentesParPeriode(dateDebut, dateFin).pipe(
-      catchError(() => of([])),
-      map(ventesListe => ({
-        resume: {
-          dateDebut,
-          dateFin,
-          chiffreAffaireTotal: this.totalVentes(ventesListe),
-          nombreVentes: ventesListe.length,
-          montantRemisesTotal: ventesListe.reduce((s, v) => s + Number(v.montantRemiseTotal || 0), 0),
-          beneficeTotal: 0
-        },
-        topProduits: this.calculerTopProduits(ventesListe).slice(0, 8).map(p => ({ nom: p.nom, quantite: p.quantiteVendue, chiffreAffaire: p.chiffreAffaire })),
-        modePaiementStats: this.calcModePaiementStats(ventesListe),
-        gains: { totalRevenus: this.totalVentes(ventesListe), beneficeBrut: 0, margeBrute: 0 },
-        pertes: { totalPertes: 0 },
-        bilanNet: this.totalVentes(ventesListe)
-      }))
+    return this.getResumePeriode(dateDebut, dateFin).pipe(
+      catchError(() => of(null)),
+      map(resume => {
+        const ca = resume?.chiffreAffaireTotal || 0;
+        return {
+          resume: {
+            dateDebut,
+            dateFin,
+            chiffreAffaireTotal: ca,
+            nombreVentes: resume?.nombreVentes || 0,
+            montantRemisesTotal: resume?.montantRemisesTotal || 0,
+            beneficeTotal: 0
+          },
+          topProduits: this.topProduitsResume(resume),
+          modePaiementStats: resume?.modePaiementStats || [],
+          gains: { totalRevenus: ca, beneficeBrut: 0, margeBrute: 0 },
+          pertes: { totalPertes: 0 },
+          bilanNet: ca
+        };
+      })
     );
+  }
+
+  private topProduitsResume(resume: ResumePeriode | null): Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }> {
+    return (resume?.topProduits || []).map(p => ({
+      nom: p.nom,
+      quantite: p.quantite,
+      quantiteTexte: p.quantiteTexte,
+      chiffreAffaire: p.chiffreAffaire
+    }));
   }
 
   /** Récupère le rapport complet (ventes, top produits, répartition modes de paiement,
@@ -366,18 +396,6 @@ export class RapportService {
     return new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
-  private calcModePaiementStats(ventes: VenteMap[]): Array<{ mode: string; montant: number; pourcentage: number }> {
-    const total = this.totalVentes(ventes);
-    const map = new Map<string, number>();
-    ventes.forEach(v => {
-      const mode = v.modePaiement || 'ESPECES';
-      map.set(mode, (map.get(mode) || 0) + Number(v.montantTotal || 0));
-    });
-    return Array.from(map.entries()).map(([mode, montant]) => ({
-      mode, montant, pourcentage: total > 0 ? (montant / total) * 100 : 0
-    }));
-  }
-
   formaterPrixFCFA(value: number): string {
     const n = Math.round(value || 0);
     return `${n < 0 ? '-' : ''}${Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} FCFA`;
@@ -388,28 +406,6 @@ export class RapportService {
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private calculerTopProduits(ventes: VenteMap[]): Array<{ nom: string; quantiteVendue: number; chiffreAffaire: number }> {
-    const map = new Map<string, { quantiteVendue: number; chiffreAffaire: number }>();
-
-    for (const vente of ventes) {
-      for (const line of vente.produits || []) {
-        const key = line.produitNom || 'Produit';
-        const current = map.get(key) || { quantiteVendue: 0, chiffreAffaire: 0 };
-        current.quantiteVendue += Number(line.quantite || 0);
-        current.chiffreAffaire += Number(line.sousTotal || 0);
-        map.set(key, current);
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([nom, data]) => ({ nom, ...data }))
-      .sort((a, b) => b.quantiteVendue - a.quantiteVendue);
-  }
-
-  private totalVentes(ventes: VenteMap[]): number {
-    return ventes.reduce((sum, vente) => sum + Number(vente.montantTotal || 0), 0);
   }
 
   private valeurStock(produits: Produit[]): number {

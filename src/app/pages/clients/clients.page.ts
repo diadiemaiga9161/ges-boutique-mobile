@@ -291,7 +291,11 @@ export class ClientsPage {
     this.showVentesModal = true;
     this.filterVenteType = '';
 
-    this.venteService.getAllVentes().subscribe({
+    // Filtre serveur quand le client est enregistré : évite de télécharger toutes les ventes.
+    const chargement$ = client.id
+      ? this.venteService.getVentesParClientId(client.id)
+      : this.venteService.getAllVentes();
+    chargement$.subscribe({
       next: ventes => {
         this.ventesClient = ventes
           .filter(v => this.isVenteForClient(v, client))

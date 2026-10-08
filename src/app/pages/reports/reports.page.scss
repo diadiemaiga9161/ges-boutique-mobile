@@ -821,3 +821,11 @@
   .rpt-hero__actions { justify-content: flex-start; }
   .rpt-glass-btn { flex: 0 0 auto; }
 }
+
+// Rappel de la période des mini-cartes « du mois » (au-dessus des boutons WhatsApp).
+.rpt-hero__periode {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  font-size: 12px;
+}

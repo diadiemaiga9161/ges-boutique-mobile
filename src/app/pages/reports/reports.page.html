@@ -46,13 +46,13 @@
     <div class="rpt-hero__minis">
       <div class="rpt-mini">
         <ion-icon name="receipt-outline" aria-hidden="true"></ion-icon>
-        <p class="rpt-mini__label">Ventes</p>
+        <p class="rpt-mini__label">Ventes du mois</p>
         <p class="rpt-mini__val">{{ stats?.chiffreAffaire?.totalVentes || 0 }}</p>
       </div>
       <ng-container *ngIf="!isVendeur">
         <div class="rpt-mini">
           <ion-icon name="basket-outline" aria-hidden="true"></ion-icon>
-          <p class="rpt-mini__label">Panier moy.</p>
+          <p class="rpt-mini__label">Panier moy. du mois</p>
           <p class="rpt-mini__val">{{ money(stats?.chiffreAffaire?.panierMoyen || 0) }}</p>
         </div>
         <div class="rpt-mini">
@@ -67,6 +67,10 @@
         </div>
       </ng-container>
     </div>
+
+    <p class="rpt-hero__sub rpt-hero__periode" *ngIf="stats?.periode">
+      « Du mois » = {{ stats!.periode.libelle }}. Pour une autre période, choisissez ci-dessous.
+    </p>
 
     <!-- Envoi WhatsApp du rapport — admin seulement (contient le CA) -->
     <div class="rpt-hero__actions" *ngIf="!isVendeur">

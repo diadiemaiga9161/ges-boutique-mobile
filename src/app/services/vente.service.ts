@@ -395,7 +395,15 @@ export class VenteService {
     const params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
     return this.http.get<any>(`${this.apiUrl}/periode`, { params }).pipe(
       map(response => this.mapVenteList(response)),
-      catchError(() => this.getAllVentes())
+      catchError(error => this.handleError(error, 'récupérer les ventes de la période'))
+    );
+  }
+
+  /** Ventes (comptant + crédit, non annulées) d'un client, filtrées par le serveur. */
+  getVentesParClientId(clientId: number): Observable<VenteMap[]> {
+    return this.http.get<any>(`${this.apiUrl}/by-client/${clientId}`).pipe(
+      map(response => this.mapVenteList(response)),
+      catchError(error => this.handleError(error, 'récupérer les ventes du client'))
     );
   }
 

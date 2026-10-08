@@ -142,7 +142,11 @@
 
     <!-- ══════════════════════ PRODUITS LES PLUS VENDUS ══════════════════════ -->
     <div class="top-produits-section">
-      <gl-section-header title="Produits les plus vendus"></gl-section-header>
+      <gl-section-header
+        [title]="'Plus vendus en ' + (stats?.periode?.libelle || 'ce mois-ci')"
+        actionLabel="Autres périodes"
+        (actionClick)="go('/tabs/reports')">
+      </gl-section-header>
 
       <div class="top-produits-list" *ngIf="(stats?.produitsPlusVendus?.length || 0) > 0; else noTopProduits">
         <div class="top-produit-row" *ngFor="let p of (stats?.produitsPlusVendus || []).slice(0, 5)">
@@ -157,8 +161,8 @@
       <ng-template #noTopProduits>
         <gl-empty-state
           icon="bar-chart-outline"
-          title="Aucune vente enregistrée"
-          message="Les produits les plus vendus apparaîtront ici dès la première vente.">
+          title="Aucune vente ce mois-ci"
+          message="Les produits les plus vendus du mois apparaîtront ici dès la première vente.">
         </gl-empty-state>
       </ng-template>
     </div>

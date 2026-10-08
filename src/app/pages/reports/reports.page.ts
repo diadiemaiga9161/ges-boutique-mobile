@@ -204,24 +204,26 @@ export class ReportsPage implements OnDestroy {
     this.presentToast('Export PDF lancé');
   }
 
-  getTopProduits(): Array<{ nom: string; quantite: number; chiffreAffaire: number }> {
+  getTopProduits(): Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }> {
     const rapport = this.getActiveReport();
     if (rapport?.topProduits) return rapport.topProduits.slice(0, 5);
     if (this.stats?.produitsPlusVendus) {
       return this.stats.produitsPlusVendus.slice(0, 5).map(p => ({
         nom: p.nom,
         quantite: p.quantiteVendue,
+        quantiteTexte: p.quantiteTexte,
         chiffreAffaire: p.chiffreAffaire
       }));
     }
     return [];
   }
 
-  getTopProduitsGeneraux(): Array<{ nom: string; quantite: number; chiffreAffaire: number }> {
+  getTopProduitsGeneraux(): Array<{ nom: string; quantite: number; quantiteTexte?: string; chiffreAffaire: number }> {
     if (!this.stats?.produitsPlusVendus) return [];
     return this.stats.produitsPlusVendus.slice(0, 5).map(p => ({
       nom: p.nom,
       quantite: p.quantiteVendue,
+      quantiteTexte: p.quantiteTexte,
       chiffreAffaire: p.chiffreAffaire
     }));
   }

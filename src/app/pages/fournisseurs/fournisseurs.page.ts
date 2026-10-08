@@ -348,24 +348,31 @@ export class FournisseursPage {
    */
   private confirmerCump(produit: Produit, stockActuel: number, quantiteEntree: number, prixEntree: number, cump: number): Promise<boolean> {
     const ancienPrix = Number(produit.prixAchat) || 0;
-    const escapeHtml = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    const message =
-      `<strong>${escapeHtml(produit.nom)}</strong><br>` +
-      `Le prix d'achat saisi (${puDoc(produit, v => this.money(v), prixEntree)}) diffère du prix d'achat actuel (${puDoc(produit, v => this.money(v), ancienPrix)}).<br><br>` +
-      `Stock actuel : ${qteDoc(produit, stockActuel)} × ${puDoc(produit, v => this.money(v), ancienPrix)} = ${this.money(stockActuel * ancienPrix)}<br>` +
-      `Entrée : ${qteDoc(produit, quantiteEntree)} × ${puDoc(produit, v => this.money(v), prixEntree)} = ${this.money(quantiteEntree * prixEntree)}<br><br>` +
-      `CUMP = (Stock × Ancien prix + Qté entrée × Prix entrée) / (Stock + Qté entrée)<br><br>` +
-      `Nouveau prix d'achat proposé : <strong>${puDoc(produit, v => this.money(v), cump)}</strong><br><br>` +
-      `Appliquer ce nouveau prix d'achat au produit ?`;
+    const prix = (v: number) => puDoc(produit, x => this.money(x), v);
+    // Même valeur que celle enregistrée (arrondie au franc, sauf vente à la mesure).
+    const propose = infoMesure(produit as any) ? cump : Math.round(cump);
+    // Texte simple (le mobile affiche les balises HTML telles quelles dans une alerte).
+    const message = [
+      produit.nom,
+      '',
+      `Prix d'achat actuel : ${prix(ancienPrix)}`,
+      `Prix de cet achat : ${prix(prixEntree)}`,
+      `Prix moyen proposé : ${prix(propose)}`,
+      ''
+    ].join('\n') + '\n' +
+      (stockActuel > 0
+        ? `Le prix moyen tient compte des ${qteDoc(produit, stockActuel)}${infoMesure(produit as any) ? '' : ' unité(s)'} déjà en stock.`
+        : `Aucun stock en boutique : le nouveau prix est celui de cet achat.`);
 
     return new Promise<boolean>(resolve => {
       this.alertCtrl.create({
-        header: 'Recalcul du prix d\'achat (CUMP)',
+        header: "Prix d'achat modifié",
         message,
+        cssClass: 'alert-pre-line',
         backdropDismiss: false,
         buttons: [
-          { text: 'Non, garder le prix actuel', role: 'cancel', handler: () => resolve(false) },
-          { text: 'Oui, appliquer', cssClass: 'alert-btn-primary', handler: () => resolve(true) }
+          { text: `Garder ${prix(ancienPrix)}`, role: 'cancel', handler: () => resolve(false) },
+          { text: `Passer à ${prix(propose)}`, cssClass: 'alert-btn-primary', handler: () => resolve(true) }
         ]
       }).then(alert => alert.present());
     });

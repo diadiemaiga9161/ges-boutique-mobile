@@ -10,7 +10,6 @@ import { TransfertService } from '../services/transfert.service';
 import { BeneficeService, BeneficeData } from '../services/benefice.service';
 import { CaisseService } from '../services/caisse.service';
 import { RoleService } from '../services/role.service';
-import { VenteService } from '../services/vente.service';
 
 @Component({
   selector: 'app-home',
@@ -22,8 +21,7 @@ export class HomePage implements OnDestroy {
   stats?: StatistiquesGenerales;
   beneficeJour?: BeneficeData;
   soldeCaisse?: { solde: number; soldeSysteme: number };
-  /** Ventes d'aujourd'hui (GET /ventes/aujourdhui). stats.chiffreAffaire.totalVentes compte
-   *  TOUTES les ventes depuis le début : l'accueil affichait « 23 ventes aujourd'hui » pour 0 FCFA. */
+  /** Nombre de ventes d'aujourd'hui (résumé du jour calculé par le serveur). */
   nbVentesJour?: number;
   alertesStock: any[] = [];
   nbTransfertsEnAttente: number = 0;
@@ -53,7 +51,6 @@ export class HomePage implements OnDestroy {
     private transfertService: TransfertService,
     private beneficeService: BeneficeService,
     private caisseService: CaisseService,
-    private venteService: VenteService,
     private roleService: RoleService
   ) {}
 
@@ -124,14 +121,6 @@ export class HomePage implements OnDestroy {
     });
   }
 
-  private chargerVentesJour(): void {
-    this.venteService.getVentesDuJour().pipe(
-      catchError(() => of(undefined))
-    ).subscribe(res => {
-      this.nbVentesJour = res ? res.ventes.length : undefined;
-    });
-  }
-
   private chargerSoldeCaisse(): void {
     if (!this.auth.isAdmin() || !this.roleService.peut('CAISSE')) return;
     this.caisseService.getSolde().pipe(
@@ -146,6 +135,7 @@ export class HomePage implements OnDestroy {
     this.reports.obtenirStatistiquesGenerales().subscribe({
       next: stats => {
         this.stats = stats;
+        this.nbVentesJour = stats.chiffreAffaire.nombreVentesJour;
         this.loading = false;
         event?.target?.complete();
       },
@@ -156,7 +146,6 @@ export class HomePage implements OnDestroy {
     });
     this.chargerBeneficeJour();
     this.chargerSoldeCaisse();
-    this.chargerVentesJour();
   }
 
   go(route: string): void {

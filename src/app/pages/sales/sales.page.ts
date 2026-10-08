@@ -205,13 +205,15 @@ export class SalesPage implements OnDestroy {
   }
 
   private execLoadPeriode(done?: () => void): void {
+    // Jamais tout l'historique : sans période, on retombe sur les ventes du jour.
+    if (!this.dateDebut || !this.dateFin) {
+      this.execLoadToday(done);
+      return;
+    }
     this.sales = [];
     this.filtered = [];
     this.loading = true;
-    const obs$ = (this.dateDebut && this.dateFin)
-      ? this.venteService.getVentesParPeriode(this.dateDebut, this.dateFin)
-      : this.venteService.getAllVentes();
-    obs$.subscribe({
+    this.venteService.getVentesParPeriode(this.dateDebut, this.dateFin).subscribe({
       next: (result: VenteMap[]) => {
         this.sales = result || [];
         this.applyFilter();
