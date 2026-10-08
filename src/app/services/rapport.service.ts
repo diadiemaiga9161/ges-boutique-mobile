@@ -148,6 +148,12 @@ export class RapportService {
     private factureService: FactureService
   ) {}
 
+  /** Ruptures, stock faible et valeur du stock calculés par le serveur (sans la liste des produits). */
+  getIndicateursStock(): Observable<{ valeurTotale: number; produitsStockFaible: number; produitsRupture: number; totalProduits: number }> {
+    return this.http.get<{ valeurTotale: number; produitsStockFaible: number; produitsRupture: number; totalProduits: number }>(
+      `${environment.apiUrl}/produits/indicateurs-stock`);
+  }
+
   /** Totaux d'une période calculés par le serveur (jamais la liste des ventes). */
   getResumePeriode(dateDebut: string, dateFin: string, top = 8): Observable<ResumePeriode> {
     return this.http.get<ResumePeriode>(`${environment.apiUrl}/ventes/statistiques/periode`, {
@@ -166,11 +172,11 @@ export class RapportService {
     return forkJoin({
       resumeJour: this.getResumePeriode(jour, jour, 1).pipe(catchError(() => of(null))),
       resumeMois: this.getResumePeriode(debutMois, jour).pipe(catchError(() => of(null))),
-      produits: this.products.getProducts().pipe(catchError(() => of([]))),
-      situationCredits: this.caisse.getSituationCredits().pipe(catchError(() => of(null))),
-      creditsRetard: this.caisse.getCreditsEnRetard().pipe(catchError(() => of([])))
+      // Chiffres seulement (plus les listes complètes des produits et des crédits en retard).
+      stock: this.getIndicateursStock().pipe(catchError(() => of(null))),
+      situationCredits: this.caisse.getSituationCredits().pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ resumeJour, resumeMois, produits, situationCredits, creditsRetard }) => ({
+      map(({ resumeJour, resumeMois, stock, situationCredits }) => ({
         periode: { dateDebut: debutMois, dateFin: jour, libelle },
         chiffreAffaire: {
           journalier: resumeJour?.chiffreAffaireTotal || 0,
@@ -180,16 +186,16 @@ export class RapportService {
           panierMoyen: resumeMois?.panierMoyen || 0
         },
         inventaire: {
-          valeurTotale: this.valeurStock(produits),
-          produitsStockFaible: produits.filter(p => Number(p.quantite || 0) <= Number(p.seuilAlerte || 0)).length,
-          produitsRupture: produits.filter(p => Number(p.quantite || 0) <= 0).length,
-          totalProduits: produits.length
+          valeurTotale: stock?.valeurTotale || 0,
+          produitsStockFaible: stock?.produitsStockFaible || 0,
+          produitsRupture: stock?.produitsRupture || 0,
+          totalProduits: stock?.totalProduits || 0
         },
         credits: {
           totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
           montantTotalCredits: situationCredits?.montantTotalCredits || situationCredits?.montantRestantTotal || 0,
-          creditsEnRetard: creditsRetard.length,
-          montantCreditsEnRetard: creditsRetard.reduce((sum, credit) => sum + Number(credit.montantRestant || 0), 0)
+          creditsEnRetard: situationCredits?.nombreCreditsEnRetard || 0,
+          montantCreditsEnRetard: situationCredits?.montantTotalRetard || 0
         },
         produitsPlusVendus: (resumeMois?.topProduits || []).map(p => ({
           nom: p.nom,
