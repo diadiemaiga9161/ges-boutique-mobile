@@ -98,6 +98,8 @@ export class ResourcesPage {
   // Fournisseurs redesign
   fournisseurSegment: 'liste' | 'achats' | 'paiements' = 'liste';
   selectedFournisseur?: Fournisseur;
+  /** Fournisseur dont la fiche (achats, paiements) est affichée. */
+  private fournisseurDetailsId?: number;
   showAchatModal = false;
   showPaiementModal = false;
   showFournisseurFormModal = false;
@@ -435,6 +437,7 @@ export class ResourcesPage {
       this.presentToast('Sélectionnez un fournisseur', 'danger');
       return;
     }
+    this.fournisseurDetailsId = id;
 
     this.productService.getSituationFournisseur(id).subscribe({
       next: situation => this.fournisseurDetails.situation = situation,
@@ -476,7 +479,34 @@ export class ResourcesPage {
     }));
   }
 
+  /** Annulation d'un achat depuis la fiche fournisseur (même règle que la page Fournisseurs). */
+  private async confirmerAnnulationAchat(achat: any): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Annuler l\'achat',
+      message: `Annuler l'achat #${achat.id} ? Le stock sera restauré automatiquement.`,
+      buttons: [
+        { text: 'Non', role: 'cancel' },
+        {
+          text: 'Oui, annuler',
+          role: 'destructive',
+          handler: () => {
+            this.productService.annulerAchatFournisseur(achat.id, this.auth.getUserId()).subscribe({
+              next: () => {
+                this.presentToast('Achat annulé — stock restauré');
+                const fournisseurId = achat.fournisseurId || this.fournisseurDetailsId;
+                if (fournisseurId) this.loadFournisseurDetails(fournisseurId);
+              },
+              error: error => this.presentToast(error?.error?.message || error.message || 'Annulation impossible', 'danger')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   async action(item: any, kind: string): Promise<void> {
+    if (kind === 'annuler-achat') return this.confirmerAnnulationAchat(item);
     if (kind === 'print') this.factureService.imprimerFacture(item as Facture);
     if (kind === 'pdf-dl') window.open('/api/caisse/factures/' + item.id + '/pdf', '_blank');
     if (kind === 'pdf-view') window.open('/api/caisse/factures/' + item.id + '/pdf/view', '_blank');
