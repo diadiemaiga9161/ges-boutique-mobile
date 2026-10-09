@@ -133,6 +133,10 @@ export interface StatistiquesCaisse {
   totalSorties: number;
   totalEntrees: number;
   soldeNetPeriode: number;
+  /** Argent réellement entré / sorti du tiroir (espèces), dépôts banque à part : Entré − Sorti = soldeNetPeriode. */
+  argentEntreTiroir?: number;
+  argentSortiTiroir?: number;
+  argentDeposeBanque?: number;
   nombreOperations: number;
 }
 

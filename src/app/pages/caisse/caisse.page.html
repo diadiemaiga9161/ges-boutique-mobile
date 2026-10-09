@@ -46,11 +46,12 @@
       </div>
       <div class="caisse-periodes__ligne" *ngFor="let l of lignesPeriodes">
         <span class="caisse-periodes__periode">{{ l.libelle }}</span>
-        <span class="caisse-periodes__montant caisse-periodes__montant--ok">{{ l.stats ? caisseService.formatPrice(l.stats.totalEntrees || 0) : '…' }}</span>
-        <span class="caisse-periodes__montant caisse-periodes__montant--bad">{{ l.stats ? caisseService.formatPrice(l.stats.totalSorties || 0) : '…' }}</span>
+        <span class="caisse-periodes__montant caisse-periodes__montant--ok">{{ l.stats ? caisseService.formatPrice((l.stats.argentEntreTiroir ?? l.stats.totalEntrees) || 0) : '…' }}</span>
+        <span class="caisse-periodes__montant caisse-periodes__montant--bad">{{ l.stats ? caisseService.formatPrice((l.stats.argentSortiTiroir ?? l.stats.totalSorties) || 0) : '…' }}</span>
         <span class="caisse-periodes__montant caisse-periodes__montant--fort">{{ l.stats ? caisseService.formatPrice(l.stats.soldeNetPeriode || 0) : '…' }}</span>
       </div>
-      <p class="caisse-note">« Différence » = de combien l'argent de la caisse a vraiment augmenté (ou baissé) sur la période. Les dépôts à la banque ne comptent pas. Ce n'est pas le bénéfice.</p>
+      <p class="caisse-note">Seul l'argent en espèces du tiroir est compté : les ventes Wave, Moov et Orange Money n'y passent pas. Entré − Sorti = Différence (de combien l'argent du tiroir a augmenté ou baissé). Les dépôts à la banque sont à part. Ce n'est pas le bénéfice.</p>
+      <p class="caisse-note" *ngIf="(statsMoisCourant?.argentDeposeBanque || 0) > 0">Déposé à la banque ce mois-ci : <strong>{{ caisseService.formatPrice(statsMoisCourant?.argentDeposeBanque || 0) }}</strong></p>
     </section>
 
     <!-- Crédits clients -->
