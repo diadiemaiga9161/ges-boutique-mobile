@@ -16,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 import { Compte, CompteService } from '../../services/compte.service';
 import { BoutiqueService } from '../../services/boutique.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-caisse',
   templateUrl: './caisse.page.html',
@@ -95,6 +96,7 @@ export class CaissePage implements OnDestroy {
   }
 
   constructor(
+    private roleService: RoleService,
     public caisseService: CaisseService,
     private auth: AuthService,
     private compteService: CompteService,
@@ -103,6 +105,12 @@ export class CaissePage implements OnDestroy {
     private ws: WebSocketService,
     private boutiqueService: BoutiqueService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   ionViewWillEnter(): void {
     this.load();

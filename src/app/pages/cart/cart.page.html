@@ -554,7 +554,7 @@
       </button>
     </div>
 
-    <button
+    <button [hidden]="!peut('VENTES', 'GERER')"
       type="button"
       class="cart-btn cart-btn--primary"
       [class.cart-btn--disabled]="submitting || !items.length"

@@ -17,6 +17,7 @@ import { MESURES, contenanceDepuisNom, infoMesure, lireNombre, prixAffiche, prix
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-products',
   templateUrl: './products.page.html',
@@ -80,6 +81,7 @@ export class ProductsPage implements OnInit {
   editUniteVente: { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number } = this.emptyUniteVente();
 
   constructor(
+    private roleService: RoleService,
     public productsService: ProductService,
     public auth: AuthService,
     private toastCtrl: ToastController,
@@ -96,6 +98,12 @@ export class ProductsPage implements OnInit {
     public photos: ProduitImageService,
     private http: HttpClient
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   // ---------------------------------------------------------------- vente à la mesure
   // Fonctionnalité VENTE_A_LA_MESURE : produit vendu au kg / L / m, choisi produit par

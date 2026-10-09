@@ -17,6 +17,7 @@ import { SaleActionKey, SaleActionsSheetComponent } from './sale-actions-sheet/s
 
 import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-sales',
   templateUrl: './sales.page.html',
@@ -100,6 +101,7 @@ export class SalesPage implements OnDestroy {
   }
 
   constructor(
+    private roleService: RoleService,
     public venteService: VenteService,
     private factureService: FactureService,
     private productService: ProductService,
@@ -115,6 +117,12 @@ export class SalesPage implements OnDestroy {
     private impressionRecuService: ImpressionRecuService,
     private bottomSheetService: BottomSheetService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   ionViewWillEnter(): void {
     this.design = this.designService.getDesign();

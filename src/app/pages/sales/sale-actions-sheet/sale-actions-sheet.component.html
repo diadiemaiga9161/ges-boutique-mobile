@@ -7,19 +7,19 @@
       <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
     </button>
 
-    <button class="sas-item" (click)="choose('modifier')" *ngIf="!sale.annulee">
+    <button class="sas-item" [hidden]="!peut('VENTES', 'GERER')" (click)="choose('modifier')" *ngIf="!sale.annulee">
       <span class="sas-item__icon sas-item__icon--orange"><ion-icon name="create-outline"></ion-icon></span>
       <span class="sas-item__label">Modifier</span>
       <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
     </button>
 
-    <button class="sas-item" (click)="choose('annuler')" *ngIf="!sale.annulee">
+    <button class="sas-item" [hidden]="!peut('VENTES', 'SUPPRIMER')" (click)="choose('annuler')" *ngIf="!sale.annulee">
       <span class="sas-item__icon sas-item__icon--red"><ion-icon name="ban-outline"></ion-icon></span>
       <span class="sas-item__label">Annuler la vente</span>
       <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>
     </button>
 
-    <button class="sas-item" (click)="choose('retour')" *ngIf="!sale.annulee">
+    <button class="sas-item" [hidden]="!peut('VENTES', 'GERER')" (click)="choose('retour')" *ngIf="!sale.annulee">
       <span class="sas-item__icon sas-item__icon--teal"><ion-icon name="return-down-back-outline"></ion-icon></span>
       <span class="sas-item__label">Retour produit</span>
       <ion-icon class="sas-item__chevron" name="chevron-forward-outline"></ion-icon>

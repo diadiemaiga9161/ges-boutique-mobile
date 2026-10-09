@@ -579,11 +579,11 @@
 
     <ion-footer class="ion-no-border">
       <div class="receipt-footer">
-        <button class="rfooter-btn rfooter-btn--warn" (click)="confirmModify(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="rfooter-btn rfooter-btn--warn" (click)="confirmModify(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
           <ion-icon name="create-outline"></ion-icon>
           Modifier
         </button>
-        <button class="rfooter-btn rfooter-btn--danger" (click)="confirmCancel(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+        <button [hidden]="!peut('VENTES', 'SUPPRIMER')" class="rfooter-btn rfooter-btn--danger" (click)="confirmCancel(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
           <ion-icon name="ban-outline"></ion-icon>
           Annuler
         </button>
@@ -595,7 +595,7 @@
           <ion-icon name="qr-code-outline"></ion-icon>
           QR
         </button>
-        <button class="rfooter-btn rfooter-btn--retour" (click)="openRetourModal(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="rfooter-btn rfooter-btn--retour" (click)="openRetourModal(selectedVente!); showDetailModal=false" *ngIf="selectedVente && !selectedVente.annulee">
           <ion-icon name="return-down-back-outline"></ion-icon>
           Retour
         </button>
@@ -659,7 +659,7 @@
               <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</option>
             </select>
           </div>
-          <ion-button fill="clear" size="small" color="danger" (click)="removeModifyLine(i)">
+          <ion-button [hidden]="!peut('VENTES', 'GERER')" fill="clear" size="small" color="danger" (click)="removeModifyLine(i)">
             <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
           </ion-button>
         </div>
@@ -695,7 +695,7 @@
       </div>
 
       <!-- Ajouter une ligne -->
-      <button class="ml-add-btn" (click)="addModifyLine()">
+      <button [hidden]="!peut('VENTES', 'GERER')" class="ml-add-btn" (click)="addModifyLine()">
         <ion-icon name="add-circle-outline"></ion-icon>
         Ajouter un article
       </button>
@@ -713,7 +713,7 @@
           <ion-icon name="arrow-back-outline"></ion-icon>
           Retour
         </button>
-        <button class="rfooter-btn rfooter-btn--warn rfooter-btn--full" (click)="saveModify()">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="rfooter-btn rfooter-btn--warn rfooter-btn--full" (click)="saveModify()">
           <ion-icon name="save-outline"></ion-icon>
           Enregistrer
         </button>
@@ -857,7 +857,7 @@
           <ion-icon name="arrow-back-outline"></ion-icon>
           Annuler
         </button>
-        <button class="rfooter-btn rfooter-btn--retour rfooter-btn--full" (click)="submitRetour()">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="rfooter-btn rfooter-btn--retour rfooter-btn--full" (click)="submitRetour()">
           <ion-icon name="return-down-back-outline"></ion-icon>
           Valider le retour ({{ money(totalRetour) }})
         </button>

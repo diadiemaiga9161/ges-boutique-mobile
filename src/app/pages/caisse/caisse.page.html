@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>{{ 'CAISSE.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="openTransfertModal()" *ngIf="caisse?.estOuverte && isAdmin">
+      <ion-button [hidden]="!peut('CAISSE', 'GERER')" (click)="openTransfertModal()" *ngIf="caisse?.estOuverte && isAdmin">
         <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -93,11 +93,11 @@
           <p class="caisse-tile__value caisse-tile__value--bad">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
         </div>
 
-        <button type="button" class="caisse-btn caisse-btn--primary" *ngIf="!caisse?.estOuverte && isAdmin" (click)="openCash()">
+        <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="caisse-btn caisse-btn--primary" *ngIf="!caisse?.estOuverte && isAdmin" (click)="openCash()">
           <ion-icon name="lock-open-outline" aria-hidden="true"></ion-icon>
           Ouvrir la caisse
         </button>
-        <button type="button" class="caisse-btn caisse-btn--danger" *ngIf="caisse?.estOuverte && isAdmin" (click)="confirmCloseCash()">
+        <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="caisse-btn caisse-btn--danger" *ngIf="caisse?.estOuverte && isAdmin" (click)="confirmCloseCash()">
           <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
           Fermer la caisse
         </button>
@@ -152,7 +152,7 @@
           </div>
         </div>
 
-        <button type="button" class="caisse-btn caisse-btn--primary" (click)="saveOperation()" [disabled]="!caisse?.estOuverte">
+        <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="caisse-btn caisse-btn--primary" (click)="saveOperation()" [disabled]="!caisse?.estOuverte">
           <ion-icon name="checkmark-outline" aria-hidden="true"></ion-icon>
           Enregistrer
         </button>
@@ -594,7 +594,7 @@
 
     <div class="gl-modal__foot">
       <button type="button" class="caisse-btn caisse-btn--secondary" (click)="showTransfertModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="caisse-btn caisse-btn--primary caisse-btn--grow" (click)="validerTransfert()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="caisse-btn caisse-btn--primary caisse-btn--grow" (click)="validerTransfert()">
         Confirmer le transfert
       </button>
     </div>

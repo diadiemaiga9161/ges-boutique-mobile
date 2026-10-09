@@ -4,6 +4,7 @@ import { IonicModule, ModalController } from '@ionic/angular';
 import { BottomSheetComponent } from '../../../components/bottom-sheet/bottom-sheet.component';
 import { VenteMap } from '../../../services/vente.service';
 
+import { ActionPermission, RoleService } from '../../../services/role.service';
 export type SaleActionKey = 'voir' | 'modifier' | 'annuler' | 'retour' | 'pdf' | 'qr';
 
 /** Contenu du tiroir "···" ouvert depuis une carte de vente (sales.page.html)
@@ -26,7 +27,15 @@ export type SaleActionKey = 'voir' | 'modifier' | 'annuler' | 'retour' | 'pdf' |
 export class SaleActionsSheetComponent {
   @Input() sale!: VenteMap;
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(
+    private roleService: RoleService,
+    private modalCtrl: ModalController) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   choose(action: SaleActionKey): void {
     this.modalCtrl.dismiss(action);

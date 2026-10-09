@@ -16,6 +16,7 @@ import { BoutiqueService } from '../../services/boutique.service';
 import { FideliteService, MouvementFidelite, SoldeFidelite } from '../../services/fidelite.service';
 import { CaisseService, CreditInfo } from '../../services/caisse.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 /** Résumé crédit non réglé d'un client, agrégé depuis CaisseService.getCreditsNonRegles()
  *  — même logique de regroupement que credits.page.ts (buildGroups) : un seul appel HTTP
  *  à plat, regroupé ici par client plutôt que d'appeler un endpoint par client (anti N+1). */
@@ -119,6 +120,7 @@ export class ClientsPage {
   }
 
   constructor(
+    private roleService: RoleService,
     public clientService: ClientService,
     public venteService: VenteService,
     private auth: AuthService,
@@ -135,6 +137,12 @@ export class ClientsPage {
     private fideliteService: FideliteService,
     private caisseService: CaisseService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   ionViewWillEnter(): void {
     this.design = this.designService.getDesign();

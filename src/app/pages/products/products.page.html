@@ -14,7 +14,7 @@
       <ion-button *ngIf="stats" (click)="showStatsModal = true">
         <ion-icon name="bar-chart-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button (click)="startCreate()">
+      <ion-button [hidden]="!peut('PRODUITS', 'GERER')" (click)="startCreate()">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -170,11 +170,11 @@
 
         <!-- Pied : Modifier | Supprimer -->
         <div class="product-card-actions">
-          <button type="button" class="pc-action" (click)="startEdit(product)">
+          <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="pc-action" (click)="startEdit(product)">
             <ion-icon name="create-outline"></ion-icon>
             {{ 'COMMON.EDIT' | translate }}
           </button>
-          <button type="button" class="pc-action pc-action--danger" (click)="confirmDelete(product)">
+          <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" type="button" class="pc-action pc-action--danger" (click)="confirmDelete(product)">
             <ion-icon name="trash-outline"></ion-icon>
             {{ 'COMMON.DELETE' | translate }}
           </button>
@@ -229,7 +229,7 @@
                 {{ (editing ? urlPhoto(editing) : photoApercu) ? 'Changer' : 'Ajouter une photo' }}
                 <input type="file" accept="image/*" hidden (change)="choisirPhoto($event)" [disabled]="photoEnvoiEnCours">
               </label>
-              <ion-button size="small" fill="clear" color="danger" *ngIf="editing && urlPhoto(editing)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</ion-button>
+              <ion-button [hidden]="!peut('PRODUITS', 'GERER')" size="small" fill="clear" color="danger" *ngIf="editing && urlPhoto(editing)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</ion-button>
               <ion-button size="small" fill="clear" color="danger" *ngIf="!editing && photoApercu" (click)="oublierPhotoEnAttente()">Retirer</ion-button>
             </div>
           </div>
@@ -256,7 +256,7 @@
           </ion-item>
           <div class="inline-create">
             <ion-input [placeholder]="'PRODUCTS.NEW_CATEGORY_PLACEHOLDER' | translate" [(ngModel)]="categoryName"></ion-input>
-            <ion-button fill="outline" size="small" (click)="createCategory()">
+            <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="outline" size="small" (click)="createCategory()">
               <ion-icon name="add-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
@@ -279,9 +279,9 @@
           <div class="mesure-bascule" *ngIf="editing">
             <span>{{ modeMesureForm ? $any(mesures)[modeMesureForm].libelle : "À l'unité" }}</span>
             <ng-container *ngIf="mesureActif">
-              <ion-button size="small" fill="outline" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">Remettre à l'unité</ion-button>
+              <ion-button [hidden]="!peut('PRODUITS', 'GERER')" size="small" fill="outline" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">Remettre à l'unité</ion-button>
               <ng-container *ngIf="!modeMesureForm">
-                <ion-button size="small" fill="outline" *ngFor="let m of modesMesure" (click)="changerModeMesure(m)" [disabled]="changementModeEnCours">{{ $any(mesures)[m].unite }}</ion-button>
+                <ion-button [hidden]="!peut('PRODUITS', 'GERER')" size="small" fill="outline" *ngFor="let m of modesMesure" (click)="changerModeMesure(m)" [disabled]="changementModeEnCours">{{ $any(mesures)[m].unite }}</ion-button>
               </ng-container>
             </ng-container>
           </div>
@@ -348,7 +348,7 @@
           </ion-item>
         </div>
 
-        <ion-button expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'" style="margin-top:8px">
+        <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'" style="margin-top:8px">
           <ion-icon name="save-outline" slot="start"></ion-icon>
           {{ editing ? ('PRODUCTS.SAVE_CHANGES' | translate) : ('PRODUCTS.CREATE_BTN' | translate) }}
         </ion-button>
@@ -377,7 +377,7 @@
           <p class="modal-section-title">{{ 'PRODUCTS.NEW_CATEGORY_TITLE' | translate }}</p>
           <div class="inline-create">
             <ion-input [placeholder]="'PRODUCTS.CAT_NAME_PLACEHOLDER' | translate" [(ngModel)]="categoryName"></ion-input>
-            <ion-button fill="solid" color="primary" (click)="createCategory()">
+            <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="solid" color="primary" (click)="createCategory()">
               <ion-icon name="add-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
@@ -395,10 +395,10 @@
                   <span class="cat-count muted">{{ countByCategorie(cat.id) }} {{ 'PRODUCTS.ITEMS' | translate }}</span>
                 </div>
                 <div class="cat-actions">
-                  <ion-button fill="clear" size="small" color="primary" (click)="startEditCategory(cat)">
+                  <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="clear" size="small" color="primary" (click)="startEditCategory(cat)">
                     <ion-icon name="create-outline" slot="icon-only"></ion-icon>
                   </ion-button>
-                  <ion-button fill="clear" size="small" color="danger" (click)="confirmDeleteCategory(cat)">
+                  <ion-button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" fill="clear" size="small" color="danger" (click)="confirmDeleteCategory(cat)">
                     <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
                   </ion-button>
                 </div>
@@ -412,7 +412,7 @@
                   (keyup.enter)="saveEditCategory()">
                 </ion-input>
                 <div class="cat-actions">
-                  <ion-button fill="clear" size="small" color="success" (click)="saveEditCategory()">
+                  <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="clear" size="small" color="success" (click)="saveEditCategory()">
                     <ion-icon name="checkmark-outline" slot="icon-only"></ion-icon>
                   </ion-button>
                   <ion-button fill="clear" size="small" color="medium" (click)="editingCategoryId = undefined">
@@ -544,10 +544,10 @@
 
                   <!-- Actions -->
                   <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                    <ion-button fill="clear" color="primary" size="small" (click)="startEditNiveau(n)">
+                    <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="clear" color="primary" size="small" (click)="startEditNiveau(n)">
                       <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
                     </ion-button>
-                    <ion-button fill="clear" color="danger" size="small" (click)="supprimerNiveau(n)">
+                    <ion-button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" fill="clear" color="danger" size="small" (click)="supprimerNiveau(n)">
                       <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
                     </ion-button>
                   </div>
@@ -555,7 +555,7 @@
 
                 <!-- Bouton Ouvrir (décomposer) — visible si ce niveau est un parent d'un autre niveau -->
                 <ng-container *ngIf="niveauEnfantDirect(n.id) as enfant">
-                  <ion-button
+                  <ion-button [hidden]="!peut('PRODUITS', 'GERER')"
                     expand="block"
                     fill="outline"
                     color="warning"
@@ -638,7 +638,7 @@
                 </div>
 
                 <div style="display:flex;gap:8px;margin-top:10px">
-                  <ion-button expand="block" style="flex:1" (click)="saveEditNiveau()">
+                  <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" style="flex:1" (click)="saveEditNiveau()">
                     <ion-icon name="checkmark-outline" slot="start"></ion-icon>
                     {{ 'COMMON.SAVE' | translate }}
                   </ion-button>
@@ -653,7 +653,7 @@
         </div>
 
         <!-- Bouton ajouter -->
-        <ion-button expand="block" color="success" style="margin-top:16px" (click)="ouvrirAjoutNiveau()">
+        <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" color="success" style="margin-top:16px" (click)="ouvrirAjoutNiveau()">
           <ion-icon name="add-circle-outline" slot="start"></ion-icon>
           {{ 'PRODUCTS.ADD_LEVEL_BTN' | translate }}
         </ion-button>
@@ -762,7 +762,7 @@
             </p>
           </div>
 
-          <ion-button expand="block" color="success" (click)="ajouterNiveau()" style="margin-top:16px">
+          <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" color="success" (click)="ajouterNiveau()" style="margin-top:16px">
             <ion-icon name="add-outline" slot="start"></ion-icon>
             {{ 'PRODUCTS.ADD_LEVEL_BTN' | translate }}
           </ion-button>
@@ -831,10 +831,10 @@
                 </div>
 
                 <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                  <ion-button fill="clear" color="primary" size="small" (click)="startEditUniteVente(u)">
+                  <ion-button [hidden]="!peut('PRODUITS', 'GERER')" fill="clear" color="primary" size="small" (click)="startEditUniteVente(u)">
                     <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
                   </ion-button>
-                  <ion-button fill="clear" color="danger" size="small" (click)="supprimerUniteVente(u)">
+                  <ion-button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" fill="clear" color="danger" size="small" (click)="supprimerUniteVente(u)">
                     <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
                   </ion-button>
                 </div>
@@ -904,7 +904,7 @@
               </ion-item>
 
               <div style="display:flex;gap:8px;margin-top:10px">
-                <ion-button expand="block" style="flex:1" (click)="saveEditUniteVente()">
+                <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" style="flex:1" (click)="saveEditUniteVente()">
                   <ion-icon name="checkmark-outline" slot="start"></ion-icon>
                   {{ 'COMMON.SAVE' | translate }}
                 </ion-button>
@@ -917,7 +917,7 @@
 
         </div>
 
-        <ion-button expand="block" color="success" style="margin-top:16px" (click)="ouvrirAjoutUniteVente()">
+        <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" color="success" style="margin-top:16px" (click)="ouvrirAjoutUniteVente()">
           <ion-icon name="add-circle-outline" slot="start"></ion-icon>
           {{ 'UNITE_VENTE.ADD_BTN' | translate }}
         </ion-button>
@@ -999,7 +999,7 @@
           </ion-input>
         </ion-item>
 
-        <ion-button expand="block" color="success" (click)="ajouterUniteVente()" style="margin-top:16px">
+        <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" color="success" (click)="ajouterUniteVente()" style="margin-top:16px">
           <ion-icon name="add-outline" slot="start"></ion-icon>
           {{ 'UNITE_VENTE.ADD_BTN' | translate }}
         </ion-button>

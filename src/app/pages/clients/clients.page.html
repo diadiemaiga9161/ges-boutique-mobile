@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>{{ 'CLIENTS.TITLE' | translate }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="startCreate()" [attr.aria-label]="'CLIENTS.ADD' | translate">
+      <ion-button [hidden]="!peut('CLIENTS', 'GERER')" (click)="startCreate()" [attr.aria-label]="'CLIENTS.ADD' | translate">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -111,7 +111,7 @@
             <ion-icon name="receipt-outline"></ion-icon>
             <span>Ventes</span>
           </button>
-          <button type="button" class="gl-act gl-act--stacked" (click)="openAvanceModal(client)">
+          <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-act gl-act--stacked" (click)="openAvanceModal(client)">
             <ion-icon name="wallet-outline"></ion-icon>
             <span>Avance</span>
           </button>
@@ -143,11 +143,11 @@
 
         <!-- Actions : gestion -->
         <div class="gl-card__foot">
-          <button type="button" class="gl-act" (click)="startEdit(client)">
+          <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-act" (click)="startEdit(client)">
             <ion-icon name="create-outline"></ion-icon>
             <span>{{ 'COMMON.EDIT' | translate }}</span>
           </button>
-          <button type="button" class="gl-act gl-act--danger" (click)="confirmDelete(client)">
+          <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" type="button" class="gl-act gl-act--danger" (click)="confirmDelete(client)">
             <ion-icon name="trash-outline"></ion-icon>
             <span>{{ 'COMMON.DELETE' | translate }}</span>
           </button>
@@ -171,7 +171,7 @@
   <!-- Bouton flottant étendu « Nouveau client » (même action que le + de l'en-tête).
        Le contenu réserve 96px en bas (.clients-content). -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <button type="button" class="gl-fab-extended" (click)="startCreate()">
+    <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-fab-extended" (click)="startCreate()">
       <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
       {{ 'CLIENTS.ADD' | translate }}
     </button>
@@ -221,7 +221,7 @@
       </div>
 
       <footer class="dlg-foot">
-        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="save()">
+        <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="save()">
           <ion-icon name="save-outline"></ion-icon>
           {{ editing ? 'Enregistrer' : 'Créer le client' }}
         </button>
@@ -774,7 +774,7 @@
       </div>
 
       <footer class="dlg-foot">
-        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="enregistrerAvance()" [disabled]="loadingAvance">
+        <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="enregistrerAvance()" [disabled]="loadingAvance">
           <ion-spinner *ngIf="loadingAvance" name="crescent"></ion-spinner>
           <ion-icon *ngIf="!loadingAvance" name="wallet-outline"></ion-icon>
           Enregistrer l'avance
@@ -879,7 +879,7 @@
               <span class="gl-label">{{ 'FIDELITE.ADJUST_MOTIF' | translate }}</span>
               <input class="gl-input" [(ngModel)]="ajustementFideliteForm.motif" />
             </label>
-            <button type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="enregistrerAjustementFidelite()" [disabled]="savingAjustementFidelite">
+            <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="enregistrerAjustementFidelite()" [disabled]="savingAjustementFidelite">
               <ion-spinner *ngIf="savingAjustementFidelite" name="crescent"></ion-spinner>
               <ion-icon *ngIf="!savingAjustementFidelite" name="create-outline"></ion-icon>
               {{ 'FIDELITE.ADJUST_BUTTON' | translate }}

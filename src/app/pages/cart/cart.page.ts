@@ -21,6 +21,7 @@ import { VenteMap } from '../../services/vente.service';
 import { infoMesure, prixAffiche, prixStocke, qteDoc, texteQte } from '../../utils/mesure.util';
 import { ProduitImageService } from '../../services/produit-image.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 interface CartItem {
   product: Produit;
   quantity: number;
@@ -115,6 +116,7 @@ export class CartPage implements OnInit {
   derniereVente: VenteMap | null = null;
 
   constructor(
+    private roleService: RoleService,
     private productService: ProductService,
     public clientService: ClientService,
     public venteService: VenteService,
@@ -135,6 +137,12 @@ export class CartPage implements OnInit {
     private impressionRecuService: ImpressionRecuService,
     public photos: ProduitImageService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   async scanPourVente(): Promise<void> {
     const code = await this.barcodeService.scan();
