@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>{{ config?.title || 'Module' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="startCreate()" *ngIf="type !== 'paiement-employe'" [attr.aria-label]="fabLabel()">
+      <ion-button [hidden]="!peutIci('GERER')" (click)="startCreate()" *ngIf="type !== 'paiement-employe'" [attr.aria-label]="fabLabel()">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -216,11 +216,11 @@
           <input [(ngModel)]="compteOperation.motif" />
         </label>
         <div class="btn-stack">
-          <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="saveCompteOperation()">
+          <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="saveCompteOperation()">
             <ion-icon name="checkmark-outline"></ion-icon>
             Enregistrer opération
           </button>
-          <button type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="transferCaisseBanque()">
+          <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--secondary gl-btn--block" (click)="transferCaisseBanque()">
             <ion-icon name="swap-horizontal-outline"></ion-icon>
             Transfert caisse vers banque
           </button>
@@ -243,7 +243,7 @@
           <span>Montant payé</span>
           <input type="text" inputmode="numeric" appMontantInput [(ngModel)]="detteReglement.montantPaye" />
         </label>
-        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="saveDetteReglement()">
+        <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="saveDetteReglement()">
           <ion-icon name="checkmark-outline"></ion-icon>
           Régler
         </button>
@@ -282,7 +282,7 @@
           <span>Observation</span>
           <textarea rows="2" [(ngModel)]="paiementForm.observation"></textarea>
         </label>
-        <button type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="payEmploye()">
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" type="button" class="gl-btn gl-btn--primary gl-btn--block" (click)="payEmploye()">
           <ion-icon name="checkmark-outline"></ion-icon>
           Payer
         </button>
@@ -309,7 +309,7 @@
           <ion-item><ion-input [label]="'Prix vente' + (uniteAchat ? ' / ' + uniteAchat : '')" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.prixVente"></ion-input></ion-item>
           <ion-item><ion-input label="Montant payé" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="achatForm.montantPaye"></ion-input></ion-item>
         </div>
-        <ion-button expand="block" (click)="saveAchatFournisseur()">Enregistrer achat</ion-button>
+        <ion-button [hidden]="!peut('FOURNISSEURS', 'GERER')" expand="block" (click)="saveAchatFournisseur()">Enregistrer achat</ion-button>
 
         <h2 class="card-title">Paiement fournisseur</h2>
         <ion-item>
@@ -318,7 +318,7 @@
           </ion-select>
         </ion-item>
         <ion-item><ion-input label="Montant" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="paiementFournisseur.montant"></ion-input></ion-item>
-        <ion-button expand="block" fill="outline" (click)="payFournisseur()">Payer fournisseur</ion-button>
+        <ion-button [hidden]="!peut('FOURNISSEURS', 'GERER')" expand="block" fill="outline" (click)="payFournisseur()">Payer fournisseur</ion-button>
 
         <h2 class="card-title">Avance fournisseur</h2>
         <ion-item>
@@ -331,7 +331,7 @@
           <ion-item><ion-input label="Référence" labelPlacement="floating" [(ngModel)]="avanceFournisseur.reference"></ion-input></ion-item>
         </div>
         <ion-item><ion-textarea label="Observation" labelPlacement="floating" [(ngModel)]="avanceFournisseur.observation"></ion-textarea></ion-item>
-        <ion-button expand="block" fill="outline" (click)="saveAvanceFournisseur()">Enregistrer avance</ion-button>
+        <ion-button [hidden]="!peut('FOURNISSEURS', 'GERER')" expand="block" fill="outline" (click)="saveAvanceFournisseur()">Enregistrer avance</ion-button>
 
         <h2 class="card-title">Situation et historiques</h2>
         <ion-button expand="block" fill="outline" (click)="loadFournisseurDetails()">
@@ -358,7 +358,7 @@
           <ion-item><ion-input [label]="'Prix achat' + (uniteRetour ? ' / ' + uniteRetour : '')" labelPlacement="floating" type="text" inputmode="numeric" appMontantInput [(ngModel)]="retourAchatForm.prixAchatUnitaire"></ion-input></ion-item>
         </div>
         <ion-item><ion-textarea label="Motif" labelPlacement="floating" [(ngModel)]="retourAchatForm.motif"></ion-textarea></ion-item>
-        <ion-button expand="block" fill="outline" (click)="saveRetourAchat()">Enregistrer retour achat</ion-button>
+        <ion-button [hidden]="!peut('FOURNISSEURS', 'GERER')" expand="block" fill="outline" (click)="saveRetourAchat()">Enregistrer retour achat</ion-button>
         <ion-button expand="block" fill="outline" color="danger" (click)="cancelAchatFournisseur()">Annuler achat fournisseur</ion-button>
       </section>
 
@@ -418,7 +418,7 @@
               </div>
             </div>
             <div class="glc-actions">
-              <button type="button" class="glc-action" (click)="edit(item)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(item)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
             </div>
@@ -467,10 +467,10 @@
               </div>
             </div>
             <div class="glc-actions">
-              <button type="button" class="glc-action" (click)="edit(item)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(item)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-dette')">
+              <button [hidden]="!peutAction('delete-dette')" type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-dette')">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -532,10 +532,10 @@
                 </div>
               </div>
               <div class="glc-actions glc-actions--stacked">
-                <button type="button" class="glc-action" (click)="openAchatForFournisseur(f)">
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="glc-action" (click)="openAchatForFournisseur(f)">
                   <ion-icon name="bag-add-outline"></ion-icon><span>Achat</span>
                 </button>
-                <button type="button" class="glc-action glc-action--ok" (click)="openPaiementForFournisseur(f)">
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="openPaiementForFournisseur(f)">
                   <ion-icon name="cash-outline"></ion-icon><span>Payer</span>
                 </button>
                 <button type="button" class="glc-action" (click)="loadFournisseurDetails(f.id)">
@@ -543,10 +543,10 @@
                 </button>
               </div>
               <div class="glc-actions">
-                <button type="button" class="glc-action" (click)="editFournisseurModal(f)">
+                <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="glc-action" (click)="editFournisseurModal(f)">
                   <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
                 </button>
-                <button type="button" class="glc-action glc-action--danger" (click)="confirmDeleteFournisseur(f)">
+                <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" type="button" class="glc-action glc-action--danger" (click)="confirmDeleteFournisseur(f)">
                   <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
                 </button>
               </div>
@@ -603,7 +603,7 @@
                 </div>
               </div>
               <div class="glc-actions" *ngIf="achat.statut !== 'ANNULE'">
-                <button type="button" class="glc-action glc-action--danger" (click)="action(achat, 'annuler-achat')">
+                <button [hidden]="!peutAction('annuler-achat')" type="button" class="glc-action glc-action--danger" (click)="action(achat, 'annuler-achat')">
                   <ion-icon name="close-circle-outline"></ion-icon><span>Annuler</span>
                 </button>
               </div>
@@ -693,16 +693,16 @@
               </div>
             </div>
             <div class="glc-actions glc-actions--stacked">
-              <button type="button" class="glc-action" (click)="edit(item)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(item)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--ok" (click)="action(item, 'activate-employe')" *ngIf="item.statut !== 'ACTIF'">
+              <button [hidden]="!peutAction('activate-employe')" type="button" class="glc-action glc-action--ok" (click)="action(item, 'activate-employe')" *ngIf="item.statut !== 'ACTIF'">
                 <ion-icon name="checkmark-circle-outline"></ion-icon><span>Activer</span>
               </button>
-              <button type="button" class="glc-action glc-action--warn" (click)="action(item, 'deactivate-employe')" *ngIf="item.statut === 'ACTIF'">
+              <button [hidden]="!peutAction('deactivate-employe')" type="button" class="glc-action glc-action--warn" (click)="action(item, 'deactivate-employe')" *ngIf="item.statut === 'ACTIF'">
                 <ion-icon name="pause-circle-outline"></ion-icon><span>Désactiver</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-employe')">
+              <button [hidden]="!peutAction('delete-employe')" type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-employe')">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -751,10 +751,10 @@
               </div>
             </div>
             <div class="glc-actions">
-              <button type="button" class="glc-action" (click)="edit(item)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(item)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-user')">
+              <button [hidden]="!peutAction('delete-user')" type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-user')">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -811,16 +811,16 @@
               </div>
             </div>
             <div class="glc-actions glc-actions--stacked">
-              <button type="button" class="glc-action glc-action--ok" (click)="openDepotRetrait(depot)" *ngIf="depot.statut === 'ACTIF'">
+              <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="openDepotRetrait(depot)" *ngIf="depot.statut === 'ACTIF'">
                 <ion-icon name="cash-outline"></ion-icon><span>Retrait</span>
               </button>
               <button type="button" class="glc-action" (click)="openDepotDetail(depot)">
                 <ion-icon name="time-outline"></ion-icon><span>Historique</span>
               </button>
-              <button type="button" class="glc-action" (click)="edit(depot)" *ngIf="depot.statut === 'ACTIF'">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(depot)" *ngIf="depot.statut === 'ACTIF'">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="confirmCloturerDepot(depot)" *ngIf="depot.statut === 'ACTIF'">
+              <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="glc-action glc-action--danger" (click)="confirmCloturerDepot(depot)" *ngIf="depot.statut === 'ACTIF'">
                 <ion-icon name="lock-closed-outline"></ion-icon><span>Clôturer</span>
               </button>
             </div>
@@ -883,13 +883,13 @@
               </div>
             </div>
             <div class="glc-actions" *ngIf="!o.stockAjoute">
-              <button type="button" class="glc-action glc-action--ok" *ngIf="o.statut === 'ATTEINT'" (click)="action(o, 'objectif-valider')">
+              <button [hidden]="!peutAction('objectif-valider')" type="button" class="glc-action glc-action--ok" *ngIf="o.statut === 'ATTEINT'" (click)="action(o, 'objectif-valider')">
                 <ion-icon name="checkmark-circle-outline"></ion-icon><span>Valider stock</span>
               </button>
-              <button type="button" class="glc-action" (click)="edit(o)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(o)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(o, 'objectif-delete')">
+              <button [hidden]="!peutAction('objectif-delete')" type="button" class="glc-action glc-action--danger" (click)="action(o, 'objectif-delete')">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -945,13 +945,13 @@
               <p class="glc-note" *ngIf="o.observation">{{ o.observation }}</p>
             </div>
             <div class="glc-actions" *ngIf="!o.bonusValide">
-              <button type="button" class="glc-action glc-action--ok" *ngIf="o.statut === 'ATTEINT'" (click)="action(o, 'objectif-vendeur-valider')">
+              <button [hidden]="!peutAction('objectif-vendeur-valider')" type="button" class="glc-action glc-action--ok" *ngIf="o.statut === 'ATTEINT'" (click)="action(o, 'objectif-vendeur-valider')">
                 <ion-icon name="checkmark-circle-outline"></ion-icon><span>Valider</span>
               </button>
-              <button type="button" class="glc-action" (click)="edit(o)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(o)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(o, 'objectif-vendeur-delete')">
+              <button [hidden]="!peutAction('objectif-vendeur-delete')" type="button" class="glc-action glc-action--danger" (click)="action(o, 'objectif-vendeur-delete')">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -1000,7 +1000,7 @@
               <button type="button" class="glc-action glc-action--ok" (click)="envoyerRecuWhatsApp(item)">
                 <ion-icon name="logo-whatsapp"></ion-icon><span>WhatsApp</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'cancel-paie')">
+              <button [hidden]="!peutAction('cancel-paie')" type="button" class="glc-action glc-action--danger" (click)="action(item, 'cancel-paie')">
                 <ion-icon name="close-circle-outline"></ion-icon><span>Annuler</span>
               </button>
             </div>
@@ -1048,27 +1048,27 @@
               </div>
             </div>
             <div class="glc-actions glc-actions--stacked">
-              <button type="button" class="glc-action" (click)="edit(item)">
+              <button [hidden]="!peutIci('GERER')" type="button" class="glc-action" (click)="edit(item)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action" (click)="action(item, 'print')">
+              <button [hidden]="!peutAction('print')" type="button" class="glc-action" (click)="action(item, 'print')">
                 <ion-icon name="print-outline"></ion-icon><span>Imprimer</span>
               </button>
-              <button type="button" class="glc-action" (click)="action(item, 'pdf-dl')">
+              <button [hidden]="!peutAction('pdf-dl')" type="button" class="glc-action" (click)="action(item, 'pdf-dl')">
                 <ion-icon name="download-outline"></ion-icon><span>PDF</span>
               </button>
-              <button type="button" class="glc-action" (click)="action(item, 'pdf-view')">
+              <button [hidden]="!peutAction('pdf-view')" type="button" class="glc-action" (click)="action(item, 'pdf-view')">
                 <ion-icon name="eye-outline"></ion-icon><span>Voir</span>
               </button>
             </div>
             <div class="glc-actions" *ngIf="item.statut !== 'ANNULEE'">
-              <button type="button" class="glc-action glc-action--ok" (click)="action(item, 'validate')" *ngIf="item.statut === 'BROUILLON'">
+              <button [hidden]="!peutAction('validate')" type="button" class="glc-action glc-action--ok" (click)="action(item, 'validate')" *ngIf="item.statut === 'BROUILLON'">
                 <ion-icon name="checkmark-circle-outline"></ion-icon><span>Valider</span>
               </button>
-              <button type="button" class="glc-action glc-action--warn" (click)="action(item, 'cancel-facture')">
+              <button [hidden]="!peutAction('cancel-facture')" type="button" class="glc-action glc-action--warn" (click)="action(item, 'cancel-facture')">
                 <ion-icon name="close-circle-outline"></ion-icon><span>Annuler</span>
               </button>
-              <button type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-facture')" *ngIf="item.statut === 'BROUILLON'">
+              <button [hidden]="!peutAction('delete-facture')" type="button" class="glc-action glc-action--danger" (click)="action(item, 'delete-facture')" *ngIf="item.statut === 'BROUILLON'">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -1083,7 +1083,7 @@
 <!-- Bouton flottant étendu : action de création principale -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed"
   *ngIf="config && type !== 'paiement-employe' && (type !== 'fournisseurs' || fournisseurSegment === 'liste')">
-  <button type="button" class="gl-fab-extended" (click)="startCreate()">
+  <button [hidden]="!peutIci('GERER')" type="button" class="gl-fab-extended" (click)="startCreate()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     {{ fabLabel() }}
   </button>
@@ -1407,7 +1407,7 @@
               <span>Adresse</span>
               <input [(ngModel)]="depotClientForm.adresse" />
             </label>
-            <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm gl-btn--block" (click)="saveNewDepotClient()">
+            <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="gl-btn gl-btn--secondary gl-btn--sm gl-btn--block" (click)="saveNewDepotClient()">
               <ion-icon name="save-outline"></ion-icon>
               Créer et sélectionner
             </button>
@@ -1540,7 +1540,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showForm = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="save()"
+      <button [hidden]="!peutIci('GERER')" type="button" class="gl-btn gl-btn--primary" (click)="save()"
         *ngIf="type !== 'paiement-employe' && !(type === 'objectifs-vendeur' && selected?.bonusValide)">
         <ion-icon name="save-outline"></ion-icon>
         Enregistrer
@@ -1601,7 +1601,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showFournisseurFormModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveFournisseurModal()">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveFournisseurModal()">
         <ion-icon name="save-outline"></ion-icon>
         {{ selected ? 'Enregistrer les modifications' : 'Créer le fournisseur' }}
       </button>
@@ -1660,7 +1660,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showAchatModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveAchatModal()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveAchatModal()">
         <ion-icon name="bag-add-outline"></ion-icon>
         Enregistrer l'achat
       </button>
@@ -1711,7 +1711,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showPaiementModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="savePaiementModal()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="savePaiementModal()">
         <ion-icon name="cash-outline"></ion-icon>
         Enregistrer le paiement
       </button>
@@ -1761,7 +1761,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showDepotRetraitModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveDepotRetrait()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveDepotRetrait()">
         <ion-icon name="cash-outline"></ion-icon>
         Effectuer le retrait
       </button>

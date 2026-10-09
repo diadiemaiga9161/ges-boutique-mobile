@@ -11,6 +11,7 @@ import {
   RetraitGlobalRequest
 } from '../../services/depot-garde.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-depots',
   templateUrl: './depots.page.html',
@@ -65,6 +66,7 @@ export class DepotsPage {
   }
 
   constructor(
+    private roleService: RoleService,
     private depotService: DepotGardeService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController
@@ -333,5 +335,10 @@ export class DepotsPage {
   private async toast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

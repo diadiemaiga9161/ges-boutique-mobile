@@ -92,10 +92,10 @@
             <p class="glc-note" *ngIf="b.description">{{ b.description }}</p>
           </div>
           <div class="glc-actions">
-            <button type="button" class="glc-action glc-action--link" (click)="startEdit(b)">
+            <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="glc-action glc-action--link" (click)="startEdit(b)">
               <ion-icon name="create-outline" aria-hidden="true"></ion-icon> Modifier
             </button>
-            <button type="button" class="glc-action glc-action--bad" (click)="supprimer(b)">
+            <button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="supprimer(b)">
               <ion-icon name="trash-outline" aria-hidden="true"></ion-icon> Supprimer
             </button>
           </div>
@@ -156,7 +156,7 @@
 
   <!-- Création : bouton flottant étendu (même handler que l'ancien bouton + de l'en-tête) -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <button type="button" class="gl-fab-extended" (click)="startCreate()">
+    <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-fab-extended" (click)="startCreate()">
       <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
       {{ 'SUPPLIER_BONUS.NEW' | translate }}
     </button>
@@ -219,7 +219,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showForm=false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="save()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="save()">
         {{ editingId ? 'Enregistrer' : 'Ajouter' }}
       </button>
     </div>

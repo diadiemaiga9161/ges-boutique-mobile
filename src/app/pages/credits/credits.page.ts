@@ -10,6 +10,7 @@ import { BoutiqueService } from '../../services/boutique.service';
 import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 interface ClientGroup {
   clientNom: string;
   clientPrenom?: string;
@@ -121,6 +122,7 @@ export class CreditsPage {
   trackById = (_: number, item: any) => item.id;
 
   constructor(
+    private roleService: RoleService,
     private caisseService: CaisseService,
     private venteService: VenteService,
     private auth: AuthService,
@@ -878,5 +880,10 @@ td{padding:6px 9px;border-bottom:1px solid #f1f5f9}
   private async toast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2400, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

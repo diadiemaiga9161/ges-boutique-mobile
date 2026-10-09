@@ -4,7 +4,7 @@ import { Comptage, InventaireService, LigneComptage } from '../../services/inven
 import { Categorie, ProductService, Produit } from '../../services/product.service';
 import { BarcodeService } from '../../services/barcode.service';
 import { ConfirmSheetService } from '../../services/confirm-sheet.service';
-import { RoleService } from '../../services/role.service';
+import { ActionPermission, RoleService } from '../../services/role.service';
 import { AuthService } from '../../services/auth.service';
 import { infoMesure, lireNombre, qteAffichee, qteStockee, texteQte } from '../../utils/mesure.util';
 
@@ -255,5 +255,10 @@ export class ComptagePage {
   private async toast(message: string, color: string): Promise<void> {
     const t = await this.toastCtrl.create({ message, duration: 2600, color, position: 'bottom' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

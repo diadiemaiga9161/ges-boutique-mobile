@@ -8,7 +8,7 @@
       <ion-button (click)="ouvrirFichePdf()" *ngIf="selectedFournisseur" aria-label="PDF">
         <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button (click)="openNewFournisseur()" [attr.aria-label]="'SUPPLIERS.NEW' | translate">
+      <ion-button [hidden]="!peut('PRODUITS', 'GERER')" (click)="openNewFournisseur()" [attr.aria-label]="'SUPPLIERS.NEW' | translate">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -128,10 +128,10 @@
               <button type="button" class="glc-action glc-action--link" (click)="selectFournisseur(f)">
                 <ion-icon name="eye-outline"></ion-icon><span>Voir</span>
               </button>
-              <button type="button" class="glc-action" (click)="editFournisseur(f)">
+              <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="glc-action" (click)="editFournisseur(f)">
                 <ion-icon name="create-outline"></ion-icon><span>Modifier</span>
               </button>
-              <button type="button" class="glc-action glc-action--bad" (click)="deleteFournisseur(f)">
+              <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="deleteFournisseur(f)">
                 <ion-icon name="trash-outline"></ion-icon><span>Supprimer</span>
               </button>
             </div>
@@ -210,7 +210,7 @@
                 <p class="glc-line__empty" *ngIf="!(a.lignes || []).length">{{ 'SUPPLIERS.NO_LINES' | translate }}</p>
               </div>
               <div class="glc-actions">
-                <button type="button" class="glc-action glc-action--bad glc-action--full" (click)="annulerAchat(a)">
+                <button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad glc-action--full" (click)="annulerAchat(a)">
                   <ion-icon name="close-circle-outline"></ion-icon>
                   <span>{{ 'SUPPLIERS.CANCEL_PURCHASE' | translate }}</span>
                 </button>
@@ -250,7 +250,7 @@
         <ng-container *ngTemplateOutlet="periodeFilterTpl"></ng-container>
 
         <!-- Avance : action secondaire (le paiement est le bouton flottant) -->
-        <button type="button" class="gl-btn gl-btn--secondary" (click)="openAvance()">
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--secondary" (click)="openAvance()">
           <ion-icon name="wallet-outline"></ion-icon>
           {{ 'SUPPLIERS.ADVANCE' | translate }}
         </button>
@@ -404,7 +404,7 @@
                 </div>
               </div>
               <div class="glc-actions">
-                <button type="button" class="glc-action glc-action--warn glc-action--full" (click)="openPaiementPourAchat(a)">
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="glc-action glc-action--warn glc-action--full" (click)="openPaiementPourAchat(a)">
                   <ion-icon name="cash-outline"></ion-icon>
                   <span>{{ 'SUPPLIERS.PAY_THIS_PURCHASE' | translate }}</span>
                 </button>
@@ -498,19 +498,19 @@
 
 <!-- Boutons flottants étendus : action de création principale de chaque onglet -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'liste'">
-  <button type="button" class="gl-fab-extended" (click)="openNewFournisseur()">
+  <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-fab-extended" (click)="openNewFournisseur()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     {{ 'SUPPLIERS.NEW' | translate }}
   </button>
 </ion-fab>
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'achats' && selectedFournisseur">
-  <button type="button" class="gl-fab-extended" (click)="openAchat()">
+  <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-fab-extended" (click)="openAchat()">
     <ion-icon name="bag-add-outline" aria-hidden="true"></ion-icon>
     {{ 'SUPPLIERS.NEW_PURCHASE' | translate }}
   </button>
 </ion-fab>
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="segment === 'paiements' && selectedFournisseur">
-  <button type="button" class="gl-fab-extended" (click)="openPaiement()">
+  <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-fab-extended" (click)="openPaiement()">
     <ion-icon name="cash-outline" aria-hidden="true"></ion-icon>
     {{ 'SUPPLIERS.PAYMENT' | translate }}
   </button>
@@ -561,7 +561,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showFournisseurModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveFournisseur()">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveFournisseur()">
         <ion-icon name="save-outline"></ion-icon>
         {{ 'COMMON.SAVE' | translate }}
       </button>
@@ -615,7 +615,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showAchatModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveAchat()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveAchat()">
         <ion-icon name="bag-add-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_PURCHASE' | translate }}
       </button>
@@ -674,7 +674,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showPaiementModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="savePaiement()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="savePaiement()">
         <ion-icon name="cash-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_PAYMENT' | translate }}
       </button>
@@ -725,7 +725,7 @@
     </div>
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showAvanceModal = false">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveAvance()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveAvance()">
         <ion-icon name="wallet-outline"></ion-icon>
         {{ 'SUPPLIERS.SAVE_ADVANCE' | translate }}
       </button>

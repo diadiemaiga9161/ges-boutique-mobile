@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { ToastController, AlertController } from '@ionic/angular';
 import { TransfertService, BoutiquePartenaire } from '../../services/transfert.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-config-transferts',
   templateUrl: './config-transferts.page.html',
@@ -24,6 +25,7 @@ export class ConfigTransfertsPage implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     private transfertService: TransfertService,
     private toast: ToastController,
     private alert: AlertController
@@ -92,5 +94,10 @@ export class ConfigTransfertsPage implements OnInit {
   private async showToast(msg: string, color: string): Promise<void> {
     const t = await this.toast.create({ message: msg, duration: 2000, color, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

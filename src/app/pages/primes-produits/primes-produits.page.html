@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>Primes sur produits</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="reglages()" aria-label="Types de primes utilisés">
+      <ion-button [hidden]="!peut('PRIMES', 'GERER')" (click)="reglages()" aria-label="Types de primes utilisés">
         <ion-icon name="options-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -78,7 +78,7 @@
             </span>
           </div>
         </div>
-        <ion-button expand="block" size="small" (click)="payer(v)" [disabled]="v.resteAPayer <= 0">
+        <ion-button [hidden]="!peut('PRIMES', 'GERER')" expand="block" size="small" (click)="payer(v)" [disabled]="v.resteAPayer <= 0">
           <ion-icon name="wallet-outline" slot="start"></ion-icon> Payer
         </ion-button>
       </div>
@@ -102,9 +102,9 @@
           {{ r.vendeurNom || 'Tous les vendeurs' }} · {{ r.dateDebut | date:'dd/MM/yyyy' }} → {{ r.dateFin ? (r.dateFin | date:'dd/MM/yyyy') : 'sans fin' }}
         </p>
         <div class="pp-actions">
-          <ion-button size="small" fill="outline" (click)="modifierRegle(r)"><ion-icon name="create-outline" slot="start"></ion-icon> Modifier</ion-button>
-          <ion-button size="small" fill="outline" color="medium" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)">Arrêter</ion-button>
-          <ion-button size="small" fill="clear" color="danger" (click)="supprimerRegle(r)" aria-label="Supprimer"><ion-icon name="trash-outline" slot="icon-only"></ion-icon></ion-button>
+          <ion-button [hidden]="!peut('PRIMES', 'GERER')" size="small" fill="outline" (click)="modifierRegle(r)"><ion-icon name="create-outline" slot="start"></ion-icon> Modifier</ion-button>
+          <ion-button [hidden]="!peut('PRIMES', 'GERER')" size="small" fill="outline" color="medium" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)">Arrêter</ion-button>
+          <ion-button [hidden]="!peut('PRIMES', 'SUPPRIMER')" size="small" fill="clear" color="danger" (click)="supprimerRegle(r)" aria-label="Supprimer"><ion-icon name="trash-outline" slot="icon-only"></ion-icon></ion-button>
         </div>
       </div>
     </ng-container>
@@ -121,7 +121,7 @@
             <span>{{ p.datePaiement | date:'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="p.note"> · {{ p.note }}</ng-container></span>
           </div>
           <span class="pp-ligne__montant">{{ cs.fmt(p.montant) }}</span>
-          <ion-button fill="clear" color="danger" size="small" (click)="supprimerPaiement(p)" aria-label="Supprimer ce paiement">
+          <ion-button [hidden]="!peut('PRIMES', 'SUPPRIMER')" fill="clear" color="danger" size="small" (click)="supprimerPaiement(p)" aria-label="Supprimer ce paiement">
             <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
           </ion-button>
         </div>
@@ -130,7 +130,7 @@
   </div>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="nouvelleRegle()" aria-label="Nouvelle condition">
+    <ion-fab-button [hidden]="!peut('PRIMES', 'GERER')" (click)="nouvelleRegle()" aria-label="Nouvelle condition">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -143,7 +143,7 @@
           <ion-buttons slot="start"><ion-button (click)="formRegle = null">Annuler</ion-button></ion-buttons>
           <ion-title>{{ formRegle?.id ? 'Modifier' : 'Nouvelle condition' }}</ion-title>
           <ion-buttons slot="end">
-            <ion-button strong="true" (click)="enregistrerRegle()" [disabled]="enregistrement">Enregistrer</ion-button>
+            <ion-button [hidden]="!peut('PRIMES', 'GERER')" strong="true" (click)="enregistrerRegle()" [disabled]="enregistrement">Enregistrer</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>

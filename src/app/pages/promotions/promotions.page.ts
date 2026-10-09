@@ -4,6 +4,7 @@ import { Promotion, PromotionService, WhatsAppLien, WhatsAppResult } from '../..
 import { BoutiqueService } from '../../services/boutique.service';
 import { ProductService, Produit } from '../../services/product.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-promotions',
   templateUrl: './promotions.page.html',
@@ -41,6 +42,7 @@ export class PromotionsPage implements OnInit {
   suggestions: Produit[] = [];
 
   constructor(
+    private roleService: RoleService,
     private promotionService: PromotionService,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
@@ -340,5 +342,10 @@ export class PromotionsPage implements OnInit {
   private async showToast(message: string, color: string): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2500, position: 'bottom' });
     await toast.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

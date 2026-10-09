@@ -122,25 +122,25 @@
             <span>Détails</span>
           </button>
           <ng-container *ngIf="t.boutiqueDestUrl && t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'">
-            <button type="button" class="glc-action glc-action--link" (click)="$event.stopPropagation(); editerTransfert(t)">
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--link" (click)="$event.stopPropagation(); editerTransfert(t)">
               <ion-icon name="create-outline"></ion-icon>
               <span>Modifier</span>
             </button>
-            <button type="button" class="glc-action glc-action--ok" (click)="$event.stopPropagation(); confirmer(t)">
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="$event.stopPropagation(); confirmer(t)">
               <ion-icon name="checkmark-outline"></ion-icon>
               <span>Confirmer</span>
             </button>
-            <button type="button" class="glc-action glc-action--bad" (click)="$event.stopPropagation(); annuler(t)">
+            <button [hidden]="!peut('STOCK', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="$event.stopPropagation(); annuler(t)">
               <ion-icon name="close-outline"></ion-icon>
               <span>Annuler</span>
             </button>
           </ng-container>
           <ng-container *ngIf="!t.boutiqueDestUrl && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE' || t.statut === 'CONFIRME')">
-            <button type="button" class="glc-action glc-action--ok" (click)="$event.stopPropagation(); accepterTransfert(t)">
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="$event.stopPropagation(); accepterTransfert(t)">
               <ion-icon name="checkmark-circle-outline"></ion-icon>
               <span>Accepter</span>
             </button>
-            <button type="button" class="glc-action glc-action--bad" (click)="$event.stopPropagation(); rejeterTransfert(t)">
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--bad" (click)="$event.stopPropagation(); rejeterTransfert(t)">
               <ion-icon name="close-circle-outline"></ion-icon>
               <span>Rejeter</span>
             </button>
@@ -154,7 +154,7 @@
 
 <!-- Bouton flottant étendu : création (même action que l'ancien bouton « + » de l'en-tête) -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <button type="button" class="gl-fab-extended" (click)="nouveauTransfert()">
+  <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-fab-extended" (click)="nouveauTransfert()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     Nouveau transfert
   </button>
@@ -265,7 +265,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="afficherFormulaire = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="sauvegarder()">
+      <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="sauvegarder()">
         <ion-icon name="checkmark-outline"></ion-icon>
         {{ editingId ? 'Modifier' : 'Créer' }}
       </button>
@@ -328,7 +328,7 @@
           <ion-icon name="close-circle-outline"></ion-icon>
           Rejeter
         </button>
-        <button type="button" class="gl-btn gl-btn--primary" (click)="accepterDepuisModal(transfertEnCours.id!)" [disabled]="actionEnCours">
+        <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="accepterDepuisModal(transfertEnCours.id!)" [disabled]="actionEnCours">
           <ion-spinner *ngIf="actionEnCours" name="crescent"></ion-spinner>
           <ion-icon *ngIf="!actionEnCours" name="checkmark-outline"></ion-icon>
           Accepter
@@ -336,7 +336,7 @@
       </ng-container>
       <ng-container *ngIf="showMotifRejet">
         <button type="button" class="gl-btn gl-btn--secondary" (click)="showMotifRejet = false" [disabled]="actionEnCours">Annuler</button>
-        <button type="button" class="gl-btn gl-btn--danger-fill" (click)="confirmerRejetModal()" [disabled]="actionEnCours">
+        <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--danger-fill" (click)="confirmerRejetModal()" [disabled]="actionEnCours">
           <ion-spinner *ngIf="actionEnCours" name="crescent"></ion-spinner>
           Confirmer rejet
         </button>
@@ -389,7 +389,7 @@
       <section class="md-section" *ngIf="!modalEditMode">
         <div class="md-section-head">
           <p class="md-section-title"><ion-icon name="cube-outline"></ion-icon> Produits</p>
-          <button type="button" class="gl-btn gl-btn--secondary gl-btn--sm" *ngIf="estEditable(transfertDetail)" (click)="activerEditionModal()">
+          <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--secondary gl-btn--sm" *ngIf="estEditable(transfertDetail)" (click)="activerEditionModal()">
             <ion-icon name="create-outline"></ion-icon>
             Modifier
           </button>
@@ -447,7 +447,7 @@
 
         <div class="md-inline-actions">
           <button type="button" class="gl-btn gl-btn--secondary" (click)="annulerEditionModal()">Annuler</button>
-          <button type="button" class="gl-btn gl-btn--primary" (click)="sauvegarderModal()">
+          <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="sauvegarderModal()">
             <ion-icon name="checkmark-outline"></ion-icon>
             Enregistrer
           </button>
@@ -505,7 +505,7 @@
           </label>
           <div class="md-inline-actions">
             <button type="button" class="gl-btn gl-btn--secondary" (click)="afficherSectionPaiements = false">Annuler</button>
-            <button type="button" class="gl-btn gl-btn--primary" (click)="enregistrerPaiement()">Enregistrer</button>
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="enregistrerPaiement()">Enregistrer</button>
           </div>
         </div>
 

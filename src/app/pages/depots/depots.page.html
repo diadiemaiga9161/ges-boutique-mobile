@@ -129,7 +129,7 @@
                 <span class="depot-mini__date">{{ formatDate(d.dateDepot) }}</span>
                 <span class="depot-mini__amount">{{ money(d.montantRestant) }}</span>
               </div>
-              <button type="button" class="gl-btn gl-btn--warn gl-btn--sm" (click)="openRetrait(d)">
+              <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--warn gl-btn--sm" (click)="openRetrait(d)">
                 <ion-icon name="arrow-down-circle-outline"></ion-icon>
                 Retrait
               </button>
@@ -137,7 +137,7 @@
           </div>
 
           <div class="glc-actions">
-            <button type="button" class="glc-action glc-action--bad" (click)="openRetraitGlobal(client)">
+            <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="glc-action glc-action--bad" (click)="openRetraitGlobal(client)">
               <ion-icon name="arrow-down-circle-outline"></ion-icon>
               <span>Retrait global</span>
             </button>
@@ -181,11 +181,11 @@
             <ion-icon name="eye-outline"></ion-icon>
             <span>Détails</span>
           </button>
-          <button type="button" class="glc-action glc-action--warn" (click)="openRetrait(d)" *ngIf="d.statut === 'ACTIF'">
+          <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="glc-action glc-action--warn" (click)="openRetrait(d)" *ngIf="d.statut === 'ACTIF'">
             <ion-icon name="arrow-down-circle-outline"></ion-icon>
             <span>Retrait</span>
           </button>
-          <button type="button" class="glc-action" (click)="editDepot(d)" *ngIf="d.statut === 'ACTIF'">
+          <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="glc-action" (click)="editDepot(d)" *ngIf="d.statut === 'ACTIF'">
             <ion-icon name="create-outline"></ion-icon>
             <span>Modifier</span>
           </button>
@@ -206,7 +206,7 @@
 
 <!-- Bouton flottant étendu : création (même action que l'ancien bouton + de la barre) -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <button type="button" class="gl-fab-extended" (click)="openNew()">
+  <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-fab-extended" (click)="openNew()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     Nouveau dépôt
   </button>
@@ -294,7 +294,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showDepotModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveDepot()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveDepot()">
         <ion-icon name="save-outline"></ion-icon>
         Enregistrer
       </button>
@@ -370,7 +370,7 @@
     </div>
 
     <div class="md-footer md-footer--stack" *ngIf="selectedDepot?.statut === 'ACTIF'">
-      <button type="button" class="gl-btn gl-btn--primary" (click)="showDetailModal = false; openRetrait(selectedDepot!)">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="showDetailModal = false; openRetrait(selectedDepot!)">
         <ion-icon name="arrow-down-circle-outline"></ion-icon>
         Effectuer un retrait
       </button>
@@ -421,7 +421,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showRetraitModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveRetrait()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveRetrait()">
         <ion-icon name="arrow-down-circle-outline"></ion-icon>
         Enregistrer le retrait
       </button>
@@ -478,7 +478,7 @@
     </div>
 
     <div class="md-footer md-footer--stack">
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveRetraitGlobal()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveRetraitGlobal()">
         <ion-icon name="arrow-down-circle-outline"></ion-icon>
         Confirmer le retrait global
       </button>

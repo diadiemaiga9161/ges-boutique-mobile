@@ -141,7 +141,7 @@
 
 <!-- Bouton flottant étendu : création (même action que l'ancien bouton pleine largeur) -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <button type="button" class="gl-fab-extended" (click)="openCreateModal()">
+  <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-fab-extended" (click)="openCreateModal()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     Nouvelle facture pro forma
   </button>
@@ -499,7 +499,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showCreateModal=false">Fermer</button>
-      <button type="button" class="gl-btn gl-btn--primary" [disabled]="proformaCreating || !proformaLignes.length"
+      <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-btn gl-btn--primary" [disabled]="proformaCreating || !proformaLignes.length"
               (click)="submitProforma()">
         <ion-spinner name="crescent" *ngIf="proformaCreating"></ion-spinner>
         <ion-icon name="checkmark-outline" *ngIf="!proformaCreating"></ion-icon>

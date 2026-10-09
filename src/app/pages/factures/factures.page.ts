@@ -10,6 +10,7 @@ import { BoutiqueConfigService } from '../../services/boutique-config.service';
 
 import { infoMesure, lireNombre, prixAffiche, qteAffichee, qteStockee, texteQte } from '../../utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-factures',
   templateUrl: './factures.page.html',
@@ -84,6 +85,7 @@ export class FacturesPage {
   }
 
   constructor(
+    private roleService: RoleService,
     public auth: AuthService,
     private factureService: FactureService,
     private productService: ProductService,
@@ -336,5 +338,10 @@ export class FacturesPage {
   private async toast(message: string, color: 'success' | 'danger' | 'medium' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

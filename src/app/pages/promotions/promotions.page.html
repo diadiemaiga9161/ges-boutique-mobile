@@ -52,7 +52,7 @@
             <ion-icon name="calendar-outline"></ion-icon>
             {{ 'PROMO.SUGGESTION_EXPIRY' | translate }} : {{ s.datePeremption | date:'dd/MM/yyyy' }}
           </p>
-          <button type="button" class="gl-btn gl-btn--warn-solid gl-btn--sm" (click)="creerPromoDepuisSuggestion(s)">
+          <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-btn gl-btn--warn-solid gl-btn--sm" (click)="creerPromoDepuisSuggestion(s)">
             <ion-icon name="flash-outline"></ion-icon>
             {{ 'PROMO.SUGGESTION_CREATE_BTN' | translate }}
           </button>
@@ -122,11 +122,11 @@
             <ion-icon name="logo-whatsapp"></ion-icon>
             <span>WhatsApp</span>
           </button>
-          <button type="button" class="glc-action glc-action--link" (click)="startEdit(promo)">
+          <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="glc-action glc-action--link" (click)="startEdit(promo)">
             <ion-icon name="create-outline"></ion-icon>
             <span>{{ 'COMMON.EDIT' | translate }}</span>
           </button>
-          <button type="button" class="glc-action glc-action--bad" (click)="supprimer(promo)">
+          <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="supprimer(promo)">
             <ion-icon name="trash-outline"></ion-icon>
             <span>{{ 'COMMON.DELETE' | translate }}</span>
           </button>
@@ -139,7 +139,7 @@
 
 <!-- Bouton flottant étendu : création (même action / même condition que l'ancien bouton + de la barre) -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="!showForm">
-  <button type="button" class="gl-fab-extended" (click)="startCreate()">
+  <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-fab-extended" (click)="startCreate()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     {{ 'PROMO.NEW' | translate }}
   </button>
@@ -272,7 +272,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="cancel()">{{ 'COMMON.CANCEL' | translate }}</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="save()" [disabled]="loading">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="save()" [disabled]="loading">
         <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
         {{ editing ? ('PROMO.BTN_SAVE' | translate) : ('PROMO.BTN_CREATE' | translate) }}
       </button>

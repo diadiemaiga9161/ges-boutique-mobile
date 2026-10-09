@@ -44,7 +44,7 @@
               </select>
             </span>
           </label>
-          <button type="button" class="gl-btn gl-btn--primary" (click)="demarrer()" [disabled]="envoi">
+          <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="demarrer()" [disabled]="envoi">
             <ion-icon name="play-outline" aria-hidden="true"></ion-icon>
             Commencer le comptage
           </button>
@@ -120,7 +120,7 @@
                        (keyup.enter)="enregistrerQuantite()" placeholder="ex : 42" aria-label="Quantité trouvée" />
               </span>
             </label>
-            <button type="button" class="gl-btn gl-btn--primary" (click)="enregistrerQuantite()" [disabled]="envoi">
+            <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="enregistrerQuantite()" [disabled]="envoi">
               <ion-icon name="checkmark-outline" aria-hidden="true"></ion-icon>
               Enregistrer
             </button>
@@ -154,10 +154,10 @@
               <ion-icon name="warning-outline" aria-hidden="true"></ion-icon> Gros écart : vérifiez avant de valider.
             </p>
             <div class="cp-ligne__actions">
-              <button type="button" class="glc-action glc-action--link" (click)="modifier(l)">
+              <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--link" (click)="modifier(l)">
                 <ion-icon name="create-outline" aria-hidden="true"></ion-icon><span>Recompter</span>
               </button>
-              <button type="button" class="glc-action glc-action--bad" (click)="retirer(l)">
+              <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="glc-action glc-action--bad" (click)="retirer(l)">
                 <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon><span>Retirer</span>
               </button>
             </div>
@@ -167,11 +167,11 @@
         <p class="cp-note">Les produits non comptés ne changent pas. Les ventes faites pendant le comptage restent justes.</p>
 
         <div class="cp-boutons">
-          <button type="button" class="gl-btn gl-btn--primary" (click)="valider()" [disabled]="envoi || !c.nbComptes">
+          <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="valider()" [disabled]="envoi || !c.nbComptes">
             <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
             Valider et corriger le stock
           </button>
-          <button type="button" class="gl-btn gl-btn--secondary cp-abandon" (click)="abandonner()" [disabled]="envoi">
+          <button [hidden]="!peut('STOCK', 'GERER')" type="button" class="gl-btn gl-btn--secondary cp-abandon" (click)="abandonner()" [disabled]="envoi">
             Abandonner
           </button>
         </div>

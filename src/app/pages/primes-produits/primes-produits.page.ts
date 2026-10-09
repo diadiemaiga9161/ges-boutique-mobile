@@ -13,6 +13,7 @@ import {
 import { ProductService } from '../../services/product.service';
 import { ConfirmSheetService } from '../../services/confirm-sheet.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 type Onglet = 'vendeurs' | 'regles' | 'paiements';
 type Periode = 'mois' | 'mois-dernier' | 'annee';
 
@@ -65,6 +66,7 @@ export class PrimesProduitsPage implements OnInit {
   };
 
   constructor(
+    private roleService: RoleService,
     public cs: CommissionService,
     private productService: ProductService,
     private confirmSheet: ConfirmSheetService,
@@ -332,5 +334,10 @@ export class PrimesProduitsPage implements OnInit {
   private async toast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'bottom' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

@@ -10,6 +10,7 @@ import {
 import { ProductService } from '../../services/product.service';
 import { AlertController, ToastController } from '@ionic/angular';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-bonus-fournisseurs',
   templateUrl: './bonus-fournisseurs.page.html',
@@ -41,6 +42,7 @@ export class BonusFournisseursPage implements OnInit {
   ];
 
   constructor(
+    private roleService: RoleService,
     private bonusService: BonusFournisseurService,
     private productService: ProductService,
     private alertCtrl: AlertController,
@@ -188,5 +190,10 @@ export class BonusFournisseursPage implements OnInit {
   private async toast(msg: string, color: string): Promise<void> {
     const t = await this.toastCtrl.create({ message: msg, duration: 2500, color, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

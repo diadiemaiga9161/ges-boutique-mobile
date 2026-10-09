@@ -28,7 +28,7 @@
     </div>
 
     <!-- Règlement groupé des crédits en cours (ancien bouton flottant, même condition) -->
-    <button type="button" class="gl-btn gl-btn--secondary" *ngIf="nbCreditsEnCours > 0" (click)="ouvrirReglementGroupe()">
+    <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="gl-btn gl-btn--secondary" *ngIf="nbCreditsEnCours > 0" (click)="ouvrirReglementGroupe()">
       <ion-icon name="cash-outline"></ion-icon>
       Règlement groupé
     </button>
@@ -167,37 +167,37 @@
             <ion-icon name="print-outline"></ion-icon>
             <span>Imprimer</span>
           </button>
-          <button type="button" class="glc-action glc-action--link" (click)="ouvrirModifier(c)"
+          <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="glc-action glc-action--link" (click)="ouvrirModifier(c)"
             *ngIf="c.statut === StatutCommande.BROUILLON">
             <ion-icon name="create-outline"></ion-icon>
             <span>Modifier</span>
           </button>
-          <button type="button" class="glc-action glc-action--ok" (click)="valider(c)"
+          <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="valider(c)"
             *ngIf="c.statut === StatutCommande.BROUILLON">
             <ion-icon name="checkmark-circle-outline"></ion-icon>
             <span>Valider</span>
           </button>
-          <button type="button" class="glc-action glc-action--link" (click)="marquerEtape(c, 'PRETE')"
+          <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="glc-action glc-action--link" (click)="marquerEtape(c, 'PRETE')"
             *ngIf="c.statut === StatutCommande.VALIDEE && !c.etapeLivraison">
             <ion-icon name="cube-outline"></ion-icon>
             <span>Prête</span>
           </button>
-          <button type="button" class="glc-action glc-action--ok" (click)="marquerEtape(c, 'LIVREE')"
+          <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="glc-action glc-action--ok" (click)="marquerEtape(c, 'LIVREE')"
             *ngIf="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'">
             <ion-icon name="bicycle-outline"></ion-icon>
             <span>Livrée</span>
           </button>
-          <button type="button" class="glc-action glc-action--warn" (click)="ouvrirReglementIndividuel(c)"
+          <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="glc-action glc-action--warn" (click)="ouvrirReglementIndividuel(c)"
             *ngIf="c.estCredit && c.montantRestant > 0">
             <ion-icon name="cash-outline"></ion-icon>
             <span>Régler</span>
           </button>
-          <button type="button" class="glc-action glc-action--bad" (click)="annuler(c)"
+          <button [hidden]="!peut('COMMANDES', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="annuler(c)"
             *ngIf="c.statut !== StatutCommande.ANNULEE">
             <ion-icon name="close-circle-outline"></ion-icon>
             <span>Annuler</span>
           </button>
-          <button type="button" class="glc-action glc-action--bad" (click)="supprimer(c)"
+          <button [hidden]="!peut('COMMANDES', 'SUPPRIMER')" type="button" class="glc-action glc-action--bad" (click)="supprimer(c)"
             *ngIf="c.statut === StatutCommande.BROUILLON">
             <ion-icon name="trash-outline"></ion-icon>
             <span>Supprimer</span>
@@ -212,7 +212,7 @@
 
 <!-- Bouton flottant étendu : création de commande (même action que l'ancien bouton « Nouvelle ») -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <button type="button" class="gl-fab-extended" (click)="ouvrirCreer()">
+  <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="gl-fab-extended" (click)="ouvrirCreer()">
     <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
     Nouvelle commande
   </button>
@@ -390,7 +390,7 @@
 
     <div class="md-footer">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="fermerModal()">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" [disabled]="isSubmitting" (click)="enregistrer()">
+      <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="gl-btn gl-btn--primary" [disabled]="isSubmitting" (click)="enregistrer()">
         <ion-spinner name="crescent" *ngIf="isSubmitting"></ion-spinner>
         {{ editingId ? 'Modifier' : 'Créer la commande' }}
       </button>

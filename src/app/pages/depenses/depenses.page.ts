@@ -9,6 +9,7 @@ import { NetworkStatusService } from '../../services/network-status.service';
 import { OfflineSyncService } from '../../services/offline-sync.service';
 import { AuthService } from '../../services/auth.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-depenses',
   templateUrl: './depenses.page.html',
@@ -49,6 +50,7 @@ export class DepensesPage {
   trackById = (_: number, item: any) => item.id;
 
   constructor(
+    private roleService: RoleService,
     private depenseService: DepenseService,
     private paiementEmployeService: PaiementEmployeService,
     private employeService: EmployeService,
@@ -598,5 +600,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
   private async toast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2500, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

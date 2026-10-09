@@ -63,7 +63,7 @@
   </div>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="!chargement && !erreur">
-    <ion-fab-button (click)="nouveauRole()" aria-label="Nouveau rôle">
+    <ion-fab-button [hidden]="!peut('PERSONNEL', 'GERER')" (click)="nouveauRole()" aria-label="Nouveau rôle">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -78,7 +78,7 @@
           </ion-buttons>
           <ion-title>{{ brouillon?.id ? brouillon?.nom : 'Nouveau rôle' }}</ion-title>
           <ion-buttons slot="end" *ngIf="brouillon && !brouillon.verrouille">
-            <ion-button (click)="enregistrer()" [disabled]="enregistrement" strong="true">Enregistrer</ion-button>
+            <ion-button [hidden]="!peut('PERSONNEL', 'GERER')" (click)="enregistrer()" [disabled]="enregistrement" strong="true">Enregistrer</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -157,7 +157,7 @@
             </div>
           </div>
 
-          <ion-button expand="block" color="danger" fill="outline" class="rl-supprimer"
+          <ion-button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" expand="block" color="danger" fill="outline" class="rl-supprimer"
                       *ngIf="brouillon.id && !brouillon.systeme" (click)="supprimer()">
             <ion-icon name="trash-outline" slot="start"></ion-icon> Supprimer ce rôle
           </ion-button>

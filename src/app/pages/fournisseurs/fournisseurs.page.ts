@@ -11,6 +11,7 @@ import { BoutiqueService } from '../../services/boutique.service';
 import { CompteService, Compte } from '../../services/compte.service';
 import { infoMesure, prixStocke, puDoc, qteDoc, qteStockee } from '../../utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 @Component({
   selector: 'app-fournisseurs',
   templateUrl: './fournisseurs.page.html',
@@ -80,6 +81,7 @@ export class FournisseursPage {
   }
 
   constructor(
+    private roleService: RoleService,
     private productService: ProductService,
     private auth: AuthService,
     private alertCtrl: AlertController,
@@ -699,5 +701,10 @@ thead th{padding:9px 8px;font-size:11px;font-weight:700;text-transform:uppercase
   private async toast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

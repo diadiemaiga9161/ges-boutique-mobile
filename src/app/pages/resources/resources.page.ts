@@ -11,7 +11,7 @@ import { Facture, FactureService, LigneFactureRequest } from '../../services/fac
 import { PaiementEmploye, PaiementEmployeService } from '../../services/paiement-employe.service';
 import { Fournisseur, ProductService, Produit } from '../../services/product.service';
 import { AppUser, UserService } from '../../services/user.service';
-import { RoleBoutique, RoleService } from '../../services/role.service';
+import { ActionPermission, RoleBoutique, RoleService } from '../../services/role.service';
 import { MobileResourceService, ResourceConfig } from '../../services/mobile-resource.service';
 import { DepotClient, DepotClientRequest, DepotGarde, DepotGardeService, RetraitDepotRequest } from '../../services/depot-garde.service';
 import { ObjectifFournisseur, ObjectifFournisseurService, ObjectifFournisseurRequest, MOIS_LABELS } from '../../services/objectif-fournisseur.service';
@@ -1456,5 +1456,42 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:20px;fon
   private async presentToast(message: string, color: 'success' | 'danger' = 'success'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, color, duration: 2200, position: 'top' });
     await toast.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
+  /** Partie des droits concernée par chaque liste de cette page. */
+  private readonly moduleParType: Partial<Record<ResourceType, string>> = {
+    factures: 'VENTES',
+    comptes: 'CAISSE',
+    dettes: 'CLIENTS',
+    employes: 'PERSONNEL',
+    'paiement-employe': 'PERSONNEL',
+    fournisseurs: 'PRODUITS',
+    vendeurs: 'PERSONNEL',
+    'depots-garde': 'CAISSE',
+    'objectifs-fournisseur': 'FOURNISSEURS',
+    'objectifs-vendeur': 'PERSONNEL'
+  };
+
+  /** Boutons communs (créer, modifier, enregistrer) de la liste affichée. */
+  peutIci(action: ActionPermission): boolean {
+    const module = this.moduleParType[this.type];
+    return !module || this.peut(module, action);
+  }
+
+  /** Boutons action(item, kind) : la consultation reste libre, le reste suit le rôle. */
+  peutAction(kind: string): boolean {
+    if (['print', 'pdf-dl', 'pdf-view', 'depot-detail'].includes(kind)) return true;
+    if (kind === 'annuler-achat') return this.peut('FOURNISSEURS', 'SUPPRIMER');
+    if (kind === 'delete-fournisseur') return this.peut('PRODUITS', 'SUPPRIMER');
+    if (kind === 'objectif-valider' || kind === 'objectif-delete') {
+      return this.peut('FOURNISSEURS', kind === 'objectif-delete' ? 'SUPPRIMER' : 'GERER');
+    }
+    const suppression = kind.startsWith('delete-') || kind.startsWith('cancel-') || kind.endsWith('-delete');
+    return this.peutIci(suppression ? 'SUPPRIMER' : 'GERER');
   }
 }

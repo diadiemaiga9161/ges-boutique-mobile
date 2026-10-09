@@ -344,4 +344,9 @@ export class RolesPage implements OnInit {
     const t = await this.toastCtrl.create({ message, color, duration: 2200, position: 'bottom' });
     await t.present();
   }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

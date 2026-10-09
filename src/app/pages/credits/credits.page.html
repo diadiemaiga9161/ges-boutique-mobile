@@ -256,7 +256,7 @@
                   <ion-icon name="eye-outline"></ion-icon>
                   Voir
                 </button>
-                <button type="button" class="gl-btn gl-btn--tonal gl-btn--sm credit-btns__main" *ngIf="!credit.estReglee" (click)="openSimple(credit)">
+                <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-btn gl-btn--tonal gl-btn--sm credit-btns__main" *ngIf="!credit.estReglee" (click)="openSimple(credit)">
                   <ion-icon name="cash-outline"></ion-icon>
                   Régler
                 </button>
@@ -270,7 +270,7 @@
 
           <!-- Pied de carte : règlement groupé -->
           <div class="gl-card__foot" *ngIf="statutFilter !== 'REGLES'">
-            <button type="button" class="gl-act" (click)="$event.stopPropagation(); openGroupe(group)">
+            <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-act" (click)="$event.stopPropagation(); openGroupe(group)">
               <ion-icon name="people-outline"></ion-icon>
               <span>Groupé</span>
             </button>
@@ -642,7 +642,7 @@
     </div>
 
     <footer class="dlg-foot dlg-foot--stack">
-      <button type="button" class="gl-btn gl-btn--primary" *ngIf="!detailCredit?.estReglee"
+      <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-btn gl-btn--primary" *ngIf="!detailCredit?.estReglee"
               (click)="showDetailModal = false; openSimple(detailCredit!)">
         <ion-icon name="cash-outline"></ion-icon>
         Régler ce crédit
@@ -743,7 +743,7 @@
 
     <footer class="dlg-foot">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showSimpleModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveSimple()" [disabled]="savingSimple">
+      <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveSimple()" [disabled]="savingSimple">
         <ion-spinner *ngIf="savingSimple" name="crescent"></ion-spinner>
         <ion-icon *ngIf="!savingSimple" name="cash-outline"></ion-icon>
         Enregistrer
@@ -827,7 +827,7 @@
 
     <footer class="dlg-foot">
       <button type="button" class="gl-btn gl-btn--secondary" (click)="showGroupModal = false">Annuler</button>
-      <button type="button" class="gl-btn gl-btn--primary" (click)="saveGroupe()" [disabled]="savingGroupe || !selectedCreditsForGroup.length">
+      <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="gl-btn gl-btn--primary" (click)="saveGroupe()" [disabled]="savingGroupe || !selectedCreditsForGroup.length">
         <ion-spinner *ngIf="savingGroupe" name="crescent"></ion-spinner>
         <ion-icon *ngIf="!savingGroupe" name="people-outline"></ion-icon>
         Régler ({{ selectedCreditsForGroup.length }})

@@ -5,6 +5,7 @@ import { ProductService, Produit } from '../../services/product.service';
 import { Client, ClientService } from '../../services/client.service';
 import { AuthService } from '../../services/auth.service';
 
+import { ActionPermission, RoleService } from '../../services/role.service';
 interface LigneForm {
   produitId: number;
   produitNom: string;
@@ -80,6 +81,7 @@ export class CommandesPage {
   }
 
   constructor(
+    private roleService: RoleService,
     private commandeService: CommandeService,
     private productService: ProductService,
     private clientService: ClientService,
@@ -607,5 +609,10 @@ export class CommandesPage {
   private async toast(message: string, color: string): Promise<void> {
     const t = await this.toastCtrl.create({ message, duration: 2500, color, position: 'bottom' });
     await t.present();
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }
