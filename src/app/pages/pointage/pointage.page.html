@@ -1,0 +1,90 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Mon pointage</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pt-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <p class="pt-etat" *ngIf="chargement && !moi">Chargement…</p>
+  <p class="pt-etat pt-etat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <!-- Compte non relié à une fiche employé -->
+  <section class="pt-carte" *ngIf="moi && !moi.relie">
+    <p class="pt-titre">Votre compte n'est pas relié à une fiche employé</p>
+    <p class="pt-texte">Pour pointer, demandez au gérant de cocher « Ce vendeur est aussi employé » sur votre compte.</p>
+  </section>
+
+  <ng-container *ngIf="moi?.relie">
+    <!-- Aujourd'hui + bouton scanner -->
+    <section class="pt-carte pt-carte--principale">
+      <p class="pt-surtitre">Aujourd'hui</p>
+      <div class="pt-heures">
+        <div>
+          <p class="pt-heures__libelle">Arrivée</p>
+          <p class="pt-heures__valeur">{{ moi?.aujourdhui?.heureArrivee || '—' }}</p>
+        </div>
+        <div>
+          <p class="pt-heures__libelle">Départ</p>
+          <p class="pt-heures__valeur">{{ moi?.aujourdhui?.heureDepart || '—' }}</p>
+        </div>
+      </div>
+      <p class="pt-retard" *ngIf="(moi?.aujourdhui?.retardMinutes || 0) > 0">{{ duree(moi?.aujourdhui?.retardMinutes) }} de retard</p>
+
+      <ion-button expand="block" size="large" class="pt-scanner" (click)="scanner()" [disabled]="envoi">
+        <ion-icon slot="start" name="qr-code-outline"></ion-icon>
+        {{ envoi ? 'Envoi…' : (moi?.aujourdhui?.heureArrivee ? 'Scanner pour le départ' : 'Scanner pour l\'arrivée') }}
+      </ion-button>
+      <p class="pt-aide">Scannez le code affiché sur l'écran de la boutique.</p>
+    </section>
+  </ng-container>
+
+  <p class="pt-resultat" *ngIf="resultat" [class.pt-resultat--ok]="resultat.ok" [class.pt-resultat--erreur]="!resultat.ok"
+     [attr.role]="resultat.ok ? 'status' : 'alert'">{{ resultat.texte }}</p>
+
+  <!-- Gérant : l'équipe aujourd'hui -->
+  <ng-container *ngIf="estGerant && equipe.length">
+    <h2 class="pt-section">L'équipe aujourd'hui</h2>
+    <article class="pt-ligne" *ngFor="let l of equipe">
+      <div class="pt-ligne__id">
+        <p class="pt-ligne__nom">{{ l.nom }}</p>
+        <p class="pt-ligne__meta">
+          <span class="pt-badge" [class.pt-badge--present]="l.statut === 'PRESENT' && !l.retardMinutes"
+                [class.pt-badge--retard]="l.retardMinutes > 0 && l.statut !== 'PARTI'"
+                [class.pt-badge--parti]="l.statut === 'PARTI'"
+                [class.pt-badge--attente]="l.statut === 'PAS_ENCORE'">{{ libelleStatut(l) }}</span>
+          <ng-container *ngIf="l.heureArrivee"> {{ l.heureArrivee }}<ng-container *ngIf="l.heureDepart"> → {{ l.heureDepart }}</ng-container></ng-container>
+          <ng-container *ngIf="l.aCompte === false"> · sans compte</ng-container>
+        </p>
+      </div>
+      <ion-button size="small" fill="outline" *ngIf="l.statut !== 'PARTI'" (click)="pointerMaintenant(l)">
+        {{ l.heureArrivee ? 'Départ' : 'Arrivée' }}
+      </ion-button>
+    </article>
+  </ng-container>
+
+  <!-- Mon mois -->
+  <ng-container *ngIf="moi?.relie">
+    <h2 class="pt-section">Ce mois-ci</h2>
+    <dl class="pt-resume" *ngIf="moi?.resume as r">
+      <div><dt>Jours présent</dt><dd>{{ r.joursPresence }}</dd></div>
+      <div><dt>Absences</dt><dd>{{ r.absences }}</dd></div>
+      <div><dt>Retards</dt><dd>{{ r.retards }}</dd></div>
+      <div><dt>Heures</dt><dd>{{ duree(r.minutesTravail) }}</dd></div>
+    </dl>
+    <article class="pt-ligne" *ngFor="let j of moi?.jours">
+      <div class="pt-ligne__id">
+        <p class="pt-ligne__nom">{{ jourLisible(j.date) }}</p>
+        <p class="pt-ligne__meta">{{ j.heureArrivee }} → {{ j.heureDepart || '…' }}<ng-container *ngIf="j.retardMinutes > 0"> · {{ duree(j.retardMinutes) }} de retard</ng-container></p>
+      </div>
+      <p class="pt-ligne__duree">{{ duree(j.minutesTravail) }}</p>
+    </article>
+    <p class="pt-etat" *ngIf="!moi?.jours?.length">Aucun pointage ce mois-ci.</p>
+  </ng-container>
+</ion-content>
