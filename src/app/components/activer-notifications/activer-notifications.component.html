@@ -7,7 +7,7 @@
     <!-- Pas encore activées -->
     <ng-container *ngIf="etat === 'inactif'">
       <p class="an__titre">Recevoir les alertes sur ce téléphone</p>
-      <p class="an__texte">Ventes annulées, stock en rupture, nouvelles commandes et résumé du soir s'affichent même quand l'appli est fermée.</p>
+      <p class="an__texte">Ventes annulées, ruptures de stock, dates de péremption, nouvelles commandes et résumé du soir s'affichent même quand l'appli est fermée.</p>
       <div class="an__actions">
         <button type="button" class="an__btn an__btn--principal" (click)="activer()" [disabled]="enCours">
           {{ enCours ? 'Activation…' : 'Activer' }}

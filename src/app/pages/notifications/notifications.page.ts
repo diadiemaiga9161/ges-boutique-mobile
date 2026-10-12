@@ -52,13 +52,17 @@ export class NotificationsPage implements OnInit, OnDestroy {
       TRANSFERT_RECU: 'arrow-forward-outline',
       TRANSFERT_MODIFIE: 'create-outline',
       TRANSFERT_CONFIRME: 'checkmark-circle-outline',
+      PEREMPTION: 'time-outline',
+      VENTE_ANNULEE: 'close-circle-outline',
+      RESUME_JOUR: 'stats-chart-outline',
+      COMMANDE_VITRINE: 'bag-handle-outline',
     };
     return map[type] ?? 'notifications-outline';
   }
 
   couleur(type: string): string {
     if (type === 'RUPTURE_STOCK') return 'danger';
-    if (type === 'STOCK_FAIBLE') return 'warning';
+    if (type === 'STOCK_FAIBLE' || type === 'PEREMPTION' || type === 'VENTE_ANNULEE') return 'warning';
     if (type === 'TRANSFERT_CONFIRME') return 'success';
     return 'primary';
   }
