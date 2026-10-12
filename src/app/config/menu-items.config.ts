@@ -115,6 +115,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { titleKey: 'NAV.PROMO', icon: 'pricetag-outline', route: '/promotions', adminOnly: true, featureFlagKey: 'PROMOTIONS' },
       { titleKey: 'NAV.NET_RESULT', icon: 'analytics-outline', route: '/resultat-net', adminOnly: true, featureFlagKey: 'RESULTAT_NET' },
       { title: 'Historique vendeur', icon: 'bar-chart-outline', route: '/historique-vendeur', adminOnly: true },
+      { title: 'Classement des vendeurs', icon: 'trophy-outline', route: '/classement-vendeurs', adminOnly: true },
       { title: 'Annulation paiements', icon: 'close-circle-outline', iconColor: 'danger', route: '/annulation-paiements', adminOnly: true },
       { titleKey: 'EXPORT.TITRE', icon: 'cloud-download-outline', route: '/export-donnees', adminOnly: true },
       { titleKey: 'JOURNAL_AUDIT.TITRE', icon: 'shield-checkmark-outline', route: '/journal-audit', adminOnly: true },

@@ -137,6 +137,32 @@ export interface RapportComplet {
   nombreClients: number;
 }
 
+export interface LigneClassementVendeur {
+  rang: number;
+  vendeurId: number;
+  nom: string;
+  actif: boolean;
+  nombreVentes: number;
+  chiffreAffaires: number;
+  evolution: number | null;
+  benefice: number;
+  panierMoyen: number;
+  nombreCredits: number;
+  montantCredits: number;
+  creditsRecuperes: number;
+  nombreAnnulations: number;
+  montantAnnulations: number;
+  remises: number;
+}
+
+export interface ClassementVendeurs {
+  dateDebut: string;
+  dateFin: string;
+  vendeurs: LigneClassementVendeur[];
+  totalChiffreAffaires: number;
+  totalVentes: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -308,6 +334,11 @@ export class RapportService {
    * enrichir le PDF exporté depuis l'écran Rapports, quelle que soit la période choisie. */
   obtenirRapportComplet(dateDebut: string, dateFin: string): Observable<RapportComplet> {
     return this.http.get<RapportComplet>(`${environment.apiUrl}/rapports/complet?dateDebut=${dateDebut}&dateFin=${dateFin}`);
+  }
+
+  /** Classement des vendeurs (gérant) : CA, ventes, bénéfice, crédits, annulations, remises. */
+  getClassementVendeurs(dateDebut: string, dateFin: string): Observable<ClassementVendeurs> {
+    return this.http.get<ClassementVendeurs>(`${environment.apiUrl}/rapports/classement-vendeurs?dateDebut=${dateDebut}&dateFin=${dateFin}`);
   }
 
   /** Exporte en PDF le rapport complet (ventes, top produits, modes de paiement, crédits,

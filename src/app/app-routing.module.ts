@@ -121,6 +121,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'classement-vendeurs',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/classement-vendeurs/classement-vendeurs.module').then(m => m.ClassementVendeursPageModule)
+  },
+  {
     path: 'historique-vendeur',
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },

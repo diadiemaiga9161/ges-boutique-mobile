@@ -1,0 +1,57 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Classement des vendeurs</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="cv-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="cv-periodes" role="group" aria-label="Période">
+    <button type="button" *ngFor="let p of periodes" class="cv-chip" [class.cv-chip--actif]="periode === p.cle"
+            [attr.aria-pressed]="periode === p.cle" (click)="choisir(p.cle)">{{ p.libelle }}</button>
+  </div>
+
+  <p class="cv-etat" *ngIf="chargement && !donnees">Chargement…</p>
+  <p class="cv-etat cv-etat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <ng-container *ngIf="donnees && !erreur">
+    <p class="cv-etat" *ngIf="!donnees.vendeurs.length">Aucune vente sur cette période.</p>
+
+    <ng-container *ngIf="donnees.vendeurs.length">
+      <p class="cv-total">{{ prix(donnees.totalChiffreAffaires) }} vendus en {{ donnees.totalVentes }} vente(s)</p>
+
+      <article class="cv-carte" *ngFor="let v of donnees.vendeurs" [class.cv-carte--premier]="v.rang === 1">
+        <div class="cv-carte__haut">
+          <span class="cv-rang">{{ v.rang }}</span>
+          <div class="cv-carte__id">
+            <p class="cv-nom">{{ v.nom }}<span class="cv-inactif" *ngIf="!v.actif"> · compte désactivé</span></p>
+            <p class="cv-meta">{{ v.nombreVentes }} vente(s) · {{ part(v) }} % du total</p>
+          </div>
+          <div class="cv-carte__ca">
+            <p class="cv-ca">{{ prix(v.chiffreAffaires) }}</p>
+            <p class="cv-evol" *ngIf="v.evolution !== null"
+               [class.cv-evol--hausse]="v.evolution >= 0" [class.cv-evol--baisse]="v.evolution < 0">
+              {{ v.evolution >= 0 ? '+' : '' }}{{ v.evolution }} %
+            </p>
+          </div>
+        </div>
+        <dl class="cv-details">
+          <div><dt>Bénéfice</dt><dd>{{ prix(v.benefice) }}</dd></div>
+          <div><dt>Panier moyen</dt><dd>{{ prix(v.panierMoyen) }}</dd></div>
+          <div><dt>Crédits accordés</dt><dd>{{ prix(v.montantCredits) }} <small>({{ v.nombreCredits }})</small></dd></div>
+          <div><dt>Crédits récupérés</dt><dd>{{ prix(v.creditsRecuperes) }}</dd></div>
+          <div [class.cv-alerte]="v.nombreAnnulations >= 3"><dt>Annulations</dt><dd>{{ v.nombreAnnulations }}<small *ngIf="v.nombreAnnulations"> · {{ prix(v.montantAnnulations) }}</small></dd></div>
+          <div><dt>Remises</dt><dd>{{ prix(v.remises) }}</dd></div>
+        </dl>
+      </article>
+
+      <p class="cv-note">Ventes annulées ou entièrement retournées non comptées. Pourcentage = évolution par rapport à la période d'avant.</p>
+    </ng-container>
+  </ng-container>
+</ion-content>
