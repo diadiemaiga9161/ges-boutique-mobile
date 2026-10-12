@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { MENU_SECTIONS, MenuSection } from './config/menu-items.config';
 import { canShowMenuItem, MenuVisibilityContext } from './config/menu-visibility.util';
 import { RoleService } from './services/role.service';
+import { NotificationsPushService } from './services/notifications-push.service';
 
 @Component({
   selector: 'app-root',
@@ -63,6 +64,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private appUpdateService: AppUpdateService,
     private themeService: ThemeService,
     private roleService: RoleService,
+    private notificationsPush: NotificationsPushService,
   ) {}
 
   ngOnInit(): void {
@@ -194,8 +196,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl(route);
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.menu.close('main-menu');
+    // Ce téléphone ne reçoit plus les alertes de la boutique une fois la personne déconnectée.
+    await this.notificationsPush.avantDeconnexion();
     this.auth.signout();
   }
 

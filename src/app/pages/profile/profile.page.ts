@@ -8,6 +8,7 @@ import { ConfirmationVocaleService } from '../../services/confirmation-vocale.se
 import { TutorielVendeurService } from '../../services/tutoriel-vendeur.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
 import { TransfertService } from '../../services/transfert.service';
+import { NotificationsPushService } from '../../services/notifications-push.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 
@@ -76,7 +77,8 @@ export class ProfilePage implements OnInit {
     private tutorielVendeur: TutorielVendeurService,
     private boutiqueConfig: BoutiqueConfigService,
     private transfertService: TransfertService,
-    private router: Router
+    private router: Router,
+    private notificationsPush: NotificationsPushService
   ) {}
 
   revoirTutoriel(): void {
@@ -122,6 +124,7 @@ export class ProfilePage implements OnInit {
     }
 
     await this.boutiqueConfig.clearBoutique();
+    await this.notificationsPush.avantDeconnexion();
     this.auth.signout();
     this.router.navigateByUrl('/boutique-select', { replaceUrl: true });
   }
@@ -261,7 +264,9 @@ export class ProfilePage implements OnInit {
     });
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    // Ce téléphone ne reçoit plus les alertes de la boutique une fois la personne déconnectée.
+    await this.notificationsPush.avantDeconnexion();
     this.auth.signout();
   }
 

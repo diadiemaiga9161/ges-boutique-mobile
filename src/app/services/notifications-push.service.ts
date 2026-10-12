@@ -67,6 +67,19 @@ export class NotificationsPushService {
     await this.swPush.unsubscribe().catch(() => undefined);
   }
 
+  /**
+   * À la déconnexion volontaire : ce téléphone ne reçoit plus les alertes de la boutique
+   * (montants, caisse) une fois la personne déconnectée. N'attend jamais plus de 3 secondes.
+   */
+  async avantDeconnexion(): Promise<void> {
+    if (!this.supporte()) return;
+    this.resynchroniseCetteSession = false;
+    await Promise.race([
+      this.desactiver().catch(() => undefined),
+      new Promise<void>(r => setTimeout(r, 3000))
+    ]);
+  }
+
   /** Une fois par session : redonne l'abonnement au serveur (changement de boutique, base restaurée…). */
   async resynchroniser(): Promise<void> {
     if (this.resynchroniseCetteSession || !this.supporte() || Notification.permission !== 'granted') return;
