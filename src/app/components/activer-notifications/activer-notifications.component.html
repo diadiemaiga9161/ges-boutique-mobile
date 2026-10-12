@@ -1,0 +1,44 @@
+<section class="an" *ngIf="visible" [class.an--reglage]="mode === 'reglage'" aria-live="polite">
+  <div class="an__icone" aria-hidden="true">
+    <ion-icon [name]="etat === 'actif' ? 'notifications' : 'notifications-outline'"></ion-icon>
+  </div>
+
+  <div class="an__corps">
+    <!-- Pas encore activées -->
+    <ng-container *ngIf="etat === 'inactif'">
+      <p class="an__titre">Recevoir les alertes sur ce téléphone</p>
+      <p class="an__texte">Ventes annulées, stock en rupture, nouvelles commandes et résumé du soir s'affichent même quand l'appli est fermée.</p>
+      <div class="an__actions">
+        <button type="button" class="an__btn an__btn--principal" (click)="activer()" [disabled]="enCours">
+          {{ enCours ? 'Activation…' : 'Activer' }}
+        </button>
+        <button type="button" class="an__btn an__btn--discret" *ngIf="mode === 'bandeau'" (click)="plusTard()">Plus tard</button>
+      </div>
+    </ng-container>
+
+    <!-- Activées -->
+    <ng-container *ngIf="etat === 'actif'">
+      <p class="an__titre">Alertes activées sur ce téléphone</p>
+      <p class="an__texte">Les notifications de la boutique s'affichent sur l'écran, même appli fermée.</p>
+      <div class="an__actions">
+        <button type="button" class="an__btn an__btn--discret" (click)="desactiver()" [disabled]="enCours">Désactiver</button>
+      </div>
+    </ng-container>
+
+    <!-- Refusées dans les réglages du téléphone -->
+    <ng-container *ngIf="etat === 'refuse'">
+      <p class="an__titre">Alertes bloquées sur ce téléphone</p>
+      <p class="an__texte" *ngIf="iphone">Ouvrez Réglages › Notifications › Ges Lafia, puis activez « Autoriser les notifications ».</p>
+      <p class="an__texte" *ngIf="!iphone">Touchez longuement l'icône de l'appli › Infos sur l'appli › Notifications, puis activez-les.</p>
+    </ng-container>
+
+    <!-- Impossible ici -->
+    <ng-container *ngIf="etat === 'indisponible'">
+      <p class="an__titre">Alertes non disponibles ici</p>
+      <p class="an__texte" *ngIf="iphone">Sur iPhone, ajoutez d'abord l'appli à l'écran d'accueil (bouton Partager › « Sur l'écran d'accueil »), puis ouvrez-la depuis son icône.</p>
+      <p class="an__texte" *ngIf="!iphone">Installez l'appli depuis Chrome (menu ⋮ › « Installer l'application »), puis ouvrez-la depuis son icône.</p>
+    </ng-container>
+
+    <p class="an__erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+  </div>
+</section>

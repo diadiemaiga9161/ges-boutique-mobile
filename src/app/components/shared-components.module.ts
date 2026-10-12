@@ -11,6 +11,7 @@ import { SectionHeaderComponent } from './section-header/section-header.componen
 import { QuickActionComponent } from './quick-action/quick-action.component';
 import { BottomSheetComponent } from './bottom-sheet/bottom-sheet.component';
 import { ConfirmSheetComponent } from './confirm-sheet/confirm-sheet.component';
+import { ActiverNotificationsComponent } from './activer-notifications/activer-notifications.component';
 
 /** Regroupe les composants partagés du design system (Phase 2) pour un
  *  import unique dans les modules de page (standalone: false) — même
@@ -20,6 +21,7 @@ import { ConfirmSheetComponent } from './confirm-sheet/confirm-sheet.component';
  *  ne fait que les ré-exporter groupés. */
 @NgModule({
   imports: [
+    ActiverNotificationsComponent,
     StatCardComponent,
     ProductCardComponent,
     StockBadgeComponent,
@@ -35,6 +37,7 @@ import { ConfirmSheetComponent } from './confirm-sheet/confirm-sheet.component';
     MesureSuffixePipe
   ],
   exports: [
+    ActiverNotificationsComponent,
     StatCardComponent,
     ProductCardComponent,
     StockBadgeComponent,
