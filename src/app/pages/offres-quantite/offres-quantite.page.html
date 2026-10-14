@@ -12,91 +12,228 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <p class="oq-intro">Exemple : « 2 pour 75 F ». La caisse applique l'offre toute seule ; le vendeur ne peut pas la retirer.</p>
-
-  <p class="oq-resultat oq-resultat--ok" *ngIf="message" role="status">{{ message }}</p>
-  <p class="oq-resultat oq-resultat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
-
-  <div class="oq-ajout" *ngIf="!saisie">
-    <ion-button expand="block" (click)="nouvelle()">
-      <ion-icon slot="start" name="add-outline"></ion-icon> Nouvelle offre
-    </ion-button>
-  </div>
-
-  <!-- Saisie -->
-  <section class="oq-carte" *ngIf="saisie">
-    <p class="oq-titre">{{ saisie.id ? 'Modifier l\'offre' : 'Nouvelle offre' }}</p>
-
-    <ng-container *ngIf="produitChoisi; else choix">
-      <div class="oq-produit">
-        <div>
-          <p class="oq-produit__nom">{{ produitChoisi.nom }}</p>
-          <p class="oq-produit__prix">Prix normal {{ prix(produitChoisi.prixVente) }}</p>
-        </div>
-        <ion-button size="small" fill="clear" (click)="saisie.produitId = null">Changer</ion-button>
+  <!-- ══════════ En-tête ══════════ -->
+  <section class="oq-hero">
+    <div class="oq-hero__deco" aria-hidden="true"></div>
+    <p class="oq-hero__surtitre">Vendre plus avec les lots</p>
+    <h1 class="oq-hero__titre">« 2 pour 75 F »</h1>
+    <p class="oq-hero__texte">Vous fixez le prix du lot, la caisse l'applique toute seule. Le vendeur ne peut pas l'enlever.</p>
+    <div class="oq-hero__chiffres">
+      <div class="oq-mini">
+        <ion-icon name="flash-outline" aria-hidden="true"></ion-icon>
+        <p class="oq-mini__label">En cours</p>
+        <p class="oq-mini__val">{{ nbEnCours }}</p>
       </div>
-    </ng-container>
-    <ng-template #choix>
-      <ion-searchbar [(ngModel)]="recherche" placeholder="Rechercher un produit" [debounce]="150"></ion-searchbar>
-      <div class="oq-liste">
-        <button type="button" class="oq-liste__item" *ngFor="let p of produitsFiltres" (click)="saisie.produitId = p.id">
-          <span>{{ p.nom }}</span><span class="oq-liste__prix">{{ prix(p.prixVente) }}</span>
-        </button>
-        <p class="oq-vide" *ngIf="!produitsFiltres.length">Aucun produit trouvé.</p>
+      <div class="oq-mini">
+        <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
+        <p class="oq-mini__label">Produits</p>
+        <p class="oq-mini__val">{{ nbProduits }}</p>
       </div>
-    </ng-template>
-
-    <div class="oq-grille">
-      <label class="oq-label">Nombre d'articles
-        <input type="number" inputmode="numeric" min="2" class="oq-champ" [(ngModel)]="saisie.quantite" />
-      </label>
-      <label class="oq-label">Prix du lot (F)
-        <input type="number" inputmode="numeric" min="1" class="oq-champ" [(ngModel)]="saisie.prix" />
-      </label>
-      <label class="oq-label">Début (facultatif)
-        <input type="date" class="oq-champ" [(ngModel)]="saisie.dateDebut" />
-      </label>
-      <label class="oq-label">Fin (facultatif)
-        <input type="date" class="oq-champ" [(ngModel)]="saisie.dateFin" />
-      </label>
-    </div>
-
-    <p class="oq-apercu" *ngIf="apercu as a">
-      {{ saisie.quantite }} articles : <s>{{ prix(a.normal) }}</s> → <strong>{{ prix(saisie.prix || 0) }}</strong>, le client gagne {{ prix(a.economie) }}.
-      <span class="oq-perte" *ngIf="a.perte">Attention : en dessous du prix d'achat, chaque lot sera vendu à perte.</span>
-    </p>
-
-    <ion-item lines="none" class="oq-toggle">
-      <ion-toggle [(ngModel)]="saisie.active">Offre en marche</ion-toggle>
-    </ion-item>
-
-    <div class="oq-actions">
-      <ion-button expand="block" (click)="enregistrer()" [disabled]="enregistrement || !saisie.produitId || !saisie.quantite || !saisie.prix">
-        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
-      </ion-button>
-      <ion-button expand="block" fill="outline" (click)="saisie = null">Annuler</ion-button>
+      <div class="oq-mini">
+        <ion-icon name="pause-circle-outline" aria-hidden="true"></ion-icon>
+        <p class="oq-mini__label">Arrêtées</p>
+        <p class="oq-mini__val">{{ nbArretees }}</p>
+      </div>
     </div>
   </section>
 
-  <p class="oq-etat" *ngIf="chargement && !offres.length">Chargement…</p>
+  <div class="oq-corps">
+    <!-- ══════════ Comment ça marche ══════════ -->
+    <section class="oq-aide">
+      <button type="button" class="oq-aide__entete" (click)="aideOuverte = !aideOuverte" [attr.aria-expanded]="aideOuverte">
+        <span class="oq-aide__icone"><ion-icon name="help-circle-outline" aria-hidden="true"></ion-icon></span>
+        <span class="oq-aide__titre">Comment ça marche ?</span>
+        <ion-icon [name]="aideOuverte ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
+      </button>
+      <ol class="oq-etapes" *ngIf="aideOuverte">
+        <li>
+          <span class="oq-etapes__num">1</span>
+          <div><p class="oq-etapes__titre">Choisissez un produit</p><p class="oq-etapes__texte">Par exemple le bonbon, vendu 50 F l'unité.</p></div>
+        </li>
+        <li>
+          <span class="oq-etapes__num">2</span>
+          <div><p class="oq-etapes__titre">Fixez le prix du lot</p><p class="oq-etapes__texte">« 2 bonbons pour 75 F » au lieu de 100 F.</p></div>
+        </li>
+        <li>
+          <span class="oq-etapes__num">3</span>
+          <div><p class="oq-etapes__titre">La caisse calcule toute seule</p><p class="oq-etapes__texte">3 bonbons = 75 + 50 = 125 F. Pas d'offre si le vendeur change le prix ou met une remise.</p></div>
+        </li>
+      </ol>
+    </section>
 
-  <article class="oq-offre" *ngFor="let o of offres">
-    <div class="oq-offre__haut">
-      <div class="oq-offre__id">
-        <p class="oq-offre__nom">{{ o.produitNom }}</p>
-        <p class="oq-offre__meta">Prix normal {{ prix(o.prixNormal) }} · le client gagne {{ prix(o.economie) }}</p>
+    <!-- ══════════ Filtres ══════════ -->
+    <div class="oq-filtres" role="group" aria-label="Filtrer les offres" *ngIf="offres.length">
+      <button type="button" class="oq-chip" [class.oq-chip--actif]="filtre === 'toutes'" [attr.aria-pressed]="filtre === 'toutes'" (click)="filtre = 'toutes'">Toutes · {{ offres.length }}</button>
+      <button type="button" class="oq-chip" [class.oq-chip--actif]="filtre === 'en-cours'" [attr.aria-pressed]="filtre === 'en-cours'" (click)="filtre = 'en-cours'">En cours · {{ nbEnCours }}</button>
+      <button type="button" class="oq-chip" [class.oq-chip--actif]="filtre === 'arretees'" [attr.aria-pressed]="filtre === 'arretees'" (click)="filtre = 'arretees'">Arrêtées · {{ nbArretees }}</button>
+    </div>
+
+    <p class="oq-etat" *ngIf="chargement && !offres.length">Chargement…</p>
+
+    <!-- ══════════ Vide ══════════ -->
+    <section class="oq-vide" *ngIf="!chargement && !offres.length">
+      <span class="oq-vide__icone"><ion-icon name="gift-outline" aria-hidden="true"></ion-icon></span>
+      <p class="oq-vide__titre">Aucune offre pour l'instant</p>
+      <p class="oq-vide__texte">Créez votre première offre : vos clients achètent plus, et la caisse fait le calcul.</p>
+      <button type="button" class="gl-fab-extended" (click)="nouvelle()">
+        <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Créer une offre
+      </button>
+    </section>
+
+    <p class="oq-etat" *ngIf="offres.length && !groupes.length">Aucune offre dans ce filtre.</p>
+
+    <!-- ══════════ Offres par produit ══════════ -->
+    <article class="oq-produit" *ngFor="let g of groupes">
+      <header class="oq-produit__entete">
+        <span class="oq-produit__icone"><ion-icon name="pricetag-outline" aria-hidden="true"></ion-icon></span>
+        <div class="oq-produit__id">
+          <h2 class="oq-produit__nom">{{ g.produitNom }}</h2>
+          <p class="oq-produit__prix">Prix normal : {{ prix(g.prixNormal) }} l'unité</p>
+        </div>
+        <button type="button" class="oq-ajout" (click)="nouvelle(g.produitId)" aria-label="Ajouter un palier sur ce produit">
+          <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+        </button>
+      </header>
+
+      <div class="oq-offre" *ngFor="let o of g.offres" [class.oq-offre--arret]="!o.active">
+        <div class="oq-offre__haut">
+          <div class="oq-offre__valeur">
+            <span class="oq-offre__qte">{{ o.quantite }}</span>
+            <span class="oq-offre__pour">pour</span>
+            <span class="oq-offre__prix">{{ prix(o.prix) }}</span>
+          </div>
+          <span class="oq-badge oq-badge--{{ etat(o).classe }}">{{ etat(o).texte }}</span>
+        </div>
+        <p class="oq-offre__compare">
+          au lieu de <s>{{ prix(o.quantite * o.prixNormal) }}</s>
+          <span class="oq-gain">le client gagne {{ prix(o.economie) }}</span>
+        </p>
+        <p class="oq-offre__periode"><ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>{{ periode(o) }}</p>
+        <p class="oq-offre__perte" *ngIf="o.prix < o.quantite * o.prixAchat">
+          <ion-icon name="warning-outline" aria-hidden="true"></ion-icon>Vendu en dessous du prix d'achat
+        </p>
+        <div class="oq-offre__actions">
+          <button type="button" class="oq-action" (click)="modifier(o)">
+            <ion-icon name="create-outline" aria-hidden="true"></ion-icon>Modifier
+          </button>
+          <button type="button" class="oq-action" (click)="basculer(o)">
+            <ion-icon [name]="o.active ? 'pause-outline' : 'play-outline'" aria-hidden="true"></ion-icon>{{ o.active ? 'Arrêter' : 'Remettre' }}
+          </button>
+          <button type="button" class="oq-action oq-action--danger" (click)="supprimer(o)">
+            <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>Supprimer
+          </button>
+        </div>
       </div>
-      <span class="oq-badge" [class.oq-badge--actif]="o.active && o.enCours" [class.oq-badge--arret]="!o.active">{{ etat(o) }}</span>
-    </div>
-    <p class="oq-offre__valeur">{{ o.quantite }} pour {{ prix(o.prix) }}</p>
-    <p class="oq-perte" *ngIf="o.prix < o.quantite * o.prixAchat">Vendu à perte</p>
-    <div class="oq-offre__boutons">
-      <ion-button size="small" fill="outline" (click)="modifier(o)">Modifier</ion-button>
-      <ion-button size="small" fill="outline" (click)="basculer(o)">{{ o.active ? 'Arrêter' : 'Remettre' }}</ion-button>
-      <ion-button size="small" fill="outline" color="danger" (click)="supprimer(o)">Supprimer</ion-button>
-    </div>
-  </article>
+    </article>
+  </div>
 
-  <p class="oq-etat" *ngIf="!chargement && !offres.length && !saisie">Aucune offre pour l'instant.</p>
-  <p class="oq-note">Au-delà du lot, la caisse complète au prix normal : avec « 2 pour 75 F », 3 articles = 125 F. Pas d'offre si le vendeur change le prix ou met une remise.</p>
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="offres.length && !saisie">
+    <button type="button" class="gl-fab-extended" (click)="nouvelle()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Nouvelle offre
+    </button>
+  </ion-fab>
 </ion-content>
+
+<!-- ══════════ Fenêtre : nouvelle / modifier ══════════ -->
+<div class="oq-modale" *ngIf="saisie" (click)="fermer()">
+  <div class="oq-modale__boite" role="dialog" aria-modal="true" aria-labelledby="oq-modale-titre" (click)="$event.stopPropagation()">
+    <header class="oq-modale__entete">
+      <span class="oq-modale__pastille"><ion-icon name="gift-outline" aria-hidden="true"></ion-icon></span>
+      <h2 id="oq-modale-titre">{{ saisie.id ? 'Modifier l\'offre' : 'Nouvelle offre' }}</h2>
+      <button type="button" class="oq-modale__fermer" (click)="fermer()" aria-label="Fermer">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </header>
+
+    <div class="oq-modale__corps">
+      <!-- 1. Produit -->
+      <p class="oq-etape"><span>1</span> Quel produit ?</p>
+      <div class="oq-choisi" *ngIf="produitChoisi; else choix">
+        <div>
+          <p class="oq-choisi__nom">{{ produitChoisi.nom }}</p>
+          <p class="oq-choisi__prix">{{ prix(produitChoisi.prixVente) }} l'unité</p>
+        </div>
+        <button type="button" class="oq-lien" (click)="saisie.produitId = null" *ngIf="!saisie.id">Changer</button>
+      </div>
+      <ng-template #choix>
+        <div class="oq-recherche">
+          <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+          <input type="search" [(ngModel)]="recherche" placeholder="Rechercher un produit" aria-label="Rechercher un produit" />
+        </div>
+        <div class="oq-liste">
+          <button type="button" class="oq-liste__item" *ngFor="let p of produitsFiltres" (click)="saisie.produitId = p.id">
+            <span>{{ p.nom }}</span><span class="oq-liste__prix">{{ prix(p.prixVente) }}</span>
+          </button>
+          <p class="oq-liste__vide" *ngIf="!produitsFiltres.length">Aucun produit trouvé.</p>
+        </div>
+      </ng-template>
+
+      <!-- 2. Lot -->
+      <p class="oq-etape"><span>2</span> Combien d'articles dans le lot ?</p>
+      <div class="oq-compteur">
+        <button type="button" (click)="changerQuantite(-1)" [disabled]="saisie.quantite <= 2" aria-label="Un de moins">
+          <ion-icon name="remove-outline" aria-hidden="true"></ion-icon>
+        </button>
+        <input type="number" inputmode="numeric" min="2" [(ngModel)]="saisie.quantite" aria-label="Nombre d'articles" />
+        <button type="button" (click)="changerQuantite(1)" aria-label="Un de plus">
+          <ion-icon name="add-outline" aria-hidden="true"></ion-icon>
+        </button>
+      </div>
+
+      <!-- 3. Prix -->
+      <p class="oq-etape"><span>3</span> Prix du lot entier</p>
+      <div class="oq-prix">
+        <input type="number" inputmode="numeric" min="1" [(ngModel)]="saisie.prix" placeholder="0" aria-label="Prix du lot en francs" />
+        <span>F</span>
+      </div>
+      <p class="oq-indice" *ngIf="produitChoisi && saisie.quantite">
+        Au prix normal, {{ saisie.quantite }} articles coûtent {{ prix(saisie.quantite * produitChoisi.prixVente) }}.
+      </p>
+
+      <!-- Aperçu -->
+      <div class="oq-apercu" *ngIf="apercu as a" [class.oq-apercu--erreur]="a.invalide">
+        <ng-container *ngIf="!a.invalide; else pasReduction">
+          <p class="oq-apercu__titre">Le client paiera</p>
+          <ul class="oq-exemples">
+            <li *ngFor="let e of exemples">
+              <span>{{ e.quantite }} article{{ e.quantite > 1 ? 's' : '' }}</span>
+              <span class="oq-exemples__prix">
+                <s *ngIf="e.prix < e.normal">{{ prix(e.normal) }}</s>
+                <strong>{{ prix(e.prix) }}</strong>
+              </span>
+            </li>
+          </ul>
+          <p class="oq-apercu__perte" *ngIf="a.perte">
+            <ion-icon name="warning-outline" aria-hidden="true"></ion-icon>
+            Attention : ce prix est en dessous du prix d'achat, chaque lot sera vendu à perte.
+          </p>
+        </ng-container>
+        <ng-template #pasReduction>
+          <p class="oq-apercu__titre">Ce n'est pas une réduction</p>
+          <p class="oq-apercu__texte">Le prix du lot doit être plus petit que {{ prix(a.normal) }}.</p>
+        </ng-template>
+      </div>
+
+      <!-- Dates -->
+      <ion-item lines="none" class="oq-interrupteur">
+        <ion-toggle [(ngModel)]="saisie.limiterDates">Limiter dans le temps</ion-toggle>
+      </ion-item>
+      <div class="oq-dates" *ngIf="saisie.limiterDates">
+        <label>Début<input type="date" [(ngModel)]="saisie.dateDebut" /></label>
+        <label>Fin<input type="date" [(ngModel)]="saisie.dateFin" /></label>
+      </div>
+      <ion-item lines="none" class="oq-interrupteur">
+        <ion-toggle [(ngModel)]="saisie.active">Offre en marche</ion-toggle>
+      </ion-item>
+
+      <p class="oq-erreur" *ngIf="erreurFormulaire" role="alert">{{ erreurFormulaire }}</p>
+    </div>
+
+    <footer class="oq-modale__pied">
+      <button type="button" class="oq-bouton oq-bouton--contour" (click)="fermer()">Annuler</button>
+      <button type="button" class="oq-bouton oq-bouton--plein" (click)="enregistrer()" [disabled]="!peutEnregistrer">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer l\'offre' }}
+      </button>
+    </footer>
+  </div>
+</div>
