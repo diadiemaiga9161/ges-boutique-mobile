@@ -352,6 +352,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+.cart-line__offre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gl-ok, #047857);
+
+  ion-icon { font-size: 15px; flex-shrink: 0; }
+}
+
 .cart-line__price {
   display: flex;
   align-items: center;

@@ -137,6 +137,9 @@
             </div>
             <p class="cart-line__total">{{ money(totalLine(item)) }}</p>
           </div>
+          <p class="cart-line__offre" *ngIf="offreLigne(item).libelle as offre">
+            <ion-icon name="gift-outline" aria-hidden="true"></ion-icon>{{ offre }} : −{{ money(offreLigne(item).remise) }}
+          </p>
 
           <!-- Prix de vente (modifiable) -->
           <div class="cart-line__price">

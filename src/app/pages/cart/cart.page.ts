@@ -22,6 +22,8 @@ import { infoMesure, prixAffiche, prixStocke, qteDoc, texteQte } from '../../uti
 import { ProduitImageService } from '../../services/produit-image.service';
 
 import { ActionPermission, RoleService } from '../../services/role.service';
+import { OffreQuantiteService } from '../../services/offre-quantite.service';
+import { remiseOffreLigne, ResultatOffre } from '../../utils/offres-quantite.util';
 interface CartItem {
   product: Produit;
   quantity: number;
@@ -135,7 +137,8 @@ export class CartPage implements OnInit {
     private boutiqueService: BoutiqueService,
     private fideliteService: FideliteService,
     private impressionRecuService: ImpressionRecuService,
-    public photos: ProduitImageService
+    public photos: ProduitImageService,
+    private offreQuantiteService: OffreQuantiteService
   ) {}
 
   /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
@@ -186,6 +189,13 @@ export class CartPage implements OnInit {
       }
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
       this.impressionTicketActif = liste.find(f => f.cle === 'IMPRESSION_TICKET')?.actif === true;
+      // Offres par quantité du gérant : le serveur les applique ; on les garde ici pour
+      // afficher le même total, y compris hors connexion.
+      if (liste.find(f => f.cle === 'OFFRES_QUANTITE')?.actif === true) {
+        this.offreQuantiteService.chargerEnCours().subscribe();
+      } else if (liste.length) {
+        this.offreQuantiteService.vider();
+      }
     });
   }
 
@@ -737,7 +747,20 @@ export class CartPage implements OnInit {
   }
 
   totalLine(item: CartItem): number {
-    return this.getPrixVenteEffectif(item) * item.quantity;
+    return Math.max(0, this.getPrixVenteEffectif(item) * item.quantity - this.offreLigne(item).remise);
+  }
+
+  /** Offre par quantité applicable à la ligne (mêmes conditions que le serveur). */
+  offreLigne(item: CartItem): ResultatOffre {
+    return remiseOffreLigne({
+      produitId: item.product.id,
+      quantite: Number(item.quantity) || 0,
+      prixUnitaire: Number(item.customPrice) || 0,
+      prixNormal: Number(item.product.prixVente) || 0,
+      aRemise: (item.remisePourcentage || 0) > 0,
+      parCarton: item.niveauId != null || (item.niveauFacteurTotal || 1) > 1,
+      auPoids: this.estMesure(item.product)
+    }, this.offreQuantiteService.enCours);
   }
 
   getPrixVenteEffectif(item: CartItem): number {
@@ -751,7 +774,7 @@ export class CartPage implements OnInit {
   }
 
   getBeneficeLigne(item: CartItem): number {
-    return (this.getPrixVenteEffectif(item) - this.getPrixAchatEffectif(item)) * item.quantity;
+    return (this.getPrixVenteEffectif(item) - this.getPrixAchatEffectif(item)) * item.quantity - this.offreLigne(item).remise;
   }
 
   getBeneficeLigneAbs(item: CartItem): number {

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BoutiqueConfigService } from '../../services/boutique-config.service';
 import { BoutiqueService } from '../../services/boutique.service';
@@ -778,7 +778,7 @@ export class SalesPage implements OnDestroy {
     this.selectedVentePourRetour = vente;
     this.retourMotif = '';
     this.retourLignes = (vente.produits || []).map((p: any) => ({
-      ligneVenteId: p.id || p.ligneVenteId,
+      ligneVenteId: p.ligneVenteId || p.id,
       produitId: p.produitId || p.id,
       produitNom: p.produitNom || p.nom || 'Produit',
       prixUnitaire: p.prixApresRemise || p.prixUnitaire || 0,
@@ -803,10 +803,22 @@ export class SalesPage implements OnDestroy {
       return;
     }
 
+    // Montant demandé au serveur : avec une offre par quantité (« 2 pour 75 F »), rendre un
+    // article ne rend pas forcément son prix normal. Sans réseau, on garde le calcul local.
+    let montantRetour = this.totalRetour;
+    try {
+      const apercu = await firstValueFrom(this.venteService.apercuRetourVente({
+        venteId: this.selectedVentePourRetour!.id,
+        lignes: lignesSel.map(l => ({ ligneVenteId: l.ligneVenteId, produitId: l.produitId,
+          quantiteRetournee: l.quantiteRetournee, prixUnitaire: l.prixUnitaire }))
+      } as RetourVenteRequest));
+      if (apercu?.montantTotal != null) montantRetour = Number(apercu.montantTotal);
+    } catch { /* hors connexion : calcul local */ }
+
     const alert = await this.alertCtrl.create({
       header: 'Confirmer le retour ?',
       cssClass: 'alert-pre-line',
-      message: `Retour de ${this.money(this.totalRetour)} pour la vente ${this.selectedVentePourRetour?.numeroVente}.\nLe stock et la caisse seront mis à jour.`,
+      message: `Retour de ${this.money(montantRetour)} pour la vente ${this.selectedVentePourRetour?.numeroVente}.\nLe stock et la caisse seront mis à jour.`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -829,7 +841,7 @@ export class SalesPage implements OnDestroy {
             this.venteService.effectuerRetourVente(request).subscribe({
               next: () => {
                 this.showRetourModal = false;
-                this.presentToast(`Retour enregistré — ${this.money(this.totalRetour)} remboursé`);
+                this.presentToast(`Retour enregistré — ${this.money(montantRetour)} remboursé`);
                 this.load();
               },
               error: err => this.presentToast(err.message || 'Retour impossible', 'danger')

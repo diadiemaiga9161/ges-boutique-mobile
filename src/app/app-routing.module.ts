@@ -121,6 +121,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'offres-quantite',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/offres-quantite/offres-quantite.module').then(m => m.OffresQuantitePageModule)
+  },
+  {
     path: 'pointage',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/pointage/pointage.module').then(m => m.PointagePageModule)

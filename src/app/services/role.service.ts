@@ -52,7 +52,7 @@ export class RoleService {
   /** Chaque écran (route) appartient à une partie de l'application côté serveur. */
   static readonly MODULE_PAR_PAGE: Record<string, string> = {
     '/tabs/sales': 'VENTES', '/cart': 'VENTES', '/credits': 'VENTES', '/tabs/factures': 'VENTES', '/resources/factures': 'VENTES',
-    '/tabs/products': 'PRODUITS', '/promotions': 'PRODUITS',
+    '/tabs/products': 'PRODUITS', '/promotions': 'PRODUITS', '/offres-quantite': 'PRODUITS',
     '/tabs/inventory': 'STOCK', '/comptage': 'STOCK', '/sorties': 'STOCK', '/tabs/transferts': 'STOCK', '/config-transferts': 'STOCK',
     '/clients': 'CLIENTS', '/tabs/clients': 'CLIENTS', '/resources/dettes': 'CLIENTS',
     '/commandes': 'COMMANDES',

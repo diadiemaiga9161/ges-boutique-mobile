@@ -113,6 +113,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { titleKey: 'NAV.SUPPLIER_BONUS', icon: 'gift-outline', route: '/bonus-fournisseurs', adminOnly: true, featureFlagKey: 'BONUS_FOURNISSEURS' },
       { titleKey: 'NAV.EXPENSES', icon: 'trending-down-outline', route: '/depenses', adminOnly: true },
       { titleKey: 'NAV.PROMO', icon: 'pricetag-outline', route: '/promotions', adminOnly: true, featureFlagKey: 'PROMOTIONS' },
+      { title: 'Offres par quantité', icon: 'gift-outline', route: '/offres-quantite', adminOnly: true, featureFlagKey: 'OFFRES_QUANTITE' },
       { titleKey: 'NAV.NET_RESULT', icon: 'analytics-outline', route: '/resultat-net', adminOnly: true, featureFlagKey: 'RESULTAT_NET' },
       { title: 'Historique vendeur', icon: 'bar-chart-outline', route: '/historique-vendeur', adminOnly: true },
       { title: 'Classement des vendeurs', icon: 'trophy-outline', route: '/classement-vendeurs', adminOnly: true },

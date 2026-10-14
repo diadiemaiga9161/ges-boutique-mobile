@@ -114,6 +114,9 @@ export interface LigneVenteDto {
   sousTotal: number;
   /** Vente à la mesure : 'KG' | 'L' | 'M', sinon absent. */
   modeMesure?: string | null;
+  ligneVenteId?: number | null;
+  /** Offre par quantité appliquée à la ligne (ex : « Offre 2 pour 75 F »). */
+  offreLibelle?: string | null;
 }
 
 export interface VenteMap {
@@ -490,6 +493,11 @@ export class VenteService {
     );
   }
 
+  /** Montant exact qui sera rendu (offres par quantité comprises), sans rien enregistrer. */
+  apercuRetourVente(request: RetourVenteRequest): Observable<{ montantTotal: number }> {
+    return this.http.post<{ montantTotal: number }>(`${environment.apiUrl}/retours-ventes/apercu`, request);
+  }
+
   effectuerRetourVente(request: RetourVenteRequest): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/retours-ventes`, request).pipe(
       catchError(error => this.handleError(error, 'effectuer le retour de vente'))
@@ -552,8 +560,9 @@ export class VenteService {
     const rowsHtml = lignes.map((item: any) => {
       const nomProduit = this.echapper(item.produitNom || item.designation || 'Produit');
       const sousTotal = item.sousTotal ?? (item.quantite * item.prixUnitaire);
+      const offre = item.offreLibelle ? `<div class="tk-detail"><span>${this.echapper(item.offreLibelle)}</span></div>` : '';
       return `<div class="tk-ligne">${nomProduit}</div>
-        <div class="tk-detail"><span>${qteDoc(item)} x ${puDoc(item, v => this.formatPrice(v))}</span><span>${this.formatPrice(sousTotal)}</span></div>`;
+        <div class="tk-detail"><span>${qteDoc(item)} x ${puDoc(item, v => this.formatPrice(v))}</span><span>${this.formatPrice(sousTotal)}</span></div>${offre}`;
     }).join('');
 
     const sousTotal = (vente.montantTotal || 0) + (vente.montantRemiseTotal || 0);
@@ -753,7 +762,9 @@ export class VenteService {
         remisePourcentage: Number(line.remisePourcentage || 0),
         remiseMontant: Number(line.remiseMontant || 0),
         prixApresRemise: Number(line.prixApresRemise || prixUnitaire),
-        sousTotal
+        sousTotal,
+        ligneVenteId: line.id ?? line.ligneVenteId ?? null,
+        offreLibelle: line.offreLibelle ?? null
       };
     });
   }
