@@ -1,0 +1,82 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Clients à rappeler</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ca-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ══════════ En-tête ══════════ -->
+  <section class="ca-hero">
+    <div class="ca-hero__deco" aria-hidden="true"></div>
+    <p class="ca-hero__surtitre">Bons clients qui ne viennent plus</p>
+    <h1 class="ca-hero__titre">
+      <ng-container *ngIf="donnees; else tirets">{{ donnees.total }}</ng-container>
+      <ng-template #tirets>—</ng-template>
+      <span>client{{ (donnees?.total || 0) > 1 ? 's' : '' }} à rappeler</span>
+    </h1>
+    <p class="ca-hero__texte">Ils achetaient souvent, mais on ne les a pas vus depuis {{ libelleChoix() }}. Un appel suffit souvent à les faire revenir.</p>
+    <div class="ca-periodes" role="group" aria-label="Absents depuis">
+      <button type="button" *ngFor="let c of choix" class="ca-periode" [class.ca-periode--actif]="jours === c.jours"
+              [attr.aria-pressed]="jours === c.jours" (click)="choisir(c.jours)">{{ c.libelle }}</button>
+    </div>
+  </section>
+
+  <div class="ca-corps">
+    <p class="ca-etat" *ngIf="chargement && !donnees">Chargement…</p>
+    <p class="ca-etat ca-etat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+    <!-- Personne à rappeler -->
+    <section class="ca-vide" *ngIf="donnees && !donnees.clients.length && !erreur">
+      <span class="ca-vide__icone"><ion-icon name="happy-outline" aria-hidden="true"></ion-icon></span>
+      <p class="ca-vide__titre">Tout le monde est revenu</p>
+      <p class="ca-vide__texte">Aucun bon client absent depuis {{ libelleChoix() }}. Bravo !</p>
+    </section>
+
+    <!-- Liste -->
+    <article class="ca-carte" *ngFor="let c of donnees?.clients" [class.ca-carte--forte]="urgence(c) === 'forte'">
+      <header class="ca-carte__haut">
+        <span class="ca-avatar" aria-hidden="true">{{ initiales(c.nom) }}</span>
+        <div class="ca-carte__id">
+          <h2 class="ca-nom">{{ c.nom }}</h2>
+          <p class="ca-habitude">{{ habitude(c) }} · {{ c.nbAchats }} achats</p>
+        </div>
+        <span class="ca-absence" [class.ca-absence--forte]="urgence(c) === 'forte'">
+          <strong>{{ c.joursAbsence }}</strong> jours
+        </span>
+      </header>
+
+      <dl class="ca-infos">
+        <div><dt>Dernière visite</dt><dd>{{ derniereVisite(c) }}</dd></div>
+        <div><dt>Panier moyen</dt><dd>{{ prix(c.panierMoyen) }}</dd></div>
+      </dl>
+
+      <div class="ca-produits" *ngIf="c.produits.length">
+        <span class="ca-produits__label">Achetait :</span>
+        <span class="ca-produit" *ngFor="let p of c.produits">{{ p }}</span>
+      </div>
+
+      <div class="ca-actions" *ngIf="numero(c); else sansNumero">
+        <button type="button" class="ca-bouton ca-bouton--appel" (click)="appeler(c)">
+          <ion-icon name="call-outline" aria-hidden="true"></ion-icon> Appeler
+        </button>
+        <button type="button" class="ca-bouton ca-bouton--whatsapp" (click)="whatsapp(c)">
+          <ion-icon name="logo-whatsapp" aria-hidden="true"></ion-icon> WhatsApp
+        </button>
+      </div>
+      <ng-template #sansNumero>
+        <p class="ca-sans-numero"><ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>Pas de numéro enregistré pour ce client.</p>
+      </ng-template>
+    </article>
+
+    <p class="ca-note" *ngIf="donnees">
+      Un « bon client » a fait au moins {{ donnees.minAchats }} achats ces 3 derniers mois. Les ventes « client divers » ne sont pas comptées : enregistrez vos clients pour les retrouver ici.
+    </p>
+  </div>
+</ion-content>

@@ -121,6 +121,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'clients-absents',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/clients-absents/clients-absents.module').then(m => m.ClientsAbsentsPageModule)
+  },
+  {
     path: 'offres-quantite',
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },

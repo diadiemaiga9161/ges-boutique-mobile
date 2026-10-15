@@ -54,7 +54,7 @@ export class RoleService {
     '/tabs/sales': 'VENTES', '/cart': 'VENTES', '/credits': 'VENTES', '/tabs/factures': 'VENTES', '/resources/factures': 'VENTES',
     '/tabs/products': 'PRODUITS', '/promotions': 'PRODUITS', '/offres-quantite': 'PRODUITS',
     '/tabs/inventory': 'STOCK', '/comptage': 'STOCK', '/sorties': 'STOCK', '/tabs/transferts': 'STOCK', '/config-transferts': 'STOCK',
-    '/clients': 'CLIENTS', '/tabs/clients': 'CLIENTS', '/resources/dettes': 'CLIENTS',
+    '/clients': 'CLIENTS', '/clients-absents': 'RAPPORTS', '/tabs/clients': 'CLIENTS', '/resources/dettes': 'CLIENTS',
     '/commandes': 'COMMANDES',
     '/tabs/caisse': 'CAISSE', '/resources/comptes': 'CAISSE', '/mobile-money': 'CAISSE', '/depots': 'CAISSE', '/resources/depots-garde': 'CAISSE',
     '/tabs/benefices': 'FINANCES', '/depenses': 'DEPENSES', '/resultat-net': 'FINANCES',

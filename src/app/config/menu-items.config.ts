@@ -57,6 +57,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { titleKey: 'NAV.SALES', icon: 'receipt-outline', route: '/tabs/sales' },
       { titleKey: 'SALES.NEW', icon: 'cart-outline', route: '/cart' },
       { titleKey: 'NAV.CLIENTS', icon: 'people-outline', route: '/clients' },
+      { title: 'Clients à rappeler', icon: 'call-outline', route: '/clients-absents', adminOnly: true, featureFlagKey: 'CLIENTS_ABSENTS' },
       { titleKey: 'NAV.CREDITS', icon: 'time-outline', route: '/credits' },
       { titleKey: 'NAV.INVENTORY', icon: 'clipboard-outline', route: '/tabs/inventory', requiresInventairePermission: true },
       { title: 'Sorties Stock', icon: 'arrow-down-circle-outline', route: '/sorties', adminOnly: true },
