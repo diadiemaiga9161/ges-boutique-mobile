@@ -1,5 +1,6 @@
 /**
- * Offres par quantité (« 2 pour 75 F ») : même calcul que le serveur (CalculOffre.java).
+ * Offres par quantité (« 3 pour 70 F », pour exactement 3 articles) : même calcul que le
+ * serveur (CalculOffre.java).
  * Les deux doivent rester identiques, sinon le total affiché à la caisse et celui
  * enregistré ne seraient pas d'accord. Le serveur reste celui qui décide.
  */
@@ -25,44 +26,18 @@ function montant(v: number): string {
   return Number.isInteger(v) ? String(v) : String(arrondir(v));
 }
 
-/** Meilleur prix pour exactement n articles, en combinant les lots et le prix normal. */
+/**
+ * Offre pour exactement n articles : « 3 pour 70 F » ne joue que si le client en prend 3.
+ * Pour 4 ou 6, prix normal, sauf si le gérant a créé une offre pour 4 ou pour 6.
+ */
 export function calculerOffre(n: number, prixUnitaire: number, offres: OffreEnCours[]): ResultatOffre {
   if (!Number.isInteger(n) || n < 2 || n > QUANTITE_MAX || !(prixUnitaire > 0)) return AUCUNE;
-  const utiles = offres
-    .filter(o => o.quantite >= 2 && o.quantite <= n && o.prix >= 0)
-    .sort((a, b) => a.quantite - b.quantite);
-  if (!utiles.length) return AUCUNE;
-
-  const cout = new Float64Array(n + 1);
-  const choix = new Int32Array(n + 1);
-  for (let i = 1; i <= n; i++) {
-    cout[i] = cout[i - 1] + prixUnitaire;
-    choix[i] = 0;
-    for (let k = 0; k < utiles.length; k++) {
-      const o = utiles[k];
-      if (o.quantite <= i) {
-        const c = cout[i - o.quantite] + o.prix;
-        if (c < cout[i] - 1e-9) {
-          cout[i] = c;
-          choix[i] = k + 1;
-        }
-      }
-    }
-  }
-  const remise = arrondir(n * prixUnitaire - arrondir(cout[n]));
+  const exactes = offres.filter(o => o.quantite === n && o.prix > 0).sort((a, b) => a.prix - b.prix);
+  if (!exactes.length) return AUCUNE;
+  const o = exactes[0];
+  const remise = arrondir(n * prixUnitaire - o.prix);
   if (remise <= 0) return AUCUNE;
-
-  const compte = new Map<OffreEnCours, number>();
-  for (let i = n; i > 0;) {
-    if (choix[i] === 0) { i--; continue; }
-    const o = utiles[choix[i] - 1];
-    compte.set(o, (compte.get(o) || 0) + 1);
-    i -= o.quantite;
-  }
-  const morceaux = [...compte.entries()]
-    .sort((a, b) => b[0].quantite - a[0].quantite || a[0].prix - b[0].prix)
-    .map(([o, nb]) => `${nb > 1 ? nb + ' × ' : ''}${o.quantite} pour ${montant(o.prix)} F`);
-  return { remise, libelle: 'Offre ' + morceaux.join(' + ') };
+  return { remise, libelle: `Offre ${o.quantite} pour ${montant(o.prix)} F` };
 }
 
 /**
