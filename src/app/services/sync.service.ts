@@ -4,6 +4,7 @@ import { ToastController } from '@ionic/angular';
 import { VenteService } from './vente.service';
 import { ProductService } from './product.service';
 import { OfflineDbService } from './offline-db.service';
+import { ModeEntrainementService } from './mode-entrainement.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncService {
@@ -23,6 +24,7 @@ export class SyncService {
 
   async syncAll(): Promise<number> {
     if (this.syncInProgress) return 0;
+    if (ModeEntrainementService.estActif()) return 0;
     if (!(await this.isConnected())) return 0;
     this.syncInProgress = true;
     let synced = 0;

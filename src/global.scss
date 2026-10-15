@@ -1788,3 +1788,47 @@ body.theme-dark {
 // Dark mode pour .transfert-recu-produit : fusionné dans le mixin gl-dark-theme
 // (voir section "DARK MODE" plus haut dans ce fichier) — anciennement un 2e bloc
 // @media (prefers-color-scheme: dark) séparé ici.
+
+// ══════════════════════════════════════════════════
+//  MODE ENTRAÎNEMENT : bandeau orange en haut, le contenu descend d'autant
+// ══════════════════════════════════════════════════
+body.mode-entrainement {
+  --ion-safe-area-top: calc(env(safe-area-inset-top, 0px) + 36px);
+}
+
+.gl-bandeau-entrainement {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 30000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 12px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button {
+    flex-shrink: 0;
+    min-height: 28px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 12.5px;
+  }
+}

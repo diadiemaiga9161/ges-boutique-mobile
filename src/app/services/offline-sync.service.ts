@@ -1,3 +1,4 @@
+import { ModeEntrainementService } from './mode-entrainement.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ToastController } from '@ionic/angular';
@@ -53,6 +54,8 @@ export class OfflineSyncService {
 
   async syncPendingActions(): Promise<void> {
     if (this.isSyncing) return;
+    // Mode entraînement : rien ne part vers le serveur, on reprendra après.
+    if (ModeEntrainementService.estActif()) return;
 
     this.isSyncing = true;
     this.updateSyncStatus({ isSyncing: true });

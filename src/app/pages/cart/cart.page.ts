@@ -23,6 +23,7 @@ import { ProduitImageService } from '../../services/produit-image.service';
 
 import { ActionPermission, RoleService } from '../../services/role.service';
 import { OffreQuantiteService } from '../../services/offre-quantite.service';
+import { ModeEntrainementService } from '../../services/mode-entrainement.service';
 import { remiseOffreLigne, ResultatOffre } from '../../utils/offres-quantite.util';
 interface CartItem {
   product: Produit;
@@ -138,7 +139,8 @@ export class CartPage implements OnInit {
     private fideliteService: FideliteService,
     private impressionRecuService: ImpressionRecuService,
     public photos: ProduitImageService,
-    private offreQuantiteService: OffreQuantiteService
+    private offreQuantiteService: OffreQuantiteService,
+    public entrainement: ModeEntrainementService
   ) {}
 
   /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
@@ -985,6 +987,14 @@ export class CartPage implements OnInit {
       estCredit: this.estCredit,
     };
 
+    // Mode entraînement : la vente n'est ni envoyée ni mise de côté hors ligne.
+    if (this.entrainement.actif) {
+      this.submitting = false;
+      await this.afficherVenteEntrainement();
+      this.reset();
+      return;
+    }
+
     const endpoint = this.estCredit ? '/api/ventes/credit' : '/api/ventes';
 
     // Mode hors ligne — pas d'id de vente disponible immédiatement, donc pas de débit
@@ -1054,6 +1064,20 @@ export class CartPage implements OnInit {
         this.presentToast(message, 'danger');
       }
     });
+  }
+
+  /** Faux ticket du mode entraînement : rien n'est enregistré (ni stock, ni caisse, ni crédit). */
+  private async afficherVenteEntrainement(): Promise<void> {
+    const lignes = this.items.map(i => `${i.quantity} × ${i.product.nom} — ${this.money(this.totalLine(i))}`).join('\n');
+    const alerte = await this.alertCtrl.create({
+      header: "Vente d'entraînement réussie",
+      subHeader: `Total : ${this.money(this.totalAvecFidelite())}`,
+      cssClass: 'alert-pre-line',
+      message: `${lignes}\n\nC'est un entraînement : rien n'a été enregistré (ni stock, ni caisse${this.estCredit ? ', ni crédit' : ''}).`,
+      buttons: [{ text: 'Vente suivante', cssClass: 'alert-btn-primary' }]
+    });
+    await alerte.present();
+    await alerte.onDidDismiss();
   }
 
   private mettreAJourStockLocal(): void {

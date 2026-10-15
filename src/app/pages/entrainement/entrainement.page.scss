@@ -1,0 +1,119 @@
+.en-content {
+  --background: var(--gl-bg);
+}
+
+.en-corps { padding: 16px; }
+
+.en-carte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 18px 18px;
+  border-radius: 20px;
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  box-shadow: var(--gl-card-shadow);
+  text-align: center;
+
+  &--actif {
+    border-color: var(--gl-warn);
+    background: var(--gl-warn-soft);
+  }
+}
+
+.en-icone {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background: var(--gl-blue-soft);
+  color: var(--gl-link, var(--gl-action));
+  font-size: 32px;
+
+  .en-carte--actif & { background: var(--gl-warn); color: #fff; }
+}
+
+.en-titre {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gl-text);
+}
+
+.en-texte {
+  max-width: 32ch;
+  margin: 6px 0 18px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--gl-text-2);
+}
+
+.en-bouton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--gl-action);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+
+  ion-icon { font-size: 22px; }
+  &--arret { background: #c2410c; }
+  &:active { transform: scale(0.98); }
+}
+
+.en-lien {
+  min-height: 44px;
+  margin-top: 6px;
+  border: 0;
+  background: none;
+  color: var(--gl-link, var(--gl-action));
+  font: inherit;
+  font-weight: 700;
+}
+
+.en-section {
+  margin: 22px 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gl-text);
+}
+
+.en-liste {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--gl-surface);
+    border: 1px solid var(--gl-border);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--gl-text);
+  }
+
+  ion-icon { flex-shrink: 0; font-size: 20px; margin-top: 1px; }
+  .en-oui ion-icon { color: var(--gl-ok); }
+  .en-non ion-icon { color: var(--gl-bad); }
+}
+
+.en-note {
+  margin: 14px 0 24px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--gl-text-2);
+}

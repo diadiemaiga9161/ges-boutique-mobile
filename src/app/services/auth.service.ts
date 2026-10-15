@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { ModeEntrainementService } from './mode-entrainement.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
@@ -37,6 +38,7 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
+  private entrainement = inject(ModeEntrainementService);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
   private readonly tokenKey = 'boutique_auth_token';
   private readonly legacyTokenKey = 'auth_token';
@@ -73,6 +75,7 @@ export class AuthService {
   }
 
   signout(): void {
+    this.entrainement.desactiver();
     this.store.removeItem(this.tokenKey);
     this.store.removeItem(this.legacyTokenKey);
     this.store.removeItem(this.userKey);

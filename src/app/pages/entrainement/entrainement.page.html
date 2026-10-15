@@ -1,0 +1,36 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Mode entraînement</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="en-content">
+  <div class="en-corps">
+    <section class="en-carte" [class.en-carte--actif]="entrainement.actif$ | async">
+      <span class="en-icone"><ion-icon name="school-outline" aria-hidden="true"></ion-icon></span>
+      <h1 class="en-titre">{{ (entrainement.actif$ | async) ? 'L\'entraînement est allumé' : 'Apprendre sans risque' }}</h1>
+      <p class="en-texte">
+        {{ (entrainement.actif$ | async)
+          ? 'Faites des ventes comme d\'habitude : rien n\'est enregistré.'
+          : 'Un nouveau vendeur s\'entraîne à vendre « pour du faux », sans toucher au vrai stock ni à la vraie caisse.' }}
+      </p>
+      <button type="button" class="en-bouton" [class.en-bouton--arret]="entrainement.actif$ | async" (click)="basculer()">
+        <ion-icon [name]="(entrainement.actif$ | async) ? 'stop-circle-outline' : 'play-circle-outline'" aria-hidden="true"></ion-icon>
+        {{ (entrainement.actif$ | async) ? 'Arrêter l\'entraînement' : 'Commencer l\'entraînement' }}
+      </button>
+      <button type="button" class="en-lien" *ngIf="entrainement.actif$ | async" (click)="allerALaCaisse()">Aller à la caisse</button>
+    </section>
+
+    <h2 class="en-section">Pendant l'entraînement</h2>
+    <ul class="en-liste">
+      <li class="en-oui"><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>Vous vendez comme d'habitude, avec les vrais produits et les vrais prix.</li>
+      <li class="en-oui"><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>À la fin, un faux ticket montre ce que le client aurait payé.</li>
+      <li class="en-non"><ion-icon name="close-circle" aria-hidden="true"></ion-icon>Rien n'est enregistré : ni le stock, ni la caisse, ni les crédits.</li>
+      <li class="en-non"><ion-icon name="close-circle" aria-hidden="true"></ion-icon>Les autres actions (ajouter un produit, une dépense…) sont refusées.</li>
+    </ul>
+    <p class="en-note">Un bandeau orange reste affiché en haut tant que l'entraînement est allumé. Il s'arrête aussi tout seul à la déconnexion.</p>
+  </div>
+</ion-content>

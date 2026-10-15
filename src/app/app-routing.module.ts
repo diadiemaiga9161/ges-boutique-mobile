@@ -121,6 +121,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'entrainement',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/entrainement/entrainement.module').then(m => m.EntrainementPageModule)
+  },
+  {
     path: 'planning',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/planning/planning.module').then(m => m.PlanningPageModule)

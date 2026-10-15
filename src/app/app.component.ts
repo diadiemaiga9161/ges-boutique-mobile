@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ModeEntrainementService } from './services/mode-entrainement.service';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuController, AlertController } from '@ionic/angular';
 import { AuthService } from './services/auth.service';
@@ -24,6 +25,7 @@ import { NotificationsPushService } from './services/notifications-push.service'
   standalone: false,
 })
 export class AppComponent implements OnInit, OnDestroy {
+  entrainement = inject(ModeEntrainementService);
   private authSub?: Subscription;
   userPhoto: string | null = null;
   /** Nom de la boutique affiché sous « Ges Lafia » dans le menu (≡ DrawerContent RN,
