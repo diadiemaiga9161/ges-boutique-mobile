@@ -16,8 +16,9 @@ interface LignePointage {
   methodeArrivee: string | null;
   retardMinutes: number;
   minutesTravail: number | null;
-  statut: 'PAS_ENCORE' | 'ABSENT' | 'PRESENT' | 'PARTI';
+  statut: 'PAS_ENCORE' | 'ABSENT' | 'PRESENT' | 'PARTI' | 'REPOS';
   aCompte?: boolean;
+  horaire?: string | null;
 }
 
 interface MesPointages {
@@ -124,6 +125,7 @@ export class PointagePage {
     if (l.statut === 'PAS_ENCORE') return 'Pas encore arrivé';
     if (l.statut === 'ABSENT') return 'Absent';
     if (l.statut === 'PARTI') return 'Parti';
+    if (l.statut === 'REPOS') return 'Repos';
     return l.retardMinutes > 0 ? 'En retard' : 'Présent';
   }
 

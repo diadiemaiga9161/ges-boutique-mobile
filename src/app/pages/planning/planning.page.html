@@ -1,0 +1,148 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>{{ estGerant ? 'Planning de l\'équipe' : 'Mon planning' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pl-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ══════════ Semaine ══════════ -->
+  <section class="pl-hero">
+    <div class="pl-hero__deco" aria-hidden="true"></div>
+    <div class="pl-semaine">
+      <button type="button" class="pl-fleche" (click)="changerSemaine(-1)" aria-label="Semaine précédente">
+        <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+      </button>
+      <div class="pl-semaine__texte">
+        <p class="pl-semaine__surtitre">{{ estSemaineEnCours ? 'Cette semaine' : 'Semaine' }}</p>
+        <p class="pl-semaine__titre">{{ titreSemaine || '…' }}</p>
+      </div>
+      <button type="button" class="pl-fleche" (click)="changerSemaine(1)" aria-label="Semaine suivante">
+        <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Choix du jour (gérant) -->
+    <div class="pl-jours" *ngIf="estGerant && semaine" role="tablist" aria-label="Jour">
+      <button type="button" role="tab" *ngFor="let j of semaine.jours; let i = index" class="pl-jour"
+              [class.pl-jour--actif]="jourChoisi === i" [class.pl-jour--auj]="j.aujourdhui"
+              [attr.aria-selected]="jourChoisi === i" (click)="choisirJour(i)">
+        <span class="pl-jour__nom">{{ jourCourt(j) }}</span>
+        <span class="pl-jour__num">{{ numeroJour(j) }}</span>
+      </button>
+    </div>
+  </section>
+
+  <div class="pl-corps">
+    <p class="pl-etat" *ngIf="chargement && !semaine">Chargement…</p>
+    <p class="pl-etat pl-etat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+    <!-- ══════════ Vue gérant ══════════ -->
+    <ng-container *ngIf="estGerant && semaine">
+      <div class="pl-resume">
+        <p><strong>{{ semaine.jours[jourChoisi].nom }}</strong> · {{ nbTravaillent }} personne{{ nbTravaillent > 1 ? 's' : '' }} au travail</p>
+        <button type="button" class="pl-lien" (click)="recopier()">
+          <ion-icon name="copy-outline" aria-hidden="true"></ion-icon> Recopier la semaine d'avant
+        </button>
+      </div>
+
+      <button type="button" class="pl-ligne" *ngFor="let e of semaine.employes" (click)="ouvrir(e)"
+              [class.pl-ligne--repos]="e.cases[jourChoisi]?.repos" [class.pl-ligne--vide]="!e.cases[jourChoisi]?.rempli">
+        <span class="pl-avatar" aria-hidden="true">{{ e.nom.charAt(0) }}</span>
+        <span class="pl-ligne__id">
+          <span class="pl-ligne__nom">{{ e.nom }}</span>
+          <span class="pl-ligne__meta">{{ e.poste }} · {{ duree(e.minutesSemaine) }} cette semaine</span>
+        </span>
+        <span class="pl-horaire">{{ horaire(e.cases[jourChoisi]) }}</span>
+        <ion-icon name="create-outline" class="pl-ligne__crayon" aria-hidden="true"></ion-icon>
+      </button>
+
+      <p class="pl-etat" *ngIf="!semaine.employes?.length">Aucun employé actif. Ajoutez-les dans Ressources humaines › Employés.</p>
+      <p class="pl-note">Touchez un employé pour changer ses horaires. Avec le pointage, les retards sont comptés à partir de l'heure prévue ici, et un jour de repos n'est jamais compté comme une absence.</p>
+    </ng-container>
+
+    <!-- ══════════ Vue employé ══════════ -->
+    <ng-container *ngIf="!estGerant && semaine">
+      <section class="pl-carte" *ngIf="semaine.relie === false">
+        <p class="pl-carte__titre">Votre compte n'est pas relié à une fiche employé</p>
+        <p class="pl-carte__texte">Demandez au gérant de cocher « Ce vendeur est aussi employé » sur votre compte.</p>
+      </section>
+
+      <ng-container *ngIf="semaine.moi as moi">
+        <p class="pl-total">{{ moi.joursTravail }} jour{{ moi.joursTravail > 1 ? 's' : '' }} de travail · {{ duree(moi.minutesSemaine) }}</p>
+        <div class="pl-mon-jour" *ngFor="let j of semaine.jours; let i = index"
+             [class.pl-mon-jour--auj]="j.aujourdhui" [class.pl-mon-jour--repos]="moi.cases[i].repos">
+          <span class="pl-mon-jour__date">
+            <span class="pl-mon-jour__nom">{{ j.nom }}</span>
+            <span class="pl-mon-jour__num">{{ numeroJour(j) }}</span>
+          </span>
+          <span class="pl-mon-jour__horaire">
+            {{ horaire(moi.cases[i]) }}
+            <small *ngIf="moi.cases[i].note">{{ moi.cases[i].note }}</small>
+          </span>
+          <span class="pl-auj" *ngIf="j.aujourdhui">Aujourd'hui</span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+</ion-content>
+
+<!-- ══════════ Fenêtre d'édition ══════════ -->
+<div class="pl-modale" *ngIf="edition && semaine" (click)="edition = null">
+  <div class="pl-modale__boite" role="dialog" aria-modal="true" aria-labelledby="pl-modale-titre" (click)="$event.stopPropagation()">
+    <header class="pl-modale__entete">
+      <span class="pl-avatar" aria-hidden="true">{{ edition.employe.nom.charAt(0) }}</span>
+      <div class="pl-modale__id">
+        <h2 id="pl-modale-titre">{{ edition.employe.nom }}</h2>
+        <p>{{ semaine.jours[edition.index].nom }} {{ numeroJour(semaine.jours[edition.index]) }}</p>
+      </div>
+      <button type="button" class="pl-modale__fermer" (click)="edition = null" aria-label="Fermer">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </header>
+
+    <div class="pl-modale__corps">
+      <div class="pl-choix" role="radiogroup" aria-label="Type de journée">
+        <button type="button" role="radio" class="pl-choix__btn" [class.pl-choix__btn--actif]="!edition.repos"
+                [attr.aria-checked]="!edition.repos" (click)="edition.repos = false">
+          <ion-icon name="briefcase-outline" aria-hidden="true"></ion-icon> Travaille
+        </button>
+        <button type="button" role="radio" class="pl-choix__btn" [class.pl-choix__btn--actif]="edition.repos"
+                [attr.aria-checked]="edition.repos" (click)="edition.repos = true">
+          <ion-icon name="cafe-outline" aria-hidden="true"></ion-icon> Repos
+        </button>
+      </div>
+
+      <div class="pl-heures" *ngIf="!edition.repos">
+        <label>Arrivée<input type="time" [(ngModel)]="edition.heureDebut" /></label>
+        <label>Départ<input type="time" [(ngModel)]="edition.heureFin" /></label>
+      </div>
+
+      <label class="pl-champ-note">Note (facultatif)
+        <input type="text" maxlength="120" [(ngModel)]="edition.note" placeholder="Ex : ouvre la boutique" />
+      </label>
+
+      <p class="pl-autres__titre">Appliquer aussi à :</p>
+      <div class="pl-autres">
+        <button type="button" *ngFor="let j of semaine.jours; let i = index" class="pl-autre"
+                [class.pl-autre--actif]="edition.autresJours[i] || i === edition.index" [disabled]="i === edition.index"
+                [attr.aria-pressed]="edition.autresJours[i] || i === edition.index" (click)="basculerAutreJour(i)">
+          {{ jourCourt(j) }}
+        </button>
+      </div>
+    </div>
+
+    <footer class="pl-modale__pied">
+      <button type="button" class="pl-bouton pl-bouton--contour" (click)="enregistrer(true)" [disabled]="enregistrement">Effacer</button>
+      <button type="button" class="pl-bouton pl-bouton--plein" (click)="enregistrer()" [disabled]="enregistrement">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+    </footer>
+  </div>
+</div>

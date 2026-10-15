@@ -121,6 +121,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'planning',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./pages/planning/planning.module').then(m => m.PlanningPageModule)
+  },
+  {
     path: 'clients-absents',
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] },

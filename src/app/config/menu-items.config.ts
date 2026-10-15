@@ -135,6 +135,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { titleKey: 'PROFILE.TITLE', icon: 'person-circle-outline', route: '/profile' },
       { title: 'Mes primes', icon: 'gift-outline', route: '/mes-primes', featureFlagKey: 'PRIMES_PRODUITS' },
       { title: 'Mon pointage', icon: 'finger-print-outline', route: '/pointage', featureFlagKey: 'POINTAGE' },
+      { title: 'Planning', icon: 'calendar-outline', route: '/planning', featureFlagKey: 'PLANNING' },
       { titleKey: 'RESSOURCES.TITRE', icon: 'information-circle-outline', route: '/a-propos' },
     ]
   }
