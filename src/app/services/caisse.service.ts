@@ -148,6 +148,19 @@ export interface ReconciliationVendeur {
   totalVentesCredit: number;
   totalReglementsCreditEspeces: number;
   totalAiRemettre: number;
+  /** Argent rendu aux clients pour des retours par cette personne, ce jour. */
+  totalRetoursRembourses?: number;
+  /** Acomptes, annulations, modifications de ventes faits par cette personne (effet sur le tiroir). */
+  totalAutresMouvementsVentes?: number;
+}
+
+export interface ControleReconciliation {
+  totalARemettre: number;
+  autresMouvements: { libelle: string; montant: number }[];
+  totalAutresMouvements: number;
+  variationTiroir: number;
+  depotBanque: number;
+  ecart: number;
 }
 
 @Injectable({
@@ -381,6 +394,19 @@ export class CaisseService {
 
   /** Rapport en lecture seule : totaux du jour par vendeur (ventes espèces, crédit,
    * règlements crédit encaissés et montant total à remettre). Réservé ADMIN côté backend. */
+  /** Réconciliation + contrôle (total à remettre + autres mouvements = argent réel du tiroir). */
+  getRapportReconciliation(date?: string): Observable<{ liste: ReconciliationVendeur[]; controle: ControleReconciliation | null }> {
+    let params = new HttpParams();
+    if (date) params = params.set('date', date);
+    return this.http.get<any>(`${this.apiUrl}/reconciliation-vendeurs`, { params }).pipe(
+      map(response => ({
+        liste: this.extractList<ReconciliationVendeur>(response, 'reconciliation'),
+        controle: response?.controle || null
+      })),
+      catchError(error => this.handleError(error, 'récupérer la réconciliation des vendeurs'))
+    );
+  }
+
   getReconciliationVendeurs(date?: string): Observable<ReconciliationVendeur[]> {
     let params = new HttpParams();
     if (date) params = params.set('date', date);

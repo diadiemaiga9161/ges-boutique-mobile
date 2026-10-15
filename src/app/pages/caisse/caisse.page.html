@@ -91,7 +91,7 @@
         <!-- Sorties du jour (aujourd'hui uniquement) -->
         <div class="caisse-tile" *ngIf="statsJour">
           <p class="caisse-tile__label">Sorties du jour</p>
-          <p class="caisse-tile__value caisse-tile__value--bad">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
+          <p class="caisse-tile__value controle__moins">{{ caisseService.formatPrice(statsJour.totalSorties || 0) }}</p>
         </div>
 
         <button [hidden]="!peut('CAISSE', 'GERER')" type="button" class="caisse-btn caisse-btn--primary" *ngIf="!caisse?.estOuverte && isAdmin" (click)="openCash()">
@@ -386,12 +386,37 @@
               <p class="caisse-tile__label">{{ 'CAISSE.RECONCILIATION.CREDIT_PAYMENTS' | translate }}</p>
               <p class="caisse-tile__value">{{ money(vendeur.totalReglementsCreditEspeces) }}</p>
             </div>
+            <div class="caisse-tile" *ngIf="vendeur.totalRetoursRembourses" [class.caisse-tile--full]="!vendeur.totalAutresMouvementsVentes">
+              <p class="caisse-tile__label">Retours remboursés</p>
+              <p class="caisse-tile__value controle__moins">− {{ money(vendeur.totalRetoursRembourses) }}</p>
+            </div>
+            <div class="caisse-tile" *ngIf="vendeur.totalAutresMouvementsVentes" [class.caisse-tile--full]="!vendeur.totalRetoursRembourses">
+              <p class="caisse-tile__label">Acomptes, annulations, modifications</p>
+              <p class="caisse-tile__value">{{ vendeur.totalAutresMouvementsVentes > 0 ? '+' : '−' }} {{ money(vendeur.totalAutresMouvementsVentes > 0 ? vendeur.totalAutresMouvementsVentes : -vendeur.totalAutresMouvementsVentes) }}</p>
+            </div>
           </div>
 
           <div class="caisse-highlight">
             <span class="caisse-overline caisse-highlight__label">{{ 'CAISSE.RECONCILIATION.TO_REMIT' | translate }}</span>
             <span class="caisse-highlight__value">{{ money(vendeur.totalAiRemettre) }}</span>
           </div>
+        </article>
+
+        <article class="caisse-card controle" *ngIf="reconciliationControle as c" [class.controle--ecart]="c.ecart">
+          <div class="controle__entete">
+            <ion-icon [name]="c.ecart ? 'alert-circle-outline' : 'checkmark-circle-outline'" aria-hidden="true"></ion-icon>
+            <div>
+              <h2 class="controle__titre">Contrôle de la caisse du jour</h2>
+              <p class="controle__etat">{{ c.ecart ? 'Écart de ' + money(c.ecart) + ' à vérifier' : 'Tout correspond' }}</p>
+            </div>
+          </div>
+          <div class="controle__ligne"><span>Total à remettre</span><strong>{{ money(c.totalARemettre) }}</strong></div>
+          <div class="controle__ligne" *ngFor="let a of c.autresMouvements">
+            <span>{{ a.libelle }}</span>
+            <strong [class.controle__moins]="a.montant < 0">{{ a.montant > 0 ? '+' : '−' }} {{ money(a.montant > 0 ? a.montant : -a.montant) }}</strong>
+          </div>
+          <div class="controle__ligne controle__ligne--total"><span>= Entré − sorti du tiroir</span><strong>{{ money(c.variationTiroir) }}</strong></div>
+          <div class="controle__ligne controle__ligne--note" *ngIf="c.depotBanque"><span>Déposé à la banque (à part)</span><span>{{ money(c.depotBanque) }}</span></div>
         </article>
 
         <gl-empty-state
@@ -445,7 +470,7 @@
             </div>
             <div class="caisse-tile">
               <p class="caisse-tile__label">Reste</p>
-              <p class="caisse-tile__value caisse-tile__value--bad">{{ caisseService.formatPrice(credit.montantRestant) }}</p>
+              <p class="caisse-tile__value controle__moins">{{ caisseService.formatPrice(credit.montantRestant) }}</p>
             </div>
           </div>
         </article>

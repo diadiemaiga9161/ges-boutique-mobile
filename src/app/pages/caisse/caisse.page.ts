@@ -8,7 +8,7 @@ import {
   CreditInfo,
   ModePaiementCaisse,
   OperationCaisse,
-  ReconciliationVendeur,
+  ReconciliationVendeur, ControleReconciliation,
   StatistiquesCaisse,
   TransfertCaisseBanqueRequest
 } from '../../services/caisse.service';
@@ -49,6 +49,7 @@ export class CaissePage implements OnDestroy {
   reconciliationDate: string = new Date().toISOString().split('T')[0];
   reconciliationToday: string = new Date().toISOString().split('T')[0];
   reconciliationList: ReconciliationVendeur[] = [];
+  reconciliationControle: ControleReconciliation | null = null;
   loadingReconciliation = false;
 
   // Filtres opérations
@@ -204,9 +205,9 @@ export class CaissePage implements OnDestroy {
    * crédit encaissés, montant total à remettre) pour la date sélectionnée. */
   loadReconciliation(): void {
     this.loadingReconciliation = true;
-    this.caisseService.getReconciliationVendeurs(this.reconciliationDate).subscribe({
-      next: liste => { this.reconciliationList = liste; this.loadingReconciliation = false; },
-      error: () => { this.reconciliationList = []; this.loadingReconciliation = false; }
+    this.caisseService.getRapportReconciliation(this.reconciliationDate).subscribe({
+      next: r => { this.reconciliationList = r.liste; this.reconciliationControle = r.controle; this.loadingReconciliation = false; },
+      error: () => { this.reconciliationList = []; this.reconciliationControle = null; this.loadingReconciliation = false; }
     });
   }
 
