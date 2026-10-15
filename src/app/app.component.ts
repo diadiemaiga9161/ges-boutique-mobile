@@ -1,6 +1,7 @@
 import { ModeEntrainementService } from './services/mode-entrainement.service';
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { MenuController, AlertController } from '@ionic/angular';
 import { AuthService } from './services/auth.service';
 import { WebSocketService } from './services/websocket.service';
@@ -13,7 +14,7 @@ import { AppUpdateService } from './services/app-update.service';
 import { ThemeService } from './services/theme.service';
 import { environment } from '../environments/environment';
 import { Subscription } from 'rxjs';
-import { MENU_SECTIONS, MenuSection } from './config/menu-items.config';
+import { MENU_SECTIONS, MenuItem, MenuSection } from './config/menu-items.config';
 import { canShowMenuItem, MenuVisibilityContext } from './config/menu-visibility.util';
 import { RoleService } from './services/role.service';
 import { NotificationsPushService } from './services/notifications-push.service';
@@ -26,6 +27,7 @@ import { NotificationsPushService } from './services/notifications-push.service'
 })
 export class AppComponent implements OnInit, OnDestroy {
   entrainement = inject(ModeEntrainementService);
+  private translate = inject(TranslateService);
   private authSub?: Subscription;
   userPhoto: string | null = null;
   /** Nom de la boutique affiché sous « Ges Lafia » dans le menu (≡ DrawerContent RN,
@@ -234,8 +236,60 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Identité stable des sections / entrées du menu (voir app.component.html) :
   // évite de recréer les lignes à chaque détection de changements.
-  trackMenuSection(index: number, section: MenuSection): string {
-    return section.labelKey || `section-${index}`;
+  trackMenuSection(_index: number, section: MenuSection): string {
+    return section.id;
+  }
+
+  // ---------------------------------------------------------------- groupes et recherche
+  // Un seul groupe ouvert à la fois, mémorisé sur ce téléphone. À l'ouverture du tiroir,
+  // le groupe de la page affichée s'ouvre tout seul.
+  private static readonly CLE_GROUPE = 'menu_groupe_ouvert';
+  groupeOuvert: string | null = (() => {
+    try { return localStorage.getItem(AppComponent.CLE_GROUPE); } catch { return null; }
+  })();
+  rechercheMenu = '';
+
+  basculerGroupe(id: string): void {
+    this.groupeOuvert = this.groupeOuvert === id ? null : id;
+    try {
+      if (this.groupeOuvert) localStorage.setItem(AppComponent.CLE_GROUPE, this.groupeOuvert);
+      else localStorage.removeItem(AppComponent.CLE_GROUPE);
+    } catch { /* stockage indisponible : on garde juste l'état en mémoire */ }
+    // Groupe ouvert en bas du tiroir : on le fait remonter pour voir ses lignes.
+    if (this.groupeOuvert) {
+      const id = this.groupeOuvert;
+      setTimeout(() => document.querySelector(`ion-menu [data-groupe="${id}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+  }
+
+  groupeEstOuvert(section: MenuSection): boolean {
+    return !section.repliable || this.groupeOuvert === section.id;
+  }
+
+  /** Le groupe contenant la page affichée s'ouvre quand on ouvre le tiroir. */
+  menuSOuvre(): void {
+    this.rechercheMenu = '';
+    const url = this.router.url.split('?')[0];
+    const groupe = MENU_SECTIONS.find(s => s.repliable && s.items.some(i => url === i.route || url.startsWith(i.route + '/')));
+    if (groupe) this.groupeOuvert = groupe.id;
+  }
+
+  libelleMenu(item: MenuItem): string {
+    return item.titleKey ? this.translate.instant(item.titleKey) : (item.title || '');
+  }
+
+  libelleSection(section: MenuSection): string {
+    return section.labelKey ? this.translate.instant(section.labelKey) : (section.label || '');
+  }
+
+  /** Recherche dans tout le tiroir (sans accents ni majuscules). */
+  get resultatsRecherche(): MenuItem[] {
+    const norm = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const q = norm(this.rechercheMenu.trim());
+    if (!q) return [];
+    const tous = ([] as MenuItem[]).concat(...this.visibleMenuSections.map(s => s.items));
+    return tous.filter(i => norm(this.libelleMenu(i)).includes(q));
   }
 
   trackMenuItem(_index: number, item: { route: string }): string {

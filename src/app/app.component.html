@@ -5,7 +5,7 @@
 </div>
 
   <!-- ══════════════════ SIDEBAR MENU (design commun ≡ DrawerContent RN) ══════════════════ -->
-  <ion-menu menuId="main-menu" contentId="main-content" type="overlay" class="gl-menu">
+  <ion-menu menuId="main-menu" contentId="main-content" type="overlay" class="gl-menu" (ionWillOpen)="menuSOuvre()">
 
     <!-- En-tête : bandeau dégradé, marque, utilisateur / rôle, cloche -->
     <ion-header class="ion-no-border">
@@ -56,6 +56,23 @@
 
     <ion-content class="menu-content">
       <nav class="menu-list">
+        <!-- Recherche dans tout le tiroir -->
+        <label class="menu-recherche">
+          <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+          <input type="search" [(ngModel)]="rechercheMenu" placeholder="Rechercher…" aria-label="Rechercher dans le menu" autocomplete="off" />
+        </label>
+
+        <ng-container *ngIf="rechercheMenu.trim(); else menuGroupes">
+          <button type="button" class="menu-item"
+            *ngFor="let item of resultatsRecherche; trackBy: trackMenuItem"
+            (click)="navigate(item.route)">
+            <ion-icon class="menu-item__icon" [name]="item.icon" [class.menu-item__icon--danger]="item.iconColor === 'danger'"></ion-icon>
+            <span class="menu-item__label">{{ libelleMenu(item) }}</span>
+          </button>
+          <p class="menu-recherche__vide" *ngIf="!resultatsRecherche.length">Aucune page ne correspond.</p>
+        </ng-container>
+
+        <ng-template #menuGroupes>
 
         <!-- Contenu piloté par src/app/config/menu-items.config.ts — voir
              AppComponent.visibleMenuSections (canShowMenuItem est l'unique
@@ -65,12 +82,25 @@
              chaque routerLinkActive recréé relance une détection → boucle infinie qui
              fige l'appli (constaté sur la page de connexion). -->
         <ng-container *ngFor="let section of visibleMenuSections; let first = first; trackBy: trackMenuSection">
-          <div class="menu-divider" *ngIf="!first"></div>
-          <p class="menu-section-label" *ngIf="section.labelKey">{{ section.labelKey | translate }}</p>
+          <div class="menu-divider" *ngIf="!first && !section.repliable"></div>
+          <p class="menu-section-label" *ngIf="!section.repliable && (section.labelKey || section.label)">{{ libelleSection(section) }}</p>
+
+          <!-- En-tête d'un groupe repliable : un seul ouvert à la fois -->
+          <button type="button" class="menu-groupe" *ngIf="section.repliable" [attr.data-groupe]="section.id"
+            [class.menu-groupe--ouvert]="groupeEstOuvert(section)"
+            [attr.aria-expanded]="groupeEstOuvert(section)"
+            (click)="basculerGroupe(section.id)">
+            <ion-icon class="menu-item__icon" [name]="section.icon || 'folder-outline'" aria-hidden="true"></ion-icon>
+            <span class="menu-item__label">{{ libelleSection(section) }}</span>
+            <span class="menu-groupe__compte">{{ section.items.length }}</span>
+            <ion-icon class="menu-groupe__fleche" name="chevron-down-outline" aria-hidden="true"></ion-icon>
+          </button>
+
+          <ng-container *ngIf="groupeEstOuvert(section)">
 
           <!-- routerLinkActive : surligne l'entrée de la page courante (lien caché,
                affichage seulement — la navigation reste navigate(item.route)). -->
-          <button type="button" class="menu-item"
+          <button type="button" class="menu-item" [class.menu-item--dans-groupe]="section.repliable"
             *ngFor="let item of section.items; trackBy: trackMenuItem"
             routerLinkActive="menu-item--active"
             (click)="navigate(item.route)">
@@ -81,7 +111,9 @@
               {{ c > 99 ? '99+' : c }}
             </span>
           </button>
+          </ng-container>
         </ng-container>
+        </ng-template>
 
       </nav>
 

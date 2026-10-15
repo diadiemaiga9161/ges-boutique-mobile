@@ -338,3 +338,105 @@
 
   &:active { background: var(--gl-surface-2); }
 }
+
+
+// ── Recherche et groupes repliables du tiroir ─────
+.menu-recherche {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  height:        44px;
+  margin:        4px 4px 8px;
+  padding:       0 12px;
+  border:        1px solid var(--gl-border);
+  border-radius: 12px;
+  background:    var(--gl-surface-2);
+  color:         var(--gl-muted);
+
+  ion-icon { flex-shrink: 0; font-size: 18px; }
+
+  input {
+    flex:        1;
+    min-width:   0;
+    height:      100%;
+    border:      none;
+    outline:     none;
+    background:  transparent;
+    font-family: inherit;
+    font-size:   15px;
+    color:       var(--gl-text);
+
+    &::placeholder { color: var(--gl-muted); }
+  }
+
+  &:focus-within { border-color: var(--gl-link); }
+}
+
+.menu-recherche__vide {
+  margin:    8px 12px;
+  font-size: 14px;
+  color:     var(--gl-muted);
+}
+
+.menu-groupe {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  width:         100%;
+  min-height:    48px;
+  margin:        1px 0;
+  padding:       0 12px;
+  border:        none;
+  border-radius: 12px;
+  background:    transparent;
+  text-align:    left;
+  font-family:   inherit;
+  color:         var(--gl-text);
+  cursor:        pointer;
+  transition:    background 0.15s;
+
+  &:active { background: var(--gl-surface-2); }
+
+  .menu-item__label { font-weight: 600; }
+
+  &__compte {
+    flex-shrink:   0;
+    min-width:     22px;
+    height:        20px;
+    padding:       0 6px;
+    border-radius: 999px;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    background:    var(--gl-surface-2);
+    color:         var(--gl-muted);
+    font-size:     11px;
+    font-weight:   700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__fleche {
+    flex-shrink: 0;
+    font-size:   16px;
+    color:       var(--gl-muted);
+    transition:  transform 0.2s ease;
+  }
+
+  &--ouvert {
+    .menu-groupe__fleche { transform: rotate(180deg); }
+    .menu-item__icon,
+    .menu-item__label { color: var(--gl-link); }
+  }
+}
+
+// Lignes d'un groupe ouvert : légèrement en retrait sous leur en-tête.
+.menu-item--dans-groupe {
+  padding-left: 28px;
+  min-height:   44px;
+
+  .menu-item__label { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-groupe__fleche { transition: none; }
+}

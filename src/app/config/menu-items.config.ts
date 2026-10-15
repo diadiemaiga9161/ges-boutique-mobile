@@ -36,10 +36,16 @@ export interface MenuItem {
 }
 
 export interface MenuSection {
-  /** Clé i18n du titre de section, absente pour la section commune (pas de
-   *  libellé) et pour la section finale Compte (pas de libellé non plus,
-   *  seulement un séparateur visuel avant). */
+  /** Identifiant stable (groupe ouvert mémorisé, trackBy). */
+  id: string;
+  /** Clé i18n du titre de section. */
   labelKey?: string;
+  /** Titre littéral (FR), pour les sections jamais traduites. */
+  label?: string;
+  /** Groupe repliable : fermé par défaut, un seul ouvert à la fois. */
+  repliable?: boolean;
+  /** Icône de l'en-tête d'un groupe repliable. */
+  icon?: string;
   items: MenuItem[];
 }
 
@@ -48,90 +54,96 @@ export interface MenuSection {
  *  disparaît entièrement (label + séparateur inclus) — voir app.component.ts,
  *  get visibleMenuSections(). */
 export const MENU_SECTIONS: MenuSection[] = [
+  // Toujours visible : ce qui sert tous les jours. Le reste est rangé dans des groupes
+  // repliables pour que le tiroir tienne sur un écran (demande utilisateur du 15/10/2026).
+  // Boutique, Design de facture, Langue, Export, Journal d'audit, Sauvegardes et
+  // Notifications ne sont plus ici : ils sont dans la page Paramètres (parametres-hub).
   {
-    // Section commune, jamais vide (aucun item conditionné par adminOnly/flag
-    // sauf Sorties/Caisse) — garde le même label 'NAV.MORE' qu'aujourd'hui.
-    labelKey: 'NAV.MORE',
+    id: 'essentiel',
+    label: 'Essentiel',
     items: [
       { title: 'Dashboard', icon: 'home-outline', route: '/home' },
-      { titleKey: 'NAV.SALES', icon: 'receipt-outline', route: '/tabs/sales' },
       { titleKey: 'SALES.NEW', icon: 'cart-outline', route: '/cart' },
+      { titleKey: 'NAV.SALES', icon: 'receipt-outline', route: '/tabs/sales' },
       { titleKey: 'NAV.CLIENTS', icon: 'people-outline', route: '/clients' },
-      { title: 'Clients à rappeler', icon: 'call-outline', route: '/clients-absents', adminOnly: true, featureFlagKey: 'CLIENTS_ABSENTS' },
       { titleKey: 'NAV.CREDITS', icon: 'time-outline', route: '/credits' },
-      { titleKey: 'NAV.INVENTORY', icon: 'clipboard-outline', route: '/tabs/inventory', requiresInventairePermission: true },
-      { title: 'Sorties Stock', icon: 'arrow-down-circle-outline', route: '/sorties', adminOnly: true },
       { titleKey: 'NAV.CAISSE', icon: 'cash-outline', route: '/tabs/caisse', adminOnly: true },
+      { titleKey: 'NAV.INVENTORY', icon: 'clipboard-outline', route: '/tabs/inventory', requiresInventairePermission: true },
+      { titleKey: 'NAV.EXPENSES', icon: 'trending-down-outline', route: '/depenses', adminOnly: true },
     ]
   },
   {
-    labelKey: 'MENU.FINANCES',
+    id: 'ventes',
+    label: 'Ventes et clients',
+    repliable: true,
+    icon: 'pricetags-outline',
     items: [
-      { titleKey: 'NAV.INVOICES', icon: 'document-text-outline', route: '/resources/factures', adminOnly: true },
+      { title: 'Clients à rappeler', icon: 'call-outline', route: '/clients-absents', adminOnly: true, featureFlagKey: 'CLIENTS_ABSENTS' },
       { title: 'Devis', icon: 'clipboard-outline', route: '/devis', adminOnly: true, featureFlagKey: 'DEVIS' },
-      { titleKey: 'NAV.BANK', icon: 'card-outline', route: '/resources/comptes', adminOnly: true, featureFlagKey: 'COMPTES_BANCAIRES' },
-      { titleKey: 'NAV.DEBTS', icon: 'alert-circle-outline', route: '/resources/dettes', adminOnly: true, featureFlagKey: 'DETTES_ANCIENNES' },
+      { titleKey: 'NAV.INVOICES', icon: 'document-text-outline', route: '/resources/factures', adminOnly: true },
+      { title: 'Offres par quantité', icon: 'gift-outline', route: '/offres-quantite', adminOnly: true, featureFlagKey: 'OFFRES_QUANTITE' },
+      { titleKey: 'NAV.PROMO', icon: 'pricetag-outline', route: '/promotions', adminOnly: true, featureFlagKey: 'PROMOTIONS' },
+      { title: 'Annulation paiements', icon: 'close-circle-outline', iconColor: 'danger', route: '/annulation-paiements', adminOnly: true },
     ]
   },
   {
-    labelKey: 'MENU.HR',
+    id: 'stock',
+    label: 'Stock et fournisseurs',
+    repliable: true,
+    icon: 'cube-outline',
     items: [
-      { titleKey: 'NAV.EMPLOYEES', icon: 'person-add-outline', route: '/resources/employes', adminOnly: true },
-      { titleKey: 'NAV.EMPLOYEE_PAY', icon: 'wallet-outline', route: '/resources/paiement-employe', adminOnly: true },
-      { title: 'Primes sur produits', icon: 'ribbon-outline', route: '/primes-produits', adminOnly: true, featureFlagKey: 'PRIMES_PRODUITS' },
-    ]
-  },
-  {
-    labelKey: 'BOUTIQUE_SETTINGS.TITLE',
-    items: [
+      { title: 'Sorties Stock', icon: 'arrow-down-circle-outline', route: '/sorties', adminOnly: true },
       { titleKey: 'NAV.SUPPLIERS', icon: 'business-outline', route: '/fournisseurs', adminOnly: true },
-      { titleKey: 'NAV.SAFE', icon: 'lock-closed-outline', route: '/depots', adminOnly: true, featureFlagKey: 'DEPOT_GARDE' },
       { titleKey: 'NAV.SUPPLIER_OBJ', icon: 'trophy-outline', route: '/resources/objectifs-fournisseur', adminOnly: true, featureFlagKey: 'OBJECTIFS_FOURNISSEUR' },
-      { titleKey: 'NAV.SELLER_BONUS', icon: 'cash-outline', route: '/resources/objectifs-vendeur', adminOnly: true, featureFlagKey: 'OBJECTIFS_VENDEUR' },
-      { titleKey: 'NAV.SELLERS', icon: 'people-circle-outline', route: '/resources/vendeurs', adminOnly: true },
-      { titleKey: 'NAV.SHOP', icon: 'storefront-outline', route: '/boutique', adminOnly: true },
-      { title: 'Rôles et permissions', icon: 'key-outline', route: '/roles', adminOnly: true, featureFlagKey: 'ROLES_PERSONNALISES' },
-      { title: 'Fonctionnalités (super admin)', icon: 'shield-checkmark-outline', route: '/super-admin-fonctionnalites', superAdminOnly: true },
-      { titleKey: 'NAV.INVOICE_DESIGN', icon: 'color-palette-outline', route: '/facture-design', adminOnly: true },
-      { titleKey: 'LANG.SELECT', icon: 'language-outline', route: '/langue', adminOnly: true },
-    ]
-  },
-  {
-    labelKey: 'NAV.TRANSFERS',
-    items: [
-      // Les 2 items ci-dessous n'ont pas de condition individuelle dans l'ancien
-      // template : c'est le ng-container englobant (*ngIf="featureTransfertsActif")
-      // qui gate toute la section — reproduit ici via requiresFeatureTransferts.
+      { titleKey: 'NAV.SUPPLIER_BONUS', icon: 'gift-outline', route: '/bonus-fournisseurs', adminOnly: true, featureFlagKey: 'BONUS_FOURNISSEURS' },
+      { titleKey: 'NAV.SAFE', icon: 'lock-closed-outline', route: '/depots', adminOnly: true, featureFlagKey: 'DEPOT_GARDE' },
+      // Transferts : même règle qu'avant (flag distinct porté par BoutiqueService.info$).
       { titleKey: 'NAV.TRANSFERS', icon: 'swap-horizontal-outline', route: '/tabs/transferts', adminOnly: true, requiresFeatureTransferts: true },
       { titleKey: 'MENU.CONFIG_PARTNERS', icon: 'settings-outline', route: '/config-transferts', adminOnly: true, requiresFeatureTransferts: true },
     ]
   },
   {
-    labelKey: 'MENU.ANALYSES',
+    id: 'equipe',
+    label: 'Équipe',
+    repliable: true,
+    icon: 'people-circle-outline',
     items: [
-      { titleKey: 'NAV.REPORTS', icon: 'stats-chart-outline', route: '/tabs/reports', adminOnly: true },
-      { titleKey: 'IA.TITLE', icon: 'sparkles-outline', iconColor: 'warning', route: '/ia', adminOnly: true, featureFlagKey: 'IA' },
-      { titleKey: 'NAV.BENEFITS', icon: 'trending-up-outline', route: '/tabs/benefices', adminOnly: true },
-      { titleKey: 'NAV.SUPPLIER_BONUS', icon: 'gift-outline', route: '/bonus-fournisseurs', adminOnly: true, featureFlagKey: 'BONUS_FOURNISSEURS' },
-      { titleKey: 'NAV.EXPENSES', icon: 'trending-down-outline', route: '/depenses', adminOnly: true },
-      { titleKey: 'NAV.PROMO', icon: 'pricetag-outline', route: '/promotions', adminOnly: true, featureFlagKey: 'PROMOTIONS' },
-      { title: 'Offres par quantité', icon: 'gift-outline', route: '/offres-quantite', adminOnly: true, featureFlagKey: 'OFFRES_QUANTITE' },
-      { titleKey: 'NAV.NET_RESULT', icon: 'analytics-outline', route: '/resultat-net', adminOnly: true, featureFlagKey: 'RESULTAT_NET' },
+      { titleKey: 'NAV.SELLERS', icon: 'people-circle-outline', route: '/resources/vendeurs', adminOnly: true },
+      { titleKey: 'NAV.EMPLOYEES', icon: 'person-add-outline', route: '/resources/employes', adminOnly: true },
+      { titleKey: 'NAV.EMPLOYEE_PAY', icon: 'wallet-outline', route: '/resources/paiement-employe', adminOnly: true },
+      { title: 'Primes sur produits', icon: 'ribbon-outline', route: '/primes-produits', adminOnly: true, featureFlagKey: 'PRIMES_PRODUITS' },
+      { titleKey: 'NAV.SELLER_BONUS', icon: 'cash-outline', route: '/resources/objectifs-vendeur', adminOnly: true, featureFlagKey: 'OBJECTIFS_VENDEUR' },
       { title: 'Historique vendeur', icon: 'bar-chart-outline', route: '/historique-vendeur', adminOnly: true },
       { title: 'Classement des vendeurs', icon: 'trophy-outline', route: '/classement-vendeurs', adminOnly: true },
-      { title: 'Annulation paiements', icon: 'close-circle-outline', iconColor: 'danger', route: '/annulation-paiements', adminOnly: true },
-      { titleKey: 'EXPORT.TITRE', icon: 'cloud-download-outline', route: '/export-donnees', adminOnly: true },
-      { titleKey: 'JOURNAL_AUDIT.TITRE', icon: 'shield-checkmark-outline', route: '/journal-audit', adminOnly: true },
-      { titleKey: 'BACKUP.TITLE', icon: 'archive-outline', route: '/sauvegardes', adminOnly: true },
-      { titleKey: 'PARAMETRES.TITRE', icon: 'settings-outline', iconColor: 'warning', route: '/parametres-hub', adminOnly: true },
-      { titleKey: 'NAV.NOTIFICATIONS', icon: 'notifications-outline', route: '/tabs/notifications', adminOnly: true, showNotificationBadge: true },
+      { title: 'Rôles et permissions', icon: 'key-outline', route: '/roles', adminOnly: true, featureFlagKey: 'ROLES_PERSONNALISES' },
     ]
   },
   {
-    // Pas de labelKey (section "Compte", jamais eu de titre) mais toujours
-    // précédée d'un séparateur, y compris pour un VENDEUR (voir app.component.html
-    // d'origine ligne 273 : le <div class="menu-divider"> n'est PAS à l'intérieur
-    // du ng-container admin, contrairement aux autres séparateurs).
+    id: 'analyses',
+    label: 'Argent et analyses',
+    repliable: true,
+    icon: 'stats-chart-outline',
+    items: [
+      { titleKey: 'NAV.REPORTS', icon: 'stats-chart-outline', route: '/tabs/reports', adminOnly: true },
+      { titleKey: 'NAV.BENEFITS', icon: 'trending-up-outline', route: '/tabs/benefices', adminOnly: true },
+      { titleKey: 'NAV.NET_RESULT', icon: 'analytics-outline', route: '/resultat-net', adminOnly: true, featureFlagKey: 'RESULTAT_NET' },
+      { titleKey: 'NAV.BANK', icon: 'card-outline', route: '/resources/comptes', adminOnly: true, featureFlagKey: 'COMPTES_BANCAIRES' },
+      { titleKey: 'NAV.DEBTS', icon: 'alert-circle-outline', route: '/resources/dettes', adminOnly: true, featureFlagKey: 'DETTES_ANCIENNES' },
+      { titleKey: 'IA.TITLE', icon: 'sparkles-outline', iconColor: 'warning', route: '/ia', adminOnly: true, featureFlagKey: 'IA' },
+    ]
+  },
+  {
+    id: 'parametres',
+    items: [
+      { titleKey: 'PARAMETRES.TITRE', icon: 'settings-outline', iconColor: 'warning', route: '/parametres-hub', adminOnly: true },
+      { title: 'Fonctionnalités (super admin)', icon: 'shield-checkmark-outline', route: '/super-admin-fonctionnalites', superAdminOnly: true },
+    ]
+  },
+  {
+    id: 'compte',
+    label: 'Mon compte',
+    repliable: true,
+    icon: 'person-circle-outline',
     items: [
       { titleKey: 'PROFILE.TITLE', icon: 'person-circle-outline', route: '/profile' },
       { title: 'Mes primes', icon: 'gift-outline', route: '/mes-primes', featureFlagKey: 'PRIMES_PRODUITS' },

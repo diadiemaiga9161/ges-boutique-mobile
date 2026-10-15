@@ -7,6 +7,7 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
@@ -43,6 +44,7 @@ export function initializeApp(boutiqueConfig: BoutiqueConfigService, preload: Da
   declarations: [AppComponent],
   imports: [
     BrowserModule,
+    FormsModule,
     HttpClientModule,
     // Pas de retour en glissant depuis le bord de l'écran (iPhone) : il se déclenchait
     // par erreur (pendant une vente, en faisant défiler). Retour par la flèche ou les onglets.
