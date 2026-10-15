@@ -68,6 +68,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     labelKey: 'MENU.FINANCES',
     items: [
       { titleKey: 'NAV.INVOICES', icon: 'document-text-outline', route: '/resources/factures', adminOnly: true },
+      { title: 'Devis', icon: 'clipboard-outline', route: '/devis', adminOnly: true, featureFlagKey: 'DEVIS' },
       { titleKey: 'NAV.BANK', icon: 'card-outline', route: '/resources/comptes', adminOnly: true, featureFlagKey: 'COMPTES_BANCAIRES' },
       { titleKey: 'NAV.DEBTS', icon: 'alert-circle-outline', route: '/resources/dettes', adminOnly: true, featureFlagKey: 'DETTES_ANCIENNES' },
     ]

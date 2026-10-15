@@ -121,6 +121,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/mes-primes/mes-primes.module').then(m => m.MesPrimesPageModule)
   },
   {
+    path: 'devis',
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./pages/devis/devis.module').then(m => m.DevisPageModule)
+  },
+  {
     path: 'entrainement',
     canActivate: [AuthGuard],
     loadChildren: () => import('./pages/entrainement/entrainement.module').then(m => m.EntrainementPageModule)

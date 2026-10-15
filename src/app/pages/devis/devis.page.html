@@ -1,0 +1,110 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="main-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Devis</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="dv-content">
+  <ion-refresher slot="fixed" (ionRefresh)="charger($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="dv-hero">
+    <div class="dv-hero__deco" aria-hidden="true"></div>
+    <p class="dv-hero__surtitre">Devis en attente de réponse</p>
+    <h1 class="dv-hero__titre">{{ prix(montantEnAttente) }}</h1>
+    <p class="dv-hero__texte">{{ enAttente }} devis en attente. Quand le client accepte, transformez le devis en vente d'un toucher.</p>
+  </section>
+
+  <div class="dv-corps">
+    <p class="dv-etat" *ngIf="chargement && !devis.length">Chargement…</p>
+    <p class="dv-etat dv-etat--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+    <section class="dv-vide" *ngIf="!chargement && !devis.length && !erreur">
+      <span class="dv-vide__icone"><ion-icon name="document-text-outline" aria-hidden="true"></ion-icon></span>
+      <p class="dv-vide__titre">Aucun devis</p>
+      <p class="dv-vide__texte">Les devis se préparent sur le site (menu Opérations › Devis), plus pratique pour une longue liste de produits. Ils apparaissent ici ensuite.</p>
+    </section>
+
+    <article class="dv-carte" *ngFor="let d of devis" [class.dv-carte--fini]="d.statut !== 'EN_ATTENTE'">
+      <button type="button" class="dv-carte__haut" (click)="basculer(d)" [attr.aria-expanded]="ouvert === d.id">
+        <span class="dv-carte__id">
+          <span class="dv-nom">{{ d.clientNom }}</span>
+          <span class="dv-meta">{{ d.numero }}{{ d.objet ? ' · ' + d.objet : '' }}</span>
+        </span>
+        <span class="dv-droite">
+          <span class="dv-montant">{{ prix(d.montantTotal) }}</span>
+          <span class="dv-badge dv-badge--{{ d.statut }}">{{ statut(d) }}</span>
+        </span>
+      </button>
+
+      <p class="dv-validite">
+        <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+        {{ d.statut === 'EXPIRE' ? 'Expiré le' : 'Valable jusqu\'au' }} {{ date(d.dateValidite) }}
+      </p>
+
+      <ul class="dv-lignes" *ngIf="ouvert === d.id">
+        <li *ngFor="let l of d.lignes"><span>{{ l.quantite }} × {{ l.designation }}</span><strong>{{ prix(l.sousTotal) }}</strong></li>
+        <li *ngIf="d.remise > 0" class="dv-lignes__remise"><span>Remise</span><strong>− {{ prix(d.remise) }}</strong></li>
+      </ul>
+
+      <div class="dv-actions">
+        <button type="button" class="dv-bouton dv-bouton--vert" *ngIf="d.statut === 'EN_ATTENTE'" (click)="ouvrirTransformation(d)">
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon> Le client accepte
+        </button>
+        <button type="button" class="dv-bouton" (click)="whatsapp(d)">
+          <ion-icon name="logo-whatsapp" aria-hidden="true"></ion-icon> Envoyer
+        </button>
+        <button type="button" class="dv-bouton" *ngIf="d.statut === 'EN_ATTENTE'" (click)="refuser(d)">Refusé</button>
+        <button type="button" class="dv-bouton" *ngIf="d.statut === 'EXPIRE'" (click)="prolonger(d)">Prolonger 30 j</button>
+      </div>
+    </article>
+  </div>
+</ion-content>
+
+<!-- ══════════ Fenêtre : transformer en vente ══════════ -->
+<div class="dv-modale" *ngIf="transformation" (click)="transformation = null">
+  <div class="dv-modale__boite" role="dialog" aria-modal="true" aria-labelledby="dv-modale-titre" (click)="$event.stopPropagation()">
+    <header class="dv-modale__entete">
+      <span class="dv-modale__pastille"><ion-icon name="cart-outline" aria-hidden="true"></ion-icon></span>
+      <div class="dv-modale__id">
+        <h2 id="dv-modale-titre">Créer la vente</h2>
+        <p>{{ transformation.devis.clientNom }} · {{ prix(transformation.devis.montantTotal) }}</p>
+      </div>
+      <button type="button" class="dv-modale__fermer" (click)="transformation = null" aria-label="Fermer">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </header>
+    <div class="dv-modale__corps">
+      <div class="dv-choix" role="radiogroup" aria-label="Paiement">
+        <button type="button" role="radio" class="dv-choix__btn" [class.dv-choix__btn--actif]="!transformation.comptant"
+                [attr.aria-checked]="!transformation.comptant" (click)="transformation.comptant = false">
+          <strong>À crédit</strong><span>Paiera plus tard</span>
+        </button>
+        <button type="button" role="radio" class="dv-choix__btn" [class.dv-choix__btn--actif]="transformation.comptant"
+                [attr.aria-checked]="transformation.comptant" (click)="transformation.comptant = true">
+          <strong>Payé maintenant</strong><span>Tout aujourd'hui</span>
+        </button>
+      </div>
+      <label class="dv-label" *ngIf="!transformation.comptant">Date limite de paiement
+        <input type="date" [(ngModel)]="transformation.dateEcheance" />
+      </label>
+      <label class="dv-label" *ngIf="!transformation.comptant">Acompte versé (facultatif)
+        <input type="number" inputmode="numeric" min="0" [(ngModel)]="transformation.montantVerse" placeholder="0" />
+      </label>
+      <label class="dv-label">Moyen de paiement
+        <select [(ngModel)]="transformation.modePaiement">
+          <option *ngFor="let m of modes" [value]="m.cle">{{ m.libelle }}</option>
+        </select>
+      </label>
+      <p class="dv-aide">Le stock baisse et la vente apparaît dans la caisse{{ transformation.comptant ? '' : ', avec le reste à payer au nom du client' }}.</p>
+    </div>
+    <footer class="dv-modale__pied">
+      <button type="button" class="dv-btn dv-btn--contour" (click)="transformation = null">Annuler</button>
+      <button type="button" class="dv-btn dv-btn--plein" (click)="transformer()" [disabled]="envoi">{{ envoi ? 'Création…' : 'Créer la vente' }}</button>
+    </footer>
+  </div>
+</div>
