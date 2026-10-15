@@ -69,6 +69,8 @@ export interface Produit {
   /** Libellé de l'unité de base pour la vente en gros/détail (VENTE_GROS_DETAIL), ex:
    *  "Pièce", "Kg" — défaut serveur "Unité". Voir UniteVenteService. */
   uniteBase?: string;
+  /** Vente à la voix (VENTE_VOIX) : autres noms du produit, séparés par des virgules. */
+  surnoms?: string | null;
 }
 
 export interface ProduitRequest {
@@ -175,6 +177,14 @@ export class ProductService {
   private readonly fournisseurAchatApiUrl = `${environment.apiUrl}/fournisseur-achats`;
 
   constructor(private http: HttpClient) {}
+
+  /** Vente à la voix : surnoms d'un produit (gérant seulement). */
+  enregistrerSurnoms(produitId: number, surnoms: string): Observable<string> {
+    return this.http.put<any>(`${this.apiUrl}/${produitId}/surnoms`, { surnoms }).pipe(
+      map(r => r?.surnoms ?? ''),
+      catchError(error => this.handleError(error, 'enregistrer les surnoms'))
+    );
+  }
 
   getProducts(): Observable<Produit[]> {
     return this.http.get<any>(this.apiUrl).pipe(

@@ -1474,3 +1474,181 @@
   overflow: hidden;
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }
+
+// ══════════════════════════════════════════════════
+//  VENTE À LA VOIX (VENTE_VOIX) — liste comprise, à confirmer avant le panier
+// ══════════════════════════════════════════════════
+.cart-voix-btn {
+  background: var(--gl-action);
+  color: #ffffff;
+}
+
+.voix-modal { max-width: 480px; }
+
+.voix-ecoute {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px 20px;
+  text-align: center;
+}
+
+.voix-micro {
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--gl-action);
+  color: #ffffff;
+  cursor: pointer;
+
+  ion-icon { font-size: 40px; }
+
+  &--actif { animation: voixPulse 1.4s ease-out infinite; }
+}
+
+@keyframes voixPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45); }
+  70%  { box-shadow: 0 0 0 18px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+.voix-ecoute__titre { margin: 6px 0 0; font-size: 17px; font-weight: 800; color: var(--gl-text); }
+.voix-ecoute__texte { margin: 0; font-size: 15px; font-weight: 600; color: var(--gl-link); overflow-wrap: anywhere; }
+.voix-ecoute__aide { margin: 0; font-size: 13px; color: var(--gl-muted); }
+
+.voix-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--gl-bad-soft);
+  color: var(--gl-bad);
+  font-size: 14px;
+  font-weight: 600;
+
+  ion-icon { flex-shrink: 0; font-size: 20px; }
+}
+
+.voix-entendu {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--gl-muted);
+  overflow-wrap: anywhere;
+}
+
+.voix-lignes { display: flex; flex-direction: column; gap: 10px; }
+
+.voix-ligne {
+  padding: 12px;
+  border: 1px solid var(--gl-border);
+  border-radius: 14px;
+  background: var(--gl-surface);
+
+  &--doute { border: 1.5px dashed var(--gl-warn); }
+}
+
+.voix-ligne__haut { display: flex; align-items: flex-start; gap: 8px; }
+.voix-ligne__infos { flex: 1; min-width: 0; }
+.voix-ligne__nom { margin: 0; font-size: 15px; font-weight: 700; color: var(--gl-text); overflow-wrap: anywhere; }
+.voix-ligne__nom--doute { color: var(--gl-warn); }
+.voix-ligne__dit { margin: 2px 0 0; font-size: 12px; color: var(--gl-muted); overflow-wrap: anywhere; }
+
+.voix-ligne__retirer {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin: -8px -8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gl-muted);
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  &:active { background: var(--gl-surface-2); color: var(--gl-bad); }
+}
+
+.voix-choix { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.voix-choix__btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--gl-blue-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gl-link);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+
+  &--actif { background: var(--gl-action); border-color: var(--gl-action); color: #ffffff; }
+}
+
+.voix-choix__vide { font-size: 13px; color: var(--gl-muted); }
+
+.voix-qte { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+
+.voix-qte__btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--gl-border);
+  border-radius: 12px;
+  background: var(--gl-surface-2);
+  color: var(--gl-text);
+  cursor: pointer;
+
+  ion-icon { font-size: 20px; }
+  &:active { transform: scale(0.96); }
+}
+
+.voix-qte__valeur {
+  min-width: 64px;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--gl-text);
+  font-variant-numeric: tabular-nums;
+
+  small { font-size: 12px; font-weight: 600; color: var(--gl-muted); }
+}
+
+.voix-qte__prix {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gl-muted);
+  white-space: nowrap;
+}
+
+.voix-foot {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+
+  .cart-btn { flex: 1; min-width: 0; padding: 0 10px; font-size: 14px; white-space: normal; line-height: 1.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voix-micro--actif { animation: none; }
+}

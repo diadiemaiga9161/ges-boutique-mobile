@@ -309,3 +309,10 @@ gl-stock-badge { flex-shrink: 0; max-width: 55%; }
   span { font-weight: 700; color: var(--gl-text); margin-right: auto; }
 }
 .mesure-aide { margin: 8px 0 0; font-size: 12px; color: var(--gl-muted); }
+
+.surnoms-aide {
+  margin: 6px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--gl-muted);
+}

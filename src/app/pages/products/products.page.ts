@@ -71,6 +71,9 @@ export class ProductsPage implements OnInit {
   // Activable/désactivable par le super admin, voir BoutiqueService.fonctionnalitesAvancees$
   // (même mécanisme déjà utilisé pour Dépôt garde/Comptes bancaires).
   venteGrosDetailActif = false;
+  /** Vente à la voix (VENTE_VOIX) : le gérant donne d'autres noms au produit. */
+  venteVoixActif = false;
+  surnomsForm = '';
   showUnitesVenteModal = false;
   produitUnitesVente: Produit | null = null;
   unitesVente: UniteVente[] = [];
@@ -304,6 +307,7 @@ export class ProductsPage implements OnInit {
     this.conditionnementActif = this.fonctionnalite.isConditionnementActif();
     this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+      this.venteVoixActif = liste.find(f => f.cle === 'VENTE_VOIX')?.actif === true;
       this.mesureActif = liste.find(f => f.cle === 'VENTE_A_LA_MESURE')?.actif === true;
     });
     this.load();
@@ -394,11 +398,13 @@ export class ProductsPage implements OnInit {
     this.modeMesureForm = null;
     this.oublierPhotoEnAttente();
     this.form = this.emptyForm();
+    this.surnomsForm = '';
     this.showForm = true;
   }
 
   startEdit(product: Produit): void {
     this.editing = product;
+    this.surnomsForm = product.surnoms || '';
     this.form = {
       nom: product.nom,
       description: product.description || '',
@@ -435,6 +441,8 @@ export class ProductsPage implements OnInit {
     }
 
     const corps = this.requeteProduit(!this.editing);
+    const surnomsAvant = this.editing?.surnoms || '';
+    const surnoms = this.surnomsForm.trim();
     const endpoint = this.editing ? `/api/produits/${this.editing.id}` : '/api/produits';
 
     if (!this.networkStatus.isOnline()) {
@@ -459,6 +467,13 @@ export class ProductsPage implements OnInit {
         this.presentToast(this.editing ? 'Produit modifié' : 'Produit créé');
         this.showForm = false;
         const produitCree = cree?.data ?? cree;
+        const idSurnoms = this.editing?.id ?? produitCree?.id;
+        if (this.venteVoixActif && this.auth.isAdmin() && idSurnoms && surnoms !== surnomsAvant) {
+          this.productsService.enregistrerSurnoms(idSurnoms, surnoms).subscribe({
+            next: () => this.load(),
+            error: () => this.presentToast('Surnoms non enregistrés, réessayez', 'danger')
+          });
+        }
         if (!this.editing && this.photoEnAttente && this.photos.estActif && produitCree?.id) {
           const fichier = this.photoEnAttente;
           this.oublierPhotoEnAttente();

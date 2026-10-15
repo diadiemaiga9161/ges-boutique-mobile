@@ -60,6 +60,10 @@
           <button type="button" class="cart-scan-btn" (click)="scanPourVente()" title="Scanner un produit" aria-label="Scanner un produit">
             <ion-icon name="barcode-outline"></ion-icon>
           </button>
+          <button type="button" class="cart-scan-btn cart-voix-btn" *ngIf="venteVoixActif" (click)="ouvrirVoix()"
+                  title="Dire les produits" aria-label="Vendre à la voix : dire les produits">
+            <ion-icon name="mic-outline"></ion-icon>
+          </button>
         </div>
 
         <!-- Produits en cartes (même action add(product) qu'avant) -->
@@ -691,6 +695,89 @@
         </button>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VENTE À LA VOIX (VENTE_VOIX) : liste à confirmer ==================== -->
+<div class="gl-modal-overlay" *ngIf="voixOuverte" (click)="fermerVoix()" (document:keydown.escape)="fermerVoix()">
+  <div class="gl-modal voix-modal" role="dialog" aria-modal="true" aria-labelledby="cart-voix-title" (click)="$event.stopPropagation()">
+    <div class="gl-modal__head">
+      <span class="gl-modal__pastille"><ion-icon name="mic-outline"></ion-icon></span>
+      <div class="gl-modal__titles">
+        <p class="gl-modal__title" id="cart-voix-title">Vendre à la voix</p>
+        <p class="gl-modal__sub">Dites la quantité puis le produit : « deux coca, un kilo de sucre »</p>
+      </div>
+      <button type="button" class="gl-modal__close" (click)="fermerVoix()" aria-label="Fermer">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="gl-modal__body">
+      <!-- Écoute en cours -->
+      <div class="voix-ecoute" *ngIf="voixEcoute" aria-live="polite">
+        <button type="button" class="voix-micro voix-micro--actif" (click)="terminerEcouteVoix()" aria-label="J'ai fini de parler">
+          <ion-icon name="mic"></ion-icon>
+        </button>
+        <p class="voix-ecoute__titre">J'écoute…</p>
+        <p class="voix-ecoute__texte" *ngIf="voixTexte">« {{ voixTexte }} »</p>
+        <p class="voix-ecoute__aide" *ngIf="!voixTexte">Parlez près du téléphone. Touchez le micro quand vous avez fini.</p>
+      </div>
+
+      <p class="voix-erreur" *ngIf="!voixEcoute && voixErreur" role="alert">
+        <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>{{ voixErreur }}
+      </p>
+
+      <p class="voix-entendu" *ngIf="!voixEcoute && voixTexte && voixLignes.length">Entendu : « {{ voixTexte }} »</p>
+
+      <!-- Lignes comprises, à confirmer -->
+      <div class="voix-lignes" *ngIf="!voixEcoute && voixLignes.length">
+        <div class="voix-ligne" *ngFor="let l of voixLignes; let i = index" [class.voix-ligne--doute]="!l.produit">
+          <div class="voix-ligne__haut">
+            <div class="voix-ligne__infos">
+              <p class="voix-ligne__nom" *ngIf="l.produit">{{ l.produit.nom }}</p>
+              <p class="voix-ligne__nom voix-ligne__nom--doute" *ngIf="!l.produit">
+                {{ l.candidats.length ? 'Lequel ?' : 'Produit introuvable' }}
+              </p>
+              <p class="voix-ligne__dit">dit : « {{ l.texte }} »<ng-container *ngIf="l.conditionnement && !l.unite && l.produit"> · compté à l'unité</ng-container></p>
+            </div>
+            <button type="button" class="voix-ligne__retirer" (click)="retirerLigneVoix(i)" [attr.aria-label]="'Retirer ' + (l.produit?.nom || l.texte)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Choix quand il y a un doute (ou pour corriger) -->
+          <div class="voix-choix" *ngIf="l.candidats.length > 1 || !l.produit">
+            <button type="button" class="voix-choix__btn" *ngFor="let c of l.candidats"
+                    [class.voix-choix__btn--actif]="l.produit?.id === c.produit.id"
+                    (click)="choisirProduitVoix(l, c.produit)">
+              {{ c.produit.nom }}
+            </button>
+            <span class="voix-choix__vide" *ngIf="!l.candidats.length">Tapez-le dans la recherche, ou ajoutez un surnom à ce produit.</span>
+          </div>
+
+          <div class="voix-qte" *ngIf="l.produit">
+            <button type="button" class="voix-qte__btn" (click)="changerQuantiteVoix(l, -1)" aria-label="Moins">
+              <ion-icon name="remove-outline"></ion-icon>
+            </button>
+            <span class="voix-qte__valeur">{{ qteVoix(l) }} <small>{{ uniteLigneVoix(l) }}</small></span>
+            <button type="button" class="voix-qte__btn" (click)="changerQuantiteVoix(l, 1)" aria-label="Plus">
+              <ion-icon name="add-outline"></ion-icon>
+            </button>
+            <span class="voix-qte__prix">{{ l.unite ? money(l.unite.prixVente) : prixCatalogue(l.produit) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gl-modal__foot voix-foot" *ngIf="!voixEcoute">
+      <button type="button" class="cart-btn cart-btn--secondary" (click)="ecouterVoix()">
+        <ion-icon name="mic-outline" aria-hidden="true"></ion-icon>
+        {{ voixLignes.length ? 'Dire d’autres produits' : 'Réessayer' }}
+      </button>
+      <button type="button" class="cart-btn cart-btn--primary" [disabled]="!voixPrete()" (click)="ajouterLignesVoix()">
+        Ajouter au panier
+      </button>
     </div>
   </div>
 </div>

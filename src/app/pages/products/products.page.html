@@ -348,6 +348,16 @@
           </ion-item>
         </div>
 
+        <!-- Vente à la voix (VENTE_VOIX) : autres noms que les clients et vendeurs disent -->
+        <div class="modal-section" *ngIf="venteVoixActif && auth.isAdmin()">
+          <p class="modal-section-title">Vente à la voix</p>
+          <ion-item>
+            <ion-textarea label="Surnoms (séparés par des virgules)" labelPlacement="floating" [autoGrow]="true" maxlength="500"
+                          placeholder="ex : nono, dégué" [(ngModel)]="surnomsForm"></ion-textarea>
+          </ion-item>
+          <p class="surnoms-aide">Les noms que l'on dit à voix haute pour ce produit, surtout s'ils sont différents du nom enregistré (marque, nom local).</p>
+        </div>
+
         <ion-button [hidden]="!peut('PRODUITS', 'GERER')" expand="block" (click)="save()" [color]="editing ? 'warning' : 'primary'" style="margin-top:8px">
           <ion-icon name="save-outline" slot="start"></ion-icon>
           {{ editing ? ('PRODUCTS.SAVE_CHANGES' | translate) : ('PRODUCTS.CREATE_BTN' | translate) }}

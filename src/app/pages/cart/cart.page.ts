@@ -18,13 +18,27 @@ import { FideliteService, SoldeFidelite } from '../../services/fidelite.service'
 import { ImpressionRecuService } from '../../services/impression-recu.service';
 import { VenteMap } from '../../services/vente.service';
 
-import { infoMesure, prixAffiche, prixStocke, qteDoc, texteQte } from '../../utils/mesure.util';
+import { infoMesure, prixAffiche, prixStocke, qteDoc, qteStockee, texteQte } from '../../utils/mesure.util';
 import { ProduitImageService } from '../../services/produit-image.service';
 
 import { ActionPermission, RoleService } from '../../services/role.service';
 import { OffreQuantiteService } from '../../services/offre-quantite.service';
 import { ModeEntrainementService } from '../../services/mode-entrainement.service';
 import { remiseOffreLigne, ResultatOffre } from '../../utils/offres-quantite.util';
+import { VenteVoixService } from '../../services/vente-voix.service';
+import { CandidatVoix, meilleureVersion, normaliserVoix } from '../../utils/vente-voix.util';
+
+/** Ligne comprise à la voix, en attente de confirmation par le vendeur. */
+interface LigneVoixPanier {
+  texte: string;
+  candidats: CandidatVoix<Produit>[];
+  produit: Produit | null;
+  /** Quantité dans l'unité affichée (pièces, cartons, kg, L, m). */
+  quantite: number;
+  /** Conditionnement dit (« carton ») et unité de vente retrouvée pour ce produit. */
+  conditionnement: string | null;
+  unite: UniteVente | null;
+}
 interface CartItem {
   product: Produit;
   quantity: number;
@@ -118,6 +132,16 @@ export class CartPage implements OnInit {
   impressionTicketActif = false;
   derniereVente: VenteMap | null = null;
 
+  // Vente à la voix (VENTE_VOIX) : le micro remplit une liste à confirmer, jamais le panier
+  // directement. Bouton absent si la fonction est coupée ou si le téléphone ne sait pas
+  // reconnaître la voix (appli Android installée, vieux navigateur).
+  venteVoixActif = false;
+  voixOuverte = false;
+  voixEcoute = false;
+  voixTexte = '';
+  voixErreur = '';
+  voixLignes: LigneVoixPanier[] = [];
+
   constructor(
     private roleService: RoleService,
     private productService: ProductService,
@@ -140,7 +164,8 @@ export class CartPage implements OnInit {
     private impressionRecuService: ImpressionRecuService,
     public photos: ProduitImageService,
     private offreQuantiteService: OffreQuantiteService,
-    public entrainement: ModeEntrainementService
+    public entrainement: ModeEntrainementService,
+    private voix: VenteVoixService
   ) {}
 
   /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
@@ -191,6 +216,7 @@ export class CartPage implements OnInit {
       }
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
       this.impressionTicketActif = liste.find(f => f.cle === 'IMPRESSION_TICKET')?.actif === true;
+      this.venteVoixActif = liste.find(f => f.cle === 'VENTE_VOIX')?.actif === true && this.voix.disponible();
       // Offres par quantité du gérant : le serveur les applique ; on les garde ici pour
       // afficher le même total, y compris hors connexion.
       if (liste.find(f => f.cle === 'OFFRES_QUANTITE')?.actif === true) {
@@ -208,6 +234,7 @@ export class CartPage implements OnInit {
 
   ionViewWillLeave(): void {
     this.pageActive = false;
+    if (this.voixOuverte) this.fermerVoix();
   }
 
   // ---------------------------------------------------------------- douchette (caisse)
@@ -257,7 +284,7 @@ export class CartPage implements OnInit {
    *  les touches tapées très vite puis « Entrée » sont lues comme un code-barres. */
   @HostListener('document:keydown', ['$event'])
   lireDouchette(e: KeyboardEvent): void {
-    if (!this.pageActive || this.showNiveauxVenteModal || this.showUniteVenteModal || this.peseeProduit) return;
+    if (!this.pageActive || this.showNiveauxVenteModal || this.showUniteVenteModal || this.peseeProduit || this.voixOuverte) return;
     const cible = e.target as HTMLElement | null;
     if (cible?.closest('input, textarea, select, ion-input, ion-textarea, ion-searchbar, ion-alert, [contenteditable]')) return;
 
@@ -690,7 +717,7 @@ export class CartPage implements OnInit {
     this.quantitePrincipale = 0;
   }
 
-  private addWithPromo(product: Produit): void {
+  private addWithPromo(product: Produit, quantity = 1): void {
     this.promotionService.getPromosPourProduit(product.id!).subscribe({
       next: (promos: Promotion[]) => {
         const promo = promos[0];
@@ -699,7 +726,7 @@ export class CartPage implements OnInit {
           ? this.promotionService.calculerPrixPromo(prixOriginal, promo)
           : prixOriginal;
         this.items = [...this.items, {
-          product, quantity: 1, remisePourcentage: 0,
+          product, quantity, remisePourcentage: 0,
           customPrice, editingPrice: false,
           promo: promo || undefined,
           prixOriginal
@@ -713,11 +740,165 @@ export class CartPage implements OnInit {
       },
       error: () => {
         this.items = [...this.items, {
-          product, quantity: 1, remisePourcentage: 0,
+          product, quantity, remisePourcentage: 0,
           customPrice: product.prixVente, editingPrice: false
         }];
       }
     });
+  }
+
+  // ---------------------------------------------------------------- vente à la voix
+
+  ouvrirVoix(): void {
+    this.voixOuverte = true;
+    this.voixLignes = [];
+    this.ecouterVoix();
+  }
+
+  ecouterVoix(): void {
+    if (this.voixEcoute) return;
+    this.voixErreur = '';
+    this.voixTexte = '';
+    this.voixEcoute = true;
+    this.voix.ecouter(t => this.voixTexte = t)
+      .then(versions => {
+        this.voixEcoute = false;
+        const { texte, lignes } = meilleureVersion(versions, this.products);
+        this.voixTexte = texte;
+        const nouvelles = lignes.map(l => this.ligneVoix(l.morceau.texte, l.candidats, l.choisi,
+          l.morceau.quantite, l.morceau.mesure, l.morceau.conditionnement));
+        // Une nouvelle écoute complète la liste (le vendeur peut dicter en plusieurs fois).
+        this.voixLignes = [...this.voixLignes, ...nouvelles];
+        if (!nouvelles.length) this.voixErreur = 'Aucun produit compris. Réessayez en disant la quantité puis le nom.';
+        nouvelles.forEach(l => this.chercherUniteVoix(l));
+      })
+      .catch((e: Error) => {
+        this.voixEcoute = false;
+        this.voixErreur = e.message;
+      });
+  }
+
+  terminerEcouteVoix(): void {
+    this.voix.terminer();
+  }
+
+  fermerVoix(): void {
+    this.voix.arreter();
+    this.voixEcoute = false;
+    this.voixOuverte = false;
+    this.voixLignes = [];
+    this.voixTexte = '';
+    this.voixErreur = '';
+  }
+
+  private ligneVoix(texte: string, candidats: CandidatVoix<Produit>[], choisi: Produit | null,
+                    quantite: number | null, mesure: string | null, conditionnement: string | null): LigneVoixPanier {
+    let q = quantite ?? 1;
+    // « 500 grammes » d'un produit au kg : 0,5 kg ; « deux » d'un produit à la pièce : 2.
+    if (choisi && infoMesure(choisi as any) && mesure === 'g') q = q / 1000;
+    if (choisi && !infoMesure(choisi as any)) q = Math.max(1, Math.round(q));
+    return { texte, candidats, produit: choisi, quantite: q, conditionnement, unite: null };
+  }
+
+  /** « deux cartons de lait » : retrouve l'unité « Carton » du produit (vente en gros/détail). */
+  private chercherUniteVoix(l: LigneVoixPanier): void {
+    l.unite = null;
+    if (!l.produit || !l.conditionnement || !this.venteGrosDetailActif || this.conditionnementActif) return;
+    const dit = normaliserVoix(l.conditionnement);
+    this.uniteVenteService.getUnites(l.produit.id!).subscribe({
+      next: unites => {
+        l.unite = unites.find(u => {
+          const nom = normaliserVoix(u.nom);
+          return nom === dit || nom.startsWith(dit) || dit.startsWith(nom);
+        }) || null;
+      },
+      error: () => l.unite = null
+    });
+  }
+
+  choisirProduitVoix(l: LigneVoixPanier, produit: Produit): void {
+    const ancien = l.produit;
+    l.produit = produit;
+    if (!ancien || !!infoMesure(ancien as any) !== !!infoMesure(produit as any)) {
+      l.quantite = infoMesure(produit as any) ? l.quantite : Math.max(1, Math.round(l.quantite));
+    }
+    this.chercherUniteVoix(l);
+  }
+
+  retirerLigneVoix(index: number): void {
+    this.voixLignes = this.voixLignes.filter((_, i) => i !== index);
+  }
+
+  uniteLigneVoix(l: LigneVoixPanier): string {
+    if (!l.produit) return '';
+    if (l.unite) return l.unite.nom;
+    return infoMesure(l.produit as any)?.unite || l.produit.uniteBase || 'pièce(s)';
+  }
+
+  /** 0,5 et non 0.5 : écriture française. */
+  qteVoix(l: LigneVoixPanier): string {
+    return String(l.quantite).replace('.', ',');
+  }
+
+  pasVoix(l: LigneVoixPanier): number {
+    return l.produit && infoMesure(l.produit as any) ? 0.25 : 1;
+  }
+
+  changerQuantiteVoix(l: LigneVoixPanier, sens: 1 | -1): void {
+    const pas = this.pasVoix(l);
+    l.quantite = Math.max(pas, Math.round((l.quantite + sens * pas) * 1000) / 1000);
+  }
+
+  voixPrete(): boolean {
+    return this.voixLignes.some(l => l.produit && l.quantite > 0);
+  }
+
+  /** Met les lignes confirmées dans le panier, avec les mêmes règles qu'un ajout à la main. */
+  ajouterLignesVoix(): void {
+    const alertes: string[] = [];
+    let ajoutes = 0;
+    for (const l of this.voixLignes) {
+      const p = l.produit;
+      if (!p || !(l.quantite > 0)) continue;
+      if (infoMesure(p as any)) {
+        const g = Math.min(qteStockee(p as any, l.quantite), p.quantite);
+        if (g < qteStockee(p as any, l.quantite)) alertes.push(`${p.nom} : stock limité à ${texteQte(p as any, p.quantite)}`);
+        const existant = this.items.find(i => i.product.id === p.id);
+        if (existant) existant.quantity = Math.min(p.quantite, existant.quantity + g);
+        else this.items = [...this.items, { product: p, quantity: g, remisePourcentage: 0, customPrice: p.prixVente, editingPrice: false }];
+        ajoutes++;
+        continue;
+      }
+      if (l.unite) {
+        const facteur = l.unite.facteurBase > 0 ? l.unite.facteurBase : 1;
+        const max = Math.floor((p.quantite || 0) / facteur);
+        const q = Math.min(l.quantite, max);
+        if (q < l.quantite) alertes.push(`${p.nom} : ${max} ${l.unite.nom} au maximum`);
+        if (q <= 0) continue;
+        const existant = this.items.find(i => i.product.id === p.id && i.niveauId == null && i.niveauNom === l.unite!.nom);
+        if (existant) existant.quantity = Math.min(max, existant.quantity + q);
+        else this.items = [...this.items, {
+          product: p, quantity: q, remisePourcentage: 0, customPrice: l.unite.prixVente, editingPrice: false,
+          prixOriginal: l.unite.prixVente, niveauPrixAchat: l.unite.prixAchat, niveauNom: l.unite.nom,
+          niveauFacteurTotal: l.unite.facteurBase,
+        }];
+        ajoutes++;
+        continue;
+      }
+      const existant = this.items.find(i => i.product.id === p.id && i.niveauId == null && !i.niveauFacteurTotal);
+      const deja = existant?.quantity || 0;
+      const q = Math.min(l.quantite, Math.max(0, p.quantite - deja));
+      if (q < l.quantite) alertes.push(`${p.nom} : stock limité à ${qteDoc(p)}`);
+      if (q <= 0) continue;
+      if (existant) existant.quantity = deja + q;
+      else this.addWithPromo(p, q);
+      ajoutes++;
+    }
+    const restants = this.voixLignes.filter(l => !l.produit).length;
+    this.fermerVoix();
+    if (ajoutes) this.presentToast(`${ajoutes} produit(s) ajouté(s) au panier`, 'success');
+    if (alertes.length) this.presentToast(alertes.join(' · '), 'warning');
+    else if (restants) this.presentToast(`${restants} ligne(s) sans produit choisi n'ont pas été ajoutées`, 'warning');
   }
 
   remove(productId: number): void {
